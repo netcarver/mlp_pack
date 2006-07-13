@@ -1230,13 +1230,13 @@ class gbp_l10n_snippet_handler
 				if( empty( $id ) )
 					{
 					#insert new entry.
-					echo " Calling safe_insert($set)." , br;
+					echo " Calling safe_insert($set). CHANGE ME!" , br;
 //					@safe_insert( 'txp_lang' , $set );
 					}
 				else{
 					#update existing entry (use the id).
 					$where = " `id`='$id'";
-					echo " Calling safe_update( $set , $where )." , br;
+					echo " Calling safe_update( $set , $where ). CHANGE ME!" , br;
 //					safe_update( 'txp_lang', $set, $where );
 					}
 				}
@@ -1328,12 +1328,10 @@ class gbp_l10n_string_handler
 			{
 			$data = doSlash($data);
 			$name = doSlash($name);
-//			echo br , "Inserting name[$name] , data[$data] Lang[$lang] Event[$event].";
-			mysql_query("INSERT DELAYED INTO `".PFX."txp_lang` SET `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'");
-			echo mysql_error();
+			mysql_query("INSERT INTO `".PFX."txp_lang` SET `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'");
 			}
 		mysql_query("DELETE FROM `".PFX."txp_lang` WHERE `data`=''");
-		mysql_query("FLUSH TABLE `".PFX."txp_lang`");
+//		mysql_query("FLUSH TABLE `".PFX."txp_lang`");
 		}
 	// ----------------------------------------------------------------------------
 	public static function StoreTranslationOfString( $name , $event , $new_lang , $translation , $id='' )
@@ -1457,8 +1455,9 @@ class gbp_l10n_string_handler
 				if( !empty($event) )
 					$where .= " AND `event`='$event'";
 //				echo br , "Deleting entry where($where).";
-				safe_delete( 'txp_lang' , $where );
+				@safe_delete( 'txp_lang' , $where );
 				}
+			@safe_optimize( 'txp_lang' , $debug );
 			}		
 		}
 	// ----------------------------------------------------------------------------
@@ -1537,7 +1536,7 @@ class gbp_l10n_string_handler
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Given a plugin name, will extract a list of strings the plugin has registered, collapsing all 
-		the translations into one string. Thus...
+		the translations into one entry. Thus...
 		name	lang	data
 		alpha	en		Alpha
 		alpha	fr		Alpha
