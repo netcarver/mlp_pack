@@ -48,8 +48,9 @@ $txp_current_plugin = $gbp_current_plugin;
 if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_languages' );
 
-class LocalizationView extends GBPPlugin {
-
+class LocalizationView extends GBPPlugin 
+	{
+	
 	var $gp = array(gbp_language);
 	var $preferences = array(
 		'languages' => array('value' => array('fr', 'de'), 'type' => 'gbp_array_text'),
@@ -71,27 +72,134 @@ class LocalizationView extends GBPPlugin {
 		'section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
-	
+		);
+
+	var $perm_strings = array( # These strings will always be inserted and never removed from the txp_lang table...
+	'gbp_l10n_cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
+	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
+	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
+	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table, most of the strings, the wraptags in pages and forms and the snippet definitions they contain.',
+	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
+	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table, all of the strings needed, the localization wraptags around pages and forms and scan them for static text to convert to snippet definitions.',
+	);
+	var $strings = array(	# These strings will be inserted when the user confirms install and removed when they request cleanup.
+	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
+	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
+	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
+	'gbp_l10n_localised'			=> 'Localised',
+	'gbp_l10n_missing'				=> ' missing.', 
+	'gbp_l10n_no_plugin_heading'	=> 'Notice&#8230;',
+	'gbp_l10n_orphans'				=> 'Orphans (Unused snippets.)',
+	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
+	'gbp_l10n_registered_plugins'	=> 'Registered Plugins.' ,
+	'gbp_l10n_remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
+	'gbp_l10n_strings'				=> ' strings.',
+	'gbp_l10n_summary'				=> 'Language Stats.',
+	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
+	'gbp_l10n_translations_for'		=> 'Translations for ',
+	'gbp_l10n_unlocalised'			=> 'Unlocalised',
 	);
 
-	function preload() {
+	// Constructor
+	function LocalizationView( $title , $event , $parent_tab = 'extensions' ) 
+		{
+		global $textarray;
+		
+		GBPPlugin::GBPPlugin( $title , $event , $parent_tab );
+		
+		# Adds the strings this class needs to render the plugin wizard. 
+		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
+//		$textarray = array_merge( $textarray , $this->perm_strings );
 
+		/* SED: This is called admin side, pull the language from the TxP language 
+		variable and use that to load the strings from the store to the $textarray. */
+		$lang = explode( '-' , LANG );
+		StringHandler::load_strings_into_textarray( $lang[0] );
+		}
+
+	function preload() 
+		{
 		global $gbp, $txp_current_plugin, $_GBP;
 		$gbp[$txp_current_plugin] = &$this;
 		$_GBP[0] = &$this;
 
-		if ($this->preferences['articles']['value'])
-			new LocalisationTabView('articles', 'article', $this);
-		if ($this->preferences['categories']['value'])
-			new LocalisationTabView('categories', 'category', $this);
-		// if ($this->preferences['links']['value'])
-		// 	new LocalisationTabView('links', 'link', $this);
-		if ($this->preferences['sections']['value'])
-			new LocalisationTabView('sections', 'section', $this);
-		if ($this->preferences['plugins']['value'])
-			new LocalisationTabView('plugins', 'plugin', $this);
-		new GBPPreferenceTabView('preferences', 'preference', $this);
+		#	NB: This event processing must occur before the installed() check below to
+		# prevent the creation of tabs if the content is not yet installed...
+		$step = gps('step');
+		if( $step )	
+			{
+			switch( $step ) 
+				{
+				case 'cleanup':		$this->cleanup();
+									break;
+				case 'setup':		$this->setup();
+									break;
+				}
+			}
 
+		if( $this->installed() )
+			{
+			if ($this->preferences['articles']['value'])
+				new LocalisationTabView('articles', 'article', $this);
+			if ($this->preferences['categories']['value'])
+				new LocalisationTabView('categories', 'category', $this);
+			// if ($this->preferences['links']['value'])
+			// 	new LocalisationTabView('links', 'link', $this);
+			if ($this->preferences['sections']['value'])
+				new LocalisationTabView('sections', 'section', $this);
+			if ($this->preferences['plugins']['value'])
+				new LocalisationTabView('plugins', 'plugin', $this);
+			new GBPPreferenceTabView('preferences', 'preference', $this);
+			}
+			
+		new LocalisationTabView('wizards', 'wizard', $this);
+
+		}	# end preload()
+		
+	function installed() 
+		{
+		$result = @safe_query( 'SELECT * FROM `'.PFX.'gbp_l10n` LIMIT 0,1'); 
+		return $result;
+		}
+	
+	function redirect( $args ) 
+		{
+		/*
+		FTAO: Graeme, I would propose this be moved to the admin library as a standalone function
+		or as a member of GBPPlugin.
+		
+		Expands the args into a get style url and redirects to that location.
+		*/
+		$location = '';
+		
+		header('HTTP/1.1 303 See Other');
+		header('Status: 303');
+		
+		if( $args )
+			{
+			if( is_array( $args ) and ( count($args) > 0 ) )
+				{
+				$location = '?';
+				foreach( $args as $k=>$v )
+					$location .=  $k . '=' . $v . '&';
+				$location = rtrim( $location , '& ' ); 
+				}
+			elseif( is_string( $args ) )
+				$location = '?'.$args;
+			}
+		header('Location: '.serverSet('REQUEST_URI').$location );
+		header('Connection: close');
+		}
+	
+	/*
+	One-shot installation code goes in here...
+	*/
+	protected function setup() 
+		{
+		# Adds this class' own strings to the string store...
+		StringHandler::insert_strings( $this->strings , 'en' , 'admin' );
+
+		# Create the l10n table...
 		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
 		$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
 		$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
@@ -104,35 +212,69 @@ class LocalizationView extends GBPPlugin {
 		$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
 
 		safe_query(join('', $sql));
-	}
+		
+		/*
+		SED: Extend the txp_lang table to allow text instead of tinytext in the data field.
+		This adds one byte per entry but gives much more flexibility to the strings/snippets for uses such as full 
+		paragraphs of static text with some xhtml markup.
+		*/
+		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
+		safe_alter( 'txp_lang' , $sql );
+		
+		$this->redirect( array( 'event'=>'l10n' , 'tab'=>'preference' ) );
+		}	# end setup()
+	
+	protected function cleanup() 
+		{
+		# Cleanup code follows...
+		$sql = 'drop table `'.PFX.'gbp_l10n`';
+		@safe_query( $sql );
+		
+		# Delete the _translations_ of the perm_strings, the defaults will, however, be reinserted by the constructor...
+		StringHandler::remove_strings( $this->perm_strings , 'admin' );
+		
+		# These get totally removed and don't get re-inserted by the constructor...
+		StringHandler::remove_strings( $this->strings , 'admin' );
+	
+		# Now the cleanup is complete, redirect to the plugin page for the delete.
+		# Not strictly necessary, but a convenience for the user.
+		$this->redirect( array( 'event'=>'plugin' ) );
+		}	# end cleanup()
 
-	function main() {
+	function main() 
+		{
+		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
+		if( $this->installed() )
+			{
+			# Only render the common area at the head of the tabs if the table is installed ok.
+			foreach ($this->preferences['languages']['value'] as $key)
+				$languages['value'][$key] = gTxt($key);
 
-		foreach ($this->preferences['languages']['value'] as $key)
-			$languages['value'][$key] = gTxt($key);
+			if (!gps(gbp_language))
+				$_GET[gbp_language] = $this->preferences['languages']['value'][0];
 
-		if (!gps(gbp_language))
-			$_GET[gbp_language] = $this->preferences['languages']['value'][0];
+			setcookie(gbp_language, gps(gbp_language), time() + 3600 * 24 * 365);
 
-		setcookie(gbp_language, gps(gbp_language), time() + 3600 * 24 * 365);
-
-		$out[] = '<div style="padding-bottom: 3em; text-align: center; clear: both;">';
-		$out[] = form(
-			fLabelCell('Language: ').
-			selectInput(gbp_language, $languages['value'], gps(gbp_language), 0, 1).
-			'<br /><a href="'.hu.gps(gbp_language).'/">view localised site</a>'.
-			$this->form_inputs()
-		);
+			#	Render the top of page div.
+			$out[] = form(
+				fLabelCell('Language: ').
+				selectInput(gbp_language, $languages['value'], gps(gbp_language), 0, 1).
+				'<br /><a href="'.hu.gps(gbp_language).'/">view localised site</a>'.
+				$this->form_inputs()
+				);
+			}
 		$out[] = '</div>';
 
 		echo join('', $out);
+		}	# end main()
+	
 	}
-}
 
-class LocalisationTabView extends GBPAdminTabView {
+class LocalisationTabView extends GBPAdminTabView 
+	{
 
-	function preload() {
-
+	function preload() 
+		{
 		$step = gps('step');
 		if( $step )
 			{
@@ -155,12 +297,15 @@ class LocalisationTabView extends GBPAdminTabView {
 												break;
 				}
 			}
-	}
+		}
 
-	function main() {
-
-		switch ($this->event)
+	function main() 
 		{
+		switch ($this->event)
+			{
+			case 'wizard':
+				$this->render_wizard();
+			break;
 			case 'article':
 				if ($id = gps(gbp_id))
 					$this->render_edit($this->parent->preferences['article_vars']['value'], $this->parent->preferences['article_hidden_vars']['value'], 'textpattern', "id = '$id'", $id);
@@ -191,11 +336,40 @@ class LocalisationTabView extends GBPAdminTabView {
 						$this->render_edit_string( $plugin , $id );
 					}
 			break;
+			}
 		}
-	}
 
-	function render_list($key, $value, $table, $where) {
+	function render_wizard()
+		{
+		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
 
+		if( $this->parent->installed() )
+			{
+			$out[] = '<h1>'.gTxt('gbp_l10n_cleanup_wiz_title').'</h1>';
+			$out[] = graf( gTxt('gbp_l10n_cleanup_wiz_text') );
+			$out[] = form(
+				fInput('submit', '', gTxt('cleanup'), '') . $this->parent->form_inputs() . sInput( 'cleanup' ) , 
+				'' ,
+				"verify('".gTxt('are_you_sure').' '.gTxt('gbp_l10n_cleanup_verify')."')"
+						 );
+			}
+		else
+			{
+			$out[] = '<h1>'.gTxt('gbp_l10n_setup_wiz_title').'</h1>';
+			$out[] = graf( gTxt('gbp_l10n_setup_wiz_text') );
+			$out[] = form(
+				fInput('submit', '', gTxt('Setup'), '') . $this->parent->form_inputs() . sInput( 'setup' ) , 
+				'' ,
+				"verify('".gTxt('are_you_sure').' '.gTxt('gbp_l10n_setup_verify')."')"
+						 );
+			}
+			
+		$out[] = '</div>';		
+		echo join('', $out);
+		}
+		
+	function render_list($key, $value, $table, $where) 
+		{
 		$out[] = '<div style="float: left; width: 50%;" class="gbp_i18n_list">';
 
 		// SQL used in both queries
@@ -203,45 +377,47 @@ class LocalisationTabView extends GBPAdminTabView {
 
 		// Localised
 		$rows = startRows("SELECT DISTINCT source.$key as k, source.$value as v ".$sql);
-		if ($rows) {
-
+		if ($rows) 
+			{
 			$out[] = '<ul><h3>'.gTxt('gbp_l10n_localised').'</h3>';
 			while ($row = nextRow($rows))
 				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_id.'='.$row['k'].'">'.$row['v'].'</a></li>';
 
 			$out[] = '</ul>';
-		}
+			}
 
 		// Unlocalised
 		$rows = startRows("SELECT DISTINCT $key as k, $value as v FROM ".PFX."$table WHERE $key NOT IN (SELECT DISTINCT source.$key $sql) AND $where");
-		if ($rows) {
-
+		if ($rows) 
+			{
 			$out[] = '<ul><h3>'.gTxt('gbp_l10n_unlocalised').'</h3>';
 			while ($row = nextRow($rows))
 				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_id.'='.$row['k'].'">'.$row['v'].'</a></li>'.n;
 
 			$out[] = '</ul>';
-		}
+			}
 
 		$out[] = '</div>';
 		echo join('', $out);
-	}
+		}
 
-	function render_edit($vars, $hidden_vars, $table, $where, $entry_id) {
+	function render_edit($vars, $hidden_vars, $table, $where, $entry_id) 
+		{
 		global $_GBP;
 
 		$fields = trim(join(',', array_merge($vars, $hidden_vars)), ' ,');
 
-		if ($rs1 = safe_row($fields, $table, $where)) {
+		if ($rs1 = safe_row($fields, $table, $where)) 
+			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_l10n_edit">';
 
-			foreach($rs1 as $field => $value) {
-
+			foreach($rs1 as $field => $value) 
+				{
 				$rs2 = safe_row(
 					'id, entry_value',
 					'gbp_l10n',
 					"`language` = '".gps(gbp_language)."' AND `entry_id` = '$entry_id' AND `entry_column` = '$field' AND `table` = '".PFX."$table'"
-				);
+					);
 
 				$field_type = mysql_field_type(mysql_query("SELECT $field FROM ".PFX.$table), 0);
 
@@ -251,21 +427,21 @@ class LocalisationTabView extends GBPAdminTabView {
 				if (!isset($entry_value))
 					$entry_value = '';
 
-				if (in_array($field_type, array('blob'))) {
-
+				if (in_array($field_type, array('blob'))) 
+					{
 					$out[] = '<p class="gbp_l10n_field">'.ucwords($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
 					$out[] = '<div class="gbp_l10n_value">'.text_area($field, 200, 420, $entry_value).'</div>';
-
-				} else if (in_array($field_type, array('string'))) {
-
+					} 
+				else if (in_array($field_type, array('string'))) 
+					{
 					$out[] = '<p class="gbp_l10n_field">'.ucwords($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
 					$out[] = '<div class="gbp_l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div>';
-
-				} else
+					} 
+				else
 					$out[] = hInput($field, $value);
-			}
+				}
 
 			$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 			$out[] = '</div>';
@@ -278,11 +454,11 @@ class LocalisationTabView extends GBPAdminTabView {
 			$out[] = hInput(gbp_id, $entry_id);
 
 			echo form(join('', $out));
+			}
 		}
-	}
 
-	function save_post() {
-
+	function save_post() 
+		{
 		global $txpcfg;
 		extract(get_prefs());
 
@@ -296,9 +472,11 @@ class LocalisationTabView extends GBPAdminTabView {
 		include_once $txpcfg['txpath'].'/lib/classTextile.php';
 		$textile = new Textile();
 
-		foreach($vars as $field => $value) {
+		foreach($vars as $field => $value) 
+			{
 
-			if ($field == 'Body') {
+			if ($field == 'Body') 
+				{
 
 				if (!isset($textile_body))
 				$textile_body = $use_textile;
@@ -312,22 +490,25 @@ class LocalisationTabView extends GBPAdminTabView {
 				else if ($use_textile == 2 && $textile_body)
 					$value_html = $textile -> TextileThis($value);
 
-			}
+				}
 
 			if ($field == 'Title')
 				$value = $textile->TextileThis($value, '', 1);
 
-			if ($field == 'Excerpt') {
-
+			if ($field == 'Excerpt') 
+				{
 				if (!isset($textile_excerpt))
 					$textile_excerpt = 1;
 
-				if ($textile_excerpt) {
+				if ($textile_excerpt) 
+					{
 					$value_html = $textile -> TextileThis($value);
-				} else {
+					} 
+				else 
+					{
 					$value_html = $textile -> TextileThis($value, 1);
+					}
 				}
-			}
 
 			if (!isset($id))
 				$id = '';
@@ -335,19 +516,19 @@ class LocalisationTabView extends GBPAdminTabView {
 			if (!isset($value_html))
 				$value_html = '';
 
-			if (phpversion() >= "4.3.0") {
-
+			if (phpversion() >= "4.3.0") 
+				{
 				$value = mysql_real_escape_string($value);
 				$value_html = mysql_real_escape_string($value_html);
-
-			} else {
-
+				} 
+			else 
+				{
 				$value = mysql_escape_string($value);
 				$value_html = mysql_escape_string($value_html);
-			}
+				}
 
 			switch(gps('step'))
-			{
+				{
 				case 'gbp_post':
 					$rs = safe_insert('gbp_l10n', "`id` = '$id', `table` = '$table', `language` = '$language', `entry_id` = '$entry_id', `entry_column` = '$field', `entry_value` = '$value', `entry_value_html` = '$value_html'");
 				break;
@@ -356,39 +537,13 @@ class LocalisationTabView extends GBPAdminTabView {
 						"`table` = '$table' AND `language` = '$language' AND `entry_id` = '$entry_id' AND `entry_column` = '$field'"
 					);
 				break;
+				}
 			}
 		}
-	}
 
 	/* ----------------------------------------------------------------------------
 	Additional methods follow...
 	---------------------------------------------------------------------------- */
-	function insert_strings()
-		{
-		/*
-		Adds this class' own strings to the string store. Add any strings you want to be able to localise for this
-		plugin.
-		*/
-		$strings = array(
-'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
-'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
-'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
-'gbp_l10n_localised'			=> 'Localised',
-'gbp_l10n_missing'				=> ' missing.', 
-'gbp_l10n_no_plugin_heading'	=> 'Notice&#8230;',
-'gbp_l10n_orphans'				=> 'Orphans (Unused snippets.)',
-'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
-'gbp_l10n_registered_plugins'	=> 'Registered Plugins.' ,
-'gbp_l10n_remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
-'gbp_l10n_strings'				=> ' strings.',
-'gbp_l10n_summary'				=> 'Language Stats.',
-'gbp_l10n_textbox_title'		=> 'Type in the text here.',
-'gbp_l10n_translations_for'		=> 'Translations for ',
-'gbp_l10n_unlocalised'			=> 'Unlocalised',
-);
-		gbp_l10n_string_handler::InsertStringsForLang( $strings , 'en' , 'admin' );
-		}
-
 	function render_edit_string( $plugin ,$name )
 		{
 		/*
@@ -398,12 +553,12 @@ class LocalisationTabView extends GBPAdminTabView {
 		$out[] = '<h3>'.gTxt('gbp_l10n_translations_for').$name.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 		
 		$string_event = '';
-		$x = gbp_l10n_string_handler::GetStringSet( $name );
+		$x = StringHandler::get_string_set( $name );
 		$final_codes = array();
 		if( count($x) )
 			{
 			#	Complete the set with any missing language codes and empty data...
-			$lang_codes = gbp_l10n_language_handler::GetSiteLangs();
+			$lang_codes = LanguageHandler::get_site_langs();
 			foreach($lang_codes as $code)
 				{
 				if( array_key_exists( $code , $x ) )
@@ -416,7 +571,7 @@ class LocalisationTabView extends GBPAdminTabView {
 				$final_codes[] = $code;
 				if( empty($string_event) and $data['event'] != $string_event )
 					$string_event = $data['event'];
-				$lang = gbp_l10n_language_handler::GetNativeNameOfLang($code);
+				$lang = LanguageHandler::get_native_name_of_lang($code);
 
 				$out[] = '<dt>'.$lang.' ('.$code.').'.((empty($data['data'])) ? ' *' . gTxt('gbp_l10n_missing') : '' ).'</dt>';
 				$out[] = '<dd><p>'.
@@ -426,7 +581,8 @@ class LocalisationTabView extends GBPAdminTabView {
 							'</p></dd>';
 				}
 			}
-		else{
+		else
+			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
 			}
 		
@@ -449,19 +605,19 @@ class LocalisationTabView extends GBPAdminTabView {
 		Show all the strings and localizations for the given plugin.
 		*/
 		$stats 			= array();
-		$strings 		= gbp_l10n_string_handler::GetPluginStrings( $plugin , $stats );
+		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats );
 		$strings_exist 	= ( count( $strings ) > 0 );
 		if( !$strings_exist )
 			return '';
 
-		$site_langs 	= gbp_l10n_language_handler::GetSiteLangs();
+		$site_langs 	= LanguageHandler::get_site_langs();
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
 		$out[] = '<h3>'.$plugin.gTxt('gbp_l10n_strings').'</h3>'.n;	
 		$out[] = '<ol>';
 		if( $strings_exist )
 			{
-			$complete_langs = gbp_l10n_string_handler::GetFullLangsString();
+			$complete_langs = StringHandler::get_full_langs_string();
 			foreach( $strings as $string=>$langs )
 				{
 				$complete = ($complete_langs === $langs);
@@ -473,7 +629,8 @@ class LocalisationTabView extends GBPAdminTabView {
 						'</a></li>';
 				}
 			}
-		else{
+		else
+			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
 			}
 		$out[] = '</ol>';
@@ -493,7 +650,7 @@ class LocalisationTabView extends GBPAdminTabView {
 			$extras_found = false;
 			foreach( $stats as $iso_code=>$count )
 				{
-				$name = gbp_l10n_language_handler::GetNativeNameOfLang( $iso_code );
+				$name = LanguageHandler::get_native_name_of_lang( $iso_code );
 				$guts = $count . ' ' . $name;
 				$remove = '';
 				if( !in_array( $iso_code , $site_langs ) )
@@ -549,7 +706,7 @@ class LocalisationTabView extends GBPAdminTabView {
 		$out[] = '<div style="float: left; width: 20%;" class="gbp_i18n_plugin_list">';
 		$out[] = '<h3>'.gTxt('gbp_l10n_registered_plugins').'</h3>'.n.'<ul>';
 
-		$plugins = gbp_l10n_string_handler::DiscoverRegisteredPlugins();
+		$plugins = StringHandler::discover_registered_plugins();
 		if( count( $plugins ) )
 			{
 			//	Get an array of installed plugins. Not all of them will have registered for 
@@ -564,7 +721,8 @@ class LocalisationTabView extends GBPAdminTabView {
 				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
 				}
 			}
-		else{
+		else
+			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
 			}
 		$out[] = '</ul>';
@@ -578,7 +736,7 @@ class LocalisationTabView extends GBPAdminTabView {
 		$plugin 		= gps(gbp_plugin);
 		$remove_langs 	= gps('lang_code');
 
-		gbp_l10n_string_handler::RemovePluginStrings( $plugin , $remove_langs );
+		StringHandler::remove_plugin_strings( $plugin , $remove_langs );
 		}
 	
 	function save_strings() 
@@ -596,40 +754,21 @@ class LocalisationTabView extends GBPAdminTabView {
 			if( !$exists and empty( $translation ) )
 				continue;
 
-			gbp_l10n_string_handler::StoreTranslationOfString( $string_name , $event , $code , $translation , $id );
+			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
 			}
 		}
 
 }
 
-if (@txpinterface == 'admin') {
-	
-	/*
-	SED: Extend the txp_lang table to allow text instead of tinytext in the data field.
-	This adds one byte per entry but gives much more flexibility to the strings/snippets for uses such as full 
-	paragraphs of static text with some xhtml markup.
-	*/
-	$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
-	safe_alter( 'txp_lang' , $sql );
-
-	/*
-	SED: Insert our own interface strings into the string table. 
-	Does not overwrite any changes the admin has made via editing/translating the strings.
-	*/
-	LocalisationTabView::insert_strings();
-
-	/*
-	SED: On the admin side, pull the language from the TxP language variable, chop off the country specific
-	part to leave the ISO-693 language part and use that to load the strings from the store to the $textarray
-	*/
-	$lang = explode( '-' , LANG );
-	gbp_l10n_string_handler::LoadStringsIntoTextArray( $lang[0] );
+if (@txpinterface == 'admin') 
+	{
 
 	// We are admin-side.
 	new LocalizationView('localisation', 'l10n', 'content');
 
-}
-else{
+	}
+else
+	{
 
 	// We are publish-side.
 	global $prefs, $gbp_language;
@@ -639,7 +778,7 @@ else{
 
 	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-	$lang_codes = gbp_l10n_language_handler::GetSiteLangs();
+	$lang_codes = LanguageHandler::get_site_langs();
 	foreach($lang_codes as $code)
 		{
 		if ($path[0] == $code)
@@ -654,18 +793,18 @@ else{
 		Our localize routine should now have all the strings it needs to do snippet localization
 		Plugins should be able to call gTxt() or gbp_gTxt() to output localized content.
 	*/
-	gbp_l10n_string_handler::LoadStringsIntoTextArray( $gbp_language );
+	StringHandler::load_strings_into_textarray( $gbp_language );
 
 	/* ====================================================
 	TAG HANDLERS FOLLOW
 	==================================================== */
 	function gbp_snippet($atts)
+		{
 		/*
 		Tag handler: Outputs a localised snippet. This is a strict alternative to using 
 		direct snippets in pages/forms.
 		Atts: 'name' the name of the snippet to output.
 		*/
-		{
 		$out = '';
 		if( array_key_exists('name', $atts) )
 			{
@@ -680,12 +819,12 @@ else{
 
 	// -----------------------------------------------------
 	function gbp_if_lang( $atts , $thing )
+	    {
 		/*
 		Basic markup tag. Use this to wrap blocks of content you only want to appear 
 		when the specified language is set or if the direction of the selected language matches
 		what you want. (Output different css files for rtl layouts for example).
 		*/
-	    {
 		global $gbp_language;
 		$out = '';
 		
@@ -702,13 +841,13 @@ else{
 			{
 			#	Does the direction of the currently selected site language match that requested?
 			#	If so, parse the contained content.
-			if( $dir == gbp_l10n_language_handler::GetLangDir( $gbp_language ) )
+			if( $dir == LanguageHandler::get_lang_direction( $gbp_language ) )
 				$out = parse($thing) . n;
 			}
 		elseif( $lang == $gbp_language )
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
-			$dir = gbp_l10n_language_handler::GetLangDirMarkup( $lang );
+			$dir = LanguageHandler::get_lang_direction_markup( $lang );
 			$out = "<$wraptag lang=\"$lang\"$dir/>" . parse($thing) . "</$wraptag>" . n;
 			}
 
@@ -717,21 +856,21 @@ else{
 
 	// ----------------------------------------------------
 	function gbp_render_lang_list( $atts )
+		{
 		/*
 		Renders a list of links that can be used to switch this page to another supported language.
 		*/
-		{
 		global $gbp_language;
 	
 		$result = array();
 		
-		$site_langs = gbp_l10n_language_handler::GetSiteLangs();
+		$site_langs = LanguageHandler::get_site_langs();
 		if( !empty($site_langs) )
 			{
 			foreach( $site_langs as $code ) 
 				{
-				$native_name = gbp_l10n_language_handler::GetNativeNameOfLang( $code );
-				$dir = gbp_l10n_language_handler::GetLangDirMarkup( $code );
+				$native_name = LanguageHandler::get_native_name_of_lang( $code );
+				$dir = LanguageHandler::get_lang_direction_markup( $code );
 				$class = ($gbp_language === $code) ? 'gbp_current_language' : '';
 				$native_name = doTag( $native_name , 'span' , $class , ' lang="'.$code.'"'.$dir );
 				$result[] = '<a href="'.hu.$code.$_SERVER['REQUEST_URI'].'">'.$native_name.'</a>'.n;
@@ -743,10 +882,10 @@ else{
 
 	// -----------------------------------------------------
 	function gbp_get_language( $atts )
+		{
 		/*
 		Outputs the current language. Use in page/forms to output the language needed by the doctype/html decl.
 		*/
-		{
 		global $gbp_language;
 
 		if( !$gbp_language )
@@ -756,28 +895,28 @@ else{
 
 	// -----------------------------------------------------
 	function gbp_get_lang_dir( $atts )
+		{
 		/*
 		Outputs the direction (rtl/ltr) of the current language. 
 		Use in page/forms to output the direction needed by xhtml elements.
 		*/
-		{
 		global $gbp_language;
 		
 		$lang = $gbp_language; 
 		if( !$gbp_language )
-			$lang = gbp_l10n_language_handler::GetSiteDefaultLang();
+			$lang = LanguageHandler::get_site_default_lang();
 
-		$dir = gbp_l10n_language_handler::GetLangDir( $lang );
+		$dir = LanguageHandler::get_lang_direction( $lang );
 		return $dir;
 		}
 	
 	// ----------------------------------------------------
 	function gbp_localize($atts, $thing = '') 
+		{
 		/*
 		Graeme's original localisation container tag. Still very much needed.
 		Some mods to include direct snippet localization for any contained content.
 		*/
-		{
 		global $gbp_language, $thisarticle, $thislink;
 
 		if ($gbp_language) {
@@ -805,7 +944,7 @@ else{
 			} else if ($thing) {
 
 				# SED: Process the direct snippet substitutions needed in the contained content.
-				$thing = gbp_l10n_snippet_handler::SubstituteSnippets( $thing );
+				$thing = SnippetHandler::substitute_snippets( $thing );
 				
 				if (isset($thisarticle)) {
 					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', "`language` = '$gbp_language' AND `entry_id` = '".$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
@@ -840,7 +979,7 @@ else{
 		} else if ($thing) {
 
 			# SED: Process and string substitutions needed in the contained content.
-			$thing = gbp_l10n_snippet_handler::SubstituteSnippets( $thing );
+			$thing = SnippetHandler::substitute_snippets( $thing );
 			return parse($thing);
 		}
 
@@ -850,9 +989,9 @@ else{
 
 
 /* ----------------------------------------------------------------------------
-class gbp_l10n_language_handler implements ISO-693-1 language support.
+class LanguageHandler implements ISO-693-1 language support.
 ---------------------------------------------------------------------------- */
-class gbp_l10n_language_handler
+class LanguageHandler
 	{
 	function iso_693_1_langs ( $input, $to_return='lang' )
 		{
@@ -1028,31 +1167,31 @@ class gbp_l10n_language_handler
 		}
 	
 	// ----------------------------------------------------------------------------
-	function IsValidISO693Code($code)
+	function is_valid_code($code)
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Check the given string is a valid 2-digit language code from the ISO-693-1 table.
 		*/
-		{
 		$result = false;
 		if( 2 == strlen( $code ) )
 			{
-			$result = ( gbp_l10n_language_handler::iso_693_1_langs( $code ) );
+			$result = ( LanguageHandler::iso_693_1_langs( $code ) );
 			}
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	function FindCodeForLanguage( $name )
+	function find_code_for_lang( $name )
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns the ISO-693-1 code for the given native language.
 		*/
-		{
 		$out = '';
 			
 		if( $name and !empty( $name ) )
 			{
-			$out = gbp_l10n_language_handler::iso_693_1_langs( $name, 'code' );
+			$out = LanguageHandler::iso_693_1_langs( $name, 'code' );
 			}
 
 		if (empty($out))
@@ -1061,45 +1200,45 @@ class gbp_l10n_language_handler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	function GetLangDirMarkup( $lang )
+	function get_lang_direction_markup( $lang )
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
-		{
 		$dir = '';
-		if( !empty($lang) and ('rtl' == gbp_l10n_language_handler::iso_693_1_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == LanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = ' dir="rtl"';
 		return $dir;
 		}
 	// ----------------------------------------------------------------------------
-	function GetLangDir( $lang )
+	function get_lang_direction( $lang )
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
-		{
 		$dir = 'ltr';
-		if( !empty($lang) and ('rtl' == gbp_l10n_language_handler::iso_693_1_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == LanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = 'rtl';
 		return $dir;
 		}
 	// ----------------------------------------------------------------------------
-	function GetNativeNameOfLang( $lang )
+	function get_native_name_of_lang( $code )
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns the native name of the given language code.
 		*/
-		{
-		return (gbp_l10n_language_handler::iso_693_1_langs( $lang )) ? gbp_l10n_language_handler::iso_693_1_langs( $lang ) : gbp_l10n_language_handler::iso_693_1_langs( 'en' ) ;
+		return (LanguageHandler::iso_693_1_langs( $code )) ? LanguageHandler::iso_693_1_langs( $code ) : LanguageHandler::iso_693_1_langs( 'en' ) ;
 		}
 	// ----------------------------------------------------------------------------
-	function GetSiteLangs()
+	function get_site_langs()
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns an array of the ISO-693-1 languages the site supports.
 		*/
-		{
 		global $prefs;
 		
 		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
@@ -1109,36 +1248,37 @@ class gbp_l10n_language_handler
 		return $lang_codes;
 		}
 	// ----------------------------------------------------------------------------
-	function GetSiteDefaultLang()
+	function get_site_default_lang()
+		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns a string containing the ISO-693-1 language to be used as the site's default.
 		*/
-		{
 		global $prefs;
 		$lang_codes = explode(',', $prefs[GBP_PREFS_LANGUAGES]);
 		return $lang_codes[0];
 		}
 
-	} // End of gbp_l10n_language_handler
+	} // End of LanguageHandler
 
 /* ----------------------------------------------------------------------------
-class gbp_l10n_snippet_handler implements localized "snippets" within page and
+class SnippetHandler implements localized "snippets" within page and
 form templates. Uses the services of the string_handler to localise the
 strings therein.
 ---------------------------------------------------------------------------- */
-class gbp_l10n_snippet_handler
+class SnippetHandler
 	{
 	# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
 	# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
 	var $snippet_pattern = "/##([\w|\.|\-]+)##/";
-//	static $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
+//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
 	# The following pattern is used to match any gbp_snippet tags in pages and forms.
 	var $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
 	
 	// ----------------------------------------------------------------------------
-	function SubstituteSnippets( &$thing )
+	function substitute_snippets( &$thing )
+		{
 		/*
 		PUBLIC LOCALIZATION SUPPORT ROUTINE for use by localization plugin.
 		Replaces all snippets within the contained block with their text from the global textarray.
@@ -1147,7 +1287,6 @@ class gbp_l10n_snippet_handler
 		*A Snippet is a specially formatted marker in the page/form template that gets substituted by
 		the localization routine.
 		*/
-		{
 		$out = preg_replace_callback( 	$this->snippet_pattern , 
 										create_function(
 							           '$match',
@@ -1167,14 +1306,14 @@ class gbp_l10n_snippet_handler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	function FindSnippetsInBlock( &$thing , $merge = false )
+	function find_snippets_in_block( &$thing , $merge = false )
+		{
 		/*
 		ADMIN SUPPORT ROUTINE
 		Scans the given block ($thing) for snippets and returns their names as the values of an array.
 		If merge is true then these values are expanded to contain whatever data is found in the txp_lang table for 
 		that snippet.
 		*/
-		{
 		$out = array();
 		$tags = array();
 
@@ -1217,7 +1356,8 @@ class gbp_l10n_snippet_handler
 						$temp[$name][$lng]['data'] 		= $a['data'];
 						}
 					}
-				else{
+				else
+					{
 					$temp[$name] = NULL;
 					}
 				}
@@ -1227,12 +1367,12 @@ class gbp_l10n_snippet_handler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	function StoreSnippets( &$snippets )
+	function store_snippets( &$snippets )
+		{
 		/*
 		ADMIN SUPPORT ROUTINE
 		Takes a full array of snippets (includes 1+ renditions) and stores them in the txp_lang table.
 		*/
-		{
 		if( !$snippets or 0==count($snippets) )
 			return;
 			
@@ -1259,24 +1399,24 @@ class gbp_l10n_snippet_handler
 					{
 					#insert new entry.
 					echo " Calling safe_insert($set). CHANGE ME!" , br;
-//					@safe_insert( 'txp_lang' , $set );
+					@safe_insert( 'txp_lang' , $set );
 					}
 				else{
 					#update existing entry (use the id).
 					$where = " `id`='$id'";
 					echo " Calling safe_update( $set , $where ). CHANGE ME!" , br;
-//					safe_update( 'txp_lang', $set, $where );
+					safe_update( 'txp_lang', $set, $where );
 					}
 				}
 			}	
 		}
 	// ----------------------------------------------------------------------------
-	function RenderSnippetList( &$snippets , $listtype )
+	function render_snippet_list( &$snippets , $listtype )
+		{
 		/*
 		ADMIN SUPPORT ROUTINE
 		Takes a full array of snippets (includes 1+ translations) and renders them as a list.
 		*/
-		{
 		$out = '';
 		
 		if( !$snippets or 0==count($snippets) )
@@ -1307,20 +1447,20 @@ class gbp_l10n_snippet_handler
 			}	
 		return doWrap( $out , $listtype, 'li' );
 		}
-	} // End of gbp_l10n_snippet_handler
+	} // End of SnippetHandler
 	
 /* ----------------------------------------------------------------------------
-class gbp_l10n_string_handler implements localized string storage support.
+class StringHandler implements localized string storage support.
 ---------------------------------------------------------------------------- */
-class gbp_l10n_string_handler
+class StringHandler	
 	{
 	// ----------------------------------------------------------------------------
-	function StripLeadingSection( $string , $delim='.' )
+	function strip_leading_section( $string , $delim='.' )
+		{
 		/*
 		Simply removes anything that prefixes a string up to the delimiting character.
 		So 'hello.world' -> 'world'
 		*/
-		{
 		if( empty( $string ))
 			return '';
 			
@@ -1331,13 +1471,13 @@ class gbp_l10n_string_handler
 		return $i;
 		}	
 	// ----------------------------------------------------------------------------
-	function InsertStringsForLang( $strings , $lang , $event='' )
+	function insert_strings( $strings , $lang , $event='' )
+		{
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
 		Adds the given array of aliased strings to an additional string table.
 		*/
-		{
 		global	$txp_current_plugin;
 
 		# 	Check we have valid arguments...
@@ -1358,17 +1498,20 @@ class gbp_l10n_string_handler
 			$name = doSlash($name);
 			mysql_query("INSERT INTO `".PFX."txp_lang` SET `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'");
 			}
+			
+		# Possible TO DO... stop deleting empty entries. We might have to do this once a proper registration routine is
+		# in place.
 		mysql_query("DELETE FROM `".PFX."txp_lang` WHERE `data`=''");
 //		mysql_query("FLUSH TABLE `".PFX."txp_lang`");
 		}
 	// ----------------------------------------------------------------------------
-	function StoreTranslationOfString( $name , $event , $new_lang , $translation , $id='' )
+	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' )
+		{
 		/*
 		ADMIN SUPPORT ROUTINE
 		For use by the localization plugin. 
 		Can create or update row in the DB depending upon the calling arguments.
 		*/
-		{
 		# 	Check we have valid arguments...
 		if( empty($name) or empty($event) or empty($new_lang) )
 			{
@@ -1403,13 +1546,13 @@ class gbp_l10n_string_handler
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	function StoreTranslationOfStringByID( $id , $new_lang , $translation )
+	function store_translation_by_id( $id , $new_lang , $translation )
+		{
 		/*
 		ADMIN SUPPORT ROUTINE
 		For use by the localization plugin. Clones the entry with the given id and stores the 
 		translation in the data and sets the lang and date as given.
 		*/
-		{
 		# 	Check we have valid arguments...
 		if( empty($id) or empty($translation) or empty($new_lang) )
 			return null;
@@ -1433,13 +1576,13 @@ class gbp_l10n_string_handler
 		@safe_insert( 'txp_lang' , $set );
 		}
 	// ----------------------------------------------------------------------------
-	function RemovePluginStrings( $plugin , $remove_lang , $debug = '' )
+	function remove_plugin_strings( $plugin , $remove_lang , $debug = '' )
+		{
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Either: Removes all the occurances of plugin strings in the given langs...
 		OR:		Removes all of the named plugin's strings.
 		*/
-		{
 		if( $remove_lang and !empty( $remove_lang ) )
 			{		
 			$where = "(`lang` IN ('$remove_lang')) AND (`event` LIKE \"common.%\" OR `event` LIKE \"public.%\" OR `event` LIKE \"admin.%\" OR `event`='snippet')";
@@ -1456,13 +1599,13 @@ class gbp_l10n_string_handler
 			}
 		}
 	// ----------------------------------------------------------------------------
-	function RemoveStrings( $strings , $event = '' )
+	function remove_strings( $strings , $event = '' )
+		{
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
 		Removes all of the named strings in ALL languages. (It uses the keys of the strings array).
 		*/
-		{
 		global	$txp_current_plugin;
 
 		if( !$strings or !is_array( $strings ) )
@@ -1472,7 +1615,7 @@ class gbp_l10n_string_handler
 			$event = $event.'.'.$txp_current_plugin;
 		$event 	= doSlash( $event );
 
-//		echo br.br.br.br, "In RemoveStrings. Event($event). ";
+//		echo br.br.br.br, "In remove_strings. Event($event). ";
 
 		if( count( $strings ) )
 			{
@@ -1489,26 +1632,26 @@ class gbp_l10n_string_handler
 			}		
 		}
 	// ----------------------------------------------------------------------------
-	function LoadStringsIntoTextArray( $lang )
+	function load_strings_into_textarray( $lang )	
+		{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Loads all strings of the given language into the global $textarray so that any plugin can call 
 		gTxt on it's own strings. Can be used for admin and public work.
 		*/
-		{
 		global $textarray;
 		
-		$extras = gbp_l10n_string_handler::LoadStrings($lang);
+		$extras = StringHandler::load_strings($lang);
 		$textarray = array_merge( $textarray , $extras );
 		return count( $extras );
 		}
 	// ----------------------------------------------------------------------------
-	function LoadStrings( $lang )
+	function load_strings( $lang )	
+		{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Loads all strings of the given language into an array and returns them.
 		*/
-		{
 		$extras = array();
 
 		if( @txpinterface == 'admin' )
@@ -1529,13 +1672,13 @@ class gbp_l10n_string_handler
 		return $extras;
 		}
 	// ----------------------------------------------------------------------------
-	function DiscoverRegisteredPlugins()
+	function discover_registered_plugins()	
+		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Gets an array of the names of plugins that have registered strings in the correct format. 
 		No repeats!
 		*/
-		{
 		$result = array();
 
 		$rs = safe_rows_start( 	
@@ -1548,7 +1691,7 @@ class gbp_l10n_string_handler
 			$set = array();
 			while ( $a = nextRow($rs) )
 				{
-				$plugin = gbp_l10n_string_handler::StripLeadingSection($a['event']);			
+				$plugin = StringHandler::strip_leading_section($a['event']);			
 				$set[$plugin] = $plugin;
 				}
 			foreach( $set as $plugin )
@@ -1560,7 +1703,8 @@ class gbp_l10n_string_handler
 		return $result;		
 		}
 	// ----------------------------------------------------------------------------
-	function GetPluginStrings( $plugin , &$stats )
+	function get_plugin_strings( $plugin , &$stats )	
+		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Given a plugin name, will extract a list of strings the plugin has registered, collapsing all 
@@ -1574,7 +1718,6 @@ class gbp_l10n_string_handler
 		alpha => 'fr, el, en'  (Sorted order)
 		beta  => 'en'
 		*/
-		{
 		$result = array();
 		
 		$plugin = doSlash( $plugin );
@@ -1594,7 +1737,6 @@ class gbp_l10n_string_handler
 					$result[$name][$lang] += 1;
 				else
 					$result[$name][$lang] = 1;
-////				$result[$name][$lang] = $lang;
 				}
 			ksort( $result );
 			foreach( $result as $name => $langs )
@@ -1620,26 +1762,26 @@ class gbp_l10n_string_handler
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	function GetFullLangsString( )
+	function get_full_langs_string( )	
+		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Returns a string of the site languages. Used to work out if a given string has a complete 
 		set of translations.
 		*/
-		{
-		$langs = gbp_l10n_language_handler::GetSiteLangs();
+		$langs = LanguageHandler::get_site_langs();
 		sort( $langs );
 		$langs = rtrim( join( ', ' , $langs ) , ' ,' );
 		return $langs;
 		}
 	// ----------------------------------------------------------------------------
-	function GetStringSet( $string_name )
+	function get_string_set( $string_name )	
+		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Given a string name, will extract an array of the matching translations.
 		translation_lang => string_id , event , data
 		*/
-		{
 		$result = array();
 
 		$where = ' `name` = "'.$string_name.'"';
@@ -1649,7 +1791,7 @@ class gbp_l10n_string_handler
 			while ( $a = nextRow($rs) )
 				{
 				$lang = $a['lang'];
-				if( gbp_l10n_language_handler::IsValidISO693Code( $lang ) )
+				if( LanguageHandler::is_valid_code( $lang ) )
 					{
 					unset( $a['lang'] );	# will be used as key, no need to store it twice.
 					$result[ $lang ] = $a;
@@ -1661,17 +1803,17 @@ class gbp_l10n_string_handler
 		}
 	// ----------------------------------------------------------------------------
 	function gTxt( $alias, $args=null )
+		{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Given a string name, will pull the string out of the $textarray and perform any argument replacements needed.
 		*/
-		{
 		global $textarray;
 		global $gbp_language;
 		
 		$lang = $gbp_language;
 		if( !$lang )
-			$lang = gbp_l10n_language_handler::GetSiteDefaultLang();
+			$lang = LanguageHandler::get_site_default_lang();
 			
 		$out = @$textarray[ $alias ];
 		if( !$out or ($out === $alias) )
@@ -1689,13 +1831,14 @@ class gbp_l10n_string_handler
 			
 		return $out;
 		}
-	} // End class gbp_l10n_string_handler
+	} // End class StringHandler
 
 
 /* ----------------------------------------------------------------------------
 PUBLIC/ADMIN WRAPPER ROUTINES...
 ---------------------------------------------------------------------------- */
-function gbp_gTxt( $name , $args = null )
+function gbp_gTxt( $name , $args = null )	
+	{
 	/*
 	Extension to the gTxt routine to allow an optional parameter list.
 	Plugin authors can define strings with embedded variables that get preg_replaced
@@ -1706,8 +1849,7 @@ function gbp_gTxt( $name , $args = null )
 	could be replaced like this from within the plugin...
 		gbp_gTxt( 'plugin_name_hello' , array( '$name'=>$name ) );
 	*/
-	{
-	return gbp_l10n_string_handler::gTxt( $name , $args );
+	return StringHandler::gTxt( $name , $args );
 	}
 // ----------------------------------------------------------------------------
 
