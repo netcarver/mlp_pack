@@ -363,7 +363,7 @@ class LocalisationTabView extends GBPAdminTabView {
 	/* ----------------------------------------------------------------------------
 	Additional methods follow...
 	---------------------------------------------------------------------------- */
-	public static function insert_strings()
+	function insert_strings()
 		{
 		/*
 		Adds this class' own strings to the string store. Add any strings you want to be able to localise for this
@@ -854,151 +854,181 @@ class gbp_l10n_language_handler implements ISO-693-1 language support.
 ---------------------------------------------------------------------------- */
 class gbp_l10n_language_handler
 	{
-	# Comment out as much as you feel you will never need. (Lightens up the memory needed a little.)
-	static $iso_693_1_langs = array( 
-	'aa'=>array( 'aa'=>'Afaraf' ),	//	'en'=>'Afar'
-	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),	//	'en'=>'Abkhazian' 
-	'af'=>array( 'af'=>'Afrikaans' ),	//	'en'=>'Afrikaans' 
-	'am'=>array( 'am'=>'አማርኛ' ),	//	'en'=>'Amharic' 
-	'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),	//	'en'=>'Arabic' 
-	'as'=>array( 'as'=>'অসমীয়া' ),	//	'en'=>'Assamese' 
-	'ay'=>array( 'ay'=>'Aymar aru' ),	//	'en'=>'Aymara' 
-	'az'=>array( 'az'=>'Azərbaycan dili' ),	//	'en'=>'Azerbaijani' 
-	'ba'=>array( 'ba'=>'башҡорт теле' ),	//	'en'=>'Bashkir' 
-	'be'=>array( 'be'=>'Беларуская мова' ),	//	'en'=>'Byelorussian' 
-	'bg'=>array( 'bg'=>'Български' ),	//	'en'=>'Bulgarian' 
-	'bh'=>array( 'bh'=>'भोजपुरी' ),	//	'en'=>'Bihari',
-	'bi'=>array( 'bi'=>'Bislama' ),	//	'en'=>'Bislama' 
-	'bn'=>array( 'bn'=>'বাংলা' ),	//	'en'=>'Bengali; Bangla'
-	'bo'=>array( 'bo'=>'Bod Skad' ) ,	//	'en'=>'Tibetan' 
-	'br'=>array( 'br'=>'ar Brezhoneg' ) ,	//	'en'=>'Breton' 
-	'ca'=>array( 'ca'=>'Català' ) ,	//	'en'=>'Catalan' 
-	'co'=>array( 'co'=>'Corsu' ) ,	//	'en'=>'Corsican' 
-	'cs'=>array( 'cs'=>'Čeština' ) ,	//	'en'=>'Czech' 
-	'cy'=>array( 'cy'=>'Cymraeg' ) ,	//	'en'=>'Welsh' 
-	'da'=>array( 'da'=>'Dansk' ) ,	//	'en'=>'Danish' 
-	'de'=>array( 'de'=>'Deutsch' ) ,	//	'en'=>'German' 
-	'dz'=>array( 'dz'=>'Dzongkha' ) ,	//	'en'=>'Bhutani'
-	'el'=>array( 'el'=>'Ελληνικά' ) ,	//	'en'=>'Greek' 
-	'en'=>array( 'en'=>'English' ),
-	'eo'=>array( 'eo'=>'Esperanto' ),	//	'en'=>'Esperanto' 
-	'es'=>array( 'es'=>'Español' ),	//	'en'=>'Spanish' 
-	'et'=>array( 'et'=>'Eesti Keel' ),	//	'en'=>'Estonian' 
-	'eu'=>array( 'eu'=>'Euskera' ),	//	'en'=>'Basque' 
-	'fa'=>array( 'fa'=>'Fārsī' ),	//	'en'=>'Persian' 
-	'fi'=>array( 'fi'=>'Suomi' ),	//	'en'=>'Finnish' 
-	'fj'=>array( 'fj'=>'vaka-Viti' ),	//	'en'=>'Fiji' 
-	'fo'=>array( 'fo'=>'Føroyska' ),	//	'en'=>'Faroese' 
-	'fr'=>array( 'fr'=>'Français' ),	//	'en'=>'French' 
-	'fy'=>array( 'fy'=>'Frysk' ),	//	'en'=>'Frisian' 
-	'ga'=>array( 'ga'=>'Gaeilge' ),	//	'en'=>'Irish' 
-	'gd'=>array( 'gd'=>'Gàidhlig' ),	//	'en'=>'Scots Gaelic'
-	'gl'=>array( 'gl'=>'Galego' ),	//	'en'=>'Galician' 
-	'gn'=>array( 'gn'=>"Avañe'ẽ" ),	//	'en'=>'Guarani' 
-	'gu'=>array( 'gu'=>'ગુજરાતી' ),	//	'en'=>'Gujarati' 
-	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),	//	'en'=>'Hausa' 
-	'he'=>array( 'he'=>'עברית / עִבְרִית' ,'dir'=>'rtl' ),	//	'en'=>'Hebrew' 
-	'hi'=>array( 'hi'=>'हिन्दी' ),	//	'en'=>'Hindi' 
-	'hr'=>array( 'hr'=>'Hrvatski' ),	//	'en'=>'Croatian' 
-	'hu'=>array( 'hu'=>'Magyar' ),	//	'en'=>'Hungarian' 
-	'hy'=>array( 'hy'=>'Հայերէն' ),	//	'en'=>'Armenian' 
-	'ia'=>array( 'ia'=>'Interlingua' ),	//	'en'=>'Interlingua' 
-	'id'=>array( 'id'=>'Bahasa Indonesia' ),	//	'en'=>'Indonesian' 
-	'ie'=>array( 'ie'=>'Interlingue' ),	//	'en'=>'Interlingue' 
-	'ik'=>array( 'ik'=>'Iñupiak' ),	//	'en'=>'Inupiak' 
-	'is'=>array( 'is'=>'Íslenska' ),	//	'en'=>'Icelandic' 
-	'it'=>array( 'it'=>'Italiano' ),	//	'en'=>'Italian' 
-	'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),	//	'en'=>'Inuktitut' 
-	'ja'=>array( 'ja'=>'日本語' ),	//	'en'=>'Japanese' 
-	'jw'=>array( 'jw'=>'basa Jawa' ),	//	'en'=>'Javanese' 
-	'ka'=>array( 'ka'=>'ქართული' ),	//	'en'=>'Georgian' 
-	'kk'=>array( 'kk'=>'Қазақ' ),	//	'en'=>'Kazakh' 
-	'kl'=>array( 'kl'=>'Kalaallisut' ),	//	'en'=>'Greenlandic' 
-	'km'=>array( 'km'=>'ភាសាខ្មែរ' ),	//	'en'=>'Cambodian' 
-	'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),	//	'en'=>'Kannada' 
-	'ko'=>array( 'ko'=>'한국어' ),	//	'en'=>'Korean' 
-	'ks'=>array( 'ks'=>'काऽशुर' ),	//	'en'=>'Kashmiri' 
-	'ku'=>array( 'ku'=>'Kurdí' ),	//	'en'=>'Kurdish' 
-	'ky'=>array( 'ky'=>'Кыргызча' ),	//	'en'=>'Kirghiz' 
-	'la'=>array( 'la'=>'Latine' ),	//	'en'=>'Latin' 
-	'ln'=>array( 'ln'=>'lokótá ya lingála' ),	//	'en'=>'Lingala' 
-	'lo'=>array( 'lo'=>'ລາວ' ),	//	'en'=>'Laothian' 
-	'lt'=>array( 'lt'=>'Lietuvių Kalba' ),	//	'en'=>'Lithuanian' 
-	'lv'=>array( 'lv'=>'Latviešu' ),	//	'en'=>'Latvian'
-	'mg'=>array( 'mg'=>'Malagasy fiteny' ),	//	'en'=>'Malagasy' 
-	'mi'=>array( 'mi'=>'te Reo Māori' ),	//	'en'=>'Maori' 
-	'mk'=>array( 'mk'=>'Македонски' ),	//	'en'=>'Macedonian' 
-	'ml'=>array( 'ml'=>'മലയാളം' ),	//	'en'=>'Malayalam' 
-	'mn'=>array( 'mn'=>'Монгол' ),	//	'en'=>'Mongolian' 
-	'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),	//	'en'=>'Moldavian' 
-	'mr'=>array( 'mr'=>'मराठी' ),	//	'en'=>'Marathi' 
-	'ms'=>array( 'ms'=>'Bahasa Melayu' ),	//	'en'=>'Malay' 
-	'mt'=>array( 'mt'=>'Malti' ),	//	'en'=>'Maltese' 
-	'my'=>array( 'my'=>'ဗမာစကား' ),	//	'en'=>'Burmese' 
-	'na'=>array( 'na'=>'Ekakairũ Naoero' ),	//	'en'=>'Nauru' 
-	'ne'=>array( 'ne'=>'नेपाली' ),	//	'en'=>'Nepali' 
-	'nl'=>array( 'nl'=>'Nederlands' ),	//	'en'=>'Dutch' 
-	'no'=>array( 'no'=>'Norsk' ),	//	'en'=>'Norwegian' 
-	'oc'=>array( 'oc'=>'lenga occitana' ),	//	'en'=>'Occitan' 
-	'om'=>array( 'om'=>'Afaan Oromo' ),	//	'en'=>'(Afan) Oromo'
-	'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),	//	'en'=>'Oriya' 
-	'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),	//	'en'=>'Punjabi' 
-	'pl'=>array( 'pl'=>'Polski' ),	//	'en'=>'Polish' 
-	'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),	//	'en'=>'Pashto' 
-	'pt'=>array( 'pt'=>'Português' ),	//	'en'=>'Portuguese' 
-	'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),	//	'en'=>'Quechua' 
-	'rm'=>array( 'en'=>'Rhaeto-Romance' ),
-	'rn'=>array( 'rn'=>'Kirundi' ),	//	'en'=>'Kirundi' 
-	'ro'=>array( 'ro'=>'Română' ),	//	'en'=>'Romanian' 
-	'ru'=>array( 'ru'=>'Русский' ),	//	'en'=>'Russian' 
-	'rw'=>array( 'rw'=>'Kinyarwandi' ),	//	'en'=>'Kinyarwanda' 
-	'sa'=>array( 'sa'=>'संस्कृतम्' ),	//	'en'=>'Sanskrit' 
-	'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),	//	'en'=>'Sindhi' 
-	'sg'=>array( 'sg'=>'yângâ tî sängö' ),	//	'en'=>'Sangho' 
-	'sh'=>array( 'sh'=>'Српскохрватски' ),	//	'en'=>'Serbo-Croatian'
-	'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),	//	'en'=>'Sinhalese' 
-	'sk'=>array( 'sk'=>'Slovenčina' ),	//	'en'=>'Slovak' 
-	'sl'=>array( 'sl'=>'Slovenščina' ),	//	'en'=>'Slovenian' 
-	'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),	//	'en'=>'Samoan' 
-	'sn'=>array( 'sn'=>'chiShona' ),	//	'en'=>'Shona' 
-	'so'=>array( 'so'=>'af Soomaali' ),	//	'en'=>'Somali' 
-	'sq'=>array( 'sq'=>'Shqip' ),	//	'en'=>'Albanian' 
-	'sr'=>array( 'sr'=>'Srpski' ),	//	'en'=>'Serbian' 
-	'ss'=>array( 'ss'=>'siSwati' ),	//	'en'=>'Siswati' 
-	'st'=>array( 'st'=>'seSotho' ),	//	'en'=>'Sesotho' 
-	'su'=>array( 'su'=>'basa Sunda' ),	//	'en'=>'Sundanese' 
-	'sv'=>array( 'sv'=>'Svenska' ),	//	'en'=>'Swedish' 
-	'sw'=>array( 'sw'=>'Kiswahili' ),	//	'en'=>'Swahili' 
-	'ta'=>array( 'ta'=>'தமிழ்' ),	//	'en'=>'Tamil' 
-	'te'=>array( 'te'=>'తెలుగు' ),	//	'en'=>'Telugu' 
-	'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),	//	'en'=>'Tajik' 
-	'th'=>array( 'th'=>'ภาษาไทย' ),	//	'en'=>'Thai' 
-	'ti'=>array( 'ti'=>'ትግርኛ' ),	//	'en'=>'Tigrinya' 
-	'tk'=>array( 'tk'=>'Türkmençe' ),	//	'en'=>'Turkmen' 
-	'tl'=>array( 'tl'=>'Tagalog' ),	//	'en'=>'Tagalog' 
-	'tn'=>array( 'tn'=>'Setswana' ),	//	'en'=>'Setswana' 
-	'to'=>array( 'to'=>'Faka-Tonga' ),	//	'en'=>'Tonga' 
-	'tr'=>array( 'tr'=>'Türkçe' ),	//	'en'=>'Turkish' 
-	'ts'=>array( 'ts'=>'xiTsonga' ),	//	'en'=>'Tsonga' 
-	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),	//	'en'=>'Tatar' 
-	'tw'=>array( 'tw'=>'Twi' ),	//	'en'=>'Twi' 
-	'ug'=>array( 'ug'=>'uyghur tili' ),	//	'en'=>'Uighur' 
-	'uk'=>array( 'uk'=>"Українська" ),	//	'en'=>'Ukrainian' 
-	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),	//	'en'=>'Urdu' 
-	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),	//	'en'=>'Uzbek' 
-	'vi'=>array( 'vi'=>'Tiếng Việt' ),	//	'en'=>'Vietnamese' 
-	'vo'=>array( 'vo'=>"vad'd'a tšeel" ),	//	'en'=>'Volapuk' 
-	'wo'=>array( 'wo'=>'Wollof' ),	//	'en'=>'Wolof' 
-	'xh'=>array( 'xh'=>'isiXhosa' ),	//	'en'=>'Xhosa' 
-	'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),	//	'en'=>'Yiddish' 
-	'yo'=>array( 'yo'=>'Yorùbá' ),	//	'en'=>'Yoruba' 
-	'za'=>array( 'za'=>'Sawcuengh' ),	//	'en'=>'Zhuang' 
-	'zh'=>array( 'zh'=>'中文(國語)' ),	//	'en'=>'Chinese' 
-	'zu'=>array( 'zu'=>'isiZulu' ),	//	'en'=>'Zulu' 
-	);
+	function iso_693_1_langs ( $input, $to_return='lang' )
+		{
+		# Comment out as much as you feel you will never need. (Lightens up the memory needed a little.)
+		static $iso_693_1_langs = array( 
+		'aa'=>array( 'aa'=>'Afaraf' ),	//	'en'=>'Afar'
+		'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),	//	'en'=>'Abkhazian' 
+		'af'=>array( 'af'=>'Afrikaans' ),	//	'en'=>'Afrikaans' 
+		'am'=>array( 'am'=>'አማርኛ' ),	//	'en'=>'Amharic' 
+		'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),	//	'en'=>'Arabic' 
+		'as'=>array( 'as'=>'অসমীয়া' ),	//	'en'=>'Assamese' 
+		'ay'=>array( 'ay'=>'Aymar aru' ),	//	'en'=>'Aymara' 
+		'az'=>array( 'az'=>'Azərbaycan dili' ),	//	'en'=>'Azerbaijani' 
+		'ba'=>array( 'ba'=>'башҡорт теле' ),	//	'en'=>'Bashkir' 
+		'be'=>array( 'be'=>'Беларуская мова' ),	//	'en'=>'Byelorussian' 
+		'bg'=>array( 'bg'=>'Български' ),	//	'en'=>'Bulgarian' 
+		'bh'=>array( 'bh'=>'भोजपुरी' ),	//	'en'=>'Bihari',
+		'bi'=>array( 'bi'=>'Bislama' ),	//	'en'=>'Bislama' 
+		'bn'=>array( 'bn'=>'বাংলা' ),	//	'en'=>'Bengali; Bangla'
+		'bo'=>array( 'bo'=>'Bod Skad' ) ,	//	'en'=>'Tibetan' 
+		'br'=>array( 'br'=>'ar Brezhoneg' ) ,	//	'en'=>'Breton' 
+		'ca'=>array( 'ca'=>'Català' ) ,	//	'en'=>'Catalan' 
+		'co'=>array( 'co'=>'Corsu' ) ,	//	'en'=>'Corsican' 
+		'cs'=>array( 'cs'=>'Čeština' ) ,	//	'en'=>'Czech' 
+		'cy'=>array( 'cy'=>'Cymraeg' ) ,	//	'en'=>'Welsh' 
+		'da'=>array( 'da'=>'Dansk' ) ,	//	'en'=>'Danish' 
+		'de'=>array( 'de'=>'Deutsch' ) ,	//	'en'=>'German' 
+		'dz'=>array( 'dz'=>'Dzongkha' ) ,	//	'en'=>'Bhutani'
+		'el'=>array( 'el'=>'Ελληνικά' ) ,	//	'en'=>'Greek' 
+		'en'=>array( 'en'=>'English' ),
+		'eo'=>array( 'eo'=>'Esperanto' ),	//	'en'=>'Esperanto' 
+		'es'=>array( 'es'=>'Español' ),	//	'en'=>'Spanish' 
+		'et'=>array( 'et'=>'Eesti Keel' ),	//	'en'=>'Estonian' 
+		'eu'=>array( 'eu'=>'Euskera' ),	//	'en'=>'Basque' 
+		'fa'=>array( 'fa'=>'Fārsī' ),	//	'en'=>'Persian' 
+		'fi'=>array( 'fi'=>'Suomi' ),	//	'en'=>'Finnish' 
+		'fj'=>array( 'fj'=>'vaka-Viti' ),	//	'en'=>'Fiji' 
+		'fo'=>array( 'fo'=>'Føroyska' ),	//	'en'=>'Faroese' 
+		'fr'=>array( 'fr'=>'Français' ),	//	'en'=>'French' 
+		'fy'=>array( 'fy'=>'Frysk' ),	//	'en'=>'Frisian' 
+		'ga'=>array( 'ga'=>'Gaeilge' ),	//	'en'=>'Irish' 
+		'gd'=>array( 'gd'=>'Gàidhlig' ),	//	'en'=>'Scots Gaelic'
+		'gl'=>array( 'gl'=>'Galego' ),	//	'en'=>'Galician' 
+		'gn'=>array( 'gn'=>"Avañe'ẽ" ),	//	'en'=>'Guarani' 
+		'gu'=>array( 'gu'=>'ગુજરાતી' ),	//	'en'=>'Gujarati' 
+		'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),	//	'en'=>'Hausa' 
+		'he'=>array( 'he'=>'עברית / עִבְרִית' ,'dir'=>'rtl' ),	//	'en'=>'Hebrew' 
+		'hi'=>array( 'hi'=>'हिन्दी' ),	//	'en'=>'Hindi' 
+		'hr'=>array( 'hr'=>'Hrvatski' ),	//	'en'=>'Croatian' 
+		'hu'=>array( 'hu'=>'Magyar' ),	//	'en'=>'Hungarian' 
+		'hy'=>array( 'hy'=>'Հայերէն' ),	//	'en'=>'Armenian' 
+		'ia'=>array( 'ia'=>'Interlingua' ),	//	'en'=>'Interlingua' 
+		'id'=>array( 'id'=>'Bahasa Indonesia' ),	//	'en'=>'Indonesian' 
+		'ie'=>array( 'ie'=>'Interlingue' ),	//	'en'=>'Interlingue' 
+		'ik'=>array( 'ik'=>'Iñupiak' ),	//	'en'=>'Inupiak' 
+		'is'=>array( 'is'=>'Íslenska' ),	//	'en'=>'Icelandic' 
+		'it'=>array( 'it'=>'Italiano' ),	//	'en'=>'Italian' 
+		'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),	//	'en'=>'Inuktitut' 
+		'ja'=>array( 'ja'=>'日本語' ),	//	'en'=>'Japanese' 
+		'jw'=>array( 'jw'=>'basa Jawa' ),	//	'en'=>'Javanese' 
+		'ka'=>array( 'ka'=>'ქართული' ),	//	'en'=>'Georgian' 
+		'kk'=>array( 'kk'=>'Қазақ' ),	//	'en'=>'Kazakh' 
+		'kl'=>array( 'kl'=>'Kalaallisut' ),	//	'en'=>'Greenlandic' 
+		'km'=>array( 'km'=>'ភាសាខ្មែរ' ),	//	'en'=>'Cambodian' 
+		'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),	//	'en'=>'Kannada' 
+		'ko'=>array( 'ko'=>'한국어' ),	//	'en'=>'Korean' 
+		'ks'=>array( 'ks'=>'काऽशुर' ),	//	'en'=>'Kashmiri' 
+		'ku'=>array( 'ku'=>'Kurdí' ),	//	'en'=>'Kurdish' 
+		'ky'=>array( 'ky'=>'Кыргызча' ),	//	'en'=>'Kirghiz' 
+		'la'=>array( 'la'=>'Latine' ),	//	'en'=>'Latin' 
+		'ln'=>array( 'ln'=>'lokótá ya lingála' ),	//	'en'=>'Lingala' 
+		'lo'=>array( 'lo'=>'ລາວ' ),	//	'en'=>'Laothian' 
+		'lt'=>array( 'lt'=>'Lietuvių Kalba' ),	//	'en'=>'Lithuanian' 
+		'lv'=>array( 'lv'=>'Latviešu' ),	//	'en'=>'Latvian'
+		'mg'=>array( 'mg'=>'Malagasy fiteny' ),	//	'en'=>'Malagasy' 
+		'mi'=>array( 'mi'=>'te Reo Māori' ),	//	'en'=>'Maori' 
+		'mk'=>array( 'mk'=>'Македонски' ),	//	'en'=>'Macedonian' 
+		'ml'=>array( 'ml'=>'മലയാളം' ),	//	'en'=>'Malayalam' 
+		'mn'=>array( 'mn'=>'Монгол' ),	//	'en'=>'Mongolian' 
+		'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),	//	'en'=>'Moldavian' 
+		'mr'=>array( 'mr'=>'मराठी' ),	//	'en'=>'Marathi' 
+		'ms'=>array( 'ms'=>'Bahasa Melayu' ),	//	'en'=>'Malay' 
+		'mt'=>array( 'mt'=>'Malti' ),	//	'en'=>'Maltese' 
+		'my'=>array( 'my'=>'ဗမာစကား' ),	//	'en'=>'Burmese' 
+		'na'=>array( 'na'=>'Ekakairũ Naoero' ),	//	'en'=>'Nauru' 
+		'ne'=>array( 'ne'=>'नेपाली' ),	//	'en'=>'Nepali' 
+		'nl'=>array( 'nl'=>'Nederlands' ),	//	'en'=>'Dutch' 
+		'no'=>array( 'no'=>'Norsk' ),	//	'en'=>'Norwegian' 
+		'oc'=>array( 'oc'=>'lenga occitana' ),	//	'en'=>'Occitan' 
+		'om'=>array( 'om'=>'Afaan Oromo' ),	//	'en'=>'(Afan) Oromo'
+		'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),	//	'en'=>'Oriya' 
+		'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),	//	'en'=>'Punjabi' 
+		'pl'=>array( 'pl'=>'Polski' ),	//	'en'=>'Polish' 
+		'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),	//	'en'=>'Pashto' 
+		'pt'=>array( 'pt'=>'Português' ),	//	'en'=>'Portuguese' 
+		'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),	//	'en'=>'Quechua' 
+		'rm'=>array( 'en'=>'Rhaeto-Romance' ),
+		'rn'=>array( 'rn'=>'Kirundi' ),	//	'en'=>'Kirundi' 
+		'ro'=>array( 'ro'=>'Română' ),	//	'en'=>'Romanian' 
+		'ru'=>array( 'ru'=>'Русский' ),	//	'en'=>'Russian' 
+		'rw'=>array( 'rw'=>'Kinyarwandi' ),	//	'en'=>'Kinyarwanda' 
+		'sa'=>array( 'sa'=>'संस्कृतम्' ),	//	'en'=>'Sanskrit' 
+		'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),	//	'en'=>'Sindhi' 
+		'sg'=>array( 'sg'=>'yângâ tî sängö' ),	//	'en'=>'Sangho' 
+		'sh'=>array( 'sh'=>'Српскохрватски' ),	//	'en'=>'Serbo-Croatian'
+		'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),	//	'en'=>'Sinhalese' 
+		'sk'=>array( 'sk'=>'Slovenčina' ),	//	'en'=>'Slovak' 
+		'sl'=>array( 'sl'=>'Slovenščina' ),	//	'en'=>'Slovenian' 
+		'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),	//	'en'=>'Samoan' 
+		'sn'=>array( 'sn'=>'chiShona' ),	//	'en'=>'Shona' 
+		'so'=>array( 'so'=>'af Soomaali' ),	//	'en'=>'Somali' 
+		'sq'=>array( 'sq'=>'Shqip' ),	//	'en'=>'Albanian' 
+		'sr'=>array( 'sr'=>'Srpski' ),	//	'en'=>'Serbian' 
+		'ss'=>array( 'ss'=>'siSwati' ),	//	'en'=>'Siswati' 
+		'st'=>array( 'st'=>'seSotho' ),	//	'en'=>'Sesotho' 
+		'su'=>array( 'su'=>'basa Sunda' ),	//	'en'=>'Sundanese' 
+		'sv'=>array( 'sv'=>'Svenska' ),	//	'en'=>'Swedish' 
+		'sw'=>array( 'sw'=>'Kiswahili' ),	//	'en'=>'Swahili' 
+		'ta'=>array( 'ta'=>'தமிழ்' ),	//	'en'=>'Tamil' 
+		'te'=>array( 'te'=>'తెలుగు' ),	//	'en'=>'Telugu' 
+		'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),	//	'en'=>'Tajik' 
+		'th'=>array( 'th'=>'ภาษาไทย' ),	//	'en'=>'Thai' 
+		'ti'=>array( 'ti'=>'ትግርኛ' ),	//	'en'=>'Tigrinya' 
+		'tk'=>array( 'tk'=>'Türkmençe' ),	//	'en'=>'Turkmen' 
+		'tl'=>array( 'tl'=>'Tagalog' ),	//	'en'=>'Tagalog' 
+		'tn'=>array( 'tn'=>'Setswana' ),	//	'en'=>'Setswana' 
+		'to'=>array( 'to'=>'Faka-Tonga' ),	//	'en'=>'Tonga' 
+		'tr'=>array( 'tr'=>'Türkçe' ),	//	'en'=>'Turkish' 
+		'ts'=>array( 'ts'=>'xiTsonga' ),	//	'en'=>'Tsonga' 
+		'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),	//	'en'=>'Tatar' 
+		'tw'=>array( 'tw'=>'Twi' ),	//	'en'=>'Twi' 
+		'ug'=>array( 'ug'=>'uyghur tili' ),	//	'en'=>'Uighur' 
+		'uk'=>array( 'uk'=>"Українська" ),	//	'en'=>'Ukrainian' 
+		'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),	//	'en'=>'Urdu' 
+		'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),	//	'en'=>'Uzbek' 
+		'vi'=>array( 'vi'=>'Tiếng Việt' ),	//	'en'=>'Vietnamese' 
+		'vo'=>array( 'vo'=>"vad'd'a tšeel" ),	//	'en'=>'Volapuk' 
+		'wo'=>array( 'wo'=>'Wollof' ),	//	'en'=>'Wolof' 
+		'xh'=>array( 'xh'=>'isiXhosa' ),	//	'en'=>'Xhosa' 
+		'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),	//	'en'=>'Yiddish' 
+		'yo'=>array( 'yo'=>'Yorùbá' ),	//	'en'=>'Yoruba' 
+		'za'=>array( 'za'=>'Sawcuengh' ),	//	'en'=>'Zhuang' 
+		'zh'=>array( 'zh'=>'中文(國語)' ),	//	'en'=>'Chinese' 
+		'zu'=>array( 'zu'=>'isiZulu' ),	//	'en'=>'Zulu' 
+		);
+		
+		switch ( $to_return )
+			{
+			default:
+			case 'lang':
+				return (array_key_exists( $input, $iso_693_1_langs ))
+					?	$iso_693_1_langs[$input][$input]
+					:	NULL;
+			break;
+
+			case 'dir':
+				return (array_key_exists( $input, $iso_693_1_langs ) and array_key_exists('dir', $iso_693_1_langs[$input]))
+					?	$iso_693_1_langs[$input]['dir']
+					:	NULL;
+			break;
+
+			case 'code':
+				foreach( $iso_693_1_langs as $code => $data )
+					{
+					if( in_array( $input , $data ) )
+						{
+						return $code;
+						}
+					}
+				return NULL;
+			break;
+			}
+		}
 	
 	// ----------------------------------------------------------------------------
-	public static function IsValidISO693Code($code)
+	function IsValidISO693Code($code)
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Check the given string is a valid 2-digit language code from the ISO-693-1 table.
@@ -1007,66 +1037,64 @@ class gbp_l10n_language_handler
 		$result = false;
 		if( 2 == strlen( $code ) )
 			{
-			$result = array_key_exists( $code , self::$iso_693_1_langs );
+			$result = ( gbp_l10n_language_handler::iso_693_1_langs( $code ) );
 			}
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	public static function FindCodeForLanguage( $name )
+	function FindCodeForLanguage( $name )
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns the ISO-693-1 code for the given native language.
 		*/
 		{
-		$out = gTxt( 'none' );
+		$out = '';
+			
 		if( $name and !empty( $name ) )
 			{
-			foreach( self::$iso_693_1_langs as $code => $data )
-				{
-				if( in_array( $name , $data ) )
-					{
-					$out = $code;
-					break;
-					}
-				}
+			$out = gbp_l10n_language_handler::iso_693_1_langs( $name, 'code' );
 			}
+
+		if (empty($out))
+			$out = gTxt( 'none' );
+
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetLangDirMarkup( $lang )
+	function GetLangDirMarkup( $lang )
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		{
 		$dir = '';
-		if( !empty($lang) and isset(self::$iso_693_1_langs[$lang]['dir']) and ('rtl' == self::$iso_693_1_langs[$lang]['dir']) )
+		if( !empty($lang) and ('rtl' == gbp_l10n_language_handler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = ' dir="rtl"';
 		return $dir;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetLangDir( $lang )
+	function GetLangDir( $lang )
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		{
 		$dir = 'ltr';
-		if( !empty($lang) and isset(self::$iso_693_1_langs[$lang]['dir']) and ('rtl' == self::$iso_693_1_langs[$lang]['dir']) )
+		if( !empty($lang) and ('rtl' == gbp_l10n_language_handler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = 'rtl';
 		return $dir;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetNativeNameOfLang( $code )
+	function GetNativeNameOfLang( $lang )
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns the native name of the given language code.
 		*/
 		{
-		return (self::$iso_693_1_langs[$code][$code]) ? self::$iso_693_1_langs[$code][$code] : self::$iso_693_1_langs[$code]['en'] ;
+		return (gbp_l10n_language_handler::iso_693_1_langs( $lang )) ? gbp_l10n_language_handler::iso_693_1_langs( $lang ) : gbp_l10n_language_handler::iso_693_1_langs( 'en' ) ;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetSiteLangs()
+	function GetSiteLangs()
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns an array of the ISO-693-1 languages the site supports.
@@ -1081,7 +1109,7 @@ class gbp_l10n_language_handler
 		return $lang_codes;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetSiteDefaultLang()
+	function GetSiteDefaultLang()
 		/*
 		LANGUAGE SUPPORT ROUTINE
 		Returns a string containing the ISO-693-1 language to be used as the site's default.
@@ -1103,14 +1131,14 @@ class gbp_l10n_snippet_handler
 	{
 	# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
 	# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
-	static $snippet_pattern = "/##([\w|\.|\-]+)##/";
+	var $snippet_pattern = "/##([\w|\.|\-]+)##/";
 //	static $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
 	# The following pattern is used to match any gbp_snippet tags in pages and forms.
-	static $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+	var $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
 	
 	// ----------------------------------------------------------------------------
-	public static function SubstituteSnippets( &$thing )
+	function SubstituteSnippets( &$thing )
 		/*
 		PUBLIC LOCALIZATION SUPPORT ROUTINE for use by localization plugin.
 		Replaces all snippets within the contained block with their text from the global textarray.
@@ -1120,7 +1148,7 @@ class gbp_l10n_snippet_handler
 		the localization routine.
 		*/
 		{
-		$out = preg_replace_callback( 	self::$snippet_pattern , 
+		$out = preg_replace_callback( 	$this->snippet_pattern , 
 										create_function(
 							           '$match',
 								       'global $gbp_language;
@@ -1139,7 +1167,7 @@ class gbp_l10n_snippet_handler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	public static function FindSnippetsInBlock( &$thing , $merge = false )
+	function FindSnippetsInBlock( &$thing , $merge = false )
 		/*
 		ADMIN SUPPORT ROUTINE
 		Scans the given block ($thing) for snippets and returns their names as the values of an array.
@@ -1151,9 +1179,9 @@ class gbp_l10n_snippet_handler
 		$tags = array();
 
 		# Match all directly included snippets...
-		preg_match_all( self::$snippet_pattern , $thing , $out );
+		preg_match_all( $this->snippet_pattern , $thing , $out );
 		# Match all snippets included as txp tags...
-		preg_match_all( self::$snippet_tag_pattern , $thing , $tags );
+		preg_match_all( $this->snippet_tag_pattern , $thing , $tags );
 
 		#	cleanup and trim the output arrays a little...
 		array_shift( $out );
@@ -1199,7 +1227,7 @@ class gbp_l10n_snippet_handler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	public static function StoreSnippets( &$snippets )
+	function StoreSnippets( &$snippets )
 		/*
 		ADMIN SUPPORT ROUTINE
 		Takes a full array of snippets (includes 1+ renditions) and stores them in the txp_lang table.
@@ -1243,7 +1271,7 @@ class gbp_l10n_snippet_handler
 			}	
 		}
 	// ----------------------------------------------------------------------------
-	public static function RenderSnippetList( &$snippets , $listtype )
+	function RenderSnippetList( &$snippets , $listtype )
 		/*
 		ADMIN SUPPORT ROUTINE
 		Takes a full array of snippets (includes 1+ translations) and renders them as a list.
@@ -1287,7 +1315,7 @@ class gbp_l10n_string_handler implements localized string storage support.
 class gbp_l10n_string_handler
 	{
 	// ----------------------------------------------------------------------------
-	public static function StripLeadingSection( $string , $delim='.' )
+	function StripLeadingSection( $string , $delim='.' )
 		/*
 		Simply removes anything that prefixes a string up to the delimiting character.
 		So 'hello.world' -> 'world'
@@ -1303,7 +1331,7 @@ class gbp_l10n_string_handler
 		return $i;
 		}	
 	// ----------------------------------------------------------------------------
-	public static function InsertStringsForLang( $strings , $lang , $event='' )
+	function InsertStringsForLang( $strings , $lang , $event='' )
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
@@ -1334,7 +1362,7 @@ class gbp_l10n_string_handler
 //		mysql_query("FLUSH TABLE `".PFX."txp_lang`");
 		}
 	// ----------------------------------------------------------------------------
-	public static function StoreTranslationOfString( $name , $event , $new_lang , $translation , $id='' )
+	function StoreTranslationOfString( $name , $event , $new_lang , $translation , $id='' )
 		/*
 		ADMIN SUPPORT ROUTINE
 		For use by the localization plugin. 
@@ -1375,7 +1403,7 @@ class gbp_l10n_string_handler
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	public static function StoreTranslationOfStringByID( $id , $new_lang , $translation )
+	function StoreTranslationOfStringByID( $id , $new_lang , $translation )
 		/*
 		ADMIN SUPPORT ROUTINE
 		For use by the localization plugin. Clones the entry with the given id and stores the 
@@ -1405,7 +1433,7 @@ class gbp_l10n_string_handler
 		@safe_insert( 'txp_lang' , $set );
 		}
 	// ----------------------------------------------------------------------------
-	public static function RemovePluginStrings( $plugin , $remove_lang , $debug = '' )
+	function RemovePluginStrings( $plugin , $remove_lang , $debug = '' )
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Either: Removes all the occurances of plugin strings in the given langs...
@@ -1428,7 +1456,7 @@ class gbp_l10n_string_handler
 			}
 		}
 	// ----------------------------------------------------------------------------
-	public static function RemoveStrings( $strings , $event = '' )
+	function RemoveStrings( $strings , $event = '' )
 		/*
 		PLUGIN SUPPORT ROUTINE
 		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
@@ -1461,7 +1489,7 @@ class gbp_l10n_string_handler
 			}		
 		}
 	// ----------------------------------------------------------------------------
-	public static function LoadStringsIntoTextArray( $lang )
+	function LoadStringsIntoTextArray( $lang )
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Loads all strings of the given language into the global $textarray so that any plugin can call 
@@ -1475,7 +1503,7 @@ class gbp_l10n_string_handler
 		return count( $extras );
 		}
 	// ----------------------------------------------------------------------------
-	public static function LoadStrings( $lang )
+	function LoadStrings( $lang )
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Loads all strings of the given language into an array and returns them.
@@ -1501,7 +1529,7 @@ class gbp_l10n_string_handler
 		return $extras;
 		}
 	// ----------------------------------------------------------------------------
-	public static function DiscoverRegisteredPlugins()
+	function DiscoverRegisteredPlugins()
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Gets an array of the names of plugins that have registered strings in the correct format. 
@@ -1520,7 +1548,7 @@ class gbp_l10n_string_handler
 			$set = array();
 			while ( $a = nextRow($rs) )
 				{
-				$plugin = self::StripLeadingSection($a['event']);			
+				$plugin = gbp_l10n_string_handler::StripLeadingSection($a['event']);			
 				$set[$plugin] = $plugin;
 				}
 			foreach( $set as $plugin )
@@ -1532,7 +1560,7 @@ class gbp_l10n_string_handler
 		return $result;		
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetPluginStrings( $plugin , &$stats )
+	function GetPluginStrings( $plugin , &$stats )
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Given a plugin name, will extract a list of strings the plugin has registered, collapsing all 
@@ -1592,7 +1620,7 @@ class gbp_l10n_string_handler
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetFullLangsString( )
+	function GetFullLangsString( )
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Returns a string of the site languages. Used to work out if a given string has a complete 
@@ -1605,7 +1633,7 @@ class gbp_l10n_string_handler
 		return $langs;
 		}
 	// ----------------------------------------------------------------------------
-	public static function GetStringSet( $string_name )
+	function GetStringSet( $string_name )
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Given a string name, will extract an array of the matching translations.
@@ -1632,7 +1660,7 @@ class gbp_l10n_string_handler
 		return $result;
 		}
 	// ----------------------------------------------------------------------------
-	public static function gTxt( $alias, $args=null )
+	function gTxt( $alias, $args=null )
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Given a string name, will pull the string out of the $textarray and perform any argument replacements needed.
