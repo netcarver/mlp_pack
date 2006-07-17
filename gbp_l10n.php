@@ -78,9 +78,9 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
 	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
 	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
-	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table, most of the strings, the wraptags in pages and forms and the snippet definitions they contain.',
+	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
 	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
-	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table, all of the strings needed, the localization wraptags around pages and forms and scan them for static text to convert to snippet definitions.',
+	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table and all of the strings definitions needed (in English). You will be able to edit and translate the strings once this plugin is setup.',
 	);
 	var $strings = array(	# These strings will be inserted when the user confirms install and removed when they request cleanup.
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
