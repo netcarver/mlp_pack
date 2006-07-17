@@ -191,11 +191,12 @@ class LocalizationView extends GBPPlugin
 		header('Connection: close');
 		}
 	
-	/*
-	One-shot installation code goes in here...
-	*/
-	protected function setup() 
+	function setup() 
 		{
+		/*
+		One-shot installation code goes in here...
+		*/
+
 		# Adds this class' own strings to the string store...
 		StringHandler::insert_strings( $this->strings , 'en' , 'admin' );
 
@@ -224,7 +225,7 @@ class LocalizationView extends GBPPlugin
 		$this->redirect( array( 'event'=>'l10n' , 'tab'=>'preference' ) );
 		}	# end setup()
 	
-	protected function cleanup() 
+	function cleanup() 
 		{
 		# Cleanup code follows...
 		$sql = 'drop table `'.PFX.'gbp_l10n`';
