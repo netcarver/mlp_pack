@@ -193,7 +193,7 @@ class LocalizationView extends GBPPlugin
 		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
 		safe_alter( 'txp_lang' , $sql );
 		
-		$this->redirect( array( 'event'=>'l10n' , 'tab'=>'preference' ) );
+		$this->redirect( array( 'event'=>'l10n' , gbp_tab=>'preference' ) );
 		}	# end setup()
 	
 	function cleanup() 
