@@ -730,7 +730,7 @@ class LocalisationTabView extends GBPAdminTabView
 			}
 		}
 
-}
+	}
 
 if (@txpinterface == 'admin') 
 	{
@@ -956,8 +956,8 @@ else
 		}
 
 		return null;
+		}
 	}
-}
 
 
 /* ----------------------------------------------------------------------------
@@ -1524,7 +1524,8 @@ class StringHandler
 			$where	= " `id`='$id'";
 			$result = @safe_update( 'txp_lang' , $set , $where );
 			}
-		else{
+		else
+			{
 			#	Insert new row...
 			$result = @safe_insert( 'txp_lang' , $set );
 			}
