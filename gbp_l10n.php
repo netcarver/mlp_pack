@@ -162,35 +162,6 @@ class LocalizationView extends GBPPlugin
 		return $result;
 		}
 	
-	function redirect( $args ) 
-		{
-		/*
-		FTAO: Graeme, I would propose this be moved to the admin library as a standalone function
-		or as a member of GBPPlugin.
-		
-		Expands the args into a get style url and redirects to that location.
-		*/
-		$location = '';
-		
-		header('HTTP/1.1 303 See Other');
-		header('Status: 303');
-		
-		if( $args )
-			{
-			if( is_array( $args ) and ( count($args) > 0 ) )
-				{
-				$location = '?';
-				foreach( $args as $k=>$v )
-					$location .=  $k . '=' . $v . '&';
-				$location = rtrim( $location , '& ' ); 
-				}
-			elseif( is_string( $args ) )
-				$location = '?'.$args;
-			}
-		header('Location: '.serverSet('REQUEST_URI').$location );
-		header('Connection: close');
-		}
-	
 	function setup() 
 		{
 		/*
