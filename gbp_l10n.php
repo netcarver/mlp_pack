@@ -1271,11 +1271,25 @@ class SnippetHandler
 	{
 	# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
 	# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
-	var $snippet_pattern = "/##([\w|\.|\-]+)##/";
-//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
+	function  get_pattern( $name )
+		{
+		static $snippet_pattern = "/##([\w|\.|\-]+)##/";
+		//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
-	# The following pattern is used to match any gbp_snippet tags in pages and forms.
-	var $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+		# The following pattern is used to match any gbp_snippet tags in pages and forms.
+		static $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+		
+		switch( $name )
+			{
+			case 'snippet' :	
+				return $snippet_pattern;
+			break;
+			default :
+			case 'snippet_tag' :
+				return $snippet_tag_pattern;
+			break;
+			}
+		}
 	
 	// ----------------------------------------------------------------------------
 	function substitute_snippets( &$thing )
@@ -1288,7 +1302,7 @@ class SnippetHandler
 		*A Snippet is a specially formatted marker in the page/form template that gets substituted by
 		the localization routine.
 		*/
-		$out = preg_replace_callback( 	$this->snippet_pattern , 
+		$out = preg_replace_callback( 	SnippetHandler::get_pattern('snippet') , 
 										create_function(
 							           '$match',
 								       'global $gbp_language;
@@ -1319,9 +1333,9 @@ class SnippetHandler
 		$tags = array();
 
 		# Match all directly included snippets...
-		preg_match_all( $this->snippet_pattern , $thing , $out );
+		preg_match_all( SnippetHandler::get_pattern('snippet') , $thing , $out );
 		# Match all snippets included as txp tags...
-		preg_match_all( $this->snippet_tag_pattern , $thing , $tags );
+		preg_match_all( SnippetHandler::get_pattern('snippet_tag') , $thing , $tags );
 
 		#	cleanup and trim the output arrays a little...
 		array_shift( $out );
