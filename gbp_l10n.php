@@ -8,7 +8,7 @@
 
 // Plugin name is optional.  If unset, it will be extracted from the current
 // file name. Uncomment and edit this line to override:
-# $plugin['name'] = 'abc_plugin';
+# $plugin['name'] = 'gbp_l10n';
 
 $plugin['version'] = '0.5';
 $plugin['author'] = 'Graeme Porteous';
@@ -74,13 +74,15 @@ class LocalizationView extends GBPPlugin
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		);
 
-	var $perm_strings = array( # These strings will always be inserted and never removed from the txp_lang table...
+	var $perm_strings = array( # These strings will be inserted (by default) into the txp_lang table. They are used in the wizard tab
 	'gbp_l10n_cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
-	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
-	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
 	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
-	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
+	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
+	'gbp_l10n_localisation'			=> 'localization',
+	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
 	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table and all of the strings definitions needed (in English). You will be able to edit and translate the strings once this plugin is setup.',
+	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
+	'gbp_l10n_wizard'				=> 'Wizards',
 	);
 	var $strings = array(	# These strings will be inserted when the user confirms install and removed when they request cleanup.
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
@@ -98,23 +100,24 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
 	'gbp_l10n_translations_for'		=> 'Translations for ',
 	'gbp_l10n_unlocalised'			=> 'Unlocalised',
+	'gbp_l10n_view_site'			=> 'View localized site', 
 	);
 
 	// Constructor
-	function LocalizationView( $title , $event , $parent_tab = 'extensions' ) 
+	function LocalizationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
 		global $textarray;
-		
-		GBPPlugin::GBPPlugin( $title , $event , $parent_tab );
-		
+
 		# Adds the strings this class needs to render the plugin wizard. 
 		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
-//		$textarray = array_merge( $textarray , $this->perm_strings );
 
 		/* SED: This is called admin side, pull the language from the TxP language 
 		variable and use that to load the strings from the store to the $textarray. */
 		$lang = explode( '-' , LANG );
 		StringHandler::load_strings_into_textarray( $lang[0] );
+
+		# Be sure to call the parent constructor *after* the strings it needs are added and loaded!
+		GBPPlugin::GBPPlugin( gTxt($title_alias) , $event , $parent_tab );
 		}
 
 	function preload() 
@@ -140,19 +143,19 @@ class LocalizationView extends GBPPlugin
 		if( $this->installed() )
 			{
 			if ($this->preferences['articles']['value'])
-				new LocalisationTabView('articles', 'article', $this);
+				new LocalisationTabView( gTxt('articles'), 'article', $this);
 			if ($this->preferences['categories']['value'])
-				new LocalisationTabView('categories', 'category', $this);
+				new LocalisationTabView( gTxt('categories'), 'category', $this);
 			// if ($this->preferences['links']['value'])
 			// 	new LocalisationTabView('links', 'link', $this);
 			if ($this->preferences['sections']['value'])
-				new LocalisationTabView('sections', 'section', $this);
+				new LocalisationTabView( gTxt('sections'), 'section', $this);
 			if ($this->preferences['plugins']['value'])
-				new LocalisationTabView('plugins', 'plugin', $this);
-			new GBPPreferenceTabView('preferences', 'preference', $this);
+				new LocalisationTabView( gTxt('plugins'), 'plugin', $this);
+			new GBPPreferenceTabView( gTxt('prefs'), 'preference', $this);
 			}
-			
-		new LocalisationTabView('wizards', 'wizard', $this);
+
+		new LocalisationTabView( gTxt('gbp_l10n_wizard'), 'wizard', $this);
 
 		}	# end preload()
 		
@@ -229,9 +232,9 @@ class LocalizationView extends GBPPlugin
 
 			#	Render the top of page div.
 			$out[] = form(
-				fLabelCell('Language: ').
+				fLabelCell( gTxt('language').': ' ).
 				selectInput(gbp_language, $languages['value'], gps(gbp_language), 0, 1).
-				'<br /><a href="'.hu.gps(gbp_language).'/">view localised site</a>'.
+				'<br /><a href="'.hu.gps(gbp_language).'/">'.gTxt('gbp_l10n_view_site').'</a>'.
 				$this->form_inputs()
 				);
 			}
@@ -736,7 +739,7 @@ if (@txpinterface == 'admin')
 	{
 
 	// We are admin-side.
-	new LocalizationView('localisation', 'l10n', 'content');
+	new LocalizationView( 'gbp_l10n_localisation' , 'l10n', 'content');
 
 	}
 else
@@ -1240,10 +1243,10 @@ strings therein.
 ---------------------------------------------------------------------------- */
 class SnippetHandler
 	{
-	# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
-	# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
 	function  get_pattern( $name )
 		{
+		# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
+		# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
 		static $snippet_pattern = "/##([\w|\.|\-]+)##/";
 		//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
@@ -1261,7 +1264,6 @@ class SnippetHandler
 			break;
 			}
 		}
-	
 	// ----------------------------------------------------------------------------
 	function substitute_snippets( &$thing )
 		{
