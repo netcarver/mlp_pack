@@ -660,8 +660,8 @@ class LocalisationTabView extends GBPAdminTabView
 			//
 			//	If the plugin is not present start with a box offering to delete the lot!
 			//
-			$installed_plugins = safe_column( 'name', 'txp_plugin', '1=1 order by name' );
-			if( !in_array( $plugin, $installed_plugins ) )
+			global $plugins_ver;
+			if( !array_key_exists( $plugin, $plugins_ver ) )
 				{
 				$out[] = '<h3>'.gTxt('gbp_l10n_no_plugin_heading').'</h3>'.n;
 				$del[] = graf( gTxt('gbp_l10n_remove_plugin') );
@@ -694,13 +694,13 @@ class LocalisationTabView extends GBPAdminTabView
 			{
 			//	Get an array of installed plugins. Not all of them will have registered for 
 			// string support...
-			$installed_plugins = safe_column( 'name', 'txp_plugin', '1=1 order by name' );
+			global $plugins_ver;
 
 			foreach( $plugins as $plugin )
 				{
-				$marker = '';
-				if( !in_array( $plugin, $installed_plugins )  )
-					$marker = ' <strong>*</strong>';
+				//	Display marker if the plugin isn't installed anymore.
+				$marker = ( !array_key_exists( $plugin, $plugins_ver ) )
+					? ' <strong>*</strong>' : '';
 				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
 				}
 			}
