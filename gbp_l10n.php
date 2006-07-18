@@ -1,15 +1,6 @@
 ﻿<?php
 
-// This is a PLUGIN TEMPLATE.
-
-// Copy this file to a new name like abc_myplugin.php.  Edit the code, then
-// run this file at the command line to produce a plugin for distribution:
-// $ php abc_myplugin.php > abc_myplugin-0.1.txt
-
-// Plugin name is optional.  If unset, it will be extracted from the current
-// file name. Uncomment and edit this line to override:
-# $plugin['name'] = 'gbp_l10n';
-
+$plugin['name'] = 'gbp_l10n';
 $plugin['version'] = '0.5';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_l10n/';
@@ -20,6 +11,7 @@ $plugin['type'] = '1';
 
 if (0) {
 ?>
+<!--
 # --- BEGIN PLUGIN HELP ---
 h1. Instructions
 
@@ -29,6 +21,7 @@ To see your localised content you need to surround *everything* in all of your p
 
 You can also use @<txp:gbp_localize section="foo" />@ or @<txp:gbp_localize category="bar" />@ to output localised sections and categories
 # --- END PLUGIN HELP ---
+-->
 <?php
 }
 # --- BEGIN PLUGIN CODE ---
@@ -243,6 +236,21 @@ class LocalizationView extends GBPPlugin
 		echo join('', $out);
 		}	# end main()
 	
+	function end()
+		{
+		$step = gps('step');
+		if( $step )	
+			{
+			switch( $step ) 
+				{
+				case 'prefs_save':
+					#	Force a redirect to ourself to refresh the view with any tab changes as needed.
+					return $this->redirect( '' );
+				break;
+				}
+			}
+		}
+		
 	}
 
 class LocalisationTabView extends GBPAdminTabView 
