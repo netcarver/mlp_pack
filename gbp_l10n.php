@@ -20,6 +20,20 @@ Under the content tab, there is a new localisation subtab. Here you can find a l
 To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:gbp_localize>@ ... @</txp:gbp_localize>@
 
 You can also use @<txp:gbp_localize section="foo" />@ or @<txp:gbp_localize category="bar" />@ to output localised sections and categories
+
+h2. Snippets
+
+To add snippets to pages or forms...
+
+# Make sure the page/form is wrapped with the @<txp:gbp_localize>@ ... @</txp:gbp_localize>@ statements.
+# Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.
+# On the *content > localize* tab, look for your page or form on the pages or form subtab.
+# Click on the page/form name to bring up a list of all snippets therein.
+# You should see your snippet "my_first_snippet" listed with no translations.
+# Click on the name of your snippet to bring up the edit boxes. 
+# Supply appropriate translations and hit the save button.
+# Now looking at your site should give you the correct translation according to the url you type.
+
 # --- END PLUGIN HELP ---
 -->
 <?php
@@ -64,6 +78,10 @@ class LocalizationView extends GBPPlugin
 		'section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
 		'section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
+		'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
+
+		'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
+
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		);
 
@@ -88,6 +106,7 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 	'gbp_l10n_registered_plugins'	=> 'Registered Plugins.' ,
 	'gbp_l10n_remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
+	'gbp_l10n_snippets'				=> ' snippets.',
 	'gbp_l10n_strings'				=> ' strings.',
 	'gbp_l10n_summary'				=> 'Language Stats.',
 	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
@@ -126,10 +145,13 @@ class LocalizationView extends GBPPlugin
 			{
 			switch( $step ) 
 				{
-				case 'cleanup':		$this->cleanup();
-									break;
-				case 'setup':		$this->setup();
-									break;
+				case 'cleanup':		
+					$this->cleanup();
+				break;
+
+				case 'setup':		
+					$this->setup();
+				break;
 				}
 			}
 
@@ -143,8 +165,12 @@ class LocalizationView extends GBPPlugin
 			// 	new LocalisationTabView('links', 'link', $this);
 			if ($this->preferences['sections']['value'])
 				new LocalisationTabView( gTxt('sections'), 'section', $this);
+			if ($this->preferences['forms']['value'])
+				new LocalizationStringView( gTxt('forms') , 'form' , $this );
+			if ($this->preferences['pages']['value'])
+				new LocalizationStringView( gTxt('pages') , 'page' , $this );
 			if ($this->preferences['plugins']['value'])
-				new LocalisationTabView( gTxt('plugins'), 'plugin', $this);
+				new LocalizationStringView( gTxt('plugins'), 'plugin', $this );
 			new GBPPreferenceTabView( gTxt('prefs'), 'preference', $this);
 			}
 
@@ -199,10 +225,10 @@ class LocalizationView extends GBPPlugin
 		@safe_query( $sql );
 		
 		# Delete the _translations_ of the perm_strings, the defaults will, however, be reinserted by the constructor...
-		StringHandler::remove_strings( $this->perm_strings , 'admin' );
+		StringHandler::remove_strings_by_name( $this->perm_strings , 'admin' );
 		
 		# These get totally removed and don't get re-inserted by the constructor...
-		StringHandler::remove_strings( $this->strings , 'admin' );
+		StringHandler::remove_strings_by_name( $this->strings , 'admin' );
 	
 		# Now the cleanup is complete, redirect to the plugin page for the delete.
 		# Not strictly necessary, but a convenience for the user.
@@ -250,7 +276,380 @@ class LocalizationView extends GBPPlugin
 				}
 			}
 		}
+	
+	}
+
+class LocalizationStringView extends GBPAdminTabView 
+	{
+	/*
+	Implements a three-pane view for the categorisation, selection and editing of string based
+	data from the txp_lang table.
+	*/
+
+	function preload()
+		{
+		$step = gps('step');
+		if( $step )
+			{
+			switch( $step )
+				{
+				# Called to save the stringset the user has been editing.
+				case 'gbp_save_strings' :
+				$this->save_strings();
+				break;
+
+				# Called if the user chooses to delete the string set for a removed plugin.
+				case 'gbp_remove_stringset' :	
+				$this->remove_strings();
+				break;
+
+				# Called if the user chooses to remove a specific languages' strings.
+				# eg if they entered some french translations but later drop french from the site.
+				case 'gbp_remove_languageset' :	
+				$this->remove_strings();
+				break;
+				}
+			}
+		}
+	
+	function main()
+		{
+		switch ($this->event)
+			{
+			case 'page':
+			$this->render_owner_list('page');
+			if ($owner = gps('owner'))
+				{
+				$id = gps(gbp_id);
+				$this->render_string_list( 'txp_page' , 'user_html' , $owner , $id );
+				if( $id )
+					$this->render_string_edit( 'page', $owner , $id );
+				}
+			break;
+
+			case 'form':
+			$this->render_owner_list('form');
+			if ($owner = gps('owner'))
+				{
+				$id = gps(gbp_id);
+				$this->render_string_list( 'txp_form' , 'Form' , $owner , $id );
+				if( $id )
+					$this->render_string_edit( 'form' , $owner , $id );
+				}
+			break;
+
+			case 'plugin':
+			$this->render_owner_list('plugin');
+			if ($owner = gps(gbp_plugin))
+				{
+				$id = gps(gbp_id);
+				$this->render_plugin_string_list( $owner , $id );
+				if( $id )
+					$this->render_string_edit( 'plugin', $owner , $id );
+				}
+			break;
+			}
+		}
+
+	function _generate_list( $table , $fname )	# left pane subroutine
+		{
+		$rs = safe_rows_start( "$fname as name", $table, '1=1' ) ;
+		if( $rs && mysql_num_rows($rs) > 0 )
+			{
+			while ( $a = nextRow($rs) )
+				$out[] = '<li><a href="'.$this->parent->url().'&#38;owner='.$a['name'].'">'.$a['name'].'</a></li>';
+			}
+		else
+			{
+			$out[] = '<li>'.gTxt('none').'</li>'.n;
+			}
+		return join('', $out);
+		}
+
+	function _generate_plugin_list()	# left pane subroutine
+		{
+		$plugins = StringHandler::discover_registered_plugins();
+		if( count( $plugins ) )
+			{
+			//	Get an array of installed plugins. Not all of them will have registered for 
+			// string support...
+			global $plugins_ver;
+			
+			foreach( $plugins as $plugin )
+				{
+				//	Display marker if the plugin isn't installed anymore.
+				$marker = ( !array_key_exists( $plugin, $plugins_ver ) )
+					? ' <strong>*</strong>' : '';
+				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
+				}
+			}
+		else
+			{
+			$out[] = '<li>'.gTxt('none').'</li>'.n;
+			}
+		return join('', $out);
+		}
+
+	function render_owner_list( $type )	#	Render the left pane
+		{
+		/*
+		Renders a list of resource owners for the left-hand pane.
+		*/
+		$out[] = '<div style="float: left; width: 20%;" class="gbp_i18n_owner_list">';
+
+		switch( $type )
+			{
+			case 'plugin':
+			$out[] = '<h3>'.gTxt('gbp_l10n_registered_plugins').'</h3>'.n.'<ol>'.n;
+			$out[] = $this->_generate_plugin_list();
+			break;
+
+			case 'page':
+			$out[] = '<h3>'.gTxt('pages').'</h3>'.n.'<ol>'.n;
+			$out[] = $this->_generate_list( 'txp_page' , 'name' , 'user_html' );
+			break;
+
+			default:
+			case 'form':
+			$out[] = '<h3>'.gTxt('forms').'</h3>'.n.'<ol>'.n;
+			$out[] = $this->_generate_list( 'txp_form' , 'name' , 'Form' );
+			break;
+			}
 		
+		$out[] = '</ol>';
+		$out[] = '</div>';
+		echo join('', $out);
+		}
+
+	function _render_string_list( $strings , $owner_label , $owner_name )	# Center pane string render subroutine
+		{
+		$strings_exist 	= ( count( $strings ) > 0 );
+		if( !$strings_exist )
+			return '';
+
+		$site_langs 	= LanguageHandler::get_site_langs();
+
+		$out[] = '<ol>';
+		if( $strings_exist )
+			{
+			$complete_langs = StringHandler::get_full_langs_string();
+			foreach( $strings as $string=>$langs )
+				{
+				$complete = ($complete_langs === $langs);
+				$guts = $string . ' ['.( ($langs) ? $langs : gTxt('none') ).']';
+				if( !$complete )
+					$guts = '<strong>'. $guts . '</strong>';
+				$out[]= '<li><a href="'.$this->parent->url().'&#38;'.$owner_label.'='.$owner_name.'&#38;'.gbp_id.'='.$string.'">' . 
+						$guts .
+						'</a></li>';
+				}
+			}
+		else
+			{
+			$out[] = '<li>'.gTxt('none').'</li>'.n;
+			}
+
+		$out[] = '</ol>';
+		return join('', $out);
+		}
+
+	function _render_string_stats( $string_name , &$stats )	# Right pane stats render subroutine
+		{
+		$site_langs 	= LanguageHandler::get_site_langs();
+
+		//
+		//	Render stats summary for the strings...
+		//
+		$out[] = '<h3>'.gTxt('gbp_l10n_summary').'</h3>'.n;
+		$out[] = '<ul>';
+		$extras_found = false;
+		foreach( $stats as $iso_code=>$count )
+			{
+			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
+			$guts = $count . ' ' . $name;
+			$remove = '';
+			if( !in_array( $iso_code , $site_langs ) )
+				{
+				$extras_found = true;
+				$remove[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
+				$remove[] = sInput( 'gbp_remove_languageset');
+				$remove[] = $this->parent->form_inputs();
+				$remove[] = hInput( 'lang_code' , $iso_code );
+				$remove[] = hInput(gbp_plugin, $plugin);
+				$guts = form( $guts . ' * ' . join( '' , $remove ) , 
+								'' ,
+								"verify('" . gbp_gTxt('gbp_l10n_lang_remove_warning' , array('$var1'=>$name ) ) . 
+								 gTxt('are_you_sure') . "')");
+				}
+			$out[]= '<li>'.$guts.'</li>';
+			}
+		$out[]= '<li style="border-top: 1px solid gray; margin-right: 1em;">'.array_sum($stats).' '.gTxt('gbp_l10n_strings').'</li>';
+		$out[] = '</ul>';
+		if( $extras_found )
+			$out[] = gTxt('gbp_l10n_explain_extra_lang');
+
+		return join( '' , $out );
+		}
+		
+	function render_plugin_string_list( $plugin , $string_name )	# Center pane plugin wrapper
+		{
+		/*
+		Show all the strings and localizations for the given plugin.
+		*/
+		$stats 			= array();
+		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats );
+		$strings_exist 	= ( count( $strings ) > 0 );
+
+		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
+		$out[] = '<h3>'.$plugin.' '.gTxt('gbp_l10n_strings').'</h3>'.n;
+		
+		$out[] = $this->_render_string_list( $strings , gbp_plugin , $plugin );
+		$out[] = '</div>';
+		
+		//
+		//	Render default view details in right hand pane...
+		//
+ 		if( empty( $string_name ) )
+			{
+			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+			$out[] = $this->_render_string_stats( $string_name , &$stats );
+			
+			//
+			//	If the plugin is not present start with a box offering to delete the lot!
+			//
+			global $plugins_ver;
+			if( !array_key_exists( $plugin, $plugins_ver ) )
+				{
+				$out[] = '<h3>'.gTxt('gbp_l10n_no_plugin_heading').'</h3>'.n;
+				$del[] = graf( gTxt('gbp_l10n_remove_plugin') );
+				$del[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</div>';
+				$del[] = sInput('gbp_remove_stringset');
+				$del[] = $this->parent->form_inputs();
+				$del[] = hInput(gbp_plugin, $plugin);
+
+				$out[] = form(	join('', $del) , 
+								'border: 1px solid grey; padding: 0.5em; margin: 1em;' ,
+								"verify('".gTxt('gbp_l10n_delete_plugin').' '.gTxt('are_you_sure')."')");
+				}
+
+			$out[] = '</div>';
+			}
+
+		echo join('', $out);
+		}
+
+	function render_string_list( $table , $fdata , $owner , $id='' )	# Center pane snippet wrapper
+		{
+		/*
+		Renders a list of strings belonging to the chosen owner in the center pane.
+		*/
+		$stats 	= array();
+		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
+		$snippets = SnippetHandler::find_snippets_in_block( &$data );
+		$strings  = SnippetHandler::get_snippet_strings( $snippets , &$stats );
+
+		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
+		$out[] = '<h3>'.$owner.' '.gTxt('gbp_l10n_snippets').'</h3>'.n;	
+
+		#	Render the list... 
+		$out[] = $this->_render_string_list( $strings , 'owner', $owner );
+		$out[] = '</div>';
+
+		//
+		//	Render default view details in right hand pane...
+		//
+ 		if( empty( $id ) )
+			{
+			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+			$out[] = $this->_render_string_stats( $id , &$stats );
+			$out[] = '</div>';
+			}
+
+		echo join('', $out);
+		}
+
+	function render_string_edit( $type , $owner , $id ) # Right pane string edit routine
+		{
+		/*
+		Render the edit controls for all localizations of the chosen string.
+		*/
+		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+		$out[] = '<h3>'.gTxt('gbp_l10n_translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
+		
+		$string_event = 'snippet';
+		$x = StringHandler::get_string_set( $id );
+		$final_codes = array();
+
+		#	Complete the set with any missing language codes and empty data...
+		$lang_codes = LanguageHandler::get_site_langs();
+		foreach($lang_codes as $code)
+			{
+			if( array_key_exists( $code , $x ) )
+				continue;
+			$x[ $code ] = array( 'id'=>'', 'event'=>'', 'data'=>'' );
+			}
+		ksort( $x );
+		foreach( $x as $code => $data )
+			{
+			$final_codes[] = $code;
+			$e = $data['event'];
+			if( !empty($e) and ($e != $string_event) )
+				$string_event = $e;
+			$lang = LanguageHandler::get_native_name_of_lang($code);
+
+			$out[] = '<dt>'.$lang.' ('.$code.').'.((empty($data['data'])) ? ' *' . gTxt('gbp_l10n_missing') : '' ).'</dt>';
+			$out[] = '<dd><p>'.
+						'<textarea name="' . $code . '-data" cols="60" rows="1" title="' . 
+						gTxt('gbp_l10n_textbox_title') . '">' . $data['data'] . '</textarea>' .
+						hInput( $code.'-id' , $data['id'] ) . 
+						'</p></dd>';
+			}
+		
+		$out[] = '</dl>';
+		$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+		$out[] = sInput('gbp_save_strings');
+		$out[] = $this->parent->form_inputs();
+		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
+		$out[] = hInput(gbp_language, gps(gbp_language));
+		if( $type === 'plugin' )
+			$out[] = hInput(gbp_plugin, $owner);
+		else
+			$out[] = hInput('owner', $owner);
+		$out[] = hInput('gbp_type', $type );
+		$out[] = hInput('string_event', $string_event);
+		$out[] = hInput(gbp_id, $id);
+		$out[] = '</form></div>';
+		echo join('', $out);
+
+		}
+
+	function remove_strings()
+		{
+		$remove_langs 	= gps('lang_code');
+		$plugin 		= gps(gbp_plugin);
+
+		StringHandler::remove_strings( $plugin , $remove_langs );
+		}
+
+	function save_strings() 
+		{
+		$string_name 	= gps( gbp_id );
+		$event       	= gps( 'string_event' );
+		$codes			= gps( 'codes' );
+		$lang_codes		= explode( ',' , $codes );
+		
+		foreach($lang_codes as $code)
+			{
+			$translation 	= gps( $code.'-data' );
+			$id 			= gps( $code.'-id' );
+			$exists			= !empty( $id );
+			if( !$exists and empty( $translation ) )
+				continue;
+
+			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
+			}
+		}
+
 	}
 
 class LocalisationTabView extends GBPAdminTabView 
@@ -263,21 +662,9 @@ class LocalisationTabView extends GBPAdminTabView
 			{
 			switch( $step )
 				{
-				case 'gbp_save':				$this->save_post();
-												break;
-												
-				# Called to save the stringset the user has been editing.
-				case 'gbp_save_strings' : 		$this->save_strings();
-												break;
-												
-				# Called if the user chooses to delete the string set for a removed plugin.
-				case 'gbp_remove_stringset' :	$this->remove_strings();
-												break;
-
-				# Called if the user chooses to remove a specific languages' strings.
-				# eg if they entered some french translations but later drop french from the site.
-				case 'gbp_remove_languageset' :	$this->remove_strings();
-												break;
+				case 'gbp_save':
+					$this->save_post();
+				break;
 				}
 			}
 		}
@@ -308,16 +695,6 @@ class LocalisationTabView extends GBPAdminTabView
 				if ($id = gps(gbp_id))
 					$this->render_edit($this->parent->preferences['section_vars']['value'], $this->parent->preferences['section_hidden_vars']['value'], 'txp_section', "name = '$id'", $id);
 				$this->render_list('name', 'title', 'txp_section', "name != 'default' order by name asc");
-			break;
-			case 'plugin':
-				$this->render_plugin_list();
-				if ($plugin = gps(gbp_plugin))
-					{
-					$id = gps(gbp_id);
-					$this->render_plugin_string_list( $plugin , $id );
-					if( $id )
-						$this->render_edit_string( $plugin , $id );
-					}
 			break;
 			}
 		}
@@ -521,223 +898,6 @@ class LocalisationTabView extends GBPAdminTabView
 					);
 				break;
 				}
-			}
-		}
-
-	/* ----------------------------------------------------------------------------
-	Additional methods follow...
-	---------------------------------------------------------------------------- */
-	function render_edit_string( $plugin ,$name )
-		{
-		/*
-		Render the edit controls for all localizations of the chosen string.
-		*/
-		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-		$out[] = '<h3>'.gTxt('gbp_l10n_translations_for').$name.'</h3>'.n.'<form action="index.php" method="post"><dl>';
-		
-		$string_event = '';
-		$x = StringHandler::get_string_set( $name );
-		$final_codes = array();
-		if( count($x) )
-			{
-			#	Complete the set with any missing language codes and empty data...
-			$lang_codes = LanguageHandler::get_site_langs();
-			foreach($lang_codes as $code)
-				{
-				if( array_key_exists( $code , $x ) )
-					continue;
-				$x[ $code ] = array( 'id'=>'', 'event'=>'', 'data'=>'' );
-				}
-			ksort( $x );
-			foreach( $x as $code => $data )
-				{
-				$final_codes[] = $code;
-				if( empty($string_event) and $data['event'] != $string_event )
-					$string_event = $data['event'];
-				$lang = LanguageHandler::get_native_name_of_lang($code);
-
-				$out[] = '<dt>'.$lang.' ('.$code.').'.((empty($data['data'])) ? ' *' . gTxt('gbp_l10n_missing') : '' ).'</dt>';
-				$out[] = '<dd><p>'.
-							'<textarea name="' . $code . '-data" cols="60" rows="1" title="' . 
-							gTxt('gbp_l10n_textbox_title') . '">' . $data['data'] . '</textarea>' .
-							hInput( $code.'-id' , $data['id'] ) . 
-							'</p></dd>';
-				}
-			}
-		else
-			{
-			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
-		
-		$out[] = '</dl>';
-		$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
-		$out[] = sInput('gbp_save_strings');
-		$out[] = $this->parent->form_inputs();
-		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
-		$out[] = hInput(gbp_language, gps(gbp_language));
-		$out[] = hInput(gbp_plugin, $plugin);
-		$out[] = hInput('string_event', $string_event);
-		$out[] = hInput(gbp_id, $name);
-		$out[] = '</form></div>';
-		echo join('', $out);
-		}
-	
-	function render_plugin_string_list( $plugin , $string_name )
-		{
-		/*
-		Show all the strings and localizations for the given plugin.
-		*/
-		$stats 			= array();
-		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats );
-		$strings_exist 	= ( count( $strings ) > 0 );
-		if( !$strings_exist )
-			return '';
-
-		$site_langs 	= LanguageHandler::get_site_langs();
-
-		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
-		$out[] = '<h3>'.$plugin.gTxt('gbp_l10n_strings').'</h3>'.n;	
-		$out[] = '<ol>';
-		if( $strings_exist )
-			{
-			$complete_langs = StringHandler::get_full_langs_string();
-			foreach( $strings as $string=>$langs )
-				{
-				$complete = ($complete_langs === $langs);
-				$guts = $string . ' ['.$langs.']';
-				if( !$complete )
-					$guts = '<strong>'. $guts . '</strong>';
-				$out[]= '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'&#38;'.gbp_id.'='.$string.'">' . 
-						$guts .
-						'</a></li>';
-				}
-			}
-		else
-			{
-			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
-		$out[] = '</ol>';
-		$out[] = '</div>';
-		
-		if( empty( $string_name ) )
-			{
-			//	Render default view details in right hand pane...
-			//
-			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-
-			//
-			//	Render stats summary for the strings...
-			//
-			$out[] = '<h3>'.gTxt('gbp_l10n_summary').'</h3>'.n;
-			$out[] = '<ul>';
-			$extras_found = false;
-			foreach( $stats as $iso_code=>$count )
-				{
-				$name = LanguageHandler::get_native_name_of_lang( $iso_code );
-				$guts = $count . ' ' . $name;
-				$remove = '';
-				if( !in_array( $iso_code , $site_langs ) )
-					{
-					$extras_found = true;
-					$remove[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
-					$remove[] = sInput( 'gbp_remove_languageset');
-					$remove[] = $this->parent->form_inputs();
-					$remove[] = hInput( 'lang_code' , $iso_code );
-					$remove[] = hInput(gbp_plugin, $plugin);
-					$guts = form( $guts . ' * ' . join( '' , $remove ) , 
-//								'border: 1px solid grey; padding: 0.5em; margin: 1em;' ,
-									'' ,
-									"verify('" . gbp_gTxt('gbp_l10n_lang_remove_warning' , array('$var1'=>$name ) ) . 
-									 gTxt('are_you_sure') . "')");
-					}
-				$out[]= '<li>'.$guts.'</li>';
-				}
-			$out[]= '<li style="border-top: 1px solid gray; margin-right: 1em;">'.array_sum($stats).' '.gTxt('gbp_l10n_strings').'</li>';
-			$out[] = '</ul>';
-			if( $extras_found )
-				$out[] = gTxt('gbp_l10n_explain_extra_lang');
-
-			//
-			//	If the plugin is not present start with a box offering to delete the lot!
-			//
-			global $plugins_ver;
-			if( !array_key_exists( $plugin, $plugins_ver ) )
-				{
-				$out[] = '<h3>'.gTxt('gbp_l10n_no_plugin_heading').'</h3>'.n;
-				$del[] = graf( gTxt('gbp_l10n_remove_plugin') );
-				$del[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</div>';
-				$del[] = sInput('gbp_remove_stringset');
-				$del[] = $this->parent->form_inputs();
-				$del[] = hInput(gbp_plugin, $plugin);
-
-				$out[] = form(	join('', $del) , 
-								'border: 1px solid grey; padding: 0.5em; margin: 1em;' ,
-								"verify('".gTxt('gbp_l10n_delete_plugin').' '.gTxt('are_you_sure')."')");
-				}
-
-			$out[] = '</div>';
-			}
-
-		echo join('', $out);
-		}
-	
-	function render_plugin_list()
-		{
-		/*
-		Lists all plugins that have registered common, admin or public strings using the string store.
-		*/
-		$out[] = '<div style="float: left; width: 20%;" class="gbp_i18n_plugin_list">';
-		$out[] = '<h3>'.gTxt('gbp_l10n_registered_plugins').'</h3>'.n.'<ul>';
-
-		$plugins = StringHandler::discover_registered_plugins();
-		if( count( $plugins ) )
-			{
-			//	Get an array of installed plugins. Not all of them will have registered for 
-			// string support...
-			global $plugins_ver;
-
-			foreach( $plugins as $plugin )
-				{
-				//	Display marker if the plugin isn't installed anymore.
-				$marker = ( !array_key_exists( $plugin, $plugins_ver ) )
-					? ' <strong>*</strong>' : '';
-				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
-				}
-			}
-		else
-			{
-			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
-		$out[] = '</ul>';
-		$out[] = '</div>';
-		echo join('', $out);
-		}
-
-
-	function remove_strings()
-		{
-		$plugin 		= gps(gbp_plugin);
-		$remove_langs 	= gps('lang_code');
-
-		StringHandler::remove_plugin_strings( $plugin , $remove_langs );
-		}
-	
-	function save_strings() 
-		{
-		$string_name 	= gps( gbp_id );
-		$event       	= gps( 'string_event' );
-		$codes			= gps( 'codes' );
-		$lang_codes		= explode( ',' , $codes );
-
-		foreach($lang_codes as $code)
-			{
-			$translation 	= gps( $code.'-data' );
-			$id 			= gps( $code.'-id' );
-			$exists			= !empty( $id );
-			if( !$exists and empty( $translation ) )
-				continue;
-
-			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
 			}
 		}
 
@@ -1302,7 +1462,7 @@ class SnippetHandler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	function find_snippets_in_block( &$thing , $merge = false )
+	function find_snippets_in_block( &$thing , $merge = false , $get_data = false )
 		{
 		/*
 		ADMIN SUPPORT ROUTINE
@@ -1349,7 +1509,8 @@ class SnippetHandler
 						$lng = $a['lang'];
 						$temp[$name][$lng]['id'] 		= $a['id'];
 						$temp[$name][$lng]['lastmod'] 	= $a['lastmod'];
-						$temp[$name][$lng]['data'] 		= $a['data'];
+						if( $get_data)
+							$temp[$name][$lng]['data'] 		= $a['data'];
 						}
 					}
 				else
@@ -1363,85 +1524,25 @@ class SnippetHandler
 		return $out;
 		}
 	// ----------------------------------------------------------------------------
-	function store_snippets( &$snippets )
+	function get_snippet_strings( $names , &$stats )	
 		{
-		/*
-		ADMIN SUPPORT ROUTINE
-		Takes a full array of snippets (includes 1+ renditions) and stores them in the txp_lang table.
-		*/
-		if( !$snippets or 0==count($snippets) )
-			return;
-			
-		foreach( $snippet as $name=>$langs )
-			{
-			if( !$langs or 0==count($langs) )
-				continue;
-				
-			$name = doSlash( $name );
-			
-			#	Pull apart the languages...
-			foreach( $langs as $lang=>$meta )
-				{				
-				if( !$meta or 3!=count( $meta ) )
-					continue;
-				
-				$lang		= doSlash( $lang );
-				$id 		= doSlash( $meta['id'] );
-				$data 		= doSlash( $meta['data'] );
-				$lastmod	= date('YmdHis');
-				$set 		= " `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='snippet', `data`='$data'" ;
+		$result = array();
 
-				if( empty( $id ) )
-					{
-					#insert new entry.
-					echo " Calling safe_insert($set). CHANGE ME!" , br;
-					@safe_insert( 'txp_lang' , $set );
-					}
-				else{
-					#update existing entry (use the id).
-					$where = " `id`='$id'";
-					echo " Calling safe_update( $set , $where ). CHANGE ME!" , br;
-					safe_update( 'txp_lang', $set, $where );
-					}
-				}
-			}	
-		}
-	// ----------------------------------------------------------------------------
-	function render_snippet_list( &$snippets , $listtype )
-		{
-		/*
-		ADMIN SUPPORT ROUTINE
-		Takes a full array of snippets (includes 1+ translations) and renders them as a list.
-		*/
-		$out = '';
-		
-		if( !$snippets or 0==count($snippets) )
-			{
-			$out[] = gTxt('none');
-			return doWrap( $out , $listtype , 'li' );
-			}
+		if( !is_array( $names ) )
+			$names = array( $names );
 			
-		foreach( $snippets as $name=>$langs )
+		$name_set = '';
+		foreach( $names as $name )
 			{
-			if( !$langs or 0==count($langs) )
-				{
-				$out[] = $name . ' - '.gTxt('none');
-				continue;
-				}
-				
-			ksort( $langs );
-			#	Pull apart the languages...
-			$tmp = $name . ' - ';
-			foreach( $langs as $lang=>$meta )
-				{				
-				if( !$meta or 3!=count( $meta ) )
-					continue;
-				
-				$tmp .= "[$lang] ";
-				}
-			$out[] = $tmp;
-			}	
-		return doWrap( $out , $listtype, 'li' );
+			$name_set .= '\''.$name.'\', ';
+			$result[$name] = '';
+			}
+		$name_set = rtrim( $name_set , ', ' );
+
+		$where = " `event`='snippet' AND `name` IN ($name_set)";
+		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
+		
+		return array_merge( $result , StringHandler::get_strings( &$rs , $stats ) );
 		}
 	} // End of SnippetHandler
 	
@@ -1573,11 +1674,11 @@ class StringHandler
 		@safe_insert( 'txp_lang' , $set );
 		}
 	// ----------------------------------------------------------------------------
-	function remove_plugin_strings( $plugin , $remove_lang , $debug = '' )
+	function remove_strings( $plugin , $remove_lang , $debug = '' )
 		{
 		/*
 		PLUGIN SUPPORT ROUTINE
-		Either: Removes all the occurances of plugin strings in the given langs...
+		Either: Removes all the occurances of plugin and snippet strings in the given langs...
 		OR:		Removes all of the named plugin's strings.
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
@@ -1596,7 +1697,7 @@ class StringHandler
 			}
 		}
 	// ----------------------------------------------------------------------------
-	function remove_strings( $strings , $event = '' )
+	function remove_strings_by_name( $strings , $event = '' )
 		{
 		/*
 		PLUGIN SUPPORT ROUTINE
@@ -1700,26 +1801,9 @@ class StringHandler
 		return $result;		
 		}
 	// ----------------------------------------------------------------------------
-	function get_plugin_strings( $plugin , &$stats )	
+	function get_strings( &$rs , &$stats )	
 		{
-		/*
-		ADMIN INTERFACE SUPPORT ROUTINE
-		Given a plugin name, will extract a list of strings the plugin has registered, collapsing all 
-		the translations into one entry. Thus...
-		name	lang	data
-		alpha	en		Alpha
-		alpha	fr		Alpha
-		alpha	el		Alpha
-		beta	en		Beta
-		Gives...
-		alpha => 'fr, el, en'  (Sorted order)
-		beta  => 'en'
-		*/
 		$result = array();
-		
-		$plugin = doSlash( $plugin );
-		$where = ' `event` = "public.'.$plugin.'" or `event` = "admin.'.$plugin.'" or `event` = "common.'.$plugin.'"';
-		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
 			while ( $a = nextRow($rs) )
@@ -1741,7 +1825,7 @@ class StringHandler
 				ksort( $langs );
 
 				//
-				//	Build the language stats for the plugin...
+				//	Build the language stats for the strings...
 				//
 				foreach( $langs as $lang=>$count )
 					{
@@ -1757,6 +1841,27 @@ class StringHandler
 			ksort( $stats );
 			}
 		return $result;
+		}
+	// ----------------------------------------------------------------------------
+	function get_plugin_strings( $plugin , &$stats )	
+		{
+		/*
+		ADMIN INTERFACE SUPPORT ROUTINE
+		Given a plugin name, will extract a list of strings the plugin has registered, collapsing all 
+		the translations into one entry. Thus...
+		name	lang	data
+		alpha	en		Alpha
+		alpha	fr		Alpha
+		alpha	el		Alpha
+		beta	en		Beta
+		Gives...
+		alpha => 'fr, el, en'  (Sorted order)
+		beta  => 'en'
+		*/
+		$plugin = doSlash( $plugin );
+		$where = ' `event` = "public.'.$plugin.'" or `event` = "admin.'.$plugin.'" or `event` = "common.'.$plugin.'"';
+		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
+		return StringHandler::get_strings( &$rs , $stats );
 		}
 	// ----------------------------------------------------------------------------
 	function get_full_langs_string( )	
