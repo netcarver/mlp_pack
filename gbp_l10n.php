@@ -512,7 +512,7 @@ class LocalizationStringView extends GBPAdminTabView
  		if( empty( $string_name ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-			$out[] = $this->_render_string_stats( $string_name , &$stats );
+			$out[] = $this->_render_string_stats( $string_name , $stats );
 			
 			//
 			//	If the plugin is not present start with a box offering to delete the lot!
@@ -545,8 +545,8 @@ class LocalizationStringView extends GBPAdminTabView
 		*/
 		$stats 	= array();
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
-		$snippets = SnippetHandler::find_snippets_in_block( &$data );
-		$strings  = SnippetHandler::get_snippet_strings( $snippets , &$stats );
+		$snippets = SnippetHandler::find_snippets_in_block( $data );
+		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('gbp_l10n_snippets').'</h3>'.n;	
@@ -561,7 +561,7 @@ class LocalizationStringView extends GBPAdminTabView
  		if( empty( $id ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-			$out[] = $this->_render_string_stats( $id , &$stats );
+			$out[] = $this->_render_string_stats( $id , $stats );
 			$out[] = '</div>';
 			}
 
@@ -1527,15 +1527,17 @@ class SnippetHandler
 		$name_set = '';
 		foreach( $names as $name )
 			{
-			$name_set .= '\''.$name.'\', ';
+			$name_set .= "'$name', ";
 			$result[$name] = '';
 			}
 		$name_set = rtrim( $name_set , ', ' );
+		if ( empty( $name_set ) )
+			$name_set = "''";
 
 		$where = " `event`='snippet' AND `name` IN ($name_set)";
 		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
 		
-		return array_merge( $result , StringHandler::get_strings( &$rs , $stats ) );
+		return array_merge( $result , StringHandler::get_strings( $rs , $stats ) );
 		}
 	} // End of SnippetHandler
 	
@@ -1854,7 +1856,7 @@ class StringHandler
 		$plugin = doSlash( $plugin );
 		$where = ' `event` = "public.'.$plugin.'" or `event` = "admin.'.$plugin.'" or `event` = "common.'.$plugin.'"';
 		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
-		return StringHandler::get_strings( &$rs , $stats );
+		return StringHandler::get_strings( $rs , $stats );
 		}
 	// ----------------------------------------------------------------------------
 	function get_full_langs_string( )	
