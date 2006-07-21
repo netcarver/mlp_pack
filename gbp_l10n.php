@@ -663,6 +663,7 @@ class LocalisationTabView extends GBPAdminTabView
 			switch( $step )
 				{
 				case 'gbp_save':
+				case 'gbp_post':
 					$this->save_post();
 				break;
 				}
