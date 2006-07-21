@@ -762,7 +762,7 @@ class LocalisationTabView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function render_edit($vars, $hidden_vars, $table, $where, $entry_id) 
+	function render_edit($vars, $hidden_vars, $table, $where, $entry_id)
 		{
 		global $_GBP;
 
@@ -842,15 +842,15 @@ class LocalisationTabView extends GBPAdminTabView
 				if (!isset($textile_body))
 				$textile_body = $use_textile;
 
-				if ($use_textile == 0 or !$textile_body)
+				if ($use_textile == LEAVE_TEXT_UNTOUCHED or !$textile_body)
 					$value_html = trim($value);
 
-				else if ($use_textile == 1)
+				else if ($use_textile == CONVERT_LINEBREAKS)
 					$value_html = nl2br(trim($value));
 
-				else if ($use_textile == 2 && $textile_body)
+				else if ($use_textile == USE_TEXTILE && $textile_body)
 					$value_html = $textile -> TextileThis($value);
-
+					
 				}
 
 			if ($field == 'Title')
@@ -877,17 +877,9 @@ class LocalisationTabView extends GBPAdminTabView
 			if (!isset($value_html))
 				$value_html = '';
 
-			if (phpversion() >= "4.3.0") 
-				{
-				$value = mysql_real_escape_string($value);
-				$value_html = mysql_real_escape_string($value_html);
-				} 
-			else 
-				{
-				$value = mysql_escape_string($value);
-				$value_html = mysql_escape_string($value_html);
-				}
-
+			$value = doSlash( $value );	
+			$value_html = doSlash( $value_html );
+			
 			switch(gps('step'))
 				{
 				case 'gbp_post':
