@@ -4,7 +4,7 @@ $plugin['name'] = 'gbp_l10n';
 $plugin['version'] = '0.5';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_l10n/';
-$plugin['description'] = 'Textpattern content localization.';
+$plugin['description'] = 'Textpattern content localisation.';
 $plugin['type'] = '1';
 
 @include_once('../zem_tpl.php');
@@ -17,17 +17,17 @@ h1. Instructions
 
 Under the content tab, there is a new localisation subtab. Here you can find a list of every article, category title and section titles which needs tobe localised.
 
-To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:gbp_localize>@ ... @</txp:gbp_localize>@
+To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:gbp_localise>@ ... @</txp:gbp_localise>@
 
-You can also use @<txp:gbp_localize section="foo" />@ or @<txp:gbp_localize category="bar" />@ to output localised sections and categories
+You can also use @<txp:gbp_localise section="foo" />@ or @<txp:gbp_localise category="bar" />@ to output localised sections and categories
 
 h2. Snippets
 
 To add snippets to pages or forms...
 
-# Make sure the page/form is wrapped with the @<txp:gbp_localize>@ ... @</txp:gbp_localize>@ statements.
+# Make sure the page/form is wrapped with the @<txp:gbp_localise>@ ... @</txp:gbp_localise>@ statements.
 # Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
-# On the *content > localize* tab, look for your page or form on the pages or form subtab.
+# On the *content > localise* tab, look for your page or form on the pages or form subtab.
 # Click on the page/form name to bring up a list of all snippets therein.
 # You should see your snippet "my_first_snippet" listed with no translations.
 # Click on the name of your snippet to bring up the edit boxes. 
@@ -55,7 +55,7 @@ $txp_current_plugin = $gbp_current_plugin;
 if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_languages' );
 
-class LocalizationView extends GBPPlugin 
+class LocalisationView extends GBPPlugin 
 	{
 	
 	var $gp = array(gbp_language);
@@ -87,7 +87,7 @@ class LocalizationView extends GBPPlugin
 
 	var $strings_lang = 'en';
 	var $perm_strings = array( # These strings are always needed.
-	'gbp_l10n_localisation'			=> 'localization',
+	'gbp_l10n_localisation'			=> 'localisation',
 	);
 	var $strings = array(	
 	'gbp_l10n_cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
@@ -97,7 +97,7 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'languages' 					=> 'Languages ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
-	'gbp_l10n_localised'			=> 'Localized',
+	'gbp_l10n_localised'			=> 'localised',
 	'gbp_l10n_missing'				=> ' missing.', 
 	'gbp_l10n_no_plugin_heading'	=> 'Notice&#8230;',
 	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
@@ -111,18 +111,18 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_summary'				=> 'Language Stats.',
 	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
 	'gbp_l10n_translations_for'		=> 'Translations for ',
-	'gbp_l10n_unlocalised'			=> 'Unlocalized',
-	'gbp_l10n_view_site'			=> 'View localized site', 
+	'gbp_l10n_unlocalised'			=> 'Unlocalised',
+	'gbp_l10n_view_site'			=> 'View localised site', 
 	'gbp_l10n_wizard'				=> 'Wizards',
 	);
 
 	// Constructor
-	function LocalizationView( $title_alias , $event , $parent_tab = 'extensions' ) 
+	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
 		global $textarray;
 		$lang = explode( '-' , LANG );
 
-		#	Merge the string that is always needed for the localization tab title...
+		#	Merge the string that is always needed for the localisation tab title...
 		$textarray = array_merge( $textarray , $this->perm_strings );
 
 		#	Only merge and load the rest of the strings if this view's event is active. 
@@ -181,11 +181,11 @@ class LocalizationView extends GBPPlugin
 			if ($this->preferences['sections']['value'])
 				new LocalisationTabView( gTxt('sections'), 'section', $this);
 			if ($this->preferences['forms']['value'])
-				new LocalizationStringView( gTxt('forms') , 'form' , $this );
+				new LocalisationStringView( gTxt('forms') , 'form' , $this );
 			if ($this->preferences['pages']['value'])
-				new LocalizationStringView( gTxt('pages') , 'page' , $this );
+				new LocalisationStringView( gTxt('pages') , 'page' , $this );
 			if ($this->preferences['plugins']['value'])
-				new LocalizationStringView( gTxt('plugins'), 'plugin', $this );
+				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
 			new GBPPreferenceTabView( gTxt('prefs'), 'preference', $this);
 			}
 
@@ -295,7 +295,7 @@ class LocalizationView extends GBPPlugin
 	
 	}
 
-class LocalizationStringView extends GBPAdminTabView 
+class LocalisationStringView extends GBPAdminTabView 
 	{
 	/*
 	Implements a three-pane view for the categorisation, selection and editing of string based
@@ -509,7 +509,7 @@ class LocalizationStringView extends GBPAdminTabView
 	function render_plugin_string_list( $plugin , $string_name )	# Center pane plugin wrapper
 		{
 		/*
-		Show all the strings and localizations for the given plugin.
+		Show all the strings and localisations for the given plugin.
 		*/
 		$stats 			= array();
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats );
@@ -588,7 +588,7 @@ class LocalizationStringView extends GBPAdminTabView
 	function render_string_edit( $type , $owner , $id ) # Right pane string edit routine
 		{
 		/*
-		Render the edit controls for all localizations of the chosen string.
+		Render the edit controls for all localisations of the chosen string.
 		*/
 		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
 		$out[] = '<h3>'.gTxt('gbp_l10n_translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
@@ -914,7 +914,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 	}
 
-new LocalizationView( 'gbp_l10n_localisation' , 'l10n', 'content');
+new LocalisationView( 'gbp_l10n_localisation' , 'l10n', 'content');
 if (@txpinterface == 'public')
 	{
 
@@ -938,8 +938,8 @@ if (@txpinterface == 'public')
 
 	/*
 	SED:	Load the localised set of strings based on the selected language...	
-		Our localize routine should now have all the strings it needs to do snippet localization
-		Plugins should be able to call gTxt() or gbp_gTxt() to output localized content.
+		Our localise routine should now have all the strings it needs to do snippet localisation
+		Plugins should be able to call gTxt() or gbp_gTxt() to output localised content.
 	*/
 	StringHandler::load_strings_into_textarray( $gbp_language );
 
@@ -1059,11 +1059,11 @@ if (@txpinterface == 'public')
 		}
 	
 	// ----------------------------------------------------
-	function gbp_localize($atts, $thing = '') 
+	function gbp_localise($atts, $thing = '') 
 		{
 		/*
 		Graeme's original localisation container tag. Still very much needed.
-		Some mods to include direct snippet localization for any contained content.
+		Some mods to include direct snippet localisation for any contained content.
 		*/
 		global $gbp_language, $thisarticle, $thislink;
 
@@ -1410,7 +1410,7 @@ class LanguageHandler
 	} // End of LanguageHandler
 
 /* ----------------------------------------------------------------------------
-class SnippetHandler implements localized "snippets" within page and
+class SnippetHandler implements localised "snippets" within page and
 form templates. Uses the services of the string_handler to localise the
 strings therein.
 ---------------------------------------------------------------------------- */
@@ -1441,12 +1441,12 @@ class SnippetHandler
 	function substitute_snippets( &$thing )
 		{
 		/*
-		PUBLIC LOCALIZATION SUPPORT ROUTINE for use by localization plugin.
+		PUBLIC LOCALISATION SUPPORT ROUTINE for use by localisation plugin.
 		Replaces all snippets within the contained block with their text from the global textarray.
 		Allows TxP devs to include snippets* in their forms and page templates.
 		
 		*A Snippet is a specially formatted marker in the page/form template that gets substituted by
-		the localization routine.
+		the localisation routine.
 		*/
 		$out = preg_replace_callback( 	SnippetHandler::get_pattern('snippet') , 
 										create_function(
@@ -1554,7 +1554,7 @@ class SnippetHandler
 	} // End of SnippetHandler
 	
 /* ----------------------------------------------------------------------------
-class StringHandler implements localized string storage support.
+class StringHandler implements localised string storage support.
 ---------------------------------------------------------------------------- */
 class StringHandler	
 	{
@@ -1613,7 +1613,7 @@ class StringHandler
 		{
 		/*
 		ADMIN SUPPORT ROUTINE
-		For use by the localization plugin. 
+		For use by the localisation plugin. 
 		Can create or update row in the DB depending upon the calling arguments.
 		*/
 		# 	Check we have valid arguments...
@@ -1655,7 +1655,7 @@ class StringHandler
 		{
 		/*
 		ADMIN SUPPORT ROUTINE
-		For use by the localization plugin. Clones the entry with the given id and stores the 
+		For use by the localisation plugin. Clones the entry with the given id and stores the 
 		translation in the data and sets the lang and date as given.
 		*/
 		# 	Check we have valid arguments...
