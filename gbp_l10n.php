@@ -97,7 +97,7 @@ class LocalisationView extends GBPPlugin
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'languages' 					=> 'Languages ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
-	'gbp_l10n_localised'			=> 'localised',
+	'gbp_l10n_localised'			=> 'Localised',
 	'gbp_l10n_missing'				=> ' missing.', 
 	'gbp_l10n_no_plugin_heading'	=> 'Notice&#8230;',
 	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
@@ -186,7 +186,7 @@ class LocalisationView extends GBPPlugin
 				new LocalisationStringView( gTxt('pages') , 'page' , $this );
 			if ($this->preferences['plugins']['value'])
 				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-			new GBPPreferenceTabView( gTxt('prefs'), 'preference', $this);
+			new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
 			}
 
 		new LocalisationTabView( gTxt('gbp_l10n_wizard'), 'wizard', $this);
