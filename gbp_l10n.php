@@ -195,8 +195,8 @@ class LocalisationView extends GBPPlugin
 		
 	function installed() 
 		{
-		$result = @safe_query( 'SELECT * FROM `'.PFX.'gbp_l10n` LIMIT 0,1'); 
-		return $result;
+		$result = getThing( "show tables like '".PFX."gbp_l10n'" );
+		return ($result);
 		}
 	
 	function setup() 
