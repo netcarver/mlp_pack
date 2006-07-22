@@ -1402,8 +1402,7 @@ class LanguageHandler
 		LANGUAGE SUPPORT ROUTINE
 		Returns a string containing the ISO-693-1 language to be used as the site's default.
 		*/
-		global $prefs;
-		$lang_codes = explode(',', $prefs[GBP_PREFS_LANGUAGES]);
+		$lang_codes = LanguageHandler::get_site_langs();
 		return $lang_codes[0];
 		}
 
