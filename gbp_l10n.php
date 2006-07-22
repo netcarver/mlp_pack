@@ -99,10 +99,9 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
-	'gbp_l10n_localised'			=> 'Localised',
+	'gbp_l10n_localised'			=> 'Localized',
 	'gbp_l10n_missing'				=> ' missing.', 
 	'gbp_l10n_no_plugin_heading'	=> 'Notice&#8230;',
-	'gbp_l10n_orphans'				=> 'Orphans (Unused snippets.)',
 	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 	'gbp_l10n_registered_plugins'	=> 'Registered Plugins.' ,
 	'gbp_l10n_remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
@@ -111,7 +110,7 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_summary'				=> 'Language Stats.',
 	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
 	'gbp_l10n_translations_for'		=> 'Translations for ',
-	'gbp_l10n_unlocalised'			=> 'Unlocalised',
+	'gbp_l10n_unlocalised'			=> 'Unlocalized',
 	'gbp_l10n_view_site'			=> 'View localized site', 
 	);
 
@@ -119,12 +118,16 @@ class LocalizationView extends GBPPlugin
 	function LocalizationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
 		global $textarray;
+		
+		# Merge the default(English) language strings into the textarray so that non-English 
+		# users at least see an English message in the plugin. If the user adds translations later 
+		# the translations will override these merged strings.
+		$textarray = array_merge( $textarray , $this->strings );
+		$textarray = array_merge( $textarray , $this->perm_strings );
 
-		# Adds the strings this class needs to render the plugin wizard. 
-		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
-
-		/* SED: This is called admin side, pull the language from the TxP language 
-		variable and use that to load the strings from the store to the $textarray. */
+		# Pull the language from the TxP language variable and use that to load the strings from 
+		# the store to the $textarray. This will override the strings inserted above, if they have
+		# been translated or edited.
 		$lang = explode( '-' , LANG );
 		StringHandler::load_strings_into_textarray( $lang[0] );
 
@@ -190,7 +193,9 @@ class LocalizationView extends GBPPlugin
 		One-shot installation code goes in here...
 		*/
 
-		# Adds this class' own strings to the string store...
+		# Adds the strings this class needs to render the plugin wizard.
+		# This line makes them editable via the "plugins" string tab.
+		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
 		StringHandler::insert_strings( $this->strings , 'en' , 'admin' );
 
 		# Create the l10n table...
@@ -475,11 +480,10 @@ class LocalizationStringView extends GBPAdminTabView
 				$remove[] = sInput( 'gbp_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
 				$remove[] = hInput( 'lang_code' , $iso_code );
-				$remove[] = hInput(gbp_plugin, $plugin);
 				$guts = form( $guts . ' * ' . join( '' , $remove ) , 
 								'' ,
-								"verify('" . gbp_gTxt('gbp_l10n_lang_remove_warning' , array('$var1'=>$name ) ) . 
-								 gTxt('are_you_sure') . "')");
+								"verify('" . doSlash(gbp_gTxt('gbp_l10n_lang_remove_warning' , array('$var1'=>$name)) ) . 
+								 doSlash(gTxt('are_you_sure')) . "')");
 				}
 			$out[]= '<li>'.$guts.'</li>';
 			}
@@ -529,7 +533,7 @@ class LocalizationStringView extends GBPAdminTabView
 
 				$out[] = form(	join('', $del) , 
 								'border: 1px solid grey; padding: 0.5em; margin: 1em;' ,
-								"verify('".gTxt('gbp_l10n_delete_plugin').' '.gTxt('are_you_sure')."')");
+								"verify('".doSlash(gTxt('gbp_l10n_delete_plugin')).' '.doSlash(gTxt('are_you_sure'))."')");
 				}
 
 			$out[] = '</div>';
@@ -708,10 +712,11 @@ class LocalisationTabView extends GBPAdminTabView
 			{
 			$out[] = '<h1>'.gTxt('gbp_l10n_cleanup_wiz_title').'</h1>';
 			$out[] = graf( gTxt('gbp_l10n_cleanup_wiz_text') );
+
 			$out[] = form(
 				fInput('submit', '', gTxt('cleanup'), '') . $this->parent->form_inputs() . sInput( 'cleanup' ) , 
 				'' ,
-				"verify('".gTxt('are_you_sure').' '.gTxt('gbp_l10n_cleanup_verify')."')"
+				"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash( gTxt('gbp_l10n_cleanup_verify'))."')"
 						 );
 			}
 		else
@@ -721,7 +726,7 @@ class LocalisationTabView extends GBPAdminTabView
 			$out[] = form(
 				fInput('submit', '', gTxt('Setup'), '') . $this->parent->form_inputs() . sInput( 'setup' ) , 
 				'' ,
-				"verify('".gTxt('are_you_sure').' '.gTxt('gbp_l10n_setup_verify')."')"
+				"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash(gTxt('gbp_l10n_setup_verify'))."')"
 						 );
 			}
 			
@@ -1677,16 +1682,16 @@ class StringHandler
 		OR:		Removes all of the named plugin's strings.
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
-			{		
+			{
 			$where = "(`lang` IN ('$remove_lang')) AND (`event` LIKE \"common.%\" OR `event` LIKE \"public.%\" OR `event` LIKE \"admin.%\" OR `event`='snippet')";
-//echo br, $where;
+//echo br, 'Langs', $where;
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
 		elseif( $plugin and !empty( $plugin ) )
 			{
 			$where = "`event`=\"common.$plugin\" OR `event`=\"public.$plugin\" OR `event`=\"admin.$plugin\"";
-//echo br, $where;
+//echo br, 'plugin', $where;
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
