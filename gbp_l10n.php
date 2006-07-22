@@ -517,6 +517,7 @@ class LocalizationStringView extends GBPAdminTabView
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('gbp_l10n_strings').'</h3>'.n;
+		$out[] = '<span style="float:right;"><a href="'.$this->parent->url( array( gbp_plugin => $plugin ) , true ).'">'.gTxt('status').'</a></span>'.br.n;
 		
 		$out[] = $this->_render_string_list( $strings , gbp_plugin , $plugin );
 		$out[] = '</div>';
@@ -565,6 +566,7 @@ class LocalizationStringView extends GBPAdminTabView
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('gbp_l10n_snippets').'</h3>'.n;	
+		$out[] = '<span style="float:right;"><a href="'.$this->parent->url( array( 'owner' => $owner ) , true ).'">'.gTxt('status').'</a></span>'.br.n;
 
 		#	Render the list... 
 		$out[] = $this->_render_string_list( $strings , 'owner', $owner );
