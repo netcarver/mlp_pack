@@ -384,17 +384,17 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _generate_plugin_list()	# left pane subroutine
 		{
-		$plugins = StringHandler::discover_registered_plugins();
-		if( count( $plugins ) )
+		$registered_plugins = StringHandler::discover_registered_plugins();
+		if( count( $registered_plugins ) )
 			{
 			//	Get an array of installed plugins. Not all of them will have registered for 
 			// string support...
-			global $plugins_ver;
+			global $plugins;
 			
-			foreach( $plugins as $plugin )
+			foreach( $registered_plugins as $plugin )
 				{
 				//	Display marker if the plugin isn't installed anymore.
-				$marker = ( !array_key_exists( $plugin, $plugins_ver ) )
+				$marker = ( !array_search( $plugin, $plugins ) )
 					? ' <strong>*</strong>' : '';
 				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
 				}
@@ -533,8 +533,8 @@ class LocalisationStringView extends GBPAdminTabView
 			//
 			//	If the plugin is not present start with a box offering to delete the lot!
 			//
-			global $plugins_ver;
-			if( !array_key_exists( $plugin, $plugins_ver ) )
+			global $plugins;
+			if( !array_search( $plugin, $plugins ) )
 				{
 				$out[] = '<h3>'.gTxt('gbp_l10n_no_plugin_heading').'</h3>'.n;
 				$del[] = graf( gTxt('gbp_l10n_remove_plugin') );
