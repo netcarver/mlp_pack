@@ -60,7 +60,7 @@ class LocalisationView extends GBPPlugin
 	
 	var $gp = array(gbp_language);
 	var $preferences = array(
-		'languages' => array('value' => array('fr', 'de'), 'type' => 'gbp_array_text'),
+		'languages' => array('value' => array( 'en' , 'fr' , 'de' ), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
 		'article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
@@ -94,6 +94,7 @@ class LocalisationView extends GBPPlugin
 	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
 	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
+	'gbp_l10n_edit_resource'		=> 'Edit $type: $owner ',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'languages' 					=> 'Languages ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
@@ -107,8 +108,9 @@ class LocalisationView extends GBPPlugin
 	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table and all of the strings definitions needed (in English). You will be able to edit and translate the strings once this plugin is setup.',
 	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
 	'gbp_l10n_snippets'				=> ' snippets.',
+	'gbp_l10n_statistics'			=> 'Show Statistics ',
 	'gbp_l10n_strings'				=> ' strings.',
-	'gbp_l10n_summary'				=> 'Language Stats.',
+	'gbp_l10n_summary'				=> 'Statistics.',
 	'gbp_l10n_textbox_title'		=> 'Type in the text here.',
 	'gbp_l10n_translations_for'		=> 'Translations for ',
 	'gbp_l10n_unlocalised'			=> 'Unlocalised',
@@ -206,8 +208,8 @@ class LocalisationView extends GBPPlugin
 		*/
 
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
-		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
-		StringHandler::insert_strings( $this->strings , 'en' , 'admin' );
+		StringHandler::insert_strings( $this->perm_strings , $this->strings_lang , 'admin' );
+		StringHandler::insert_strings( $this->strings , $this->strings_lang , 'admin' );
 
 		# Create the l10n table...
 		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
@@ -324,6 +326,10 @@ class LocalisationStringView extends GBPAdminTabView
 				case 'gbp_remove_languageset' :	
 				$this->remove_strings();
 				break;
+				
+				case 'gbp_save_pageform':
+				$this->save_pageform();
+				break;
 				}
 			}
 		}
@@ -340,6 +346,10 @@ class LocalisationStringView extends GBPAdminTabView
 				$this->render_string_list( 'txp_page' , 'user_html' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'page', $owner , $id );
+				elseif( $step = gps('step') and $step == 'edit_pageform' )
+					{
+					$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
+					}
 				}
 			break;
 
@@ -351,6 +361,10 @@ class LocalisationStringView extends GBPAdminTabView
 				$this->render_string_list( 'txp_form' , 'Form' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'form' , $owner , $id );
+				elseif( $step = gps('step') and $step == 'edit_pageform' )
+					{
+					$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
+					}
 				}
 			break;
 
@@ -517,7 +531,9 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('gbp_l10n_strings').'</h3>'.n;
-		$out[] = '<span style="float:right;"><a href="'.$this->parent->url( array( gbp_plugin => $plugin ) , true ).'">'.gTxt('status').'</a></span>'.br.n;
+		$out[] = '<span style="float:right;"><a href="' . 
+				 $this->parent->url( array( gbp_plugin => $plugin ) , true ) . '">' . 
+				 gTxt('gbp_l10n_statistics') . '&#187;</a></span>' . br . n;
 		
 		$out[] = $this->_render_string_list( $strings , gbp_plugin , $plugin );
 		$out[] = '</div>';
@@ -565,8 +581,14 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
-		$out[] = '<h3>'.$owner.' '.gTxt('gbp_l10n_snippets').'</h3>'.n;	
-		$out[] = '<span style="float:right;"><a href="'.$this->parent->url( array( 'owner' => $owner ) , true ).'">'.gTxt('status').'</a></span>'.br.n;
+		$out[] = '<h3>'.$owner.' '.gTxt('gbp_l10n_snippets').'</h3>'.n;
+		$out[] = '<span style="float:right;"><a href="' . 
+				 $this->parent->url( array( 'owner' => $owner ) , true ) . '">' . 
+				 gTxt('gbp_l10n_statistics') . '&#187;</a></span>' . br . n;
+		$out[] = '<span style="float:right;"><a href="' . 
+				 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' . 
+				 gbp_gTxt('gbp_l10n_edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) . 
+				 '&#187;</a></span>' . br . br . n;
 
 		#	Render the list... 
 		$out[] = $this->_render_string_list( $strings , 'owner', $owner );
@@ -575,7 +597,8 @@ class LocalisationStringView extends GBPAdminTabView
 		//
 		//	Render default view details in right hand pane...
 		//
- 		if( empty( $id ) )
+		$step = gps('step');
+ 		if( empty( $id ) and empty( $step ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
 			$out[] = $this->_render_string_stats( $id , $stats );
@@ -585,6 +608,23 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
+	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
+		{
+		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+		$out[] = '<h3>'.gbp_gTxt('gbp_l10n_edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>'.n.'<form action="index.php" method="post">';
+		
+		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
+		$out[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('gbp_l10n_textbox_title').'">' . 
+				 $data . 
+				 '</textarea></p>'.br.n;
+		$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+		$out[] = sInput('gbp_save_pageform');
+		$out[] = $this->parent->form_inputs();
+		$out[] = hInput('owner', $owner);
+		$out[] = '</form></div>';
+		echo join('', $out);
+		}
+		
 	function render_string_edit( $type , $owner , $id ) # Right pane string edit routine
 		{
 		/*
@@ -664,6 +704,22 @@ class LocalisationStringView extends GBPAdminTabView
 				continue;
 
 			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
+			}
+		}
+
+	function save_pageform()
+		{
+		$data = doSlash( gps('data') );
+		$owner = doSlash( gps('owner') );
+		$tab = doSlash( gps( gbp_tab ) );
+
+		if( $tab === 'form' )
+			{
+			@safe_update( 'txp_form' , "`Form`='$data'" , "`name`='$owner'" );
+			}
+		elseif( $tab === 'page' )
+			{
+			@safe_update( 'txp_page' , "`user_html`='$data'" , "`name`='$owner'" );
 			}
 		}
 
