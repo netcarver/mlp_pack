@@ -95,6 +95,7 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
+	'languages' 					=> 'Languages ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
 	'gbp_l10n_localised'			=> 'Localized',
 	'gbp_l10n_missing'				=> ' missing.', 
@@ -805,13 +806,13 @@ class LocalisationTabView extends GBPAdminTabView
 
 				if (in_array($field_type, array('blob'))) 
 					{
-					$out[] = '<p class="gbp_l10n_field">'.ucwords($field).'</p>';
+					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
 					$out[] = '<div class="gbp_l10n_value">'.text_area($field, 200, 420, $entry_value).'</div>';
 					} 
 				else if (in_array($field_type, array('string'))) 
 					{
-					$out[] = '<p class="gbp_l10n_field">'.ucwords($field).'</p>';
+					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
 					$out[] = '<div class="gbp_l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div>';
 					} 
