@@ -26,7 +26,7 @@ h2. Snippets
 To add snippets to pages or forms...
 
 # Make sure the page/form is wrapped with the @<txp:gbp_localize>@ ... @</txp:gbp_localize>@ statements.
-# Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.
+# Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
 # On the *content > localize* tab, look for your page or form on the pages or form subtab.
 # Click on the page/form name to bring up a list of all snippets therein.
 # You should see your snippet "my_first_snippet" listed with no translations.
@@ -85,17 +85,14 @@ class LocalizationView extends GBPPlugin
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		);
 
-	var $perm_strings = array( # These strings will be inserted (by default) into the txp_lang table. They are used in the wizard tab
+	var $strings_lang = 'en';
+	var $perm_strings = array( # These strings are always needed.
+	'gbp_l10n_localisation'			=> 'localization',
+	);
+	var $strings = array(	
 	'gbp_l10n_cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
 	'gbp_l10n_cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
 	'gbp_l10n_cleanup_wiz_title'	=> 'Cleanup Wizard',
-	'gbp_l10n_localisation'			=> 'localization',
-	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
-	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table and all of the strings definitions needed (in English). You will be able to edit and translate the strings once this plugin is setup.',
-	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
-	'gbp_l10n_wizard'				=> 'Wizards',
-	);
-	var $strings = array(	# These strings will be inserted when the user confirms install and removed when they request cleanup.
 	'gbp_l10n_delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
@@ -105,6 +102,9 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 	'gbp_l10n_registered_plugins'	=> 'Registered Plugins.' ,
 	'gbp_l10n_remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
+	'gbp_l10n_setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
+	'gbp_l10n_setup_wiz_text'		=> 'This allows you to install the custom table and all of the strings definitions needed (in English). You will be able to edit and translate the strings once this plugin is setup.',
+	'gbp_l10n_setup_wiz_title'		=> 'Setup Wizard',
 	'gbp_l10n_snippets'				=> ' snippets.',
 	'gbp_l10n_strings'				=> ' strings.',
 	'gbp_l10n_summary'				=> 'Language Stats.',
@@ -112,24 +112,35 @@ class LocalizationView extends GBPPlugin
 	'gbp_l10n_translations_for'		=> 'Translations for ',
 	'gbp_l10n_unlocalised'			=> 'Unlocalized',
 	'gbp_l10n_view_site'			=> 'View localized site', 
+	'gbp_l10n_wizard'				=> 'Wizards',
 	);
 
 	// Constructor
 	function LocalizationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
 		global $textarray;
-		
-		# Merge the default(English) language strings into the textarray so that non-English 
-		# users at least see an English message in the plugin. If the user adds translations later 
-		# the translations will override these merged strings.
-		$textarray = array_merge( $textarray , $this->strings );
+		$lang = explode( '-' , LANG );
+
+		#	Merge the string that is always needed for the localization tab title...
 		$textarray = array_merge( $textarray , $this->perm_strings );
 
-		# Pull the language from the TxP language variable and use that to load the strings from 
-		# the store to the $textarray. This will override the strings inserted above, if they have
-		# been translated or edited.
-		$lang = explode( '-' , LANG );
-		StringHandler::load_strings_into_textarray( $lang[0] );
+		#	Only merge and load the rest of the strings if this view's event is active. 
+		$txp_event = gps('event');
+		if( $txp_event === $event )
+			{
+			if( !$this->installed() or ($this->strings_lang != $lang[0]) )
+				{
+				# Merge the default language strings into the textarray so that non-English 
+				# users at least see an English message in the plugin. If the user adds translations later 
+				# the translations will override these merged strings.
+				$textarray = array_merge( $textarray , $this->strings );
+				}
+
+			# Pull the language from the TxP language variable and use that to load the strings from 
+			# the store to the $textarray. This will override the strings inserted above, if they have
+			# been translated or edited.
+			StringHandler::load_strings_into_textarray( $lang[0] );
+			}
 
 		# Be sure to call the parent constructor *after* the strings it needs are added and loaded!
 		GBPPlugin::GBPPlugin( gTxt($title_alias) , $event , $parent_tab );
@@ -193,8 +204,7 @@ class LocalizationView extends GBPPlugin
 		One-shot installation code goes in here...
 		*/
 
-		# Adds the strings this class needs to render the plugin wizard.
-		# This line makes them editable via the "plugins" string tab.
+		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		StringHandler::insert_strings( $this->perm_strings , 'en' , 'admin' );
 		StringHandler::insert_strings( $this->strings , 'en' , 'admin' );
 
@@ -229,10 +239,10 @@ class LocalizationView extends GBPPlugin
 		$sql = 'drop table `'.PFX.'gbp_l10n`';
 		@safe_query( $sql );
 		
-		# Delete the _translations_ of the perm_strings, the defaults will, however, be reinserted by the constructor...
+		# Delete the perm_strings, the defaults will, however, be merged into textarray by the constructor...
 		StringHandler::remove_strings_by_name( $this->perm_strings , 'admin' );
 		
-		# These get totally removed and don't get re-inserted by the constructor...
+		# These get totally removed and don't get re-inserted by the setup routine...
 		StringHandler::remove_strings_by_name( $this->strings , 'admin' );
 	
 		# Now the cleanup is complete, redirect to the plugin page for the delete.
