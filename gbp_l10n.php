@@ -914,14 +914,8 @@ class LocalisationTabView extends GBPAdminTabView
 
 	}
 
-if (@txpinterface == 'admin') 
-	{
-
-	// We are admin-side.
-	new LocalizationView( 'gbp_l10n_localisation' , 'l10n', 'content');
-
-	}
-else
+new LocalizationView( 'gbp_l10n_localisation' , 'l10n', 'content');
+if (@txpinterface == 'public')
 	{
 
 	// We are publish-side.
@@ -1396,9 +1390,9 @@ class LanguageHandler
 		global $prefs;
 		
 		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
-			$prefs[GBP_PREFS_LANGUAGES] = 'en,el';
+			$prefs[GBP_PREFS_LANGUAGES] = array('en', 'el');
 		
-		$lang_codes = explode(',', $prefs[GBP_PREFS_LANGUAGES]);
+		$lang_codes = $prefs[GBP_PREFS_LANGUAGES];
 		return $lang_codes;
 		}
 	// ----------------------------------------------------------------------------
