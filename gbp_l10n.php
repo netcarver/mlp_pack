@@ -83,6 +83,8 @@ class LocalisationView extends GBPPlugin
 		'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
 
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		
+		'inline_editing' => array('value' => 0, 'type' => 'yesnoradio'),
 		);
 
 	var $strings_lang = 'en';
@@ -97,6 +99,7 @@ class LocalisationView extends GBPPlugin
 	'gbp_l10n_edit_resource'		=> 'Edit $type: $owner ',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'languages' 					=> 'Languages ',
+	'inline_editing'				=> 'Inline editing of pages and forms ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
 	'gbp_l10n_localised'			=> 'Localised',
 	'gbp_l10n_missing'				=> ' missing.', 
@@ -348,7 +351,8 @@ class LocalisationStringView extends GBPAdminTabView
 					$this->render_string_edit( 'page', $owner , $id );
 				elseif( $step = gps('step') and $step == 'edit_pageform' )
 					{
-					$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
+					if ($this->parent->preferences['inline_editing']['value'])
+						$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
 					}
 				}
 			break;
@@ -363,7 +367,8 @@ class LocalisationStringView extends GBPAdminTabView
 					$this->render_string_edit( 'form' , $owner , $id );
 				elseif( $step = gps('step') and $step == 'edit_pageform' )
 					{
-					$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
+					if ($this->parent->preferences['inline_editing']['value'])
+						$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
 					}
 				}
 			break;
@@ -585,10 +590,11 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<span style="float:right;"><a href="' . 
 				 $this->parent->url( array( 'owner' => $owner ) , true ) . '">' . 
 				 gTxt('gbp_l10n_statistics') . '&#187;</a></span>' . br . n;
-		$out[] = '<span style="float:right;"><a href="' . 
-				 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' . 
-				 gbp_gTxt('gbp_l10n_edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) . 
-				 '&#187;</a></span>' . br . br . n;
+		if ($this->parent->preferences['inline_editing']['value'])
+			 $out[] = '<span style="float:right;"><a href="' . 
+					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' . 
+					 gbp_gTxt('gbp_l10n_edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) . 
+					 '&#187;</a></span>' . br . br . n;
 
 		#	Render the list... 
 		$out[] = $this->_render_string_list( $strings , 'owner', $owner );
