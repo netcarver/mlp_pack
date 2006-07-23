@@ -60,7 +60,7 @@ class LocalisationView extends GBPPlugin
 	
 	var $gp = array(gbp_language);
 	var $preferences = array(
-		'languages' => array('value' => array( 'en' , 'fr' , 'de' ), 'type' => 'gbp_array_text'),
+		'languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
 		'article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
@@ -87,7 +87,7 @@ class LocalisationView extends GBPPlugin
 		'inline_editing' => array('value' => 0, 'type' => 'yesnoradio'),
 		);
 
-	var $strings_lang = 'en';
+	var $strings_lang = 'en-gb';
 	var $perm_strings = array( # These strings are always needed.
 	'gbp_l10n_localisation'			=> 'localisation',
 	);
@@ -124,8 +124,23 @@ class LocalisationView extends GBPPlugin
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
-		global $textarray;
-		$lang = explode( '-' , LANG );
+		global $textarray, $prefs;
+
+		# First run, setup the languages to the currently installed admin side languages...
+		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
+			{
+			# Make sure the currently selected admin-side language is the site default...
+			$this->preferences['languages']['value'][] = LANG;
+			
+			# Get the remaining admin-side langs...
+			$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
+			foreach( $installed_langs as $lang )
+				{
+				if( !in_array( $lang , $this->preferences['languages']['value'] ) )
+					$this->preferences['languages']['value'][] = $lang;
+				}
+			}
+
 
 		#	Merge the string that is always needed for the localisation tab title...
 		$textarray = array_merge( $textarray , $this->perm_strings );
@@ -134,7 +149,7 @@ class LocalisationView extends GBPPlugin
 		$txp_event = gps('event');
 		if( $txp_event === $event )
 			{
-			if( !$this->installed() or ($this->strings_lang != $lang[0]) )
+			if( !$this->installed() or ($this->strings_lang != LANG) )
 				{
 				# Merge the default language strings into the textarray so that non-English 
 				# users at least see an English message in the plugin. If the user adds translations later 
@@ -145,7 +160,7 @@ class LocalisationView extends GBPPlugin
 			# Pull the language from the TxP language variable and use that to load the strings from 
 			# the store to the $textarray. This will override the strings inserted above, if they have
 			# been translated or edited.
-			StringHandler::load_strings_into_textarray( $lang[0] );
+			StringHandler::load_strings_into_textarray( LANG );
 			}
 
 		# Be sure to call the parent constructor *after* the strings it needs are added and loaded!
@@ -640,6 +655,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<h3>'.gTxt('gbp_l10n_translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 		
 		$string_event = 'snippet';
+		if( $type == gbp_plugin )
+			$string_event = $owner;
 		$x = StringHandler::get_string_set( $id );
 		$final_codes = array();
 
@@ -665,6 +682,7 @@ class LocalisationStringView extends GBPAdminTabView
 						'<textarea name="' . $code . '-data" cols="60" rows="1" title="' . 
 						gTxt('gbp_l10n_textbox_title') . '">' . $data['data'] . '</textarea>' .
 						hInput( $code.'-id' , $data['id'] ) . 
+						hInput( $code.'-event' , $data['event'] ) .
 						'</p></dd>';
 			}
 		
@@ -709,6 +727,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( !$exists and empty( $translation ) )
 				continue;
 
+//echo br , "Storing $string_name($code) as [$translation] using id:'$id' and event:'$event'";
 			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
 			}
 		}
@@ -980,6 +999,24 @@ new LocalisationView( 'gbp_l10n_localisation' , 'l10n', 'content');
 if (@txpinterface == 'public')
 	{
 
+	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
+		{
+		/*
+		FTAO: Graeme.
+		You can call this function from permanant_links with the short (ISO-693-1) language code.
+		*/
+		global $gbp_language;
+		
+		$tmp = LanguageHandler::expand_code( $short_code );
+		if( isset( $tmp ) )
+			$gbp_language = $tmp;
+		else
+			$gbp_language = LanguageHandler::get_site_default_lang();
+			
+		if( $debug )
+			echo br , "Short code='$short_code', Site Language set to [$gbp_language]";
+		}
+	
 	// We are publish-side.
 	global $prefs, $gbp_language;
 
@@ -988,15 +1025,7 @@ if (@txpinterface == 'public')
 
 	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-	$lang_codes = LanguageHandler::get_site_langs();
-	foreach($lang_codes as $code)
-		{
-		if ($path[0] == $code)
-			{
-			$gbp_language = $code;
-			break;	# Stop on first match.
-			}
-		}
+	gbp_l10n_set_browse_language( $path[0] );
 
 	/*
 	SED:	Load the localised set of strings based on the selected language...	
@@ -1079,11 +1108,13 @@ if (@txpinterface == 'public')
 			{
 			foreach( $site_langs as $code ) 
 				{
+				extract( LanguageHandler::compact_code($code) );
 				$native_name = LanguageHandler::get_native_name_of_lang( $code );
 				$dir = LanguageHandler::get_lang_direction_markup( $code );
 				$class = ($gbp_language === $code) ? 'gbp_current_language' : '';
 				$native_name = doTag( $native_name , 'span' , $class , ' lang="'.$code.'"'.$dir );
-				$result[] = '<a href="'.hu.$code.$_SERVER['REQUEST_URI'].'">'.$native_name.'</a>'.n;
+				
+				$result[] = '<a href="'.hu.$short.$_SERVER['REQUEST_URI'].'">'.$native_name.'</a>'.n;
 				}
 			}
 		
@@ -1203,6 +1234,61 @@ class LanguageHandler implements ISO-693-1 language support.
 ---------------------------------------------------------------------------- */
 class LanguageHandler
 	{
+	function compact_code( $long_code )
+		{
+		/*
+		Attempts to pull apart a potentially long form language code into it's components.
+		The output is of the form { short , country , [long] }
+		But the long form will only be included if it isn't in the txp lang-lang form.
+		Examples...
+			en-gb	=> { en , GB , en-gb }
+			fr-fr	=> { fr , FR }
+		*/
+		
+		# Cache the results as they are probably going to get used many times per tab...
+		static $code_mappings;
+		if( isset( $code_mappings[$long_code] ) )
+			return $code_mappings[$long_code];
+		
+		$result = array();
+		$result['short'] 	= @substr( $long_code , 0 , 2 );
+		$result['country']  = @substr( $long_code , 3 , 2 );
+
+		#	If the long_code given is a repeat, like fr-fr then don't setup the long version, just use the short.
+		if( isset( $result['country'] ) and (2 == strlen($result['country'])) and $result['short'] !== $result['country'] )
+			{
+			$result['long'] = $long_code;
+			}
+
+		if( isset( $result['country'] ) )
+			$result['country'] = strtoupper( $result['country'] );
+			
+//echo br, "compact_code( $long_code ) yields ... "; var_dump( $result );
+
+		$code_mappings[$long_code] = $result;
+
+		return $result;
+		}
+	// ----------------------------------------------------------------------------
+	function expand_code( $short_code )
+		{
+		global $prefs;
+		$result = array();
+		foreach( $prefs[GBP_PREFS_LANGUAGES] as $code )
+			{
+			extract( LanguageHandler::compact_code( $code ) );
+			if( $short_code === $short )
+				$result[] = $code;
+			}
+		if( count( $result ) )
+			{
+//echo br , "expand_code ($short_code) yields ... [{$result[0]}]";
+			return $result[0];
+			}
+		else
+			return NULL;
+		}
+	// ----------------------------------------------------------------------------
 	function iso_693_1_langs ( $input, $to_return='lang' )
 		{
 		# Comment out as much as you feel you will never need. (Lightens up the memory needed a little.)
@@ -1231,7 +1317,7 @@ class LanguageHandler
 		'de'=>array( 'de'=>'Deutsch' ) ,	//	'en'=>'German' 
 		'dz'=>array( 'dz'=>'Dzongkha' ) ,	//	'en'=>'Bhutani'
 		'el'=>array( 'el'=>'Ελληνικά' ) ,	//	'en'=>'Greek' 
-		'en'=>array( 'en'=>'English' ),
+		'en'=>array( 'en'=>'English' , 'en-gb'=>'British English' , 'en-us'=>'American English' ),
 		'eo'=>array( 'eo'=>'Esperanto' ),	//	'en'=>'Esperanto' 
 		'es'=>array( 'es'=>'Español' ),	//	'en'=>'Spanish' 
 		'et'=>array( 'et'=>'Eesti Keel' ),	//	'en'=>'Estonian' 
@@ -1352,14 +1438,37 @@ class LanguageHandler
 			{
 			default:
 			case 'lang':
-				return (array_key_exists( $input, $iso_693_1_langs ))
-					?	$iso_693_1_langs[$input][$input]
-					:	NULL;
+				extract( LanguageHandler::compact_code( $input ) );
+				
+				if( !array_key_exists( $short , $iso_693_1_langs ))
+					return NULL;
+
+				$row = $iso_693_1_langs[$short];
+
+				if( isset( $long ) )
+					{
+					#	Try getting the language name for the long code...
+					if( array_key_exists( $long , $row ) )
+						return $row[$long];
+					}
+				
+				# Fall back to the default entry for the short code...
+				return $row[$short];
 			break;
 
+			case 'long2short':
+				extract( LanguageHandler::compact_code( $input ) );
+				return $short;
+			break;
+			
+			case 'short2long':
+				return LanguageHandler::expand_code( $input );
+			break;
+			
 			case 'dir':
-				return (array_key_exists( $input, $iso_693_1_langs ) and array_key_exists('dir', $iso_693_1_langs[$input]))
-					?	$iso_693_1_langs[$input]['dir']
+				extract( LanguageHandler::compact_code( $input ) );
+				return (array_key_exists( $short, $iso_693_1_langs ) and array_key_exists('dir', $iso_693_1_langs[$short]))
+					?	$iso_693_1_langs[$short]['dir']
 					:	NULL;
 			break;
 
@@ -1375,9 +1484,21 @@ class LanguageHandler
 			break;
 			}
 		}
-	
 	// ----------------------------------------------------------------------------
 	function is_valid_code($code)
+		{
+		/*
+		LANGUAGE SUPPORT ROUTINE
+		Check the given string is a valid 2-digit language code from the ISO-693-1 table.
+		*/
+		extract( LanguageHandler::compact_code( $code ) );
+		if( isset( $short ) )
+			return LanguageHandler::is_valid_short_code($short);
+
+		return false;
+		}
+	// ----------------------------------------------------------------------------
+	function is_valid_short_code($code)
 		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
@@ -1452,8 +1573,10 @@ class LanguageHandler
 		global $prefs;
 		
 		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
-			$prefs[GBP_PREFS_LANGUAGES] = array('en', 'el');
-		
+			{
+			$prefs[GBP_PREFS_LANGUAGES] = LANG;
+			}
+
 		$lang_codes = $prefs[GBP_PREFS_LANGUAGES];
 		return $lang_codes;
 		}
