@@ -1014,11 +1014,15 @@ if (@txpinterface == 'public')
 		*/
 		global $gbp_language;
 		
+		$site_langs = LanguageHandler::get_site_langs();
 		$tmp = LanguageHandler::expand_code( $short_code );
-		if( isset( $tmp ) )
+		if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
 			$gbp_language = $tmp;
 		else
-			$gbp_language = LanguageHandler::get_site_default_lang();
+			{
+			if( !isset($gbp_language) or !in_array( $gbp_language , $site_langs ))
+				$gbp_language = LanguageHandler::get_site_default_lang();
+			}
 			
 		if( $debug )
 			echo br , "Short code='$short_code', Site Language set to [$gbp_language]";
