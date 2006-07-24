@@ -105,7 +105,7 @@ class LocalisationView extends GBPPlugin
 
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		
-		'inline.editing' => array('value' => 0, 'type' => 'yesnoradio'),
+		'inline_editing' => array('value' => 0, 'type' => 'yesnoradio'),
 		);
 
 	var $strings_lang = 'en-gb';
@@ -120,7 +120,7 @@ class LocalisationView extends GBPPlugin
 	'gbp_l10n_edit_resource'		=> 'Edit $type: $owner ',
 	'gbp_l10n_explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'languages' 					=> 'Languages ',
-	'inline.editing'				=> 'Inline editing of pages and forms ',
+	'inline_editing'				=> 'Inline editing of pages and forms ',
 	'gbp_l10n_lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
 	'gbp_l10n_localised'			=> 'Localised',
 	'gbp_l10n_missing'				=> ' missing.', 
