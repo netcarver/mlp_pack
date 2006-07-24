@@ -1022,7 +1022,6 @@ if (@txpinterface == 'public')
 
 	if (!defined('rhu'))
 		define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
-
 	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
 	gbp_l10n_set_browse_language( $path[0] );
@@ -1272,9 +1271,9 @@ class LanguageHandler
 	// ----------------------------------------------------------------------------
 	function expand_code( $short_code )
 		{
-		global $prefs;
 		$result = array();
-		foreach( $prefs[GBP_PREFS_LANGUAGES] as $code )
+		$langs = LanguageHandler::get_site_langs();
+		foreach( $langs as $code )
 			{
 			extract( LanguageHandler::compact_code( $code ) );
 			if( $short_code === $short )
