@@ -124,14 +124,15 @@ class LocalisationView extends GBPPlugin
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' ) 
 		{
-		global $textarray, $prefs;
+		global $textarray;
 
-		# First run, setup the languages to the currently installed admin side languages...
-		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
+		# First run, setup the languages array to the currently installed admin side languages...
+		$langs = LanguageHandler::get_site_langs( false );
+		if( NULL === $langs )
 			{
 			# Make sure the currently selected admin-side language is the site default...
 			$this->preferences['languages']['value'][] = LANG;
-			
+
 			# Get the remaining admin-side langs...
 			$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
 			foreach( $installed_langs as $lang )
@@ -1563,7 +1564,7 @@ class LanguageHandler
 		return (LanguageHandler::iso_693_1_langs( $code )) ? LanguageHandler::iso_693_1_langs( $code ) : LanguageHandler::iso_693_1_langs( 'en' ) ;
 		}
 	// ----------------------------------------------------------------------------
-	function get_site_langs()
+	function get_site_langs( $set_if_empty = true )
 		{
 		/*
 		LANGUAGE SUPPORT ROUTINE
@@ -1571,12 +1572,18 @@ class LanguageHandler
 		*/
 		global $prefs;
 		
-		if (!array_key_exists(GBP_PREFS_LANGUAGES, $prefs))
+		$exists = array_key_exists(GBP_PREFS_LANGUAGES, $prefs);
+		if( $set_if_empty and !$exists )
 			{
 			$prefs[GBP_PREFS_LANGUAGES] = LANG;
+			$exists = true;
 			}
 
-		$lang_codes = $prefs[GBP_PREFS_LANGUAGES];
+		if( $exists )
+			$lang_codes = $prefs[GBP_PREFS_LANGUAGES];
+		else
+			$lang_codes = NULL;
+
 		return $lang_codes;
 		}
 	// ----------------------------------------------------------------------------
