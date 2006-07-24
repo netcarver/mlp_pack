@@ -174,6 +174,8 @@ class LocalisationView extends GBPPlugin
 		$gbp[$txp_current_plugin] = &$this;
 		$_GBP[0] = &$this;
 
+		add_privs($this->event, '1,2,3,6');
+		
 		#	NB: This event processing must occur before the installed() check below to
 		# prevent the creation of tabs if the content is not yet installed...
 		$step = gps('step');
@@ -193,24 +195,26 @@ class LocalisationView extends GBPPlugin
 
 		if( $this->installed() )
 			{
-			if ($this->preferences['articles']['value'])
+			if ($this->preferences['articles']['value'] and has_privs('article.edit') )
 				new LocalisationTabView( gTxt('articles'), 'article', $this);
-			if ($this->preferences['categories']['value'])
+			if ($this->preferences['categories']['value'] and has_privs('category') )
 				new LocalisationTabView( gTxt('categories'), 'category', $this);
-			// if ($this->preferences['links']['value'])
+			// if ($this->preferences['links']['value'] and has_privs('link') )
 			// 	new LocalisationTabView('links', 'link', $this);
-			if ($this->preferences['sections']['value'])
+			if ($this->preferences['sections']['value'] and has_privs('section') )
 				new LocalisationTabView( gTxt('sections'), 'section', $this);
-			if ($this->preferences['forms']['value'])
+			if ($this->preferences['forms']['value'] and has_privs('form') )
 				new LocalisationStringView( gTxt('forms') , 'form' , $this );
-			if ($this->preferences['pages']['value'])
+			if ($this->preferences['pages']['value'] and has_privs('page') )
 				new LocalisationStringView( gTxt('pages') , 'page' , $this );
-			if ($this->preferences['plugins']['value'])
+			if ($this->preferences['plugins']['value'] and has_privs('plugin') )
 				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-			new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
+			if( has_privs('prefs') )
+				new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
 			}
 
-		new LocalisationTabView( gTxt('gbp_l10n_wizard'), 'wizard', $this);
+		if( has_privs('admin.edit') )
+			new LocalisationTabView( gTxt('gbp_l10n_wizard'), 'wizard', $this);
 
 		}	# end preload()
 		
@@ -274,6 +278,8 @@ class LocalisationView extends GBPPlugin
 
 	function main() 
 		{
+		require_privs($this->event);
+
 		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
 		if( $this->installed() )
 			{
