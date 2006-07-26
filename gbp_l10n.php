@@ -1869,7 +1869,7 @@ class StringHandler
 		/*
 		ADMIN SUPPORT ROUTINE
 		For use by the localisation plugin. 
-		Can create or update row in the DB depending upon the calling arguments.
+		Can create, delete or update a row in the DB depending upon the calling arguments.
 		*/
 		
 		extract( doSlash( func_get_args() ) );
@@ -1887,13 +1887,14 @@ class StringHandler
 			{
 			#	This is an update...
 			$where	= " `id`='$id'";
-			$result = @safe_update( 'txp_lang' , $set , $where );
+			if( empty( $translation ) )
+				$result = @safe_delete( 'txp_lang', $where );
+			else
+				$result = @safe_update( 'txp_lang' , $set , $where );
 			}
 		else
 			$result = @safe_insert( 'txp_lang' , $set );
 
-		# Cleanup empty strings.
-		@safe_delete( 'txp_lang', "`data`=''");
 		return $result;
 		}
 
