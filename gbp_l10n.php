@@ -231,8 +231,6 @@ $txp_current_plugin = $gbp_current_plugin;
 
 if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_l10n-languages' );
-if( !defined( 'L10N_SEP' ))
-	define( 'L10N_SEP' , '-' );
 
 class LocalisationView extends GBPPlugin 
 	{
@@ -534,13 +532,13 @@ class LocalisationStringView extends GBPAdminTabView
 	
 	function main()
 		{
+		$id = gps(gbp_id);
 		switch ($this->event)
 			{
 			case 'page':
 			$this->render_owner_list('page');
 			if ($owner = gps('owner'))
 				{
-				$id = gps(gbp_id);
 				$this->render_string_list( 'txp_page' , 'user_html' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'page', $owner , $id );
@@ -556,7 +554,6 @@ class LocalisationStringView extends GBPAdminTabView
 			$this->render_owner_list('form');
 			if ($owner = gps('owner'))
 				{
-				$id = gps(gbp_id);
 				$this->render_string_list( 'txp_form' , 'Form' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'form' , $owner , $id );
@@ -570,10 +567,9 @@ class LocalisationStringView extends GBPAdminTabView
 
 			case 'plugin':
 			$this->render_owner_list('plugin');
-			if ($owner = gps(gbp_plugin))
+			if ($owner = gps(gbp_plugin) and $prefix = gps('prefix') )
 				{
-				$id = gps(gbp_id);
-				$this->render_plugin_string_list( $owner , $id );
+				$this->render_plugin_string_list( $owner , $id , $prefix );
 				if( $id )
 					$this->render_string_edit( 'plugin', $owner , $id );
 				}
@@ -598,25 +594,24 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _generate_plugin_list()	# left pane subroutine
 		{
-		$registered_plugins = StringHandler::discover_registered_plugins();
-		if( count( $registered_plugins ) )
+		$rps = StringHandler::discover_registered_plugins();
+		if( count( $rps ) )
 			{
-			//	Get an array of installed plugins. Not all of them will have registered for 
-			// string support...
 			global $plugins;
-			
-			foreach( $registered_plugins as $plugin )
+			foreach( $rps as $plugin=>$vals )
 				{
-				//	Display marker if the plugin isn't installed anymore.
+				extract( $vals );
 				$marker = ( !array_search( $plugin, $plugins ) )
 					? ' <strong>*</strong>' : '';
-				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_plugin.'='.$plugin.'">'.$plugin.$marker.'</a></li>';
+				$out[] = '<li><a href="' . $this->parent->url() . 
+						'&#38;'.gbp_plugin.'='.$plugin.'&#38;prefix='.$pfx.'">' . 
+						$plugin.' (~'.$num.') '.$marker.
+						'</a></li>';
 				}
 			}
 		else
-			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
+
 		return join('', $out);
 		}
 
@@ -651,7 +646,7 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function _render_string_list( $strings , $owner_label , $owner_name )	# Center pane string render subroutine
+	function _render_string_list( $strings , $owner_label , $owner_name , $prefix )	# Center pane string render subroutine
 		{
 		$strings_exist 	= ( count( $strings ) > 0 );
 		if( !$strings_exist )
@@ -669,15 +664,13 @@ class LocalisationStringView extends GBPAdminTabView
 				$guts = $string . ' ['.( ($langs) ? $langs : gTxt('none') ).']';
 				if( !$complete )
 					$guts = '<strong>'. $guts . '</strong>';
-				$out[]= '<li><a href="'.$this->parent->url().'&#38;'.$owner_label.'='.$owner_name.'&#38;'.gbp_id.'='.$string.'">' . 
-						$guts .
-						'</a></li>';
+				$out[]= '<li><a href="' . 
+					$this->parent->url( array($owner_label=>$owner_name, gbp_id=>$string, 'prefix'=>$prefix) , true ) .
+					'">' . $guts . '</a></li>';
 				}
 			}
 		else
-			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
 
 		$out[] = '</ol>';
 		return join('', $out);
@@ -687,9 +680,6 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		$site_langs 	= LanguageHandler::get_site_langs();
 
-		//
-		//	Render stats summary for the strings...
-		//
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
 		$out[] = '<ul>';
 		$extras_found = false;
@@ -720,22 +710,22 @@ class LocalisationStringView extends GBPAdminTabView
 		return join( '' , $out );
 		}
 		
-	function render_plugin_string_list( $plugin , $string_name )	# Center pane plugin wrapper
+	function render_plugin_string_list( $plugin , $string_name , $prefix )	# Center pane plugin wrapper
 		{
 		/*
 		Show all the strings and localisations for the given plugin.
 		*/
 		$stats 			= array();
-		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats );
+		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' . 
-				 $this->parent->url( array( gbp_plugin => $plugin ) , true ) . '">' . 
+				 $this->parent->url( array( gbp_plugin => $plugin, 'prefix'=>$prefix ) , true ) . '">' . 
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 		
-		$out[] = br . n . $this->_render_string_list( $strings , gbp_plugin , $plugin );
+		$out[] = br . n . $this->_render_string_list( $strings , gbp_plugin , $plugin , $prefix );
 		$out[] = '</div>';
 		
 		# Render default view details in right hand pane...
@@ -788,12 +778,10 @@ class LocalisationStringView extends GBPAdminTabView
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list... 
-		$out[] = br . n . $this->_render_string_list( $strings , 'owner', $owner ) . n;
+		$out[] = br . n . $this->_render_string_list( $strings , 'owner', $owner , '' ) . n;
 		$out[] = '</div>';
 
-		//
-		//	Render default view details in right hand pane...
-		//
+		#	Render default view details in right hand pane...
 		$step = gps('step');
  		if( empty( $id ) and empty( $step ) )
 			{
@@ -1407,11 +1395,7 @@ class LanguageHandler
 		{
 		/*
 		Pull apart a long form language code into components.
-		Output = {short , COUNTRY , [long]}
-		But the long form will only be included if it isn't repeated
-		Examples...
-		en-gb=> {en , GB , en-gb}
-		fr-fr=> {fr , FR}
+		Output = {short , COUNTRY , [long]}	So, en-gb=> {en , GB , en-gb}
 		*/
 
 		# Cache the results as they are probably going to get used many times per tab...
@@ -1423,11 +1407,8 @@ class LanguageHandler
 		$result['short'] 	= @substr( $long_code , 0 , 2 );
 		$result['country']  = @substr( $long_code , 3 , 2 );
 
-		#	If the long_code given is a repeat, like fr-fr then don't setup the long version, just use the short.
-		if( isset( $result['country'] ) and (2 == strlen($result['country'])) and $result['short'] !== $result['country'] )
-			{
+		if( isset( $result['country'] ) and (2 == strlen($result['country'])) )
 			$result['long'] = $long_code;
-			}
 
 		if( isset( $result['country'] ) )
 			$result['country'] = strtoupper( $result['country'] );
@@ -1803,17 +1784,17 @@ class StringHandler
 
 	function do_prefs_name( $plugin , $add = true )
 		{
-		static $pfx = 'l10n_registered_plugin_';
+		static $pfx;
 		static $pfx_len;
 		
-		if( empty( $plugin ) )
-			return NULL;
-
-		if( !isset( $pfx_len ) )
+		if( !isset( $pfx ) )
+			{
+			$pfx = 'l10n_registered_plugin'.L10N_SEP;
 			$pfx_len = strlen( $pfx );
+			}
 			
 		if( $add )
-			return  $pfx. $plugin;
+			return  $pfx.$plugin;
 		else
 			return substr( $plugin , $pfx_len ); 
 		}
@@ -1830,14 +1811,15 @@ class StringHandler
 	function register_plugin( $plugin , $pfx , $string_count )
 		{
 		$name = StringHandler::do_prefs_name( $plugin );
-		return set_pref( $name , $pfx , L10N_NAME , 2 );
+		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count );
+		return set_pref( doSlash($name) , serialize($vals) , L10N_NAME , 2 );
 		}
 
 	function unregister_plugin( $plugin )
 		{
 		global $prefs;
-		$name = StringHandler::do_prefs_name( $plugin );
-		$result = safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
+		$name = doSlash( StringHandler::do_prefs_name( $plugin ) );
+		@safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
 		unset( $prefs[$name] );
 		}
 		
@@ -1900,19 +1882,15 @@ class StringHandler
 		For use by the localisation plugin. 
 		Can create or update row in the DB depending upon the calling arguments.
 		*/
-		# 	Check we have valid arguments...
+		
+		extract( doSlash( func_get_args() ) );
+		
 		if( empty($name) or empty($event) or empty($new_lang) )
 			return null;
 
 		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
 			$event = $event.'.'.$txp_current_plugin;
 
-		#	Escape the lot for mySQL.
-		$id 			= doSlash( $id );
-		$event 			= doSlash( $event );
-		$name  			= doSlash( $name );
-		$translation	= doSlash( $translation );
-		$new_lang 		= doSlash( $new_lang );
 		$lastmod 		= date('YmdHis');
 
 		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation'" ;
@@ -1924,10 +1902,7 @@ class StringHandler
 			$result = @safe_update( 'txp_lang' , $set , $where );
 			}
 		else
-			{
-			#	Insert new row...
 			$result = @safe_insert( 'txp_lang' , $set );
-			}
 
 		return $result;
 		}
@@ -2055,29 +2030,19 @@ class StringHandler
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
 		Gets an array of the names of plugins that have registered strings in the correct format. 
-		No repeats!
 		*/
+		global $prefs;
+		
 		$result = array();
+		$p = StringHandler::do_prefs_name( '' );
 
-		$rs = safe_rows_start( 	
-							'distinct event', 
-							'txp_lang', 
-							' `event` like "public.%" or `event` like "admin.%" or `event` like "common.%"'
-							);
-		if( $rs && mysql_num_rows($rs) > 0 )
-			{
-			$set = array();
-			while ( $a = nextRow($rs) )
-				{
-				$plugin = StringHandler::strip_leading_section($a['event']);			
-				$set[$plugin] = $plugin;
-				}
-			foreach( $set as $plugin )
-				{
-				$result[] = $plugin;
-				}
-			sort( $result );
-			}
+		foreach( $prefs as $k=>$v )
+			if( false !== strpos($k , $p) )
+				$result[StringHandler::do_prefs_name( $k , false )] = unserialize($v);
+
+		if( count( $result ) > 1 )
+			ksort( $result );
+
 		return $result;		
 		}
 
@@ -2123,7 +2088,7 @@ class StringHandler
 		return $result;
 		}
 
-	function get_plugin_strings( $plugin , &$stats )	
+	function get_plugin_strings( $plugin , &$stats , $prefix )	
 		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
@@ -2139,7 +2104,8 @@ class StringHandler
 		beta  => 'en'
 		*/
 		$plugin = doSlash( $plugin );
-		$where = ' `event` = "public.'.$plugin.'" or `event` = "admin.'.$plugin.'" or `event` = "common.'.$plugin.'"';
+		$prefix = doSlash( $prefix );
+		$where = ' `name` LIKE "'.$prefix.L10N_SEP.'%"';
 		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
 		return StringHandler::get_strings( $rs , $stats );
 		}
