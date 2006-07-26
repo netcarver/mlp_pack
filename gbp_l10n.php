@@ -2028,28 +2028,24 @@ class StringHandler
 		return count( $extras );
 		}
 
-	function load_strings( $lang )	
+	function load_strings( $lang )
 		{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Loads all strings of the given language into an array and returns them.
 		*/
 		$extras = array();
-
+		$where  = ' AND ( event=\'snippet\' OR event LIKE "public.%" OR event LIKE "common.%" ';
+		$close = ')';
 		if( @txpinterface == 'admin' )
-			$rs = safe_rows_start('name, data','txp_lang',"lang='".doSlash($lang)."'");
-		else
-			$rs = safe_rows_start(
-				'name, data', 
-				'txp_lang', 
-				"lang='" . doSlash($lang) . "' AND ( event='snippet' OR event LIKE \"public.%\" OR event LIKE \"common.%\" )");
+			$close = 'OR event LIKE "admin.%" )';
 
-		if( $rs && mysql_num_rows($rs) > 0 )
+		$rs = safe_rows_start('name, data','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close );
+		$count = mysql_num_rows($rs);
+		if( $rs && $count > 0 )
 			{
 			while ( $a = nextRow($rs) )
-				{
 				$extras[$a['name']] = $a['data'];
-				}
 			}
 		return $extras;
 		}
