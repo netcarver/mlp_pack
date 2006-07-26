@@ -275,8 +275,10 @@ class LocalisationView extends GBPPlugin
 	'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
 	'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
 	'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
+	'l10n-cannot_delete_all'	=> 'Must have 1+ translations.',
 	'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'l10n-edit_resource'		=> 'Edit $type: $owner ',
+	'l10n-empty'				=> 'empty',
 	'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 	'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
@@ -598,9 +600,8 @@ class LocalisationStringView extends GBPAdminTabView
 				extract( $vals );
 				$marker = ( !array_search( $plugin, $plugins ) )
 					? ' <strong>*</strong>' : '';
-				$out[] = '<li><a href="' . $this->parent->url() . 
-						'&#38;'.gbp_plugin.'='.$plugin.'&#38;prefix='.$pfx.'">' . 
-						$plugin.' (~'.$num.') '.$marker.
+				$out[] = '<li><a href="' . $this->parent->url( array(gbp_plugin=>$plugin,'prefix'=>$pfx) , true ) . '">' .
+						$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
 						'</a></li>';
 				}
 			}
@@ -836,7 +837,13 @@ class LocalisationStringView extends GBPAdminTabView
 				$string_event = $e;
 			$lang = LanguageHandler::get_native_name_of_lang($code);
 
-			$out[] = '<dt>'.$lang.' ('.$code.').'.((empty($data['data'])) ? ' *' . gTxt('l10n-missing') : '' ).'</dt>';
+			$warning = '';
+			if( empty( $data['id'] ) )
+				$warning .= ' * '.gTxt('l10n-missing').sp;
+			elseif( empty( $data['data'] ))
+				$warning .= ' * '.gTxt('l10n-empty').sp;
+
+			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.'</dt>';
 			$out[] = '<dd><p>'.
 						'<textarea name="' . $code . '-data" cols="60" rows="1" title="' . 
 						gTxt('l10n-textbox_title') . '">' . $data['data'] . '</textarea>' .
@@ -876,7 +883,21 @@ class LocalisationStringView extends GBPAdminTabView
 		$event       	= gps( 'string_event' );
 		$codes			= gps( 'codes' );
 		$lang_codes		= explode( ',' , $codes );
-		
+		$i				= 0;
+
+		#	Check that we are not deleting every string!
+		foreach($lang_codes as $code)
+			{
+			$t = gps( $code.'-data' );
+			if( !empty( $t ) ) 
+				$i += 1;
+			}
+		if( 0 === $i )
+			{
+			$this->parent->message = gTxt('l10n-cannot_delete_all');
+			return;
+			}
+
 		foreach($lang_codes as $code)
 			{
 			$translation 	= gps( $code.'-data' );
@@ -1788,7 +1809,7 @@ class StringHandler
 			return substr( $plugin , $pfx_len ); 
 		}
 
-	function if_plugin_registered( $plugin , $count = 0 )
+	function if_plugin_registered( $plugin , $lang , $count = 0 )
 		{
 		global $prefs;
 		$name = StringHandler::do_prefs_name( $plugin );
@@ -1797,10 +1818,10 @@ class StringHandler
 		return false;
 		}
 
-	function register_plugin( $plugin , $pfx , $string_count )
+	function register_plugin( $plugin , $pfx , $string_count , $lang )
 		{
 		$name = StringHandler::do_prefs_name( $plugin );
-		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count );
+		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang );
 		return set_pref( doSlash($name) , serialize($vals) , L10N_NAME , 2 );
 		}
 
@@ -1826,8 +1847,8 @@ class StringHandler
 
 		# If needed, register the plugin...
 		$num = count($strings);
-		if( $override or (false === StringHandler::if_plugin_registered($txp_current_plugin , $num)) )
-			StringHandler::register_plugin( $txp_current_plugin , $pfx , $num );
+		if( $override or (false === StringHandler::if_plugin_registered($txp_current_plugin , $lang , $num )) )
+			StringHandler::register_plugin( $txp_current_plugin , $pfx , $num , $lang );
 		else
 			return false;
 
@@ -1857,7 +1878,8 @@ class StringHandler
 			else
 				$name = doSlash( $name );
 
-			mysql_query("INSERT INTO `".PFX."txp_lang` SET `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'");
+			$set = "`lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'";
+			@safe_insert( 'txp_lang' , $set );
 			}
 
 		# Cleanup empty strings.
@@ -1885,7 +1907,6 @@ class StringHandler
 
 		if( !empty( $id ) )
 			{
-			#	This is an update...
 			$where	= " `id`='$id'";
 			if( empty( $translation ) )
 				$result = @safe_delete( 'txp_lang', $where );
