@@ -20,7 +20,7 @@ if (0) {
 <style type="text/css">
 div#l10n_help td { vertical-align:top; }
 div#l10n_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
-div#l10n_help code.sed_code_tag { font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
+div#l10n_help code.code_tag { font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
 div#l10n_help a:link, div#l10n_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
 div#l10n_help a:hover, div#l10n_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
 div#l10n_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
@@ -60,9 +60,7 @@ Here is the full array for the 2-character ISO-693 part 1 language codes.
 
 Cut and paste the rows you need into the iso_693_1_langs() function in the language handler...
 
- <code>
- <pre>
-	static $iso_693_1_langs = array( 
+ <code><pre>static $iso_693_1_langs = array( 
 	'aa'=>array( 'aa'=>'Afaraf' ),	//	'en'=>'Afar'
 	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),	//	'en'=>'Abkhazian' 
 	'af'=>array( 'af'=>'Afrikaans' ),	//	'en'=>'Afrikaans' 
@@ -202,9 +200,7 @@ Cut and paste the rows you need into the iso_693_1_langs() function in the langu
 	'za'=>array( 'za'=>'Sawcuengh' ),	//	'en'=>'Zhuang' 
 	'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),	// 'en'=>'Chinese'
 	'zu'=>array( 'zu'=>'isiZulu' ),	//	'en'=>'Zulu' 
-	);
- </pre>
- </code>
+	);</pre></code>
 
 </div>
 # --- END PLUGIN HELP ---
@@ -425,7 +421,6 @@ class LocalisationView extends GBPPlugin
 		$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
 		$sql[] = 'PRIMARY KEY (`id`)';
 		$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
-
 		safe_query(join('', $sql));
 
 		# SED: Extend the txp_lang table to allow text instead of tinytext in the data field.
@@ -856,6 +851,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = $this->parent->form_inputs();
 		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
 		$out[] = hInput(gbp_language, gps(gbp_language));
+		$out[] = hInput('prefix', gps('prefix'));
 		if( $type === 'plugin' )
 			$out[] = hInput(gbp_plugin, $owner);
 		else
@@ -865,14 +861,12 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form></div>';
 		echo join('', $out);
-
 		}
 
 	function remove_strings()
 		{
 		$remove_langs 	= gps('lang_code');
 		$plugin 		= gps(gbp_plugin);
-
 		StringHandler::remove_strings( $plugin , $remove_langs );
 		}
 
@@ -903,13 +897,9 @@ class LocalisationStringView extends GBPAdminTabView
 		$tab = doSlash( gps( gbp_tab ) );
 
 		if( $tab === 'form' )
-			{
 			@safe_update( 'txp_form' , "`Form`='$data'" , "`name`='$owner'" );
-			}
 		elseif( $tab === 'page' )
-			{
 			@safe_update( 'txp_page' , "`user_html`='$data'" , "`name`='$owner'" );
-			}
 		}
 
 	}
@@ -1414,7 +1404,6 @@ class LanguageHandler
 			$result['country'] = strtoupper( $result['country'] );
 
 		$code_mappings[$long_code] = $result;
-
 		return $result;
 		}
 
@@ -1871,8 +1860,8 @@ class StringHandler
 			mysql_query("INSERT INTO `".PFX."txp_lang` SET `lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'");
 			}
 
-		# Possible TO DO... stop deleting empty entries. 
-		mysql_query("DELETE FROM `".PFX."txp_lang` WHERE `data`=''");
+		# Cleanup empty strings.
+		@safe_delete( 'txp_lang', "`data`=''");
 		}
 
 	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' )
@@ -1892,7 +1881,6 @@ class StringHandler
 			$event = $event.'.'.$txp_current_plugin;
 
 		$lastmod 		= date('YmdHis');
-
 		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation'" ;
 
 		if( !empty( $id ) )
@@ -1904,6 +1892,8 @@ class StringHandler
 		else
 			$result = @safe_insert( 'txp_lang' , $set );
 
+		# Cleanup empty strings.
+		@safe_delete( 'txp_lang', "`data`=''");
 		return $result;
 		}
 
@@ -2192,7 +2182,5 @@ function gbp_gTxt( $name , $args = null )
 	return StringHandler::gTxt( $name , $args );
 	}
 
-
 # --- END PLUGIN CODE ---
-
 ?>
