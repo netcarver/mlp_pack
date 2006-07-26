@@ -218,6 +218,10 @@ if (!defined('gbp_language'))
 	define('gbp_language', 'language');
 if (!defined('gbp_plugin'))
 	define('gbp_plugin', 'plugin');
+if( !defined( 'L10N_SEP' ))
+	define( 'L10N_SEP' , '-' );
+if( !defined( 'L10N_NAME' ) )
+	define( 'L10N_NAME' , 'l10n' );
 
 // require_plugin() will reset the $txp_current_plugin global
 global $txp_current_plugin;
@@ -263,7 +267,7 @@ class LocalisationView extends GBPPlugin
 		);
 
 	var $strings_lang = 'en-gb';
-	var $strings_prefix = 'l10n';
+	var $strings_prefix = L10N_NAME;
 	var $perm_strings = array( # These strings are always needed.
 	'l10n-localisation'			=> 'localisation',
 	);
@@ -430,7 +434,7 @@ class LocalisationView extends GBPPlugin
 		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
 		safe_alter( 'txp_lang' , $sql );
 
-		$this->redirect( array( 'event'=>'l10n' , gbp_tab=>'preference' ) );
+		$this->redirect( array( 'event'=>L10N_NAME , gbp_tab=>'preference' ) );
 		}
 	
 	function cleanup() 
@@ -653,7 +657,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( !$strings_exist )
 			return '';
 
-		$site_langs 	= LanguageHandler::get_site_langs();
+		$site_langs = LanguageHandler::get_site_langs();
 
 		$out[] = '<ol>';
 		if( $strings_exist )
@@ -734,17 +738,13 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = br . n . $this->_render_string_list( $strings , gbp_plugin , $plugin );
 		$out[] = '</div>';
 		
-		//
-		//	Render default view details in right hand pane...
-		//
+		# Render default view details in right hand pane...
  		if( empty( $string_name ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
 			$out[] = $this->_render_string_stats( $string_name , $stats );
-			
-			//
-			//	If the plugin is not present start with a box offering to delete the lot!
-			//
+
+			# If the plugin is not present offer to delete the lot
 			global $plugins;
 			if( !array_search( $plugin, $plugins ) )
 				{
@@ -1171,7 +1171,8 @@ class LocalisationTabView extends GBPAdminTabView
 
 	}
 
-new LocalisationView( 'l10n-localisation' , 'l10n', 'content');
+new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content');
+
 if (@txpinterface == 'public')
 	{
 
@@ -1478,7 +1479,6 @@ class LanguageHandler
 		'no'=>array( 'no'=>'Norsk' ),
 		'pl'=>array( 'pl'=>'Polski' ), 
 		'pt'=>array( 'pt'=>'Português' ),
-		'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),
 		'ro'=>array( 'ro'=>'Română' ), 
 		'ru'=>array( 'ru'=>'Русский' ),
 		'sk'=>array( 'sk'=>'Slovenčina' ),
@@ -1830,14 +1830,14 @@ class StringHandler
 	function register_plugin( $plugin , $pfx , $string_count )
 		{
 		$name = StringHandler::do_prefs_name( $plugin );
-		return set_pref( $name , $pfx , 'l10n' , 2 );
+		return set_pref( $name , $pfx , L10N_NAME , 2 );
 		}
 
 	function unregister_plugin( $plugin )
 		{
 		global $prefs;
 		$name = StringHandler::do_prefs_name( $plugin );
-		$result = safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='l10n'" );
+		$result = safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
 		unset( $prefs[$name] );
 		}
 		
@@ -2050,7 +2050,7 @@ class StringHandler
 		return $extras;
 		}
 
-	function discover_registered_plugins()	
+	function discover_registered_plugins()
 		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
