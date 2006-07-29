@@ -308,40 +308,49 @@ class LocalisationView extends GBPPlugin
 		{
 		global $textarray;
 
-		# First run, setup the languages array to the currently installed admin side languages...
-		$langs = LanguageHandler::get_site_langs( false );
-		if( NULL === $langs )
+		if( @txpinterface == 'admin' )
 			{
-			# Make sure the currently selected admin-side language is the site default...
-			$this->preferences['l10n-languages']['value'][] = LANG;
+			#	Register callbacks to get plugins' strings registered. 
+			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 0 );
 
-			# Get the remaining admin-side langs...
-			$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
-			foreach( $installed_langs as $lang )
+			# First run, setup the languages array to the currently installed admin side languages...
+			$langs = LanguageHandler::get_site_langs( false );
+			if( NULL === $langs )
 				{
-				if( !in_array( $lang , $this->preferences['l10n-languages']['value'] ) )
-					$this->preferences['l10n-languages']['value'][] = $lang;
-				}
-			}
+				# Make sure the currently selected admin-side language is the site default...
+				$this->preferences['l10n-languages']['value'][] = LANG;
 
-		#	Merge the string that is always needed for the localisation tab title...
-		$textarray = array_merge( $textarray , $this->perm_strings );
-
-		#	Only merge and load the rest of the strings if this view's event is active. 
-		$txp_event = gps('event');
-		if( $txp_event === $event )
-			{
-			if( !$this->installed() or ($this->strings_lang != LANG) )
-				{
-				# Merge the default language strings into the textarray so that non-English 
-				# users at least see an English message in the plugin. 
-				$textarray = array_merge( $textarray , $this->strings );
+				# Get the remaining admin-side langs...
+				$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
+				foreach( $installed_langs as $lang )
+					{
+					if( !in_array( $lang , $this->preferences['l10n-languages']['value'] ) )
+						$this->preferences['l10n-languages']['value'][] = $lang;
+					}
 				}
 
-			# Load the strings from the store to the $textarray. This will override the 
-			# strings inserted above, if they have been translated or edited.
-			StringHandler::load_strings_into_textarray( LANG );
+			$textarray = array_merge( $textarray , $this->perm_strings );
+
+			#	Merge the string that is always needed for the localisation tab title...
+			#	Only merge and load the rest of the strings if this view's event is active. 
+			$txp_event = gps('event');
+			if( $txp_event === $event )
+				{
+				if( !$this->installed() or ($this->strings_lang != LANG) )
+					{
+					# Merge the default language strings into the textarray so that non-English 
+					# users at least see an English message in the plugin. 
+					$textarray = array_merge( $textarray , $this->strings );
+					}
+
+				# Load the strings from the store to the $textarray. This will override the 
+				# strings inserted above, if they have been translated or edited.
+				StringHandler::load_strings_into_textarray( LANG );
+				}
 			}
+		else
+			#	Register callbacks to get plugins' strings registered. 
+			register_callback(array(&$this, '_initiate_callbacks'), 'pretext' , '' , 0 );
 
 		# Be sure to call the parent constructor *after* the strings it needs are added and loaded!
 		GBPPlugin::GBPPlugin( gTxt($title_alias) , $event , $parent_tab );
@@ -410,7 +419,7 @@ class LocalisationView extends GBPPlugin
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		# Make sure we only call insert_strings() once!
 		$this->strings = array_merge( $this->strings , $this->perm_strings );
-		StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' );
+		StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'gbp_l10n' );
 
 		# Create the l10n table...
 		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
@@ -444,10 +453,72 @@ class LocalisationView extends GBPPlugin
 		$this->redirect( array( 'event'=>'plugin' ) );
 		}
 
+	function _process_string_callbacks( $event , $step , $pre , $func )
+		{
+		#	May need to move this to base class when the string handler moves to Admin Lib.
+		if( !is_callable($func , false , $key) )
+			return "Cannot call function '$key'.";
+
+		$r = call_user_func($func, $event, $step);
+		if( !is_array( $r ) )
+			return "Call of '$key' returned a non-array value.";
+
+//echo br , "function _process_string_callbacks( $event , $step , $pre , $func ) ";
+//echo br , "Call of $key returned ... " , var_dump( $r ) , br;
+
+		extract( $r );
+		
+		$result = "Skipped insertion of strings for '$key'.";
+		if( $plugin and $prefix and $strings and $lang and $event and (count($strings)) )
+			{
+			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $plugin ) )
+				$result = true;
+			}
+		
+		return $result;
+		}
+	
+	function _initiate_callbacks( $event , $step='' , $pre=0 )
+		{
+		#	May need to move this to base class when the string handler moves to Admin Lib.
+		#	Our callback routine, in turn, initiates our string enumeration event...
+		return $this->_do_callback( "l10n.enumerate_strings", '', 0, array(&$this , '_process_string_callbacks') );
+		}
+
+	function _do_callback( $event, $step='', $pre=0, $func=NULL )
+		{
+		#	Graeme, move this to base class??
+		global $plugin_callback;
+		
+		#	Make sure we use a copy of the array to avoid messing with it's internal pointer.
+		if( !is_array($plugin_callback) )
+			return;
+
+		$results = array();
+
+		$cb_copies = $plugin_callback;
+		reset( $cb_copies );
+		foreach ($cb_copies as $c) 
+			{
+			if( $c['event'] == $event and (empty($c['step']) or $c['step'] == $step) and $c['pre'] == $pre) 
+				{
+				$key = '';
+				if( !is_callable($c['function'] , false , $key ) )
+					continue;
+				# If a processing routinue has been specified then use it otherwise use the callback directly.
+				if( $func and is_callable($func) )
+					$results[ $key ] = call_user_func( $func , $event , $step , $pre , $c['function'] );
+				else
+					$results[ $key ] = call_user_func($c['function'], $event, $step);	
+				}
+			}
+		return $results;
+		}
+		
 	function main() 
 		{
 		require_privs($this->event);
-
+	
 		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
 		if( $this->installed() )
 			{
@@ -574,18 +645,26 @@ class LocalisationStringView extends GBPAdminTabView
 			}
 		}
 
-	function _generate_list( $table , $fname )	# left pane subroutine
+	function _generate_list( $table , $fname , $fdata )	# left pane subroutine
 		{
-		$rs = safe_rows_start( "$fname as name", $table, '1=1' ) ;
+		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
 			while ( $a = nextRow($rs) )
-				$out[] = '<li><a href="'.$this->parent->url().'&#38;owner='.$a['name'].'">'.$a['name'].'</a></li>';
+				{
+				$snippets 	= array();
+				$snippets = SnippetHandler::find_snippets_in_block( $a['data'] );
+				$localised = false;
+				$count = count( $snippets );
+					$marker = ($count) ? '['.$count.']' : '';
+				$guts = $a['name'].' '.$marker;
+				if( $localised )
+					$guts = doTag( $guts , 'strong' );
+				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>';
+				}
 			}
 		else
-			{
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
-			}
 		return join('', $out);
 		}
 
@@ -761,13 +840,14 @@ class LocalisationStringView extends GBPAdminTabView
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
 		$snippets = SnippetHandler::find_snippets_in_block( $data );
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
-
+		$can_edit = $this->parent->preferences['l10n-inline_editing']['value'];
+		
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' . 
 				 $this->parent->url( array( 'owner' => $owner ) , true ) . '">' . 
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
-		if ($this->parent->preferences['l10n-inline_editing']['value'])
+		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' . 
 					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' . 
 					 gbp_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) . 
@@ -952,12 +1032,12 @@ class LocalisationTabView extends GBPAdminTabView
 			break;
 			case 'article':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['article_vars']['value'], $this->parent->preferences['article_hidden_vars']['value'], 'textpattern', "id = '$id'", $id);
+					$this->render_edit($this->parent->preferences['l10n-article_vars']['value'], $this->parent->preferences['l10n-article_hidden_vars']['value'], 'textpattern', "id = '$id'", $id);
 				$this->render_list('ID', 'Title', 'textpattern', '1 order by Title asc');
 			break;
 			case 'category':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['category_vars']['value'], $this->parent->preferences['category_hidden_vars']['value'], 'txp_category', "id = '$id'", $id);
+					$this->render_edit($this->parent->preferences['l10n-category_vars']['value'], $this->parent->preferences['l10n-category_hidden_vars']['value'], 'txp_category', "id = '$id'", $id);
 				$this->render_list('id', 'title', 'txp_category', "name != 'root' order by title asc");
 			break;
 			// case 'link':
@@ -967,7 +1047,7 @@ class LocalisationTabView extends GBPAdminTabView
 			// break;
 			case 'section':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['section_vars']['value'], $this->parent->preferences['section_hidden_vars']['value'], 'txp_section', "name = '$id'", $id);
+					$this->render_edit($this->parent->preferences['l10n-section_vars']['value'], $this->parent->preferences['l10n-section_hidden_vars']['value'], 'txp_section', "name = '$id'", $id);
 				$this->render_list('name', 'title', 'txp_section', "name != 'default' order by name asc");
 			break;
 			}
@@ -1097,8 +1177,10 @@ class LocalisationTabView extends GBPAdminTabView
 		global $txpcfg;
 		extract(get_prefs());
 
-		extract(gpsa($this->parent->preferences[$this->event.'_hidden_vars']['value']));
-		$vars = gpsa($this->parent->preferences[$this->event.'_vars']['value']);
+		$hidden_vars = @gpsa($this->parent->preferences['l10n-'.$this->event.'_hidden_vars']['value']);
+		$vars = @gpsa($this->parent->preferences['l10n-'.$this->event.'_vars']['value']);
+		if( !empty( $hidden_vars ) )
+			extract( $hidden_vars );
 
 		$table = PFX.$_POST['gbp_table'];
 		$language = $_POST[gbp_language];
@@ -1174,37 +1256,68 @@ new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content');
 
 if (@txpinterface == 'public')
 	{
+	register_callback( '_l10n_pretext' , 'pretext' );
 
 	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
 		{
 		# Call this function with the short language code.
 		global $gbp_language;
-		
+		$result = false;
+
 		$site_langs = LanguageHandler::get_site_langs();
 		$tmp = LanguageHandler::expand_code( $short_code );
+
+		if( $debug )
+			echo br, "gbp_l10n_set_browse_language( $short_code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
+
 		if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
-			$gbp_language = $tmp;
+			{
+			if( $debug )
+				echo " ... in IF() ... " ;
+			$gbp_language = LanguageHandler::compact_code($tmp);
+			$result = true;
+			if( $debug )
+				echo "\$tmp [$tmp] used to set \$gbp_language to " , var_dump($gbp_language['long']) , " returning TRUE", br ;
+			}
 		else
 			{
-			if( !isset($gbp_language) or !in_array( $gbp_language , $site_langs ))
-				$gbp_language = LanguageHandler::get_site_default_lang();
+			if( $debug )
+				echo " ... in ELSE ... " ;
+			if( !isset($gbp_language) or !in_array( $gbp_language['long'] , $site_langs ))
+				{
+				$gbp_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+				$result = (!empty($tmp));
+				}
 			}
-			
 		if( $debug )
-			echo br , "Short code='$short_code', Site Language set to [$gbp_language]";
+			echo br , "Input='$short_code', Site Language set to " , var_dump( $gbp_language ) , " Returning ", var_dump($result),  br;
+		
+		return $result;
 		}
 	
-	// We are publish-side.
-	global $prefs, $gbp_language;
+	function _l10n_pretext()
+		{
+		global $prefs, $gbp_language;
 
-	if (!defined('rhu'))
-		define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
-	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
+		if (!defined('rhu'))
+			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
+		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-	gbp_l10n_set_browse_language( $path[0] );
+//echo br.br.br.br , "_l10n_pretext() ... ";
+		$tmp = array_shift($path);
+//echo " ... first item=$tmp ";
+		if( gbp_l10n_set_browse_language( $tmp ) )
+			{
+			#	Reset the URL, removing the language component...
+			$new_uri = '/' . join( '/' , $path );
+			$_SERVER['REQUEST_URI'] = $new_uri;
+			}
 
-	# Load the localised set of strings based on the selected language...	
-	StringHandler::load_strings_into_textarray( $gbp_language );
+//echo ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br;
+
+		# Load the localised set of strings based on the selected language...	
+		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
+		}
 
 	/*
 	TAG HANDLERS FOLLOW
@@ -1216,6 +1329,7 @@ if (@txpinterface == 'public')
 		direct snippets in pages/forms.
 		Atts: 'name' the name of the snippet to output.
 		*/
+		
 		$out = '';
 		if( array_key_exists('name', $atts) )
 			{
@@ -1223,7 +1337,7 @@ if (@txpinterface == 'public')
 
 			$out = gTxt( $atts['name'] );
 			if( $out === $atts['name'] )
-				$out = '('.(($gbp_language)?$gbp_language:'??').')'.$out;
+				$out = '('.(($gbp_language['long'])?$gbp_language['long']:'??').')'.$out;
 			}
 		return $out;
 		}
@@ -1251,10 +1365,10 @@ if (@txpinterface == 'public')
 			{
 			#	Does the direction of the currently selected site language match that requested?
 			#	If so, parse the contained content.
-			if( $dir == LanguageHandler::get_lang_direction( $gbp_language ) )
+			if( $dir == LanguageHandler::get_lang_direction( $gbp_language['short'] ) )
 				$out = parse($thing) . n;
 			}
-		elseif( $lang == $gbp_language )
+		elseif( $lang == $gbp_language['short'] or $lang == $gbp_language['long'] )
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
 			$dir = LanguageHandler::get_lang_direction_markup( $lang );
@@ -1298,9 +1412,11 @@ if (@txpinterface == 'public')
 		*/
 		global $gbp_language;
 
+		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
+		
 		if( !$gbp_language )
 			return '';
-		return $gbp_language;
+		return $gbp_language[$type];
 		}
 
 	function gbp_get_lang_dir( $atts )
@@ -1311,11 +1427,13 @@ if (@txpinterface == 'public')
 		*/
 		global $gbp_language;
 		
+		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
+		
 		$lang = $gbp_language; 
 		if( !$gbp_language )
-			$lang = LanguageHandler::get_site_default_lang();
+			$lang = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
 
-		$dir = LanguageHandler::get_lang_direction( $lang );
+		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
 		}
 	
@@ -1355,7 +1473,7 @@ if (@txpinterface == 'public')
 				$thing = SnippetHandler::substitute_snippets( $thing );
 				
 				if (isset($thisarticle)) {
-					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', "`language` = '$gbp_language' AND `entry_id` = '".$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
+					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['short'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
 
 					if ($rs) foreach($rs as $row) {
 						if ($row['entry_value'])
@@ -1363,7 +1481,7 @@ if (@txpinterface == 'public')
 					}
 				}
 				$html = parse($thing);
-				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|'.$gbp_language.'))\/?#', '$1'.$gbp_language.'/', $html);
+				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $gbp_language['short'].'/'.'$1', $html);
 				return $html;
 			}
 		}
@@ -1678,7 +1796,7 @@ class SnippetHandler
 								       'global $gbp_language;
 										global $textarray;
 										if( $gbp_language )
-											$lang = $gbp_language;
+											$lang = $gbp_language[\'long\'];
 										else
 											$lang = "??";
 										$snippet = strtolower($match[1]);
@@ -1833,7 +1951,7 @@ class StringHandler
 		unset( $prefs[$name] );
 		}
 		
-	function insert_strings( $pfx , $strings , $lang , $event='' , $override = false )
+	function insert_strings( $pfx , $strings , $lang , $event='' , $plugin='' , $override = false )
 		{
 		/*
 		PLUGIN SUPPORT ROUTINE
@@ -1845,10 +1963,13 @@ class StringHandler
 		if( empty($strings) or !is_array($strings) or empty($lang) or empty($pfx) )
 			return null;
 
+		if( empty( $plugin) )
+			$plugin = $txp_current_plugin;
+
 		# If needed, register the plugin...
 		$num = count($strings);
-		if( $override or (false === StringHandler::if_plugin_registered($txp_current_plugin , $lang , $num )) )
-			StringHandler::register_plugin( $txp_current_plugin , $pfx , $num , $lang );
+		if( $override or (false === StringHandler::if_plugin_registered($plugin , $lang , $num )) )
+			StringHandler::register_plugin( $plugin , $pfx , $num , $lang );
 		else
 			return false;
 
@@ -1861,8 +1982,8 @@ class StringHandler
 			}
 			
 		# if the plugin is known, store it as a suffix to any strings stored...
-		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-			$event = $event.'.'.$txp_current_plugin;
+		if( !empty($plugin) and ($event=='public' or $event=='admin' or $event=='common') )
+			$event = $event.'.'.$plugin;
 
 		#	Iterate over the $strings and, for each that is not present, enter them into the sql table...
 		$lastmod 	= date('YmdHis');
@@ -1884,6 +2005,7 @@ class StringHandler
 
 		# Cleanup empty strings.
 		@safe_delete( 'txp_lang', "`data`=''");
+		return true;
 		}
 
 	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' )
