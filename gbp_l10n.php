@@ -1,7 +1,7 @@
 ﻿<?php
 
 $plugin['name'] = 'gbp_l10n';
-$plugin['version'] = '0.5';
+$plugin['version'] = '0.6';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_l10n/';
 $plugin['description'] = 'Textpattern content localisation.';
@@ -266,6 +266,7 @@ class LocalisationView extends GBPPlugin
 	'l10n-localisation'			=> 'localisation',
 	);
 	var $strings = array(	
+	'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 	'l10n-article_vars'			=> 'Article variables ',
 	'l10n-article_hidden_vars'	=> 'Hidden article variables ',
 	'l10n-category_vars'		=> 'Category variables ',
@@ -279,6 +280,7 @@ class LocalisationView extends GBPPlugin
 	'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'l10n-edit_resource'		=> 'Edit $type: $owner ',
 	'l10n-empty'				=> 'empty',
+	'l10n-explain_no_tags'		=> '<p>** These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 	'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 	'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
@@ -594,6 +596,10 @@ class LocalisationStringView extends GBPAdminTabView
 				case 'gbp_save_pageform':
 				$this->save_pageform();
 				break;
+				
+				case 'gbp_localise_pageform':
+				$this->localise_pageform();
+				break;
 				}
 			}
 		}
@@ -601,6 +607,10 @@ class LocalisationStringView extends GBPAdminTabView
 	function main()
 		{
 		$id = gps(gbp_id);
+		$step = gps('step');
+		$pf_steps = array('gbp_save_pageform', 'edit_pageform', 'gbp_localise_pageform');
+		$can_edit = $this->parent->preferences['l10n-inline_editing']['value'];
+
 		switch ($this->event)
 			{
 			case 'page':
@@ -610,11 +620,8 @@ class LocalisationStringView extends GBPAdminTabView
 				$this->render_string_list( 'txp_page' , 'user_html' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'page', $owner , $id );
-				elseif( $step = gps('step') and $step == 'edit_pageform' )
-					{
-					if ($this->parent->preferences['l10n-inline_editing']['value'])
-						$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
-					}
+				elseif( $can_edit and in_array($step , $pf_steps) )
+					$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
 				}
 			break;
 
@@ -625,11 +632,8 @@ class LocalisationStringView extends GBPAdminTabView
 				$this->render_string_list( 'txp_form' , 'Form' , $owner , $id );
 				if( $id )
 					$this->render_string_edit( 'form' , $owner , $id );
-				elseif( $step = gps('step') and $step == 'edit_pageform' )
-					{
-					if ($this->parent->preferences['l10n-inline_editing']['value'])
-						$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
-					}
+				elseif( $can_edit and in_array($step , $pf_steps) )
+					$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
 				}
 			break;
 
@@ -650,18 +654,26 @@ class LocalisationStringView extends GBPAdminTabView
 		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
+			$explain = false;
 			while ( $a = nextRow($rs) )
 				{
 				$snippets 	= array();
 				$snippets = SnippetHandler::find_snippets_in_block( $a['data'] );
-				$localised = false;
+				$localised = SnippetHandler::do_localise( $a['data'] );
 				$count = count( $snippets );
-					$marker = ($count) ? '['.$count.']' : '';
+				$marker = ($count) ? '['.$count.']' : '';
 				$guts = $a['name'].' '.$marker;
-				if( $localised )
+				if( !$localised and ($count) )
+					{
+					$guts .= ' **';
+					$explain = true;
+					}
+				if( $localised or ($count) )
 					$guts = doTag( $guts , 'strong' );
-				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>';
+				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
+			if( $explain )
+				$out[] = br . gTxt('l10n-explain_no_tags') . n;
 			}
 		else
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
@@ -872,17 +884,32 @@ class LocalisationStringView extends GBPAdminTabView
 	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
 		{
 		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-		$out[] = '<h3>'.gbp_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>'.n.'<form action="index.php" method="post">';
-		
+		$out[] = '<h3>'.gbp_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
+
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
-		$out[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' . 
-				 $data . 
-				 '</textarea></p>'.br.n;
-		$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
-		$out[] = sInput('gbp_save_pageform');
-		$out[] = $this->parent->form_inputs();
-		$out[] = hInput('owner', $owner);
-		$out[] = '</form></div>';
+		$localised = SnippetHandler::do_localise( $data );
+
+		if( !$localised )
+			{
+			$l[] = '<p>'.gTxt('l10n-add_tags').n;
+			$l[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
+			$l[] = sInput('gbp_localise_pageform').n;
+			$l[] = $this->parent->form_inputs();
+			$l[] = hInput('owner', $owner);
+			$l[] = hInput('data', $data);
+			$out[] = form( join('', $l) , 'border: 1px solid grey; padding: 0.5em; margin: 1em;' );
+			}
+
+		$f[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' . 
+			 $data . 
+			 '</textarea></p>'.br.n;
+		$f[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+		$f[] = sInput('gbp_save_pageform');
+		$f[] = $this->parent->form_inputs();
+		$f[] = hInput('owner', $owner);
+		$out[] = form( join('', $f) , 'padding: 0.5em; margin: 1em;' );
+		
+		$out[] = '</div>';
 		echo join('', $out);
 		}
 		
@@ -957,7 +984,7 @@ class LocalisationStringView extends GBPAdminTabView
 		StringHandler::remove_strings( $plugin , $remove_langs );
 		}
 
-	function save_strings() 
+	function save_strings()
 		{
 		$string_name 	= gps( gbp_id );
 		$event       	= gps( 'string_event' );
@@ -1003,6 +1030,13 @@ class LocalisationStringView extends GBPAdminTabView
 			@safe_update( 'txp_page' , "`user_html`='$data'" , "`name`='$owner'" );
 		}
 
+	function localise_pageform()
+		{
+		$data = gps('data');
+		$data = SnippetHandler::do_localise( $data , 'insert' );
+		$_POST['data'] = $data;
+		LocalisationStringView::save_pageform();
+		}
 	}
 
 class LocalisationTabView extends GBPAdminTabView 
@@ -1772,10 +1806,16 @@ class SnippetHandler
 		# The following pattern is used to match any gbp_snippet tags in pages and forms.
 		static $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
 		
+		# The following are the localise tag pattern(s)...
+		static $tag_pattern = '/\<\/*txp:gbp_localise\s*\>/';
+		
 		switch( $name )
 			{
 			case 'snippet' :	
 				return $snippet_pattern;
+			break;
+			case 'tag_localise':
+				return $tag_pattern;
 			break;
 			default :
 			case 'snippet_tag' :
@@ -1809,6 +1849,42 @@ class SnippetHandler
 		return $out;
 		}
 
+	function has_localisation_tags( &$thing )
+		{
+		$p = SnippetHandler::get_pattern( 'tag_localise' );
+		$i = 0;
+		$r = preg_match_all( $p , $thing , $matches );
+		if( $r !== false )
+			$i += $r;
+		return ($i > 1);
+		}
+
+	function do_localise( &$thing , $action = 'check' )
+		{
+		if( !$thing or empty( $thing ) )
+			return NULL;
+		
+//echo br , "do_localise( \$thing , $action )";
+
+		switch( $action )
+			{
+			case 'remove' :
+			$p = SnippetHandler::get_pattern( 'tag_localise' );
+			$thing = trim( preg_replace( $p , '' , $thing , -1 , $count ) );
+			return $count;
+			break;
+
+			case 'insert' :
+			return '<txp:gbp_localise>'.n.n.$thing.n.n.'</txp:gbp_localise>';
+			break;
+
+			default:
+			case 'check':
+			return SnippetHandler::has_localisation_tags( $thing );
+			break;
+			}
+		}
+		
 	function find_snippets_in_block( &$thing , $merge = false , $get_data = false )
 		{
 		/*
