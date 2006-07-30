@@ -280,12 +280,13 @@ class LocalisationView extends GBPPlugin
 	'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 	'l10n-edit_resource'		=> 'Edit $type: $owner ',
 	'l10n-empty'				=> 'empty',
-	'l10n-explain_no_tags'		=> '<p>** These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
+	'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 	'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
 	'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 	'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
 	'l10n-languages' 			=> 'Languages ',
 	'l10n-localised'			=> 'Localised',
+	'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
 	'l10n-missing'				=> ' missing.', 
 	'l10n-no_plugin_heading'	=> 'Notice&#8230;',
 	'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
@@ -665,15 +666,16 @@ class LocalisationStringView extends GBPAdminTabView
 				$guts = $a['name'].' '.$marker;
 				if( !$localised and ($count) )
 					{
-					$guts .= ' **';
+					$guts .= ' *';
 					$explain = true;
 					}
 				if( $localised or ($count) )
 					$guts = doTag( $guts , 'strong' );
 				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
+			$out[] = br . gTxt('l10n-pageform-markup') . n;
 			if( $explain )
-				$out[] = br . gTxt('l10n-explain_no_tags') . n;
+				$out[] = gTxt('l10n-explain_no_tags') . n;
 			}
 		else
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
