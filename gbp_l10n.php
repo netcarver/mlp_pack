@@ -1641,7 +1641,7 @@ if (@txpinterface == 'public')
 				$thing = SnippetHandler::substitute_snippets( $thing );
 				
 				if (isset($thisarticle)) {
-					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['short'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
+					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
 
 					if ($rs) foreach($rs as $row) {
 						if ($row['entry_value'])
