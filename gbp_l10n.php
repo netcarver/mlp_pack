@@ -282,7 +282,12 @@ class LocalisationView extends GBPPlugin
 	'l10n-empty'				=> 'empty',
 	'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 	'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
+	'l10n-export'				=> 'Export',
+	'l10n-import'				=> 'Import',
+	'l10n-import_title'			=> '<h2>Import Strings</h2><br/><p>Paste exported files into the box below and click the button.</p>',
 	'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
+	'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
+	'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
 	'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
 	'l10n-languages' 			=> 'Languages ',
 	'l10n-localised'			=> 'Localised',
@@ -517,7 +522,31 @@ class LocalisationView extends GBPPlugin
 			}
 		return $results;
 		}
-		
+
+	function serve_file( $data , $title )
+		{
+		/*
+		Graeme - possible routine for the admin library, serves a data block as a file download.
+		*/
+		ob_clean();
+		$size = strlen( $data );
+		header('Content-Description: File Download');
+		header('Content-Type: application/octet-stream');
+		header('Content-Length: ' . $size);
+		header('Content-Disposition: attachment; filename="' . $title . '"');
+		@ini_set("zlib.output_compression", "Off");
+		@set_time_limit(0);
+		@ignore_user_abort(true);
+		$data = str_split( $data , 64*1024 );
+		foreach( $data as $chunk )
+			{
+			echo $chunk; 
+			ob_flush();
+			flush();
+			}
+		exit(0);
+		}
+
 	function main() 
 		{
 		require_privs($this->event);
@@ -601,6 +630,14 @@ class LocalisationStringView extends GBPAdminTabView
 				case 'gbp_localise_pageform':
 				$this->localise_pageform();
 				break;
+				
+				case 'gbp_export_languageset':
+				$this->export_languageset();
+				break;
+				
+				case 'gbp_import_languageset':
+				$this->import_languageset();
+				break;
 				}
 			}
 		}
@@ -610,6 +647,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$id = gps(gbp_id);
 		$step = gps('step');
 		$pf_steps = array('gbp_save_pageform', 'edit_pageform', 'gbp_localise_pageform');
+		$pl_steps = array('gbp_import_languageset');
 		$can_edit = $this->parent->preferences['l10n-inline_editing']['value'];
 
 		switch ($this->event)
@@ -640,7 +678,11 @@ class LocalisationStringView extends GBPAdminTabView
 
 			case 'plugin':
 			$this->render_owner_list('plugin');
-			if ($owner = gps(gbp_plugin) and $prefix = gps('prefix') )
+			if( $step and in_array( $step , $pl_steps ) )
+				{
+				$this->render_import_list();
+				}
+			elseif( $owner = gps(gbp_plugin) and $prefix = gps('prefix') )
 				{
 				$this->render_plugin_string_list( $owner , $id , $prefix );
 				if( $id )
@@ -770,13 +812,13 @@ class LocalisationStringView extends GBPAdminTabView
 		$site_langs 	= LanguageHandler::get_site_langs();
 
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
-		$out[] = '<ul>';
+		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">&nbsp;&nbsp;&#035;&nbsp;</td>' . td('') . td('') ).n.'</thead><tbody>';
 		$extras_found = false;
 		foreach( $stats as $iso_code=>$count )
 			{
 			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
-			$guts = $count . ' ' . $name;
 			$remove = '';
+			$export = '';
 			if( !in_array( $iso_code , $site_langs ) )
 				{
 				$extras_found = true;
@@ -784,17 +826,46 @@ class LocalisationStringView extends GBPAdminTabView
 				$remove[] = sInput( 'gbp_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
 				$remove[] = hInput( 'lang_code' , $iso_code );
-				$guts = form( $guts . ' * ' . join( '' , $remove ) , 
+				$remove = form( join( '' , $remove ) , 
 								'' ,
 								"verify('" . doSlash(gbp_gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) . 
 								 doSlash(gTxt('are_you_sure')) . "')");
 				}
-			$out[]= '<li>'.$guts.'</li>';
+
+			$details =  StringHandler::if_plugin_registered( $string_name , $iso_code );
+			if( false !== $details )
+				{
+				$details = unserialize( $details );
+				$export[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
+				$export[] = sInput( 'gbp_export_languageset');
+				$export[] = $this->parent->form_inputs();
+				$export[] = hInput( 'language' , $iso_code );
+				$export[] = hInput( 'prefix' , $details['pfx'] );
+				$export[] = hInput( 'plugin' , $string_name );
+				$export = form( join( '' , $export ) );
+				}
+			
+			$out[]= tr( '<td align="right">'.($extras_found ? ' * ' : '').$name.'</td>'.n.'<td align="right">&nbsp;&nbsp;'.$count.'&nbsp;</td>'.n.td($export).td($remove) );
 			}
-		$out[]= '<li style="border-top: 1px solid gray; margin-right: 1em;">'.array_sum($stats).' '.gTxt('l10n-strings').'</li>';
-		$out[] = '</ul>';
+		$out[] = '<tr style="border: 1px solid #ccc;">'.td('').'<td align="right">&nbsp;&nbsp;'.array_sum($stats).'&nbsp;</td>'.n.td('').n.td('').'</tr>'.n;
+		$out[] = '</tbody></table>';
+
 		if( $extras_found )
 			$out[] = gTxt('l10n-explain_extra_lang');
+
+		if( !empty( $string_name ) )
+			{
+			$import[] = gTxt('l10n-import_title') . br;
+			$import[] = '<textarea name="data" cols="60" rows="2" id="gbp_l10n_string_import">';
+			$import[] = '</textarea>' .br . br;
+			$import[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
+			$import[] = sInput( 'gbp_import_languageset');
+			$import[] = $this->parent->form_inputs();
+			$import[] = hInput( 'plugin' , gps('plugin') );	
+			$import[] = hInput( 'prefix' , gps('prefix') );
+			$import[] = hInput( 'language' , gps('language') );	
+			$out[] = form( join( '' , $import ) , 'border: 1px solid #ccc; padding:1em; margin:1em;' );
+			}
 
 		return join( '' , $out );
 		}
@@ -821,7 +892,7 @@ class LocalisationStringView extends GBPAdminTabView
  		if( empty( $string_name ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-			$out[] = $this->_render_string_stats( $string_name , $stats );
+			$out[] = $this->_render_string_stats( $plugin , $stats );
 
 			# If the plugin is not present offer to delete the lot
 			global $plugins;
@@ -876,7 +947,7 @@ class LocalisationStringView extends GBPAdminTabView
  		if( empty( $id ) and empty( $step ) )
 			{
 			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-			$out[] = $this->_render_string_stats( $id , $stats );
+			$out[] = $this->_render_string_stats( '' , $stats );
 			$out[] = '</div>';
 			}
 
@@ -954,7 +1025,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.'</dt>';
 			$out[] = '<dd><p>'.
-						'<textarea name="' . $code . '-data" cols="60" rows="1" title="' . 
+						'<textarea name="' . $code . '-data" cols="60" rows="2" title="' . 
 						gTxt('l10n-textbox_title') . '">' . $data['data'] . '</textarea>' .
 						hInput( $code.'-id' , $data['id'] ) . 
 						hInput( $code.'-event' , $data['event'] ) .
@@ -977,6 +1048,39 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form></div>';
 		echo join('', $out);
+		}
+
+	function render_import_list()
+		{
+		$d 	= gps( 'data' );
+		$d = @unserialize( @base64_decode( @str_replace( "\r\n", '', $d ) ) );
+
+		$o[] = '<div style="float:left;">';
+		$o[] = '<h2>'.gTxt('preview').' '.gTxt('file').'</h2>';
+		if( !isset($d['plugin']) or !isset($d['prefix']) or !isset($d['event']) or !isset($d['strings']) )
+			$o[] = gTxt('l10n-invalid_import_file');
+		else
+			{
+			$f1[] = gTxt('plugin') . ': <strong>'.$d['plugin'].'</strong>'.br.n;
+			$f1[] = gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($d['lang']).' ['.$d['lang'].']</strong>'.br.br.n;
+			$f1[] = hInput( 'data' , gps('data') );
+			$f1[] = hInput( 'plugin' , $d['plugin'] );	
+			$f1[] = hInput( 'prefix' , $d['prefix'] );
+			$f1[] = hInput( 'language' , gps('language') );	
+			$f1[] = sInput( 'gbp_import_languageset');
+			$f1[] = hInput( 'commit', 'true' );
+			$f1[] = $this->parent->form_inputs();
+			
+			foreach( $d['strings'] as $k=>$v )
+				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\"/>") ) .n ;
+
+			$f2[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
+			$content = join( '' , $f1 ) . doTag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
+			$o[] = form( $content , '' ,
+						"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
+			}
+		$o[] = '</div>';
+		echo join( '' , $o );
 		}
 
 	function remove_strings()
@@ -1039,6 +1143,34 @@ class LocalisationStringView extends GBPAdminTabView
 		$_POST['data'] = $data;
 		LocalisationStringView::save_pageform();
 		}
+	
+	function export_languageset()
+		{
+		$plugin = gps('plugin');
+		$lang   = gps('language');
+		$prefix = gps('prefix');
+
+		$details =  StringHandler::if_plugin_registered( $plugin , $lang );
+		if( false !== $details )
+			{
+			$details = unserialize( $details );
+			$data = StringHandler::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
+			$this->parent->serve_file( $data , $plugin . '.' . $lang . '.inc' );
+			}
+		}
+	
+	function import_languageset()
+		{
+		$commit = gps( 'commit' );
+		if( !empty($commit) and ('true' === $commit) )
+			{
+			$d 	= gps( 'data' );
+			$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
+			StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['plugin'] , true );
+			unset( $_POST['step'] );
+			}
+		}
+
 	}
 
 class LocalisationTabView extends GBPAdminTabView 
@@ -2014,10 +2146,10 @@ class StringHandler
 		return false;
 		}
 
-	function register_plugin( $plugin , $pfx , $string_count , $lang )
+	function register_plugin( $plugin , $pfx , $string_count , $lang , $event )
 		{
 		$name = StringHandler::do_prefs_name( $plugin );
-		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang );
+		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) );
 		return set_pref( doSlash($name) , serialize($vals) , L10N_NAME , 2 );
 		}
 
@@ -2046,9 +2178,9 @@ class StringHandler
 
 		# If needed, register the plugin...
 		$num = count($strings);
-		if( $override or (false === StringHandler::if_plugin_registered($plugin , $lang , $num )) )
-			StringHandler::register_plugin( $plugin , $pfx , $num , $lang );
-		else
+		if( false === StringHandler::if_plugin_registered($plugin , $lang , $num ) )
+			StringHandler::register_plugin( $plugin , $pfx , $num , $lang , $event );
+		elseif( !$override )
 			return false;
 
 		# If the prefix doesn't end with the required sep character, add it...
@@ -2077,8 +2209,11 @@ class StringHandler
 			else
 				$name = doSlash( $name );
 
-			$set = "`lang`='$lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$data'";
-			@safe_insert( 'txp_lang' , $set );
+			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data'";
+			$where 	= ", `name`='$name'";
+			@safe_insert( 'txp_lang' , $set . $where );
+			if( $override )
+				@safe_update( 'txp_lang' , $set , $where );
 			}
 
 		# Cleanup empty strings.
@@ -2215,7 +2350,7 @@ class StringHandler
 		return count( $extras );
 		}
 
-	function load_strings( $lang )
+	function load_strings( $lang , $filter='' )
 		{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
@@ -2227,7 +2362,7 @@ class StringHandler
 		if( @txpinterface == 'admin' )
 			$close = 'OR event LIKE "admin.%" )';
 
-		$rs = safe_rows_start('name, data','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close );
+		$rs = safe_rows_start('name, data','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
 		$count = mysql_num_rows($rs);
 		if( $rs && $count > 0 )
 			{
@@ -2237,6 +2372,22 @@ class StringHandler
 		return $extras;
 		}
 
+	function serialize_strings( $lang , $owner , $prefix , $event )
+		{
+		$r = array	(
+					'plugin'	=> $owner,	#	Name the plugin these strings are for.
+					'prefix'	=> $prefix,	#	Its unique string prefix
+					'lang'		=> $lang,	#	The language of the initial strings.
+					'event'		=> $event,	#	public/admin/common = which interface the strings will be loaded into
+					);
+					
+		$filter = ' AND `name` LIKE "'.doSlash($prefix).L10N_SEP.'%"';
+		$r['strings'] = StringHandler::load_strings( $lang, $filter );
+		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
+//echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
+		return $result;
+		}
+	
 	function discover_registered_plugins()
 		{
 		/*
