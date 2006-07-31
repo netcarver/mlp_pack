@@ -1607,7 +1607,7 @@ class LanguageHandler
 		'da'=>array( 'da'=>'Dansk' ) ,
 		'de'=>array( 'de'=>'Deutsch' ) ,
 		'el'=>array( 'el'=>'Ελληνικά' ) ,
-		'en'=>array( 'en'=>'English' , 'en-gb'=>'British English' , 'en-us'=>'American English' ),
+		'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
 		'es'=>array( 'es'=>'Español' ),
 		'et'=>array( 'et'=>'Eesti Keel' ),	
 		'eu'=>array( 'eu'=>'Euskera' ),
