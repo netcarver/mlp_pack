@@ -1119,7 +1119,6 @@ class LocalisationStringView extends GBPAdminTabView
 			if( !$exists and empty( $translation ) )
 				continue;
 
-//echo br , "Storing $string_name($code) as [$translation] using id:'$id' and event:'$event'";
 			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
 			}
 		}
@@ -2228,15 +2227,18 @@ class StringHandler
 		For use by the localisation plugin. 
 		Can create, delete or update a row in the DB depending upon the calling arguments.
 		*/
-		
-		extract( doSlash( func_get_args() ) );
-		
 		if( empty($name) or empty($event) or empty($new_lang) )
 			return null;
 
 		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
 			$event = $event.'.'.$txp_current_plugin;
 
+		$name = doSlash( $name );
+		$event = doSlash( $event );
+		$new_lang = doSlash( $new_lang );
+		$translation = doSlash( $translation );
+		$id = doSlash( $id );
+			
 		$lastmod 		= date('YmdHis');
 		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation'" ;
 
