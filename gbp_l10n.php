@@ -306,6 +306,7 @@ class LocalisationView extends GBPPlugin
 	'l10n-summary'				=> 'Statistics.',
 	'l10n-textbox_title'		=> 'Type in the text here.',
 	'l10n-translations_for'		=> 'Translations for ',
+	'l10n-total'				=> 'Total',
 	'l10n-unlocalised'			=> 'Unlocalised',
 	'l10n-view_site'			=> 'View localised site', 
 	'l10n-wizard'				=> 'Wizards',
@@ -712,7 +713,7 @@ class LocalisationStringView extends GBPAdminTabView
 					$explain = true;
 					}
 				if( $localised or ($count) )
-					$guts = doTag( $guts , 'strong' );
+					$guts = '<strong>'.$guts.'</strong>';
 				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
@@ -845,9 +846,9 @@ class LocalisationStringView extends GBPAdminTabView
 				$export = form( join( '' , $export ) );
 				}
 			
-			$out[]= tr( '<td align="right">'.($extras_found ? ' * ' : '').$name.'</td>'.n.'<td align="right">&nbsp;&nbsp;'.$count.'&nbsp;</td>'.n.td($export).td($remove) );
+			$out[]= tr( td( ($extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
 			}
-		$out[] = '<tr style="border: 1px solid #ccc;">'.td('').'<td align="right">&nbsp;&nbsp;'.array_sum($stats).'&nbsp;</td>'.n.td('').n.td('').'</tr>'.n;
+		$out[] = tr( td( gTxt('l10n-total') ).td(array_sum($stats).'&nbsp;').td('').td('') , ' style="text-align:right;" ' );
 		$out[] = '</tbody></table>';
 
 		if( $extras_found )
