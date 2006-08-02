@@ -1444,6 +1444,7 @@ if (@txpinterface == 'public')
 				echo " ... in IF() ... " ;
 			$gbp_language = LanguageHandler::compact_code($tmp);
 			$result = true;
+			getlocale( $gbp_language['long'] );
 			if( $debug )
 				echo "\$tmp [$tmp] used to set \$gbp_language to " , var_dump($gbp_language['long']) , " returning TRUE", br ;
 			}
@@ -1454,6 +1455,7 @@ if (@txpinterface == 'public')
 			if( !isset($gbp_language) or !in_array( $gbp_language['long'] , $site_langs ))
 				{
 				$gbp_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+				getlocale( $gbp_language['long'] );
 				$result = (!empty($tmp));
 				}
 			}
