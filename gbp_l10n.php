@@ -1296,6 +1296,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 			foreach($rs1 as $field => $value) 
 				{
+				$entry_value = '';
 				$rs2 = safe_row(
 					'id, entry_value',
 					'gbp_l10n',
@@ -1314,13 +1315,13 @@ class LocalisationTabView extends GBPAdminTabView
 					{
 					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
-					$out[] = '<div class="gbp_l10n_value">'.text_area($field, 200, 420, $entry_value).'</div>';
+					$out[] = '<div class="gbp_l10n_value">'.text_area($field, 200, 420, $entry_value).'</div><br/>';
 					} 
 				else if (in_array($field_type, array('string'))) 
 					{
 					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
 					$out[] = '<div class="gbp_l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
-					$out[] = '<div class="gbp_l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div>';
+					$out[] = '<div class="gbp_l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div><br/>';
 					} 
 				else
 					$out[] = hInput($field, $value);
