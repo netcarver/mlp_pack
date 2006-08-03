@@ -538,7 +538,8 @@ class LocalisationView extends GBPPlugin
 		@ini_set("zlib.output_compression", "Off");
 		@set_time_limit(0);
 		@ignore_user_abort(true);
-		$data = str_split( $data , 64*1024 );
+		$d = chunk_split( $data , 8*1024 , n );
+		$data = explode( n , $d );
 		foreach( $data as $chunk )
 			{
 			echo $chunk; 
