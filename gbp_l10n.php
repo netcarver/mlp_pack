@@ -1074,7 +1074,10 @@ class LocalisationStringView extends GBPAdminTabView
 			$f1[] = $this->parent->form_inputs();
 			
 			foreach( $d['strings'] as $k=>$v )
+				{
+				$v = htmlspecialchars( $v );
 				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\"/>") ) .n ;
+				}
 
 			$f2[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
 			$content = join( '' , $f1 ) . doTag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
