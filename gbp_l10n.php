@@ -1472,15 +1472,30 @@ if (@txpinterface == 'public')
 	
 	function _l10n_pretext()
 		{
+		function load_localised_pref( $name )
+			{
+			global $prefs , $gbp_language;
+			//	echo br ,br ,br ,br , "pretext: load_localised_pref( $name ) ... language = '{$gbp_language['long']}' ... ";
+			$r = StringHandler::load_strings( $gbp_language['long'] , " AND `name`='snip-$name'" );
+			if( !empty( $r ) )
+				{
+				$v = $r['snip-'.$name];
+				$GLOBALS[$name] = $v;
+				$GLOBALS['prefs'][$name] = $v;
+				$prefs[$name] = $v;
+				//	echo " \$prefs[$name] = " , $prefs[$name] , br , var_dump( $v );
+				}
+			}
+		
 		global $prefs, $gbp_language;
 
 		if (!defined('rhu'))
 			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
 		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-//echo br.br.br.br , "_l10n_pretext() ... ";
+		//	echo br.br.br.br , "_l10n_pretext() ... ";
 		$tmp = array_shift($path);
-//echo " ... first item=$tmp ";
+		//	echo " ... first item=$tmp ";
 		if( gbp_l10n_set_browse_language( $tmp ) )
 			{
 			#	Reset the URL, removing the language component...
@@ -1488,7 +1503,11 @@ if (@txpinterface == 'public')
 			$_SERVER['REQUEST_URI'] = $new_uri;
 			}
 
-//echo ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br;
+		//	echo ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br;
+
+		#	Load the site name and slogan into the $prefs[] array in the right place...
+		load_localised_pref( 'sitename' );
+		load_localised_pref( 'site_slogan' );
 
 		# Load the localised set of strings based on the selected language...	
 		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
@@ -1531,7 +1550,7 @@ if (@txpinterface == 'public')
 			return $out;
 		
 		extract(lAtts(array(
-							'lang' => $gbp_language ,
+							'lang' => $gbp_language['short'] ,
 							'dir'  => '',
 							'wraptag' => 'div' ,
 							),$atts));
@@ -1603,10 +1622,11 @@ if (@txpinterface == 'public')
 		global $gbp_language;
 		
 		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
-		
-		$lang = $gbp_language; 
+
 		if( !$gbp_language )
 			$lang = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+		else
+			$lang = $gbp_language;
 
 		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
@@ -1646,15 +1666,18 @@ if (@txpinterface == 'public')
 
 				# SED: Process the direct snippet substitutions needed in the contained content.
 				$thing = SnippetHandler::substitute_snippets( $thing );
-				
-				if (isset($thisarticle)) {
-					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
 
-					if ($rs) foreach($rs as $row) {
-						if ($row['entry_value'])
-							$thisarticle[strtolower($row['entry_column'])] = ($row['entry_value_html']) ? parse($row['entry_value_html']) : $row['entry_value'];
+				if (isset($thisarticle)) 
+					{
+					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
+					if( $rs )
+						foreach( $rs as $row ) 
+							{
+							if( $row['entry_value'] )
+								$thisarticle[strtolower($row['entry_column'])] = ($row['entry_value_html']) ? parse($row['entry_value_html']) : $row['entry_value'];
+							}
 					}
-				}
+
 				$html = parse($thing);
 				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $gbp_language['short'].'/'.'$1', $html);
 				return $html;
@@ -1727,8 +1750,8 @@ class LanguageHandler
 		$langs = LanguageHandler::get_site_langs();
 		foreach( $langs as $code )
 			{
-			extract( LanguageHandler::compact_code( $code ) );
-			if( $short_code === $short )
+			$r = LanguageHandler::compact_code( $code );
+			if( $short_code === $r['short'] )
 				$result[] = $code;
 			}
 		if( count( $result ) )
@@ -1776,7 +1799,9 @@ class LanguageHandler
 			{
 			default:
 			case 'lang':
-				extract( LanguageHandler::compact_code( $input ) );
+				$r = LanguageHandler::compact_code( $input );
+				$short = $r['short'];
+				if( isset($r['long']) ) $long = $r['long'];
 				
 				if( !array_key_exists( $short , $iso_693_1_langs ))
 					return NULL;
@@ -1795,8 +1820,8 @@ class LanguageHandler
 			break;
 
 			case 'long2short':
-				extract( LanguageHandler::compact_code( $input ) );
-				return $short;
+				$r = LanguageHandler::compact_code( $input );
+				return $r['short'];
 			break;
 			
 			case 'short2long':
@@ -1828,7 +1853,8 @@ class LanguageHandler
 		/*
 		Check the given string is a valid language code.
 		*/
-		extract( LanguageHandler::compact_code( $code ) );
+		$lang = LanguageHandler::compact_code( $code );
+		$short = $lang['short'];
 		if( isset( $short ) )
 			return LanguageHandler::is_valid_short_code($short);
 
@@ -2004,12 +2030,10 @@ class SnippetHandler
 		{
 		if( !$thing or empty( $thing ) )
 			return NULL;
-		
-//echo br , "do_localise( \$thing , $action )";
-
 		switch( $action )
 			{
 			case 'remove' :
+			$count = 0;
 			$p = SnippetHandler::get_pattern( 'tag_localise' );
 			$thing = trim( preg_replace( $p , '' , $thing , -1 , $count ) );
 			return $count;
@@ -2100,7 +2124,7 @@ class SnippetHandler
 		if ( empty( $name_set ) )
 			$name_set = "''";
 
-//		$where = " `event`='snippet' AND `name` IN ($name_set)";
+		//	$where = " `event`='snippet' AND `name` IN ($name_set)";
 		$where = " `name` IN ($name_set)";
 		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
 		
@@ -2235,6 +2259,8 @@ class StringHandler
 		For use by the localisation plugin. 
 		Can create, delete or update a row in the DB depending upon the calling arguments.
 		*/
+		global	$txp_current_plugin;
+
 		if( empty($name) or empty($event) or empty($new_lang) )
 			return null;
 
@@ -2300,14 +2326,12 @@ class StringHandler
 		if( $remove_lang and !empty( $remove_lang ) )
 			{
 			$where = "(`lang` IN ('$remove_lang')) AND (`event` LIKE \"common.%\" OR `event` LIKE \"public.%\" OR `event` LIKE \"admin.%\" OR `event`='snippet')";
-//echo br, 'Langs', $where;
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
 		elseif( $plugin and !empty( $plugin ) )
 			{
 			$where = "`event`=\"common.$plugin\" OR `event`=\"public.$plugin\" OR `event`=\"admin.$plugin\"";
-//echo br, 'plugin', $where;
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			StringHandler::unregister_plugin( $plugin );
@@ -2339,7 +2363,7 @@ class StringHandler
 					$where .= " AND `event`='$event'";
 				@safe_delete( 'txp_lang' , $where );
 				}
-			@safe_optimize( 'txp_lang' , $debug );
+			@safe_optimize( 'txp_lang' );
 			}
 
 		if( $txp_current_plugin )
@@ -2373,7 +2397,7 @@ class StringHandler
 			$close = 'OR event LIKE "admin.%" )';
 
 		$rs = safe_rows_start('name, data','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
-		$count = mysql_num_rows($rs);
+		$count = @mysql_num_rows($rs);
 		if( $rs && $count > 0 )
 			{
 			while ( $a = nextRow($rs) )
@@ -2394,7 +2418,7 @@ class StringHandler
 		$filter = ' AND `name` LIKE "'.doSlash($prefix).L10N_SEP.'%"';
 		$r['strings'] = StringHandler::load_strings( $lang, $filter );
 		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
-//echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
+		//	echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
 		return $result;
 		}
 	
