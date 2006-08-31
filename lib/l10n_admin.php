@@ -3,9 +3,8 @@
 /*	To do...
 
 Article filtering by language
-	add cookie tracking
+	add cookie tracking?
 	User permissions to set/filter by language
-
 						Clone4xl18n		List restrictions		Article creation lang
 0	Others				No access		No access				No access
 1	Publishers			Yes				None					Any
@@ -15,29 +14,36 @@ Article filtering by language
 5	Freelancer			No				Known site langs		No access
 6	Designer			No				No access				No access
 
-
-ajw_admin_workflow like...
-	article tranfser capabilities
+	ajw_admin_workflow like...
+		article tranfser capabilities
 		REQUIRES
 			user language permissions.
-	emailing of transfer notices
+		emailing of transfer notices
+
+	404 error handling
 
 */
 
 $l10n_vars = array();
 
-add_privs( 'l10n_clone_js_link'		, '1,2,3,4,5,6' );
-add_privs( 'l10n_serve_clone_js'	, '1,2,3,4,5,6' );
+global $l10n_vars;
 
-//register_callback( 'l10n_setup_buffer_processor'			, 'article' , 'edit' , 1 );
-register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
-register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
-register_callback( 'l10n_generate_lang_tables'				, 'article' );
-register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
-register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
-register_callback( 'l10n_clone_js_link'         			, 'article' );
-register_callback( 'l10n_serve_clone_js'        			, 'l10n_clone_js', '', 1 );
-register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
+if( $l10n_view->installed() )
+	{
+	add_privs( 'l10n_clone_js_link'		, '1,2,3,4,5,6' );
+	add_privs( 'l10n_serve_clone_js'	, '1,2,3,4,5,6' );
+
+	//register_callback( 'l10n_setup_buffer_processor'			, 'article' , 'edit' , 1 );
+	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
+	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
+	register_callback( 'l10n_generate_lang_tables'				, 'article' );
+	register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
+	register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
+	register_callback( 'l10n_clone_js_link'         			, 'article' );
+	register_callback( 'l10n_serve_clone_js'        			, 'l10n_clone_js', '', 1 );
+	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
+	}
+
 
 function _l10n_create_temp_textpattern( $languages )
 	{
