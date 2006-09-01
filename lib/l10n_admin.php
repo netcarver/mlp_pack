@@ -72,7 +72,6 @@ function l10n_list_filter( $event, $step )
 					$selected[] = "'$lang'";
 				}
 			$languages = join( ',' , $selected );
-//			$languages = "'fr-fr','de-de','en-gb','el-gr'";
 			_l10n_create_temp_textpattern( $languages );
 			break;
 		default:
@@ -136,7 +135,7 @@ function l10n_list_buffer_processor( $buffer )
 
 	#	Inject the language chooser...
 	$chooser = _l10n_chooser( LanguageHandler::get_site_langs() );
-	$f = '<form action="index.php" method="post"><p style="text-align: center;"><label for="list-search">';
+	$f = '<form action="index.php" method="post" style="margin: auto; text-align: center;"><p><label for="list-search">';
 	$buffer = str_replace( $f , $chooser.br.n.$f , $buffer );
 
 	#	Inject the language markers...
@@ -244,7 +243,7 @@ function l10n_article_buffer_processor( $buffer )
 		$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
 				hInput('original_ID' , $id_no) .
 				hInput('Group' , $group_id) .
-				'<p>Translating into: ' . selectInput( 'Lang', $remaining ) . '</p>' .
+				'<p>'. gTxt('l10n-xlate_to') . selectInput( 'Lang', $remaining ) . '</p>' .
 				'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return l10n_clone();" />' .
 				'</fieldset>';
 		$buffer = str_replace( $f , $f.n.$r , $buffer );
@@ -359,20 +358,18 @@ function l10n_delete_articles_from_group_cb( $event , $step )
 			$l10n_vars['update_tables'] = $languages;
 		}
 	}
-
-
-function _l10n_generate_lang_table( $lang )
+function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	$code  = LanguageHandler::compact_code( $lang );
 	$table_name = 'textpattern_' . $code['short'];
 
-	//echo br , "_l10n_generate_lang_table( $lang ) ... \$table_name=[$table_name] ... ";
-
 	$sql = 'drop table `'.PFX."$table_name`";
 	@safe_query( $sql );
+	$where = '';
+	if( $filter )
+		$where = " where `Lang`='$lang'";
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
-	//echo br , "sql: $sql";
+	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern`$where";
 	@safe_query( $sql );
 	}
 function l10n_generate_lang_tables( $event , $step )
