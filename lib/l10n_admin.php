@@ -5,14 +5,14 @@
 Article filtering by language
 	add cookie tracking?
 	User permissions to set/filter by language
-						Clone4xl18n		List restrictions		Article creation lang
-0	Others				No access		No access				No access
-1	Publishers			Yes				None					Any
-2	Managing editor		Yes				None					Any
-3	Copy editor			No				None					Known site langs
-4	Staff writer		No				Known site langs		Known site langs
-5	Freelancer			No				Known site langs		No access
-6	Designer			No				No access				No access
+	ID	Group				Clone4xl18n		List restrictions		Article creation lang
+	0	Others				No access		No access				No access
+	1	Publishers			Yes				None					Any
+	2	Managing editor		Yes				None					Any
+	3	Copy editor			No				None					Known site langs
+	4	Staff writer		No				Known site langs		Known site langs
+	5	Freelancer			No				Known site langs		No access
+	6	Designer			No				No access				No access
 
 	ajw_admin_workflow like...
 		article tranfser capabilities
@@ -24,23 +24,16 @@ Article filtering by language
 
 */
 
-$l10n_vars = array();
-
 global $l10n_vars;
+$l10n_vars = array();
 
 if( $l10n_view->installed() )
 	{
-	add_privs( 'l10n_clone_js_link'		, '1,2,3,4,5,6' );
-	add_privs( 'l10n_serve_clone_js'	, '1,2,3,4,5,6' );
-
-	//register_callback( 'l10n_setup_buffer_processor'			, 'article' , 'edit' , 1 );
 	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
 	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
 	register_callback( 'l10n_generate_lang_tables'				, 'article' );
 	register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
 	register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
-	register_callback( 'l10n_clone_js_link'         			, 'article' );
-	register_callback( 'l10n_serve_clone_js'        			, 'l10n_clone_js', '', 1 );
 	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
 	}
 
@@ -118,11 +111,11 @@ function _l10n_chooser( $permitted_langs )
 	$o[] = t.'<input type="submit" value="'.gTxt('go').'" class="smallerbox" />' . n;
 	$o[] = '</fieldset></div>' . n;
 
-//	if( 0 === $count )
+	//if( 0 === $count )
 		#
 		#	No checked boxes => nothing to show here!
 		#
-//		$o = '';
+		//$o = '';
 
 	$o = form( join( '' , $o ) );
 
@@ -145,26 +138,6 @@ function l10n_list_buffer_processor( $buffer )
 
 	return $buffer;
 	}
-function l10n_clone_js_link()
-	{
-	echo n.n.'<script type="text/javascript" src="index.php?event=l10n_clone_js"></script>'.n.n;
-	}
-
-function l10n_serve_clone_js()
-	{
-	while (@ob_end_clean());
-	header("Content-type: text/javascript");
-	$text = doSlash( gTxt('are_you_sure') );
-	echo <<<js
-	function l10n_clone()
-		{
-		var check = confirm('$text');
-		return check;
-		}
-js;
-	exit;
-	}
-
 function l10n_setup_vars( $event , $step )
 	{
 	#
@@ -239,12 +212,13 @@ function l10n_article_buffer_processor( $buffer )
 	if( $can_clone and $id_no !== '-' )
 		{
 		#	Insert the clone panel...
+		$checkit = "'".doSlash(gTxt('are_you_sure'))."'";
 		$f = '<input type="submit" name="save" value="'.gTxt('save').'" class="publish" tabindex="4" />';
 		$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
 				hInput('original_ID' , $id_no) .
 				hInput('Group' , $group_id) .
 				'<p>'. gTxt('l10n-xlate_to') . selectInput( 'Lang', $remaining ) . '</p>' .
-				'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return l10n_clone();" />' .
+				'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return confirm('.$checkit.');" />' .
 				'</fieldset>';
 		$buffer = str_replace( $f , $f.n.$r , $buffer );
 		}
