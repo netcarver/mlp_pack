@@ -315,7 +315,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-section_vars'			=> 'Section variables ',
 		'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
-		'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom table and almost all of the strings that were inserted.',
+		'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
 		'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ translations.',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
@@ -338,7 +338,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
 		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
-		'l10n-setup_verify'			=> 'This will add a table called gbp_l10n to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT.',
+		'l10n-setup_verify'			=> 'This will add some tables to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT. It will then insert some new fields into the textpattern table.',
 		'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
 		'l10n-setup_wiz_title'		=> 'Setup Wizard',
 		'l10n-snippets'				=> ' snippets.',
@@ -473,7 +473,7 @@ class LocalisationView extends GBPPlugin
 		# Extend the txp_lang table to allow text instead of tinytext in the data field.
 		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Extend the txp_lang.data field from TINY_TEXT to TEXT' , $ok );
+		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok );
 
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		# Make sure we only call insert_strings() once!
@@ -610,8 +610,9 @@ class LocalisationView extends GBPPlugin
 			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
 			}
 
-
-		# These get totally removed and don't get re-inserted by the setup routine...
+		#
+		# Remove the strings...
+		#
 		$this->strings = array_merge( $this->strings , $this->perm_strings );
 		$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' );
 		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true );
@@ -1400,6 +1401,17 @@ class LocalisationTabView extends GBPAdminTabView
 		{
 		$step = gps('step');
 
+		$langs = array();
+		$codes = $this->parent->preferences['l10n-languages']['value'];
+		foreach( $codes as $code )
+			{
+			$code = trim( $code );
+			$tmp = LanguageHandler::get_native_name_of_lang( $code ) . ' [' . $code . ']';
+			if( $code == LANG )
+				$tmp .= ' - ' . gTxt('default') . '.';
+			$langs[$code] = $tmp;
+			}
+
 		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
 		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
 
@@ -1423,6 +1435,7 @@ class LocalisationTabView extends GBPAdminTabView
 				$out[] = graf( gTxt('l10n-cleanup_wiz_text') );
 
 				$out[] = form(
+					//graf( 'Reduce the site to which language? ' . selectInput( 'l10n_reduce_to', $langs ) ) .
 					fInput('submit', '', gTxt('cleanup'), '') . $this->parent->form_inputs() . sInput( 'cleanup' ) ,
 					'' ,
 					"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash( gTxt('l10n-cleanup_verify'))."')"
@@ -1454,10 +1467,19 @@ class LocalisationTabView extends GBPAdminTabView
 									);
 				$out[] = '<h1>'.gTxt('l10n-setup_wiz_title').'</h1>';
 				$out[] = graf( gTxt('l10n-setup_wiz_text') );
-				$lang = LanguageHandler::get_native_name_of_lang( LANG ) . ' [' . LANG . ']';
-				$out[] = graf( gbp_gTxt('l10n-site_default_lang' , array('$lang'=>$lang) ) );
 				$out[] = form(
-					//graf( 'The existing articles&#8230; ' . selectInput( 'l10n_import_routine', $importers ) ) . br .
+					tag(
+						StringHandler::make_legend('l10n-languages') .
+						graf( 'Tables for the following languages will be added&#8230;' . br . join( "<br />\n\t" , $langs ) )
+						//.graf( 'The existing articles&#8230; ' . selectInput( 'l10n_import_routine', $importers ) )
+						, 'fieldset'
+						) .
+					//tag(
+					//	StringHandler::make_legend('l10n-snippets') .
+					//	graf( fInput('checkbox' , 'l10n_snippets' , 'checked' ) . ' Convert pages/forms to use snippets' )
+					//	, 'fieldset'
+					//	) .
+					br .
 					fInput('submit', '', gTxt('Setup'), '') . $this->parent->form_inputs() . sInput( 'setup' ) ,
 					'' ,
 					"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash(gTxt('l10n-setup_verify'))."')"
@@ -2077,7 +2099,13 @@ class SnippetHandler
 
 class StringHandler
 	{
-
+	function make_legend( $title , $args = null )
+		{
+		$title = gbp_gTxt( $title , $args );
+		$title = mb_convert_case( $title , MB_CASE_TITLE , 'utf-8' );
+		$title = tag( $title.'&#8230;', 'legend' );
+		return $title;
+		}
 	function strip_leading_section( $string , $delim='.' )
 		{
 		/*
