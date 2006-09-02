@@ -72,18 +72,41 @@ class GroupManager
 		$group = safe_update( 'l10n_textpattern_groups' , "`names`='$title', `members`='$members'" , "`ID`='$group'" );
 		return $group;
 		}
-	function add_article( $group , $article_id , $article_lang )
+	function change_article_language( $group , $article_id , $article_lang , $target_lang )
 		{
+		echo br , "change_article_language( $group , $article_id , $article_lang -> $target_lang ) ... ";
 		# get the group info...
 		extract( GroupManager::_get_group_info( $group ) );
 
+		if( array_key_exists( $target_lang , $members ) )
+			return "Group $group already has a translation for $target_lang.";
+
+		if( !array_key_exists( $article_lang , $members ) )
+			return "Article $article_id in $article_lang does not belong to group $group.";
+		unset( $members[$article_lang] );
+
+		$members[$target_lang] = $article_id;
+
+		$ok = GroupManager::_update_group( $group , $names , $members );
+		return $ok;
+		}
+	function add_article( $group , $article_id , $article_lang , $check_membership = true )
+		{
+		# get the group info...
+		$info = GroupManager::_get_group_info( $group );
+		if( empty( $info ) )
+			return false;
+		extract( $info );
+
 		if( array_key_exists( $article_lang , $members ) )
 			return false;	# There is already a translation of the target language in the group.
-		if( in_array( $article_id , $members ) )
+		if( $check_membership and in_array( $article_id , $members ) )
 			return false;	# The article is already in this group!
 
 		$members[$article_lang] = $article_id;
 		$ok = GroupManager::_update_group( $ID , $names , $members );
+
+		echo br , 'add_article() returning ' , ($ok) ? 'true' : 'false';
 		return $ok;
 		}
 	function remove_article( $group , $article_id , $article_lang )
@@ -131,7 +154,7 @@ class GroupManager
 		}
 	function create_group_and_add( $article )
 		{
-		//		echo br , "create_group_and_add(\$article) ... ", var_dump ($article) ,br,br;
+		//echo br , "create_group_and_add(\$article) ... ", var_dump ($article) ,br,br;
 		$result = false;
 		$name = doSlash($article['Title']);
 		$lang = (@$article['Lang']) ? $article['Lang'] : LanguageHandler::get_site_default_lang();
@@ -198,7 +221,7 @@ class GroupManager
 			$out[]	= n.t.'<li><a href="" rel="nofollow">'.LanguageHandler::get_native_name_of_lang($lang).'</a></li>';
 			}
 
-		return '<ul>'.n.join( '' , $out ).n.'</ul>'.n;
+		return tag( n . join( "\n\t" , $out ) . n , 'ul' ) . n;
 		}
 	function get_remaining_langs( $group )
 		{
@@ -221,15 +244,14 @@ class GroupManager
 
 		return $to_do;
 		}
-	function move_to_group( $article_id , $new_lang, $new_group )
+	function move_to_group( $article )
 		{
-		#
-		# 	WIP = NOT TESTED/DEBUGGED YET.
-		#
-		#	DO I NEED THIS ANYMORE?
-		#
+		echo br , "move_to_group( $article ) ... ";
 
-		echo br , "move_to_group( $article_id , $new_lang, $new_group )";
+		#	Get the new entries...
+		$new_group	= $article['Group'];
+		$new_lang	= (@$article['Lang']) ? $article['Lang'] : LanguageHandler::get_site_default_lang();
+		$article_id	= $article['ID'];
 
 		#	Read the existing article entries...
 		$info = safe_row( '*' , 'textpattern' , "`ID`='$article_id'" );
@@ -239,11 +261,18 @@ class GroupManager
 			return false;
 			}
 
-		$group = $info['Group'];
-		$lang = $info['Lang'];
+		$current_group	= $info['Group'];
+		$current_lang	= $info['Lang'];
 
+		echo "id=$article_id, lang {$current_lang}->{$new_lang}, group={$current_group}->{$new_group}" , br ;
+
+		if( ($new_group == $current_group) and ($new_lang == $current_lang) )
+			{
+			echo '... returning true: no changes needed.';
+			return true;
+			}
 		#	Add article to new group...
-		$added = add_article( $new_group , $article_id , $new_lang );
+		$added = GroupManager::add_article( $new_group , $article_id , $new_lang , false );
 		if( !$added )
 			{
 			echo " ... returning: failed to add to new group.";
@@ -251,9 +280,8 @@ class GroupManager
 			}
 
 		#	Remove article from existing group...
-		$removed = GroupManager::remove_article( $group , $id , $lang );
-
-		if( !removed )
+		$removed = GroupManager::remove_article( $current_group , $article_id , $current_lang );
+		if( !$removed )
 			{
 			#	Attempt to remove from the group we just added to...
 			remove_article( $new_group , $article_id , $new_lang );
@@ -1401,16 +1429,8 @@ class LocalisationTabView extends GBPAdminTabView
 		{
 		$step = gps('step');
 
-		$langs = array();
 		$codes = $this->parent->preferences['l10n-languages']['value'];
-		foreach( $codes as $code )
-			{
-			$code = trim( $code );
-			$tmp = LanguageHandler::get_native_name_of_lang( $code ) . ' [' . $code . ']';
-			if( $code == LANG )
-				$tmp .= ' - ' . gTxt('default') . '.';
-			$langs[$code] = $tmp;
-			}
+		$langs = LanguageHandler::do_fleshout_names( $codes , true, true );
 
 		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
 		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
@@ -1670,6 +1690,24 @@ class LanguageHandler
 	/*
 	class LanguageHandler implements ISO-693-1 language support.
 	*/
+	function do_fleshout_names( $langs , $append_code = false , $append_default=false )
+		{
+		$result = array();
+		if( is_array($langs) and !empty($langs) )
+			{
+			foreach( $langs as $code )
+				{
+				$code = trim( $code );
+				$tmp = LanguageHandler::get_native_name_of_lang( $code );
+				if( $append_code )
+					$tmp .= ' [' . $code . ']';
+				if( $append_default and ($code === LanguageHandler::get_site_default_lang() ) )
+					$tmp .= ' - ' . gTxt('default');
+				$result[$code] = $tmp;
+				}
+			}
+		return $result;
+		}
 
 	function compact_code( $long_code )
 		{

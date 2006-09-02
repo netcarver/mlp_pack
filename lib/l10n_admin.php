@@ -29,14 +29,50 @@ $l10n_vars = array();
 
 if( $l10n_view->installed() )
 	{
+	add_privs( 'l10n.clone' 	, '1,2' );
+	add_privs( 'l10n.reassign'	, '1,2' );
+
 	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
 	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
 	register_callback( 'l10n_generate_lang_tables'				, 'article' );
 	register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
 	register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
+	register_callback( 'l10n_send_notification_email'			, 'list' , 'list_multi_edit' );
 	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
 	}
 
+function _l10n_get_user_languages( $user_id = null )
+	{
+	#
+	#	Returns an array of the languages that the given TxP user can create/edit
+	# If the input user id is null (default) then the current txp_user is used...
+	#
+	if( null === $user_id )
+		{
+		global $txp_user;
+		$user_id = $txp_user;
+		}
+
+	$langs = array();
+
+	echo br , "_l10n_get_user_languages() ... user: " . var_dump( $user_id );
+
+	#
+	#	Certain user groups get full rights...
+	#
+	$power_users = array( '1', '2' );
+	$privs = safe_field('privs', 'txp_users', "user_id='$user_id'");
+	if( in_array( $privs , $power_users ) )
+		$langs = LanguageHandler::get_site_langs();
+
+	#
+	#	Stub... replace with lookup of the user's languages....
+	#
+	//$langs = array( 'fr-fr' , 'de-de' );
+	$langs = LanguageHandler::get_site_langs();
+
+	return $langs;
+	}
 
 function _l10n_create_temp_textpattern( $languages )
 	{
@@ -80,9 +116,10 @@ function _l10n_match_cb( $matches )
 	#
 	$id = $matches[1];
 	$rs = safe_row(	'*', 'textpattern', "ID=$id" );
-	$code = $rs['Lang'];
+	$code	= $rs['Lang'];
+	$group	= $rs['Group'];
 	$lang = LanguageHandler::get_native_name_of_lang( $code );
-	return $matches[0] . br . $lang . ' [' . $code . ']';
+	return $matches[0] . br . $lang . ' [' . gTxt('group'). ' :' .$group . ']';
 	}
 function _l10n_chooser( $permitted_langs )
 	{
@@ -162,6 +199,7 @@ function l10n_setup_vars( $event , $step )
 		$l10n_vars['article_id'] 	= $ID;
 		$l10n_vars['article_lang']	= $rs['Lang'];
 		$l10n_vars['article_group']	= $rs['Group'];
+		$l10n_vars['article_author_id'] = $rs['AuthorID'];
 		}
 	else
 		{
@@ -190,42 +228,75 @@ function l10n_setup_article_buffer_processor( $event , $step )
 		$_POST['publish_now'] = '1';	#	Force update of publish time to NOW.
 		unset($_POST['reset_time']);
 		$_POST['url_title'] = '';		#	Force the url_title to be rebuilt.
+		$_POST['Lang'] = $_POST['CloneLang'];		#	The article language and group comes
+		$_POST['Group'] = $_POST['CloneGroup'];	# from the clone selector elements.
 		}
 	}
 function l10n_article_buffer_processor( $buffer )
 	{
 	global $l10n_vars;
+	global $txp_user;
 
 	#
 	#	The buffer processing routine injects page elements when editing an article.
 	#
 	$remaining	= GroupManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
+	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
+	$cloning_permitted	= has_privs( 'l10n.clone' );
+
 	$lang 		= $l10n_vars['article_lang'];
+	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() , true );
+
+	$reassigning_permitted = has_privs( 'l10n.reassign' );
+
 	$id_no		= '-';
 	if( $l10n_vars['article_id'] )
 		$id_no = $l10n_vars['article_id'];
+
 	$group_id 	= '-';
 	if( $l10n_vars['article_group'] )
 		$group_id = $l10n_vars['article_group'];
 
-	if( $can_clone and $id_no !== '-' )
+	if( $cloning_permitted and $can_clone and $id_no !== '-' )
 		{
 		#	Insert the clone panel...
 		$checkit = "'".doSlash(gTxt('are_you_sure'))."'";
 		$f = '<input type="submit" name="save" value="'.gTxt('save').'" class="publish" tabindex="4" />';
 		$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
 				hInput('original_ID' , $id_no) .
-				hInput('Group' , $group_id) .
-				'<p>'. gTxt('l10n-xlate_to') . selectInput( 'Lang', $remaining ) . '</p>' .
+				hInput('CloneGroup' , $group_id) .
+				'<p>'. gTxt('l10n-xlate_to') . selectInput( 'CloneLang', $remaining ) . '</p>' .
 				'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return confirm('.$checkit.');" />' .
 				'</fieldset>';
 		$buffer = str_replace( $f , $f.n.$r , $buffer );
 		}
 
-	#	Insert the Language/Group markers...
+	#
+	#	Insert the ID/Language/Group display elements...
+	#
 	$f = '<p><input type="text" id="title"';
-	$r = '<p>ID: <strong>' . $id_no . '</strong>, ' . gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang) . ' ['.$lang.']</strong>, ' . gTxt('group') . ': <strong>' . $group_id . '</strong></p>';
+	$r = 'ID: '                  . strong( $id_no ) . ' / ';
+
+	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
+		{
+		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
+		$r .= 	gTxt('group')    . ': ' . strong( $group_id );
+		}
+	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
+		{
+		if( $reassigning_permitted )
+			{
+			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
+			$r .=	gTxt('group')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
+			}
+		else
+			{
+			$r .= 	hInput( 'Lang' , $lang )      . gTxt('language') . ': ' . strong( LanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
+			$r .= 	hInput( 'Group' , $group_id ) . gTxt('group')    . ': ' . strong( $group_id );
+			}
+		}
+	$r = graf( $r );
 	$buffer = str_replace( $f , $r.n.$f , $buffer );
 
 	return $buffer;
@@ -236,7 +307,7 @@ function l10n_add_article_to_group_cb( $event , $step )
 	require_privs('article');
 
 	global $vars;
-	$new_vars = array_merge( $vars , array( 'Lang' , 'Group' ,  'original_ID' ) );
+	$new_vars = array_merge( $vars , array( 'Lang' , 'Group' ,  'original_ID' , 'CloneLang' ) );
 
 	//echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
 
@@ -246,16 +317,24 @@ function l10n_add_article_to_group_cb( $event , $step )
 	$publish = gps('publish');
 	if ($publish) $step = 'publish';
 
+	$incoming = psa($new_vars);
+
 	//	echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
 	switch(strtolower($step))
 		{
 		case 'publish':
 			#	Create a group for this article
 			//echo br , "Publishing new article...";
-			$incoming = psa($new_vars);
 			GroupManager::create_group_and_add( $incoming );
 			l10n_setup_vars( $event , $step );
-			break;
+		break;
+		case 'save':
+			#
+			#	Check for changes to the article language and groups ...
+			#
+			GroupManager::move_to_group( $incoming );
+			l10n_setup_vars( $event , $step );
+		break;
 		}
 	}
 function l10n_delete_articles_and_redirect( $event , $step )
@@ -279,21 +358,87 @@ function l10n_delete_articles_and_redirect( $event , $step )
 				_l10n_generate_lang_table( $lang );
 				}
 			}
+
+		#
+		#	Force a redirect to the 'event=list' page, because the delete
+		# multi-edit event will call list_list directly, without us getting a chance
+		# to generate the temporary textpattern table to limit the results.
+		#
+		while (@ob_end_clean());
+
+		$search = gpsa( array( 'search_method' , 'crit' , 'event' , 'step' ) );
+		$search['event'] = 'list';
+		$search['step'] = '';
+
+		global $l10n_view;
+		$l10n_view->redirect( $search );
 		}
 
-	#
-	#	Force a redirect to the 'event=list' page, because the delete
-	# multi-edit event will call list_list directly, without us getting a chance
-	# to generate the temporary textpattern table to limit the results.
-	#
-	while (@ob_end_clean());
 
-	$search = gpsa( array( 'search_method' , 'crit' , 'event' , 'step' ) );
-	$search['event'] = 'list';
-	$search['step'] = '';
+	$notify_new_authors = true;
+	$notify_self = true;
+	if( 'changeauthor' == $method and $notify_new_authors )
+		{
+		#
+		#	Placeholder for email notification code. Something like ajw_admin_workflow,
+		# send the new owner a notification message (if prefs allow)...
+		#
+		global $statuses, $sitename, $siteurl, $txp_user;
+		$new_user = ps('AuthorID');
+		$selected = ps('selected');
+		$links    = array();
+		$same	  = $new_user == $txp_user;
 
-	global $l10n_view;
-	$l10n_view->redirect( $search );
+		if( !$same or $notify_self )
+			{
+			if( $selected and !empty($selected) )
+				{
+				foreach( $selected as $id )
+					{
+					#
+					#	Make a link to the article...
+					#
+					extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
+					$lang   = LanguageHandler::get_native_name_of_lang( $Lang );
+					$status = $statuses[$Status];
+					$msg = "\"$Title\"\r\nStatus: $status , Language: $lang [$Lang] , Group: $Group.\r\n";
+					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
+					$links[] = $msg;
+					}
+				}
+
+			extract(safe_row('RealName AS txp_username,email AS replyto','txp_users',"name='$txp_user'"));
+			extract(safe_row('RealName AS new_user,email','txp_users',"name='$new_user'"));
+
+			$count = count( $links );
+			$s = (($count===1) ? '' : 's');
+			if( $same )
+				$body = "To\t: $txp_username,\r\nFrom\t: Self\r\nMemo\t: you transferred the following article$s to yourself...\r\n\r\n";
+			else
+				$body = "To\t: $new_user,\r\nFrom\t: $txp_username\r\nMemo\t: I have transferred the following article$s to you...\r\n\r\n";
+			$body.= join( "\r\n" , $links ) . "\r\n\r\n";
+
+			$subject = "[$sitename] Notice ... $count article$s transferred to you.";
+
+			echo br , "Building email to send to new author: $new_user &lt;$email&gt;, from $txp_user &lt;$replyto&gt;..." , br;
+			echo "$subject" , n , n , br , $body ;
+
+			//$ok = txpMail($email, $subject, $body, $replyto);
+			/*$ok = mail	(
+						$email, $subject, $message,
+						"From: $replyto <$replyto>\r\n"
+						."Reply-To: $replyto <$replyto>\r\n"
+						."X-Mailer: Textpattern\r\n"
+						."Content-Transfer-Encoding: 8bit\r\n"
+						."Content-Type: text/plain; charset=\"UTF-8\"\r\n"
+						);
+			if( $ok )
+				echo br , "Mail sent ok.";
+			else
+				echo br , "Mail send failed.";
+			*/
+			}
+		}
 	}
 function l10n_delete_articles_from_group_cb( $event , $step )
 	{
