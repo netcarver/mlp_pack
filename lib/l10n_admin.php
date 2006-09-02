@@ -37,7 +37,6 @@ if( $l10n_view->installed() )
 	register_callback( 'l10n_generate_lang_tables'				, 'article' );
 	register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
 	register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
-	register_callback( 'l10n_send_notification_email'			, 'list' , 'list_multi_edit' );
 	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
 	}
 
