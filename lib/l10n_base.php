@@ -95,40 +95,46 @@ class GroupManager
 		# get the group info...
 		$info = GroupManager::_get_group_info( $group );
 		if( empty( $info ) )
-			return false;
+			return "Group $group does not exist";
 		extract( $info );
 
 		if( array_key_exists( $article_lang , $members ) )
-			return false;	# There is already a translation of the target language in the group.
+			return "A translation in $article_lang is already present in group $group.";
 		if( $check_membership and in_array( $article_id , $members ) )
-			return false;	# The article is already in this group!
+			return "Article $article_id is already a member of group $group.";
 
 		$members[$article_lang] = $article_id;
 		$ok = GroupManager::_update_group( $ID , $names , $members );
-
-		echo br , 'add_article() returning ' , ($ok) ? 'true' : 'false';
+		if( !$ok )
+			$ok = "Could not update group $group.";
 		return $ok;
 		}
 	function remove_article( $group , $article_id , $article_lang )
 		{
 		$g_info = GroupManager::_get_group_info( $group );
 		if( empty($g_info) )
-			return false;
+			return "Group $group does not exist";
 
 		extract( $g_info );
 
 		if( $members[$article_lang] != $article_id )	# Article is not in this group under this language!
 			{
-			return false;
+			return "Article $article_lang, not $article_lang translation in group $group.";
 			}
 
 		unset( $members[$article_lang] );
 
 		if( !empty( $members ) )
+			{
 			$result = GroupManager::_update_group( $ID , $names , $members );
+			if(!$result)
+				$result = "Could not update group $group.";
+			}
 		else
 			{
 			$result = safe_delete( 'l10n_textpattern_groups' , "`ID`='$ID'" );
+			if(!$result)
+				$result = "Could not delete group $group.";
 			}
 
 		return $result;
@@ -246,7 +252,8 @@ class GroupManager
 		}
 	function move_to_group( $article )
 		{
-		echo br , "move_to_group( $article ) ... ";
+		global $l10n_article_message;
+		//echo br , "move_to_group( $article ) ... ";
 
 		#	Get the new entries...
 		$new_group	= $article['Group'];
@@ -257,40 +264,42 @@ class GroupManager
 		$info = safe_row( '*' , 'textpattern' , "`ID`='$article_id'" );
 		if( $info === false )
 			{
-			echo " ... returning: failed to read article data.";
+			$l10n_article_message = "Error: failed to read article $article_id data.";
 			return false;
 			}
 
 		$current_group	= $info['Group'];
 		$current_lang	= $info['Lang'];
 
-		echo "id=$article_id, lang {$current_lang}->{$new_lang}, group={$current_group}->{$new_group}" , br ;
-
 		if( ($new_group == $current_group) and ($new_lang == $current_lang) )
 			{
-			echo '... returning true: no changes needed.';
 			return true;
 			}
+
 		#	Add article to new group...
-		$added = GroupManager::add_article( $new_group , $article_id , $new_lang , false );
-		if( !$added )
+		$result = GroupManager::add_article( $new_group , $article_id , $new_lang , false );
+		if( $result !== true )
 			{
-			echo " ... returning: failed to add to new group.";
+			$l10n_article_message = 'Error: ' . $result;
 			return false;
 			}
 
 		#	Remove article from existing group...
-		$removed = GroupManager::remove_article( $current_group , $article_id , $current_lang );
-		if( !$removed )
+		$result = GroupManager::remove_article( $current_group , $article_id , $current_lang );
+		if( $result !== true )
 			{
 			#	Attempt to remove from the group we just added to...
 			remove_article( $new_group , $article_id , $new_lang );
-			echo " ... returning: failed to remove from old group.";
+			$l10n_article_message = 'Error: ' . $result;
 			return false;
 			}
 
 		# 	Update the entries in the article...
-		safe_update( 'textpattern', "`Group`='$new_group' , `Lang`='$new_lang'" , "`ID`='$article_id'" );
+		$ok = safe_update( 'textpattern', "`Group`='$new_group' , `Lang`='$new_lang'" , "`ID`='$article_id'" );
+		if( $ok )
+			$l10n_article_message = "Language: {$current_lang}->{$new_lang}, group:{$current_group}->{$new_group}";
+		else
+			$l10n_article_message = 'Warning: Failed to record changes to article table';
 
 		return true;
 		}
