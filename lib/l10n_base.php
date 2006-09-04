@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /*	TO DO...
 	Add new categorisasation feature to the setup wizard -- allow language spec on section prefix/cat/custom field
@@ -74,7 +74,7 @@ class GroupManager
 		}
 	function change_article_language( $group , $article_id , $article_lang , $target_lang )
 		{
-		echo br , "change_article_language( $group , $article_id , $article_lang -> $target_lang ) ... ";
+		//echo br , "change_article_language( $group , $article_id , $article_lang -> $target_lang ) ... ";
 		# get the group info...
 		extract( GroupManager::_get_group_info( $group ) );
 
@@ -209,7 +209,7 @@ class GroupManager
 		$info = safe_row( 'Group' , 'textpattern' , "`ID`='$article_id'" );
 		if( $info === false )
 			{
-			echo " ... returning: failed to read article data.";
+			//echo " ... returning: failed to read article data.";
 			return false;
 			}
 
