@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /*	To do...
 Article filtering by language
@@ -60,7 +60,7 @@ function _l10n_get_user_languages( $user_id = null )
 
 	$langs = array();
 
-	echo br , "_l10n_get_user_languages() ... user: " . var_dump( $user_id );
+	//echo br , "_l10n_get_user_languages() ... user: " . var_dump( $user_id );
 
 	#
 	#	Certain user groups get full rights...
@@ -522,7 +522,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$code  = LanguageHandler::compact_code( $lang );
 	$table_name = 'textpattern_' . $code['short'];
 
-	echo br , "Updating the {$code['short']} table...";
+	//echo br , "Updating the {$code['short']} table...";
 
 	$where = '';
 	if( $filter )
@@ -534,7 +534,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	@safe_query( $drop_sql );
 	$ok = @safe_query( $sql );
 	@safe_query( 'unlock tables' ) ;
-	echo ($ok) ? ' done.' : ' failed.';
+	//echo ($ok) ? ' done.' : ' failed.';
 	}
 function l10n_generate_lang_tables( $event , $step )
 	{
