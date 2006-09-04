@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $plugin['name'] = 'gbp_l10n';
 $plugin['version'] = '0.6';
@@ -271,6 +271,7 @@ if (@txpinterface == 'public')
 		return $result;
 		}
 
+
 	function _l10n_process_url()
 		{
 		global $gbp_language;
@@ -306,7 +307,7 @@ if (@txpinterface == 'public')
 				}
 			}
 
-		if( !$_SESSION['lang'] or empty($_SESSION['lang']) )
+		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
 			{
 			#
 			#	If we are still missing a language for the session, try to get the prefered selection
@@ -344,7 +345,7 @@ if (@txpinterface == 'public')
 		#
 		#	If we are still missing a language for the session, use the site default...
 		#
-		if( !$_SESSION['lang'] or empty($_SESSION['lang']) )
+		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
 			{
 			$def = $site_langs[0];
 			//echo " ... setting to default lang: $def " , br;
@@ -374,7 +375,7 @@ if (@txpinterface == 'public')
 				//	echo " \$prefs[$name] = " , $prefs[$name] , br , var_dump( $v );
 				}
 			}
-		global $prefs, $gbp_language;
+		global $gbp_language;
 
 		_l10n_process_url();
 
@@ -384,6 +385,16 @@ if (@txpinterface == 'public')
 
 		# Load the localised set of strings based on the selected language...
 		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
+
+		#
+		#	Don't know why, but there seems to be some whitespace getting into the
+		# output buffer. XHTML can cope but it causes a parse error in the feed xml
+		#
+		#	Simple solution is to make sure the output buffer is empty before
+		# continuing.
+		#
+		while( @ob_end_clean() )
+			;
 		}
 
 	/*
