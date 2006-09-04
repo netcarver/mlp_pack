@@ -422,29 +422,13 @@ function l10n_changeauthor_notify_routine()
 		$count = count( $links );
 		$s = (($count===1) ? '' : 's');
 		if( $same )
-			$body = "To\t: $txp_username,\r\nFrom\t: Self\r\nMemo\t: you transferred the following article$s to yourself...\r\n\r\n";
+			$body = "To\t: $txp_username\r\nFrom\t: Self\r\n\r\nYou transferred the following article$s to yourself...\r\n\r\n";
 		else
-			$body = "To\t: $new_user,\r\nFrom\t: $txp_username\r\nMemo\t: I have transferred the following article$s to you...\r\n\r\n";
-		$body.= join( "\r\n" , $links ) . "\r\n\r\n";
+			$body = "To\t: $new_user\r\nFrom\t: $txp_username\r\n\r\nI have transferred the following article$s to you...\r\n\r\n";
+		$body.= join( "\r\n" , $links ) . "\r\n\r\nThank You.\r\n--\r\n$txp_username.";
+		$subject = "[$sitename] Notice: $count article$s transferred to you.";
 
-		$subject = "[$sitename] Notice ... $count article$s transferred to you.";
-
-		echo br , "Building email to send to new author: $new_user &lt;$email&gt;, from $txp_user &lt;$replyto&gt;..." , br;
-		echo "$subject" , n , n , br , $body ;
-
-		$ok = txpMail($email, $subject, $body, $replyto);
-		/*$ok = mail	(
-					$email, $subject, $message,
-					"From: $replyto <$replyto>\r\n"
-					."Reply-To: $replyto <$replyto>\r\n"
-					."X-Mailer: Textpattern\r\n"
-					."Content-Transfer-Encoding: 8bit\r\n"
-					."Content-Type: text/plain; charset=\"UTF-8\"\r\n"
-					);*/
-		if( $ok )
-			echo br , "Mail sent ok.";
-		else
-			echo br , "Mail send failed.";
+		txpMail($email, $subject, $body, $replyto);
 		}
 	}
 function l10n_post_multi_edit_cb( $event , $step )
