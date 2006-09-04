@@ -1,7 +1,6 @@
-<?php
+﻿<?php
 
 /*	To do...
-
 Article filtering by language
 	add cookie tracking?
 	User permissions to set/filter by language
@@ -13,12 +12,6 @@ Article filtering by language
 	4	Staff writer		No				Known site langs		Known site langs
 	5	Freelancer			No				Known site langs		No access
 	6	Designer			No				No access				No access
-
-	ajw_admin_workflow like...
-		article tranfser capabilities
-		REQUIRES
-			user language permissions.
-		emailing of transfer notices
 
 	404 error handling
 
@@ -32,12 +25,25 @@ if( $l10n_view->installed() )
 	add_privs( 'l10n.clone' 	, '1,2' );
 	add_privs( 'l10n.reassign'	, '1,2' );
 
+	#
+	#	Article handlers...
+	#
 	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
 	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
-	register_callback( 'l10n_generate_lang_tables'				, 'article' );
-	register_callback( 'l10n_delete_articles_from_group_cb'	, 'list' , 'list_multi_edit' , 1 );
-	register_callback( 'l10n_delete_articles_and_redirect'		, 'list' , 'list_multi_edit' );
+	//register_callback( 'l10n_generate_lang_tables'				, 'article' );
+
+	#
+	#	Article list handlers...
+	#
+	register_callback( 'l10n_pre_multi_edit_cb'				, 'list' , 'list_multi_edit' , 1 );
+	register_callback( 'l10n_post_multi_edit_cb'				, 'list' , 'list_multi_edit' );
 	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
+
+	#
+	#	Comment handlers...
+	#
+	register_callback( 'l10n_pre_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' , 1 );
+	register_callback( 'l10n_post_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' );
 	}
 
 function _l10n_get_user_languages( $user_id = null )
@@ -275,7 +281,15 @@ function l10n_article_buffer_processor( $buffer )
 	#	Insert the ID/Language/Group display elements...
 	#
 	$f = '<p><input type="text" id="title"';
-	$r = 'ID: '                  . strong( $id_no ) . ' / ';
+
+	$r = '';
+	global $l10n_article_message;
+	if( isset($l10n_article_message) )
+		{
+		$r = strong( htmlspecialchars($l10n_article_message) ) . n . br;
+		unset( $l10n_article_message );
+		}
+	$r.= 'ID: ' . strong( $id_no ) . ' / ';
 
 	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
 		{
@@ -306,9 +320,7 @@ function l10n_add_article_to_group_cb( $event , $step )
 	require_privs('article');
 
 	global $vars;
-	$new_vars = array_merge( $vars , array( 'Lang' , 'Group' ,  'original_ID' , 'CloneLang' ) );
-
-	//echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
+	$new_vars = array_merge( $vars , array( 'Lang' , 'Group' , 'original_ID' ) );
 
 	$save = gps('save');
 	if ($save) $step = 'save';
@@ -317,31 +329,142 @@ function l10n_add_article_to_group_cb( $event , $step )
 	if ($publish) $step = 'publish';
 
 	$incoming = psa($new_vars);
+	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : LanguageHandler::get_site_default_lang();
 
-	//	echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
+	//echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
 	switch(strtolower($step))
 		{
 		case 'publish':
+			#
 			#	Create a group for this article
-			//echo br , "Publishing new article...";
+			#
 			GroupManager::create_group_and_add( $incoming );
+
+			#
+			#	Update the language table for the target language...
+			#
+			_l10n_generate_lang_table( $new_lang );
+
+			#
+			#	Read the variables to continue the edit...
+			#
 			l10n_setup_vars( $event , $step );
 		break;
 		case 'save':
 			#
+			#	Record the old and new languages, if there are any changes we need to update
+			# both the old and new tables after moving the group/lang over...
+			#
+			$article_id	= $incoming['ID'];
+
+			$info = safe_row( '*' , 'textpattern' , "`ID`='$article_id'" );
+			if( $info !== false )
+				{
+				$current_lang	= $info['Lang'];
+				}
+
+			#
 			#	Check for changes to the article language and groups ...
 			#
 			GroupManager::move_to_group( $incoming );
+
+			#
+			#	Now we can setup the tables again...
+			#
+			_l10n_generate_lang_table( $new_lang );
+			if( $new_lang != $current_lang )
+				_l10n_generate_lang_table( $current_lang );
+
+			#
+			#	Read the variables to continue the edit...
+			#
 			l10n_setup_vars( $event , $step );
 		break;
 		}
 	}
-function l10n_delete_articles_and_redirect( $event , $step )
+
+function l10n_changeauthor_notify_routine()
+	{
+	#	Permissions for email...
+	$notify_new_authors = true;
+	$notify_self = true;
+
+	if( !$notify_new_authors )
+		return false;
+
+	global $statuses, $sitename, $siteurl, $txp_user;
+	$new_user = ps('AuthorID');
+	$selected = ps('selected');
+	$links    = array();
+	$same	  = ($new_user == $txp_user);
+
+	if( !$same or $notify_self )
+		{
+		if( $selected and !empty($selected) )
+			{
+			foreach( $selected as $id )
+				{
+				#
+				#	Make a link to the article...
+				#
+				extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
+				$lang   = LanguageHandler::get_native_name_of_lang( $Lang );
+				$status = $statuses[$Status];
+				$msg = "\"$Title\"\r\nStatus: $status , Language: $lang [$Lang] , Group: $Group.\r\n";
+				$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
+				$links[] = $msg;
+				}
+			}
+
+		extract(safe_row('RealName AS txp_username,email AS replyto','txp_users',"name='$txp_user'"));
+		extract(safe_row('RealName AS new_user,email','txp_users',"name='$new_user'"));
+
+		$count = count( $links );
+		$s = (($count===1) ? '' : 's');
+		if( $same )
+			$body = "To\t: $txp_username,\r\nFrom\t: Self\r\nMemo\t: you transferred the following article$s to yourself...\r\n\r\n";
+		else
+			$body = "To\t: $new_user,\r\nFrom\t: $txp_username\r\nMemo\t: I have transferred the following article$s to you...\r\n\r\n";
+		$body.= join( "\r\n" , $links ) . "\r\n\r\n";
+
+		$subject = "[$sitename] Notice ... $count article$s transferred to you.";
+
+		echo br , "Building email to send to new author: $new_user &lt;$email&gt;, from $txp_user &lt;$replyto&gt;..." , br;
+		echo "$subject" , n , n , br , $body ;
+
+		$ok = txpMail($email, $subject, $body, $replyto);
+		/*$ok = mail	(
+					$email, $subject, $message,
+					"From: $replyto <$replyto>\r\n"
+					."Reply-To: $replyto <$replyto>\r\n"
+					."X-Mailer: Textpattern\r\n"
+					."Content-Transfer-Encoding: 8bit\r\n"
+					."Content-Type: text/plain; charset=\"UTF-8\"\r\n"
+					);*/
+		if( $ok )
+			echo br , "Mail sent ok.";
+		else
+			echo br , "Mail send failed.";
+		}
+	}
+function l10n_post_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
-	$method = ps('edit_method');
+	$method   = ps('edit_method');
+	$redirect = false;
+	$update   = true;
 
-	if( isset( $l10n_vars['update_tables'] ) AND 'delete' == $method )
+	#
+	#	Special cases...
+	#
+	switch( $method )
+		{
+		case 'changeauthor':
+		l10n_changeauthor_notify_routine();
+		break;
+		}
+
+	if( $update and isset( $l10n_vars['update_tables'] ) )
 		{
 		$tables = $l10n_vars['update_tables'];
 
@@ -350,19 +473,17 @@ function l10n_delete_articles_and_redirect( $event , $step )
 			unset( $l10n_vars['update_tables'] );
 
 			#
-			#	Re-generate each language table touched by the delete...
+			#	Re-generate each language table touched by the edit...
 			#
 			foreach( $tables as $k=>$lang )
 				{
 				_l10n_generate_lang_table( $lang );
 				}
 			}
+		}
 
-		#
-		#	Force a redirect to the 'event=list' page, because the delete
-		# multi-edit event will call list_list directly, without us getting a chance
-		# to generate the temporary textpattern table to limit the results.
-		#
+	if( $redirect )
+		{
 		while (@ob_end_clean());
 
 		$search = gpsa( array( 'search_method' , 'crit' , 'event' , 'step' ) );
@@ -372,90 +493,21 @@ function l10n_delete_articles_and_redirect( $event , $step )
 		global $l10n_view;
 		$l10n_view->redirect( $search );
 		}
-
-
-	$notify_new_authors = true;
-	$notify_self = true;
-	if( 'changeauthor' == $method and $notify_new_authors )
-		{
-		#
-		#	Placeholder for email notification code. Something like ajw_admin_workflow,
-		# send the new owner a notification message (if prefs allow)...
-		#
-		global $statuses, $sitename, $siteurl, $txp_user;
-		$new_user = ps('AuthorID');
-		$selected = ps('selected');
-		$links    = array();
-		$same	  = $new_user == $txp_user;
-
-		if( !$same or $notify_self )
-			{
-			if( $selected and !empty($selected) )
-				{
-				foreach( $selected as $id )
-					{
-					#
-					#	Make a link to the article...
-					#
-					extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
-					$lang   = LanguageHandler::get_native_name_of_lang( $Lang );
-					$status = $statuses[$Status];
-					$msg = "\"$Title\"\r\nStatus: $status , Language: $lang [$Lang] , Group: $Group.\r\n";
-					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
-					$links[] = $msg;
-					}
-				}
-
-			extract(safe_row('RealName AS txp_username,email AS replyto','txp_users',"name='$txp_user'"));
-			extract(safe_row('RealName AS new_user,email','txp_users',"name='$new_user'"));
-
-			$count = count( $links );
-			$s = (($count===1) ? '' : 's');
-			if( $same )
-				$body = "To\t: $txp_username,\r\nFrom\t: Self\r\nMemo\t: you transferred the following article$s to yourself...\r\n\r\n";
-			else
-				$body = "To\t: $new_user,\r\nFrom\t: $txp_username\r\nMemo\t: I have transferred the following article$s to you...\r\n\r\n";
-			$body.= join( "\r\n" , $links ) . "\r\n\r\n";
-
-			$subject = "[$sitename] Notice ... $count article$s transferred to you.";
-
-			echo br , "Building email to send to new author: $new_user &lt;$email&gt;, from $txp_user &lt;$replyto&gt;..." , br;
-			echo "$subject" , n , n , br , $body ;
-
-			//$ok = txpMail($email, $subject, $body, $replyto);
-			/*$ok = mail	(
-						$email, $subject, $message,
-						"From: $replyto <$replyto>\r\n"
-						."Reply-To: $replyto <$replyto>\r\n"
-						."X-Mailer: Textpattern\r\n"
-						."Content-Transfer-Encoding: 8bit\r\n"
-						."Content-Type: text/plain; charset=\"UTF-8\"\r\n"
-						);
-			if( $ok )
-				echo br , "Mail sent ok.";
-			else
-				echo br , "Mail send failed.";
-			*/
-			}
-		}
 	}
-function l10n_delete_articles_from_group_cb( $event , $step )
+function l10n_pre_multi_edit_cb( $event , $step )
 	{
-	#
-	#	This routine handles the delete of articles from containing translation groups
-	# It is called when the multi_list of articles is used to delete articles from the
-	# DB.
-	#
+	global $l10n_vars;
 	$method = ps('edit_method');
 	$things = ps('selected');
 
-	if( !$things )
-		return;
+	$languages = array();
 
-	if( 'delete' == $method )
+	#
+	#	Scan the selected items, building a table of languages touched by the edit.
+	# Also delete any group info on the delete method calls.
+	#
+	if( $things )
 		{
-		global $l10n_vars;
-		$languages = array();
 		foreach( $things as $id )
 			{
 			$id = intval($id);
@@ -463,32 +515,39 @@ function l10n_delete_articles_from_group_cb( $event , $step )
 			if( $info !== false )
 				{
 				$group = $info['Group'];
-				$lang = $info['Lang'];
+				$lang  = $info['Lang'];
 				$languages[$lang] = $lang;
-				GroupManager::remove_article( $info['Group'] , $id , $info['Lang'] );
+				if( 'delete' === $method )
+					GroupManager::remove_article( $group , $id , $lang );
 				}
 			}
-		#
-		#	Pass the languages array to the post-process routine to reconstruct the
-		# per-language tables that were changed by the edit...
-		#
-		if( !empty( $languages ) )
-			$l10n_vars['update_tables'] = $languages;
 		}
+
+	#
+	#	Pass the languages array to the post-process routine to reconstruct the
+	# per-language tables that were changed by the edit...
+	#
+	if( !empty( $languages ) )
+		$l10n_vars['update_tables'] = $languages;
 	}
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	$code  = LanguageHandler::compact_code( $lang );
 	$table_name = 'textpattern_' . $code['short'];
 
-	$sql = 'drop table `'.PFX."$table_name`";
-	@safe_query( $sql );
+	echo br , "Updating the {$code['short']} table...";
+
 	$where = '';
 	if( $filter )
 		$where = " where `Lang`='$lang'";
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern`$where";
-	@safe_query( $sql );
+	$drop_sql = 'drop table `'.PFX."$table_name`";
+	@safe_query( 'lock tables `'.PFX."$table_name` WRITE" ) ;
+	@safe_query( $drop_sql );
+	$ok = @safe_query( $sql );
+	@safe_query( 'unlock tables' ) ;
+	echo ($ok) ? ' done.' : ' failed.';
 	}
 function l10n_generate_lang_tables( $event , $step )
 	{
@@ -512,10 +571,86 @@ function l10n_generate_lang_tables( $event , $step )
 			//echo " ... Lang=$lang, Langs=" , var_dump( $langs ) , br;
 			if( in_array( $lang, $langs ) )
 				{
-				_l10n_generate_lang_table( $lang );
+				//_l10n_generate_lang_table( $lang );
 				}
 		break;
 		}
 	}
+function l10n_pre_discuss_multi_edit( $event , $step )
+	{
+	global $l10n_vars;
+	$languages = array();
+
+	$things = ps('selected');
+	$method = ps('edit_method');
+
+	if( $things )
+		{
+		//echo br , "pre-discuss-multi-edit($event, $step)... method is '$method'";
+		foreach( $things as $id )
+			{
+			$id = intval($id);
+			$comment = safe_row( 'parentid as id,visible as current_visibility' , 'txp_discuss' , "`discussid`='$id'" );
+			if( $comment !== false )
+				{
+				//echo br , "read discussion $id as " , var_dump( $comment ) , "VISIBLE=", VISIBLE;
+
+				$mark_lang = false;
+				extract( $comment );
+
+				#
+				# It's only going from non_visible->visible or visible->non_visible that
+				# needs an update.
+				#
+				if( 'visible' == $method )
+					$mark_lang = (VISIBLE != $current_visibility);
+				else
+					$mark_lang = (VISIBLE == $current_visibility);
+
+				if( $mark_lang )
+					{
+					$info = safe_row( 'Lang' , 'textpattern' , "`ID`='$id'" );
+					if( $info !== false )
+						{
+						$lang = $info['Lang'];
+						$languages[$lang] = $lang;
+						//echo br , "Marking language $lang for update.";
+						}
+					}
+				}
+			}
+		}
+
+	#
+	#	Pass the languages array to the post-process routine to reconstruct the
+	# per-language tables that were changed by the edit...
+	#
+	if( !empty( $languages ) )
+		$l10n_vars['update_tables'] = $languages;
+	}
+function l10n_post_discuss_multi_edit( $event , $step )
+	{
+	global $l10n_vars;
+	$method   = ps('edit_method');
+
+	if( isset( $l10n_vars['update_tables'] ) )
+		{
+		$tables = $l10n_vars['update_tables'];
+
+		if( $tables AND !empty( $tables ) )
+			{
+			unset( $l10n_vars['update_tables'] );
+
+			#
+			#	Re-generate each language table touched by the edit...
+			#
+			foreach( $tables as $k=>$lang )
+				{
+				_l10n_generate_lang_table( $lang );
+				}
+			}
+		}
+	}
+
 ?>
 
