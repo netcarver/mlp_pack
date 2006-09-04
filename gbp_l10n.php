@@ -271,6 +271,93 @@ if (@txpinterface == 'public')
 		return $result;
 		}
 
+	function _l10n_process_url()
+		{
+		global $gbp_language;
+
+		session_start();
+		//$gbp_language = @$_SESSION['lang'];
+		$site_langs = LanguageHandler::get_site_langs();
+
+		if (!defined('rhu'))
+			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
+		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
+
+		//echo br.br.br.br.br , "_l10n_process_url() ...";
+		//echo "site langs = " , var_dump( $site_langs );
+
+		if( !empty( $path ) )
+			{
+			#
+			#	Examine the first path entry for the language request.
+			# If it matches a known language code that this site supports, pop this off the array,
+			# set the language selector and session variable then re-write the request URI minus
+			# the language selector...
+			#
+			$tmp = array_shift( $path );
+			$temp = LanguageHandler::expand_code( $tmp );
+			//echo br , " ... first item=$tmp [$temp] ";
+			if( !empty($temp) and in_array( $temp , $site_langs ) )
+				{
+				//echo " ... setting lang=$tmp from path." , br;
+				$_SESSION['lang'] = $tmp;
+				$new_uri = '/' . join( '/' , $path );
+				$_SERVER['REQUEST_URI'] = $new_uri;
+				}
+			}
+
+		if( !$_SESSION['lang'] or empty($_SESSION['lang']) )
+			{
+			#
+			#	If we are still missing a language for the session, try to get the prefered selection
+			# from the user agent's HTTP header.
+			#
+			//echo br , "Processing user agent request...";
+			$req_lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			if( isset( $req_lang ) and !empty( $req_lang ) )
+				{
+				$chunks = split( ',' , $req_lang );
+				//echo br, "Agent request: " , var_dump($req_lang) , br , " chunks: " , var_dump($chunks);
+				if( count( $chunks ) )
+					{
+					foreach( $chunks as $chunk )
+						{
+						$info = split( ';' , $chunk );
+						//echo br, "Langs: " , var_dump($info);
+						if( $info[0] )
+							{
+							$lang = LanguageHandler::expand_code( $info[0] );
+							$lang = LanguageHandler::compact_code( $lang );
+							//echo br , "trying " , var_dump($lang), " in " , var_dump( $site_langs );
+							if( in_array( $lang['long'] , $site_langs ) )
+								{
+								$_SESSION['lang'] = $lang['short'];
+								//echo " ... Setting language to {$_SESSION['lang']} [$lang], from user-agent request." , br;
+								break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+		#
+		#	If we are still missing a language for the session, use the site default...
+		#
+		if( !$_SESSION['lang'] or empty($_SESSION['lang']) )
+			{
+			$def = $site_langs[0];
+			//echo " ... setting to default lang: $def " , br;
+			$_SESSION['lang'] = $def;
+			}
+
+		gbp_l10n_set_browse_language( $_SESSION['lang'] );
+
+		//echo br , "\$gbp_language = " , var_dump($gbp_language);
+		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
+		}
+
+
 	function _l10n_pretext()
 		{
 		function load_localised_pref( $name )
@@ -289,21 +376,7 @@ if (@txpinterface == 'public')
 			}
 		global $prefs, $gbp_language;
 
-		if (!defined('rhu'))
-			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
-		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
-
-		//		echo br.br.br.br , "_l10n_pretext() ... ";
-		$tmp = array_shift($path);
-		//		echo " ... first item=$tmp ";
-		if( gbp_l10n_set_browse_language( $tmp ) )
-			{
-			#	Reset the URL, removing the language component...
-			$new_uri = '/' . join( '/' , $path );
-			$_SERVER['REQUEST_URI'] = $new_uri;
-			}
-
-		//		echo ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br;
+		_l10n_process_url();
 
 		#	Load the site name and slogan into the $prefs[] array in the right place...
 		load_localised_pref( 'sitename' );
