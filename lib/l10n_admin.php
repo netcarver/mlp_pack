@@ -398,6 +398,9 @@ function l10n_changeauthor_notify_routine()
 	$links    = array();
 	$same	  = ($new_user == $txp_user);
 
+	if( empty( $new_user ) )
+		return;
+
 	if( !$same or $notify_self )
 		{
 		if( $selected and !empty($selected) )
