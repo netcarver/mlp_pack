@@ -231,6 +231,7 @@ if (@txpinterface == 'public')
 	{
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' , 'pretext' );
+	register_callback( '_l10n_textpattern' , 'textpattern' );
 
 	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
 		{
@@ -366,6 +367,30 @@ if (@txpinterface == 'public')
 		}
 
 
+	function _l10n_textpattern()
+		{
+		global $pretext, $gbp_language;
+
+		#
+		#	WORK IN PROGRESS...
+		#
+		#	Detect comment submission and update master textpattern table...
+		#
+		$commented = gps( 'commented' );
+		if( $commented === '1' )
+			{
+			$id = isset($pretext['id']) ? $pretext['id'] : '' ;
+			if( !empty($id) )
+				{
+				$thecount = safe_field('count(*)','txp_discuss','parentid='.doSlash($id).' and visible='.VISIBLE);
+
+				#
+				#	Update the l10n master table (which simply maps to the underlying 'textpattern' table)...
+				#
+				$updated = safe_update('l10n_master_textpattern',"comments_count='".doSlash($thecount)."'","ID='".doSlash($id)."'");
+				}
+			}
+		}
 	function _l10n_pretext()
 		{
 		function load_localised_pref( $name )
