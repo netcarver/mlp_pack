@@ -372,8 +372,6 @@ if (@txpinterface == 'public')
 		global $pretext, $gbp_language;
 
 		#
-		#	WORK IN PROGRESS...
-		#
 		#	Detect comment submission and update master textpattern table...
 		#
 		$commented = gps( 'commented' );
@@ -424,10 +422,10 @@ if (@txpinterface == 'public')
 		# output buffer. XHTML can cope but it causes a parse error in the feed xml
 		#
 		#	Simple solution is to make sure the output buffer is empty before
-		# continuing.
+		# continuing the processing of rss or atom requests...
 		#
-		$no_ob_cleaning = array( 'file_download' );
-		if( !in_array( $first_chunk , $no_ob_cleaning) )
+		$ob_cleaning = array( 'rss' , 'atom' );
+		if( in_array( $first_chunk , $ob_cleaning) )
 			while( @ob_end_clean() );
 		}
 
