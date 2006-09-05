@@ -276,6 +276,8 @@ if (@txpinterface == 'public')
 		{
 		global $gbp_language;
 
+		$result = '';
+
 		session_start();
 		//$gbp_language = @$_SESSION['lang'];
 		$site_langs = LanguageHandler::get_site_langs();
@@ -304,7 +306,10 @@ if (@txpinterface == 'public')
 				$_SESSION['lang'] = $tmp;
 				$new_uri = '/' . join( '/' , $path );
 				$_SERVER['REQUEST_URI'] = $new_uri;
+				$result = (isset($path[0])) ? $path[0] : '' ;
 				}
+			else
+				$result = $tmp;
 			}
 
 		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
@@ -356,6 +361,8 @@ if (@txpinterface == 'public')
 
 		//echo br , "\$gbp_language = " , var_dump($gbp_language);
 		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
+
+		return $result;
 		}
 
 
@@ -377,7 +384,8 @@ if (@txpinterface == 'public')
 			}
 		global $gbp_language;
 
-		_l10n_process_url();
+		$first_chunk = _l10n_process_url();
+		//echo br,br,br,br,br,"First chunk=",$first_chunk;
 
 		#	Load the site name and slogan into the $prefs[] array in the right place...
 		load_localised_pref( 'sitename' );
@@ -393,8 +401,9 @@ if (@txpinterface == 'public')
 		#	Simple solution is to make sure the output buffer is empty before
 		# continuing.
 		#
-		while( @ob_end_clean() )
-			;
+		$no_ob_cleaning = array( 'file_download' );
+		if( !in_array( $first_chunk , $no_ob_cleaning) )
+			while( @ob_end_clean() );
 		}
 
 	/*
