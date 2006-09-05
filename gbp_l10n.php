@@ -235,7 +235,12 @@ if (@txpinterface == 'public')
 
 	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
 		{
-		# Call this function with the short language code.
+		#
+		#	Call this function with the SHORT language code.
+		#
+		#	Takes care of storing the global language variable and also tries to do extra stuff like
+		#	setting up the correct locale for the requested language.
+		#
 		global $gbp_language;
 		$result = false;
 
@@ -277,7 +282,7 @@ if (@txpinterface == 'public')
 		{
 		global $gbp_language;
 
-		$result = '';
+		$new_first_path = '';
 
 		session_start();
 		//$gbp_language = @$_SESSION['lang'];
@@ -294,23 +299,42 @@ if (@txpinterface == 'public')
 			{
 			#
 			#	Examine the first path entry for the language request.
-			# If it matches a known language code that this site supports, pop this off the array,
-			# set the language selector and session variable then re-write the request URI minus
-			# the language selector...
 			#
 			$tmp = array_shift( $path );
 			$temp = LanguageHandler::expand_code( $tmp );
+			$reduce_uri = true;
+			$new_first_path = (isset($path[0])) ? $path[0] : '' ;
+
 			//echo br , " ... first item=$tmp [$temp] ";
 			if( !empty($temp) and in_array( $temp , $site_langs ) )
 				{
+				#
+				#	Hit! We can serve this language...
+				#
 				//echo " ... setting lang=$tmp from path." , br;
 				$_SESSION['lang'] = $tmp;
-				$new_uri = '/' . join( '/' , $path );
-				$_SERVER['REQUEST_URI'] = $new_uri;
-				$result = (isset($path[0])) ? $path[0] : '' ;
 				}
 			else
-				$result = $tmp;
+				{
+				#
+				#	Not a language this site can serve...
+				#
+				if( !LanguageHandler::is_valid_short_code( $tmp ) )
+					{
+					#
+					#	And not a known language so don't reduce the uri and use
+					# the original part of the path...
+					#
+					$reduce_uri = false;
+					$new_first_path = $tmp;
+					}
+				}
+
+			if( $reduce_uri )
+				{
+				$new_uri = '/' . join( '/' , $path );
+				$_SERVER['REQUEST_URI'] = $new_uri;
+				}
 			}
 
 		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
@@ -363,7 +387,7 @@ if (@txpinterface == 'public')
 		//echo br , "\$gbp_language = " , var_dump($gbp_language);
 		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
 
-		return $result;
+		return $new_first_path;
 		}
 
 
