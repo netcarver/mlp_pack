@@ -230,8 +230,8 @@ if( @txpinterface == 'admin' )
 if (@txpinterface == 'public')
 	{
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
-	register_callback( '_l10n_pretext' , 'pretext' );
-	register_callback( '_l10n_textpattern' , 'textpattern' );
+	register_callback( '_l10n_pretext' 					, 'pretext' );
+	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
 
 	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
 		{
@@ -391,7 +391,7 @@ if (@txpinterface == 'public')
 		}
 
 
-	function _l10n_textpattern()
+	function _l10n_textpattern_comment_submit()
 		{
 		global $pretext, $gbp_language;
 
@@ -456,6 +456,164 @@ if (@txpinterface == 'public')
 	/*
 	TAG HANDLERS FOLLOW
 	*/
+	function gbp_translation_list( $atts )
+		{
+		global $thisarticle , $gbp_language, $is_article_list , $pretext;
+
+		extract(lAtts(array(
+							'title'				=> '',					#	Title will be prepended as a paragraph.
+							'on404'				=> '', 					#	Article id to lookup. If explicitly defined
+							'current_class'		=> 'l10n_current',		#	Literal class markup for the current language
+							'language_class'	=> 'long',				#	How the class of the list item is marked up
+																		#	'long' => long lang eg: en-gb | 'short' eg. 'en'
+							'list_class'		=> 'l10n_lang_list',	#	Literal class markup for entire list
+							'show_empty'  		=> '',					#	show all langs, even ones with no translation?
+							'link_current'		=> '',					#	make the current language an active hyperlink?
+							'display'			=> 'native',			# 	How the language is displayed on the web page
+																		#	'native++' | 'native+' | 'native' | 'long' | 'short'
+							),$atts));
+
+		$on404			= !empty($on404);
+		$show_empty		= !empty($show_empty);
+		$link_current	= !empty($link_current);
+
+		$list = array();
+		$alangs = array();
+		$slangs = LanguageHandler::get_site_langs();
+		$article_list = $is_article_list;
+		$section = empty($pretext['s']) ? '' : '/'.$pretext['s'];
+
+		if( $on404 )
+			{
+			#
+			#	Find the section and id of the faulting article (if possible)...
+			#
+			$url = trim($_SERVER['REQUEST_URI'] , '/');
+			$parts = chopUrl($url);
+			$section = '/'.$parts['u0'];
+			$id = $parts['u1'];
+			if( !empty($id) and is_numeric($id) )
+				{
+				$article_list = false;
+				}
+			else
+				{
+				return '';
+				}
+			#
+			#	Make sure we show all alternatives, even if they are in the current language...
+			#
+			$link_current = true;
+			}
+		else
+			{
+			#
+			#	Not on a 404 page, so use the one of the current article (if any).
+			#
+			$id = (isset($thisarticle['thisid'])) ? $thisarticle['thisid'] : '' ;
+			}
+
+
+		if( !$article_list )
+			{
+			$alangs = GroupManager::get_alternate_mappings( $id , 'nothing' , true );
+			}
+
+		if( !empty( $title ) )
+			$title = tag( $title , 'p' ) . n;
+
+		foreach( $slangs as $lang )
+			{
+			$codes = LanguageHandler::compact_code($lang);
+			$short = $codes['short'];
+			$long  = $codes['long'];
+
+			switch( $display )
+				{
+				case 'short':
+					$lname = $short;
+				break;
+				case 'long':
+					$lname = $long;
+				break;
+				case 'native+':
+					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$short]";
+				break;
+				case 'native++':
+					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$long]";
+				break;
+				default:
+					$lname = LanguageHandler::get_native_name_of_lang( $lang );
+				break;
+				}
+
+			if( $article_list )
+				{
+				#
+				#	No individual ID but we should be able to serve all the languages
+				# so use the current url and inject the language component into each one...
+				#
+				$current = ($gbp_language['long'] === $lang);
+				$text    = $lname;
+
+				#
+				#	Prep the line class...
+				#
+				$class = ('short'===$language_class) ? $short : $lang ;
+				if( $current )
+					$class .= ' '.$current_class;
+				$class = ' class="'.$class.'"';
+
+				if( !$current or $link_current )
+					$line = '<a href="'.hu.$short.$_SERVER['REQUEST_URI'].'">'.$text.'</a>';
+				else
+					$line = $text;
+
+				$list[] = tag( $line , 'li' , $class );
+				}
+			else
+				{
+				#
+				#	If a translation exists for that language then we
+				# build a valid url to it and make it active in the list, otherwise include it in the
+				# list but wihtout the hyper-link.
+				#
+				#	The active page is marked up with a css class.
+				#
+				if( array_key_exists( $lang , $alangs ) )
+					{
+					$current = ($gbp_language['long'] === $lang);
+					$text    = $lname;
+
+					#
+					#	Prep the line class...
+					#
+					$class = ('short'===$language_class) ? $short : $lang ;
+					if( $current )
+						$class .= ' '.$current_class;
+					$class = ' class="'.$class.'"';
+
+					if( !$current or $link_current )
+						$line = '<a href="'.hu.$short.$section.'/'.$alangs[$lang].'">'.$text.'</a>';
+					else
+						$line = $text;
+
+					$list[] = tag( $line , 'li' , $class );
+					}
+				else
+					{
+					//echo 'no translation.';
+					if( $show_empty )
+						$list[] = tag( $lname , 'li' );
+					}
+				}
+			}
+
+
+		$list = tag( join( "\n\t" , $list ) , 'ul' , " class=\"$list_class\"" );
+		return $title . $list;
+		}
+
 	function gbp_snippet($atts)
 		{
 		/*
@@ -515,6 +673,7 @@ if (@txpinterface == 'public')
 	function gbp_render_lang_list( $atts )
 		{
 		/*
+		DEPRECATED. DO NOT USE.
 		Renders a list of links that can be used to switch this page to another supported language.
 		*/
 		global $gbp_language;
