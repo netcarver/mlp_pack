@@ -335,7 +335,6 @@ class LocalisationView extends GBPPlugin
 
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		);
-	var $wizard_report;
 	var $strings_lang = 'en-gb';
 	var $strings_prefix = L10N_NAME;
 	var $perm_strings = array( # These strings are always needed.
@@ -459,15 +458,8 @@ class LocalisationView extends GBPPlugin
 
 		add_privs($this->event, '1,2,3,6');
 
-		$callable_steps = array( 'setup' , 'setup2' , 'cleanup' , 'cleanup2' );
-
-		#	NB: Process step before the installed() check below
-		$step = gps('step');
-		if( in_array( $step , $callable_steps )  )
-			call_user_func( array( $this , $step ) );
-
 		if( has_privs('admin.edit') )
-			new LocalisationTabView( gTxt('l10n-wizard'), 'wizard', $this);
+			new LocalisationWizardView( gTxt('l10n-wizard'), 'wizard', $this);
 
 		if( $this->installed() )
 			{
@@ -495,174 +487,6 @@ class LocalisationView extends GBPPlugin
 		//$result = getThing( "show tables like '".PFX."gbp_l10n'" );
 		$result = getThing( "show tables like '".PFX."l10n_textpattern_groups'" );
 		return ($result);
-		}
-
-	function add_report_item( $string , $ok )
-		{
-		$class  = ($ok===true) ? 'success' : 'failure';
-		$okfail = ($ok===true) ? gTxt('l10n-done') : gTxt('l10n-failed');
-		$okfail = '<span class="'.$class.'">'.tag($okfail,'strong').'</span>';
-		$line = n . t . tag($string.' :' , 'td' , ' style="width: 35em; text-align: right"') . tag($okfail , 'td'  , ' style="text-align: left"');
-		$this->wizard_report[] = tag( $line , 'tr' );
-		}
-	function setup()
-		{
-		# Extend the txp_lang table to allow text instead of tinytext in the data field.
-		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
-		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok );
-
-		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
-		# Make sure we only call insert_strings() once!
-		$this->strings = array_merge( $this->strings , $this->perm_strings );
-		$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'gbp_l10n' );
-		$this->add_report_item( 'Insert the strings for this plugin' , $ok );
-
-		# Extend the textpattern table...
-		$sql = array();
-			$sql[] = " ADD `Lang` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci ";
-			$sql[] = " NOT NULL DEFAULT '-' AFTER `LastModID` , ";
-			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
-		$ok = @safe_alter( 'textpattern' , join('', $sql) );
-		$this->add_report_item( 'Add `Lang` and `Group` fields to textpattern table' , $ok );
-
-		# Create the l10n tables...
-		$sql = array();
-			$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
-			$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
-			$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			$sql[] = '`entry_id` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			$sql[] = '`entry_column` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			$sql[] = '`entry_value` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			$sql[] = 'PRIMARY KEY (`id`)';
-			$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
-		$ok = safe_query(join('', $sql));
-		$this->add_report_item( 'Add the gbp_l10n table' , $ok );
-
-		$ok = GroupManager::create_table();
-		$this->add_report_item( 'Add the l10n_textpattern_groups table' , $ok );
-
-		#
-		#	Run the import routine selected by the user from the install wizard tab...
-		#
-		//$importer = gps( 'l10n_import_routine' );
-		//$key = '';
-		//echo br , "setup() ... importer name '$importer' ...";
-		//if( $importer and is_callable( array($this , $importer) , false , $key) )
-		//	{
-		//	call_user_func( array($this , $importer) );
-		//	}
-		//else
-		//	{
-			$ok = $this->_import_fixed_lang();
-			$this->add_report_item( ($ok===true)?'Process all articles':"Process $ok articles "  , true );
-		//	}
-
-		#	Create the first instances of the language tables as straight copies of the existing
-		# textpattern table so users on the public side still see everything until we start editing
-		# articles.
-		$langs = $this->preferences['l10n-languages']['value'];
-		foreach( $langs as $lang )
-			{
-			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = 'textpattern_' . $code['short'];
-			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where Status>=4";
-			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
-			}
-		}
-	function setup2()
-		{
-		$this->redirect( array( 'event'=>L10N_NAME , gbp_tab=>'preference' ) );
-		}
-	function cleanup2()
-		{
-		//	$this->redirect( array( 'event'=>'plugin' , 'step'=>'switch_status' , 'status'=>'1' , 'name'=>'gbp_l10n' ) );
-		$this->redirect( array( 'event'=>'plugin' ) );
-		}
-	function _import_cat1_lang()
-		{
-		#
-		#	Scan cat1 to find the language for an article.
-		# Probably need a mapping from cat1 lang -> iso language unless we are lucky.
-		#
-		}
-	function _import_cat2_lang()
-		{
-		}
-	function _import_section_lang()
-		{
-		}
-	function _import_fixed_lang()
-		{
-		# 	Scans the articles, creating a group for each and adding it and setting the
-		# language to the site default...
-
-		$where = "1";
-		$rs = safe_rows_start( 'ID , Title' , 'textpattern' , $where );
-		$count = @mysql_num_rows($rs);
-
-		$lang = $this->preferences['l10n-languages']['value'][0];
-		$i = 0;
-		if( $rs && $count > 0 )
-			{
-			while ( $a = nextRow($rs) )
-				if( GroupManager::create_group_and_add( $a ) )
-					$i++;
-			}
-		if( $i === $count )
-			return true;
-
-		return "$i of $count";
-		}
-
-	function cleanup()
-		{
-		$sql = 'drop table `'.PFX.'gbp_l10n`';
-		$ok = @safe_query( $sql );
-		$this->add_report_item( 'Delete the gbp_l10n table' , $ok );
-
-		$ok = GroupManager::destroy_table();
-		$this->add_report_item( 'Delete the l10n_textpattern_groups table' , $ok );
-
-		# Strip extra columns out of the textpattern table...
-		# ?? Should we still do this ??
-		$sql = "drop `Lang`, drop `Group`";
-		$ok = @safe_alter( 'textpattern' , $sql );
-		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
-
-		#
-		#	Drop the per-language textpattern_XX tables...
-		#
-		$langs = $this->preferences['l10n-languages']['value'];
-		foreach( $langs as $lang )
-			{
-			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = 'textpattern_' . $code['short'];
-			$sql = 'drop table `'.PFX.$table_name.'`';
-			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
-			}
-
-		#
-		# Remove the strings...
-		#
-		$this->strings = array_merge( $this->strings , $this->perm_strings );
-		$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' );
-		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true );
-
-		# TODO : get user choice as to which language to revert the site to...
-		# revert_content( form_table , field_list , validated_language_choice );
-			# revert_content will ...
-			# 	remove gbp_localise tags,
-			#	revert any found snippets with their language replacement (if any)
-			#	leave only blocks marked with matching if_lang statements
-			#	change all get_lang tags to the chosen lang
-		# revert_content( page_table , field_list , validated_language_choice );
-		# revert_content( article_table , field_list , validated_language_choice );
 		}
 
 	function _process_string_callbacks( $event , $step , $pre , $func )
@@ -1408,9 +1232,6 @@ class LocalisationTabView extends GBPAdminTabView
 		{
 		switch ($this->event)
 			{
-			case 'wizard':
-				$this->render_wizard();
-			break;
 			case 'article':
 				if ($id = gps(gbp_id))
 					$this->render_edit($this->parent->preferences['l10n-article_vars']['value'], $this->parent->preferences['l10n-article_hidden_vars']['value'], 'textpattern', "id = '$id'", $id);
@@ -1432,92 +1253,6 @@ class LocalisationTabView extends GBPAdminTabView
 				$this->render_list('name', 'title', 'txp_section', "name != 'default' order by name asc");
 			break;
 			}
-		}
-
-	function render_wizard()
-		{
-		$step = gps('step');
-
-		$codes = $this->parent->preferences['l10n-languages']['value'];
-		$langs = LanguageHandler::do_fleshout_names( $codes , true, true );
-
-		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
-		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
-
-		if( $this->parent->installed() )
-			{
-			if( 'setup' === $step )
-				{
-				#
-				#	Render the post-setup screen...
-				#
-				$out[] = tag( "Setup Report&#8230;" , 'h1' ) . n;
-				$out[] = tag( join( "\n\t" , $this->parent->wizard_report ) , 'table' ) . n . br;
-				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . $this->parent->form_inputs() . sInput( 'setup2' ) );
-				}
-			else
-				{
-				#
-				#	Render the cleanup wizard initial step...
-				#
-				$out[] = '<h1>'.gTxt('l10n-cleanup_wiz_title').'</h1>';
-				$out[] = graf( gTxt('l10n-cleanup_wiz_text') );
-
-				$out[] = form(
-					//graf( 'Reduce the site to which language? ' . selectInput( 'l10n_reduce_to', $langs ) ) .
-					fInput('submit', '', gTxt('cleanup'), '') . $this->parent->form_inputs() . sInput( 'cleanup' ) ,
-					'' ,
-					"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash( gTxt('l10n-cleanup_verify'))."')"
-							 );
-				}
-			}
-		else
-			{
-			if( 'cleanup' === $step )
-				{
-				#
-				#	Render the post-cleanup screen...
-				#
-				$out[] = tag( "Cleanup Report&#8230;" , 'h1' );
-				$out[] = tag( join( "\n\t" , $this->parent->wizard_report ) , 'table' ) . n . br;
-				$out[] = graf( 'The plugin can now be disabled and uninstalled.' );
-				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . $this->parent->form_inputs() . sInput( 'cleanup2' ) );
-				}
-			else
-				{
-				#
-				#	Render the setup wizard initial step...
-				#
-				$importers = array	(
-									'_import_fixed_lang' 	=> gTxt('l10n-import_fixed_lang'),
-									'_import_cat1_lang'		=> gTxt('l10n-import_cat1_lang'),
-									'_import_cat2_lang'		=> gTxt('l10n-import_cat2_lang'),
-									'_import_section_lang'	=> gTxt('l10n-import_section_lang'),
-									);
-				$out[] = '<h1>'.gTxt('l10n-setup_wiz_title').'</h1>';
-				$out[] = graf( gTxt('l10n-setup_wiz_text') );
-				$out[] = form(
-					tag(
-						StringHandler::make_legend('l10n-languages') .
-						graf( 'Tables for the following languages will be added&#8230;' . br . join( "<br />\n\t" , $langs ) )
-						//.graf( 'The existing articles&#8230; ' . selectInput( 'l10n_import_routine', $importers ) )
-						, 'fieldset'
-						) .
-					//tag(
-					//	StringHandler::make_legend('l10n-snippets') .
-					//	graf( fInput('checkbox' , 'l10n_snippets' , 'checked' ) . ' Convert pages/forms to use snippets' )
-					//	, 'fieldset'
-					//	) .
-					br .
-					fInput('submit', '', gTxt('Setup'), '') . $this->parent->form_inputs() . sInput( 'setup' ) ,
-					'' ,
-					"verify('".doSlash(gTxt('are_you_sure')).' '.doSlash(gTxt('l10n-setup_verify'))."')"
-							 );
-				}
-			}
-
-		$out[] = '</div>';
-		echo join('', $out);
 		}
 
 	function render_list($key, $value, $table, $where)
@@ -1690,6 +1425,199 @@ class LocalisationTabView extends GBPAdminTabView
 
 	}
 
+class LocalisationWizardView extends GBPWizardTabView
+	{
+	var $installation_steps = array(
+		'1' => array('setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT'), 
+		'2' => array(
+			'setup' => 'Insert the strings for this plugin',
+			'cleanup' => 'Remove plugin strings'),
+		'3' => array(
+			'setup' => 'Add `Lang` and `Group` fields to textpattern table',
+			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table'),
+		'4' => array(
+			'setup' => 'Add the gbp_l10n table',
+			'cleanup' => 'Drop the gbp_l10n table'),
+		'5' => array(
+			'setup' => 'Add the l10n_textpattern_groups table',
+			'cleanup' => 'Drop the l10n_textpattern_groups table'),
+		'6' => array('setup' => 'Process articles'),
+		'7' => array(
+			'setup' => 'Add the language native textpattern tables',
+			'cleanup' => 'Drop the language native textpattern tables'),
+	);
+
+	function setup_1()
+		{
+		# Extend the txp_lang table to allow text instead of tinytext in the data field.
+		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
+		$ok = @safe_alter( 'txp_lang' , $sql );
+		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok );
+		}
+
+	function setup_2()
+		{
+		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
+		# Make sure we only call insert_strings() once!
+		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
+		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $this->parent->strings , $this->parent->strings_lang , 'admin' , 'gbp_l10n' );
+		$this->add_report_item( 'Insert the strings for this plugin' , $ok );
+		}
+
+	function setup_3()
+		{
+		# Extend the textpattern table...
+		$sql = array();
+			$sql[] = " ADD `Lang` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci ";
+			$sql[] = " NOT NULL DEFAULT '-' AFTER `LastModID` , ";
+			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
+		$ok = @safe_alter( 'textpattern' , join('', $sql) );
+		$this->add_report_item( 'Add `Lang` and `Group` fields to textpattern table' , $ok );
+		}
+
+	function setup_4()
+		{
+		# Create the l10n tables...
+		$sql = array();
+			$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
+			$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
+			$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
+			$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
+			$sql[] = '`entry_id` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
+			$sql[] = '`entry_column` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
+			$sql[] = '`entry_value` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
+			$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
+			$sql[] = 'PRIMARY KEY (`id`)';
+			$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
+		$ok = safe_query(join('', $sql));
+		$this->add_report_item( 'Add the gbp_l10n table' , $ok );
+		}
+
+	function setup_5()
+		{
+		$ok = GroupManager::create_table();
+		$this->add_report_item( 'Add the l10n_textpattern_groups table' , $ok );
+		}
+
+	function setup_6()
+		{
+		# Run the import routine selected by the user from the install wizard tab...
+		$ok = $this->_import_fixed_lang();
+		$this->add_report_item( ($ok===true)?'Process all articles':"Process $ok articles "  , true );
+		}
+
+	function setup_7()
+		{
+		# Create the first instances of the language tables as straight copies of the existing
+		# textpattern table so users on the public side still see everything until we start editing
+		# articles.
+		$langs = $this->pref('l10n-languages');
+		foreach( $langs as $lang )
+			{
+			$code  = LanguageHandler::compact_code( $lang );
+			$table_name = 'textpattern_' . $code['short'];
+			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
+			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where Status>=4";
+			$ok = @safe_query( $sql );
+			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
+			}
+		}
+
+	function cleanup_2()
+		{
+		# Remove the strings...
+		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
+		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' );
+		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true );
+		}
+
+	function cleanup_3()
+		{
+		# Strip extra columns out of the textpattern table...
+		# ?? Should we still do this ??
+		$sql = "drop `Lang`, drop `Group`";
+		$ok = @safe_alter( 'textpattern' , $sql );
+		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
+		}
+
+	function cleanup_4()
+		{
+		$sql = 'drop table `'.PFX.'gbp_l10n`';
+		$ok = @safe_query( $sql );
+		$this->add_report_item( 'Delete the gbp_l10n table' , $ok );
+		}
+
+	function cleanup_5()
+		{
+		$ok = GroupManager::destroy_table();
+		$this->add_report_item( 'Delete the l10n_textpattern_groups table' , $ok );
+		}
+
+	function cleanup_7()
+		{
+		# Drop the per-language textpattern_XX tables...
+		global $prefs;
+		$langs = $this->pref('l10n-languages');
+		foreach( $langs as $lang )
+			{
+			$code  = LanguageHandler::compact_code( $lang );
+			$table_name = 'textpattern_' . $code['short'];
+			$sql = 'drop table `'.PFX.$table_name.'`';
+			$ok = @safe_query( $sql );
+			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
+			}
+		}
+
+	# TODO : get user choice as to which language to revert the site to...
+	# revert_content( form_table , field_list , validated_language_choice );
+		# revert_content will ...
+		# 	remove gbp_localise tags,
+		#	revert any found snippets with their language replacement (if any)
+		#	leave only blocks marked with matching if_lang statements
+		#	change all get_lang tags to the chosen lang
+	# revert_content( page_table , field_list , validated_language_choice );
+	# revert_content( article_table , field_list , validated_language_choice );
+
+	function _import_cat1_lang()
+		{
+		#
+		#	Scan cat1 to find the language for an article.
+		# Probably need a mapping from cat1 lang -> iso language unless we are lucky.
+		#
+		}
+
+	function _import_cat2_lang()
+		{
+		}
+
+	function _import_section_lang()
+		{
+		}
+
+	function _import_fixed_lang()
+		{
+		# 	Scans the articles, creating a group for each and adding it and setting the
+		# language to the site default...
+
+		$where = "1";
+		$rs = safe_rows_start( 'ID , Title' , 'textpattern' , $where );
+		$count = @mysql_num_rows($rs);
+
+		$lang = $this->pref('l10n-languages');
+		$i = 0;
+		if( $rs && $count > 0 )
+			{
+			while ( $a = nextRow($rs) )
+				if( GroupManager::create_group_and_add( $a ) )
+					$i++;
+			}
+		if( $i === $count )
+			return true;
+
+		return "$i of $count";
+		}
+
+	}
 
 global $l10n_view;
 $l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
