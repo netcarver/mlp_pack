@@ -1500,6 +1500,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		# textpattern table so users on the public side still see everything until we start editing
 		# articles.
 		$langs = $this->pref('l10n-languages');
+		$this->add_report_item( 'Add the language native textpattern tables' );
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
@@ -1507,7 +1508,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where Status>=4";
 			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
+			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
 			}
 		}
 
@@ -1546,13 +1547,14 @@ class LocalisationWizardView extends GBPWizardTabView
 		# Drop the per-language textpattern_XX tables...
 		global $prefs;
 		$langs = $this->pref('l10n-languages');
+		$this->add_report_item( 'Drop the language native textpattern tables' );
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
 			$table_name = 'textpattern_' . $code['short'];
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok );
+			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
 			}
 		}
 
