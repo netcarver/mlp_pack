@@ -457,11 +457,11 @@ class LocalisationView extends GBPPlugin
 		$gbp[$txp_current_plugin] = &$this;
 		$_GBP[0] = &$this;
 
-		new LocalisationWizardView( gTxt('l10n-wizard'), 'wizard', $this);
+		new LocalisationWizardView($this);
 
 		if( $this->installed() )
 			{
-			new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
+			new GBPPreferenceTabView($this);
 			if ($this->preferences['plugins']['value'] and has_privs('plugin') )
 				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
 			if ($this->preferences['pages']['value'] and has_privs('page') )
