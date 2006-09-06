@@ -1110,7 +1110,7 @@ class LocalisationStringView extends GBPAdminTabView
 				}
 
 			$f2[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
-			$content = join( '' , $f1 ) . doTag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
+			$content = join( '' , $f1 ) . tag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
 			$o[] = form( $content , '' ,
 						"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
 			}
