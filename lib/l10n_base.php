@@ -404,14 +404,14 @@ class LocalisationView extends GBPPlugin
 			if( NULL === $langs )
 				{
 				# Make sure the currently selected admin-side language is the site default...
-				$this->preferences['l10n-languages']['value'][] = LANG;
+				$this->set_preference('l10n-languages', LANG);
 
 				# Get the remaining admin-side langs...
 				$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
 				foreach( $installed_langs as $lang )
 					{
-					if( !in_array( $lang , $this->preferences['l10n-languages']['value'] ) )
-						$this->preferences['l10n-languages']['value'][] = $lang;
+					if( !in_array( $lang , $this->pref('l10n-languages') ) )
+						$this->set_preference('l10n-languages', $lang);
 					}
 				}
 
@@ -453,19 +453,19 @@ class LocalisationView extends GBPPlugin
 		if( $this->installed() )
 			{
 			new GBPPreferenceTabView($this);
-			if ($this->preferences['plugins']['value'] and has_privs('plugin') )
+			if ($this->pref('plugins') and has_privs('plugin') )
 				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-			if ($this->preferences['pages']['value'] and has_privs('page') )
+			if ($this->pref('pages') and has_privs('page') )
 				new LocalisationStringView( gTxt('pages') , 'page' , $this );
-			if ($this->preferences['forms']['value'] and has_privs('form') )
+			if ($this->pref('forms') and has_privs('form') )
 				new LocalisationStringView( gTxt('forms') , 'form' , $this );
-			if ($this->preferences['articles']['value'] and has_privs('article.edit') )
+			if ($this->pref('articles') and has_privs('article.edit') )
 				new LocalisationTabView( gTxt('articles'), 'article', $this);
-			if ($this->preferences['categories']['value'] and has_privs('category') )
+			if ($this->pref('categories') and has_privs('category') )
 				new LocalisationTabView( gTxt('categories'), 'category', $this);
-			// if ($this->preferences['links']['value'] and has_privs('link') )
+			// if ($this->pref('links') and has_privs('link') )
 			// 	new LocalisationTabView('links', 'link', $this);
-			if ($this->preferences['sections']['value'] and has_privs('section') )
+			if ($this->pref('sections') and has_privs('section') )
 				new LocalisationTabView( gTxt('sections'), 'section', $this);
 			}
 		}
@@ -572,14 +572,14 @@ class LocalisationView extends GBPPlugin
 		if( $this->installed() )
 			{
 			# Only render the common area at the head of the tabs if the table is installed ok.
-			foreach( $this->preferences['l10n-languages']['value'] as $key )
+			foreach( $this->pref('l10n-languages') as $key )
 				{
 				$safe_key = trim( $key );	# make sure we trim any spaces out -- they mess up the gTxt call.
 				$languages['value'][$safe_key] = gTxt($safe_key);
 				}
 
 			if (!gps(gbp_language))
-				$_GET[gbp_language] = $this->preferences['l10n-languages']['value'][0];
+				$_GET[gbp_language] = array_shift($this->pref('l10n-languages'));
 
 			setcookie(gbp_language, gps(gbp_language), time() + 3600 * 24 * 365);
 
@@ -668,7 +668,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$step = gps('step');
 		$pf_steps = array('gbp_save_pageform', 'edit_pageform', 'gbp_localise_pageform');
 		$pl_steps = array('gbp_import_languageset');
-		$can_edit = $this->parent->preferences['l10n-inline_editing']['value'];
+		$can_edit = $this->pref('l10n-inline_editing');
 
 		switch ($this->event)
 			{
@@ -948,7 +948,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
 		$snippets = SnippetHandler::find_snippets_in_block( $data );
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
-		$can_edit = $this->parent->preferences['l10n-inline_editing']['value'];
+		$can_edit = $this->pref('l10n-inline_editing');
 
 		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
@@ -1222,22 +1222,22 @@ class LocalisationTabView extends GBPAdminTabView
 			{
 			case 'article':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['l10n-article_vars']['value'], $this->parent->preferences['l10n-article_hidden_vars']['value'], 'textpattern', "id = '$id'", $id);
+					$this->render_edit($this->pref('l10n-article_vars'), $this->pref('l10n-article_hidden_vars'), 'textpattern', "id = '$id'", $id);
 				$this->render_list('ID', 'Title', 'textpattern', '1 order by Title asc');
 			break;
 			case 'category':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['l10n-category_vars']['value'], $this->parent->preferences['l10n-category_hidden_vars']['value'], 'txp_category', "id = '$id'", $id);
+					$this->render_edit($this->pref('l10n-category_vars'), $this->pref('l10n-category_hidden_vars'), 'txp_category', "id = '$id'", $id);
 				$this->render_list('id', 'title', 'txp_category', "name != 'root' order by title asc");
 			break;
 			// case 'link':
 			// 	if ($id = gps(gbp_id))
-			// 		$this->render_edit($this->parent->preferences['link_vars']['value'], $this->parent->preferences['link_hidden_vars']['value'], 'txp_link', "id = '$id'", $id);
+			// 		$this->render_edit($this->pref('link_vars'), $this->pref('link_hidden_vars'), 'txp_link', "id = '$id'", $id);
 			// 	$this->render_list('id', 'linkname', 'txp_link', '1 order by linkname asc');
 			// break;
 			case 'section':
 				if ($id = gps(gbp_id))
-					$this->render_edit($this->parent->preferences['l10n-section_vars']['value'], $this->parent->preferences['l10n-section_hidden_vars']['value'], 'txp_section', "name = '$id'", $id);
+					$this->render_edit($this->pref('l10n-section_vars'), $this->pref('l10n-section_hidden_vars'), 'txp_section', "name = '$id'", $id);
 				$this->render_list('name', 'title', 'txp_section', "name != 'default' order by name asc");
 			break;
 			}
