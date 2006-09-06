@@ -187,7 +187,7 @@ class GroupManager
 			}
 		return $result;
 		}
-	function get_group_members( $group , $exlude_lang )
+	function get_group_members( $group , $exclude_lang )
 		{
 		#
 		#	Returns an array of the lang->article mappings for all members of the
@@ -204,9 +204,12 @@ class GroupManager
 			}
 		return $members;
 		}
-	function get_alternate_mappings( $article_id , $exclude_lang )
+	function get_alternate_mappings( $article_id , $exclude_lang , $use_master=false )
 		{
-		$info = safe_row( 'Group' , 'textpattern' , "`ID`='$article_id'" );
+		if( $use_master )
+			$info = safe_row( '`Group`' , 'l10n_master_textpattern' , "`ID`='$article_id'" );
+		else
+			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$article_id'" );
 		if( $info === false )
 			{
 			//echo " ... returning: failed to read article data.";
@@ -216,18 +219,6 @@ class GroupManager
 		$group = $info['Group'];
 		$alternatives = GroupManager::get_group_members( $group , $exclude_lang );
 		return $alternatives;
-		}
-	function get_alternatives_markup( $article_id , $exclude_lang , $style='' )
-		{
-		$mappings = GroupManager::get_alternate_mappings( $article_id , $exclude_lang );
-
-		$out = array();
-		foreach( $mappings as $lang=>$article )
-			{
-			$out[]	= n.t.'<li><a href="" rel="nofollow">'.LanguageHandler::get_native_name_of_lang($lang).'</a></li>';
-			}
-
-		return tag( n . join( "\n\t" , $out ) . n , 'ul' ) . n;
 		}
 	function get_remaining_langs( $group )
 		{
