@@ -417,16 +417,14 @@ if (@txpinterface == 'public')
 		{
 		function load_localised_pref( $name )
 			{
-			global $prefs , $gbp_language;
-			//	echo br ,br ,br ,br , "pretext: load_localised_pref( $name ) ... language = '{$gbp_language['long']}' ... ";
-			$r = StringHandler::load_strings( $gbp_language['long'] , " AND `name`='snip-$name'" );
-			if( !empty( $r ) )
+			global $prefs;
+			$k = "snip-$name";
+			$r = gTxt( $k );
+			if( $r !== $k )
 				{
-				$v = $r['snip-'.$name];
-				$GLOBALS[$name] = $v;
-				$GLOBALS['prefs'][$name] = $v;
-				$prefs[$name] = $v;
-				//	echo " \$prefs[$name] = " , $prefs[$name] , br , var_dump( $v );
+				$GLOBALS[$name] = $r;
+				$GLOBALS['prefs'][$name] = $r;
+				$prefs[$name] = $r;
 				}
 			}
 		global $gbp_language;
@@ -434,12 +432,12 @@ if (@txpinterface == 'public')
 		$first_chunk = _l10n_process_url();
 		//echo br,br,br,br,br,"First chunk=",$first_chunk;
 
+		# Load the localised set of strings based on the selected language...
+		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
+
 		#	Load the site name and slogan into the $prefs[] array in the right place...
 		load_localised_pref( 'sitename' );
 		load_localised_pref( 'site_slogan' );
-
-		# Load the localised set of strings based on the selected language...
-		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
 
 		#
 		#	Don't know why, but there seems to be some whitespace getting into the
@@ -766,6 +764,7 @@ if (@txpinterface == 'public')
 				# SED: Process the direct snippet substitutions needed in the contained content.
 				$thing = SnippetHandler::substitute_snippets( $thing );
 
+				/*
 				if (isset($thisarticle))
 					{
 					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
@@ -777,6 +776,7 @@ if (@txpinterface == 'public')
 							}
 					}
 
+				*/
 				$html = parse($thing);
 				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $gbp_language['short'].'/'.'$1', $html);
 				return $html;
