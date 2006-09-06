@@ -396,6 +396,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-done'					=> 'Done',
 		'l10n-failed'				=> 'Failed',
 		);
+	var $permissions = '1,2,3,6';
 
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' )
@@ -456,15 +457,11 @@ class LocalisationView extends GBPPlugin
 		$gbp[$txp_current_plugin] = &$this;
 		$_GBP[0] = &$this;
 
-		add_privs($this->event, '1,2,3,6');
-
-		if( has_privs('admin.edit') )
-			new LocalisationWizardView( gTxt('l10n-wizard'), 'wizard', $this);
+		new LocalisationWizardView( gTxt('l10n-wizard'), 'wizard', $this);
 
 		if( $this->installed() )
 			{
-			if( has_privs('prefs') )
-				new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
+			new GBPPreferenceTabView( gTxt('tab_preferences'), 'preference', $this);
 			if ($this->preferences['plugins']['value'] and has_privs('plugin') )
 				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
 			if ($this->preferences['pages']['value'] and has_privs('page') )
