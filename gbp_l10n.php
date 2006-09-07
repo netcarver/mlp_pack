@@ -710,6 +710,49 @@ if (@txpinterface == 'public')
 		return $gbp_language[$type];
 		}
 
+	function _gbp_feed_link_cb( $matches )
+		{
+		global $gbp_feed_link_lang;
+
+		#
+		#	$matches[0] is the entire pattern...
+		#	$matches[1] is the href...
+		#
+		$path = trim( str_replace( trim(hu, '/'), '', $matches[1] ), '/' );
+		$path = $gbp_feed_link_lang['short'].'/'.$path;
+		$path = ' href="'.hu.$path.'"';
+		return $path;
+		}
+	function gbp_feed_link( $atts )
+		{
+		global $gbp_language, $gbp_feed_link_lang;
+		$gbp_feed_link_lang = $gbp_language;
+
+		if( isset($atts['code']) )
+			{
+			$code = $atts['code'];
+			unset( $atts['code'] );
+
+			if( $code === 'none' )
+				return feed_link( $atts );
+
+			$gbp_feed_link_lang = LanguageHandler::compact_code( $code );
+			}
+
+		#
+		#	Get the standard result...
+		#
+		$result = feed_link( $atts );
+
+		#
+		#	Inject the language code into the url...
+		#
+		$pattern = '/ href="(.*)" /';
+		$result = preg_replace_callback( $pattern , '_gbp_feed_link_cb' , $result );
+
+		return $result;
+		}
+
 	function gbp_get_lang_dir( $atts )
 		{
 		/*
