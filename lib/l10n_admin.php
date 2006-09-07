@@ -520,9 +520,9 @@ function l10n_pre_multi_edit_cb( $event , $step )
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	$code  = LanguageHandler::compact_code( $lang );
-	$table_name = 'textpattern_' . $code['short'];
+	$table_name = GroupManager::make_textpattern_name( $code );
 
-	//echo br , "Updating the {$code['short']} table...";
+	//echo br , "Updating the $table_name table...";
 
 	$where = '';
 	if( $filter )

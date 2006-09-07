@@ -56,9 +56,7 @@ $DB = new DB;
 				$language_ok	= true;
 				if( $language_set and $language_ok )
 					{
-					//echo br , "_redirect_textpattern($table) to ... ";
-					$table = $table.'_'.$gbp_language['short'];
-					//echo $table;
+					$table = $table.'_'.$gbp_language['long'];
 					}
 				}
 			elseif( 'l10n_master_textpattern' === $table )

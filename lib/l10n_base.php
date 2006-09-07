@@ -51,6 +51,10 @@ class GroupManager
 		$sql = 'drop table `'.PFX.'l10n_textpattern_groups`';
 		return @safe_query( $sql );
 		}
+	function make_textpattern_name( $full_code )
+		{
+		return 'textpattern_' . $full_code['long'];
+		}
 	function _get_group_info( $id )
 		{
 		$info = safe_row( '*' , 'l10n_textpattern_groups' , "`ID`='$id'" );
@@ -1416,7 +1420,7 @@ class LocalisationTabView extends GBPAdminTabView
 class LocalisationWizardView extends GBPWizardTabView
 	{
 	var $installation_steps = array(
-		'1' => array('setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT'), 
+		'1' => array('setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT'),
 		'2' => array(
 			'setup' => 'Insert the strings for this plugin',
 			'cleanup' => 'Remove plugin strings'),
@@ -1504,7 +1508,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = 'textpattern_' . $code['short'];
+			$table_name = GroupManager::make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where Status>=4";
 			$ok = @safe_query( $sql );
@@ -1551,7 +1555,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = 'textpattern_' . $code['short'];
+			$table_name = GroupManager::make_textpattern_name( $code );
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
 			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
