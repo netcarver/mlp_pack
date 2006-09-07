@@ -408,14 +408,14 @@ class LocalisationView extends GBPPlugin
 			if( NULL === $langs )
 				{
 				# Make sure the currently selected admin-side language is the site default...
-				$this->set_preference('l10n-languages', LANG);
+				$this->set_preference('l10n-languages', array(LANG));
 
 				# Get the remaining admin-side langs...
 				$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
 				foreach( $installed_langs as $lang )
 					{
 					if( !in_array( $lang , $this->pref('l10n-languages') ) )
-						$this->set_preference('l10n-languages', $lang);
+						$this->set_preference('l10n-languages', array($lang));
 					}
 				}
 
