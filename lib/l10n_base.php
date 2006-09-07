@@ -448,37 +448,28 @@ class LocalisationView extends GBPPlugin
 
 	function preload()
 		{
-		global $gbp, $txp_current_plugin, $_GBP;
-		$gbp[$txp_current_plugin] = &$this;
-		$_GBP[0] = &$this;
-
+		if ($this->pref('plugins') and has_privs('plugin') )
+			new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
+		if ($this->pref('pages') and has_privs('page') )
+			new LocalisationStringView( gTxt('pages') , 'page' , $this );
+		if ($this->pref('forms') and has_privs('form') )
+			new LocalisationStringView( gTxt('forms') , 'form' , $this );
+		if ($this->pref('articles') and has_privs('article.edit') )
+			new LocalisationTabView( gTxt('articles'), 'article', $this, true );
+		if ($this->pref('categories') and has_privs('category') )
+			new LocalisationTabView( gTxt('categories'), 'category', $this );
+		// if ($this->pref('links') and has_privs('link') )
+		// 	new LocalisationTabView('links', 'link', $this );
+		if ($this->pref('sections') and has_privs('section') )
+			new LocalisationTabView( gTxt('sections'), 'section', $this );	
+		
+		new GBPPreferenceTabView($this);
 		new LocalisationWizardView($this);
-
-		if( $this->installed() )
-			{
-			new GBPPreferenceTabView($this);
-			if ($this->pref('plugins') and has_privs('plugin') )
-				new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-			if ($this->pref('pages') and has_privs('page') )
-				new LocalisationStringView( gTxt('pages') , 'page' , $this );
-			if ($this->pref('forms') and has_privs('form') )
-				new LocalisationStringView( gTxt('forms') , 'form' , $this );
-			if ($this->pref('articles') and has_privs('article.edit') )
-				new LocalisationTabView( gTxt('articles'), 'article', $this);
-			if ($this->pref('categories') and has_privs('category') )
-				new LocalisationTabView( gTxt('categories'), 'category', $this);
-			// if ($this->pref('links') and has_privs('link') )
-			// 	new LocalisationTabView('links', 'link', $this);
-			if ($this->pref('sections') and has_privs('section') )
-				new LocalisationTabView( gTxt('sections'), 'section', $this);
-			}
 		}
 
 	function installed()
 		{
-		//$result = getThing( "show tables like '".PFX."gbp_l10n'" );
-		$result = getThing( "show tables like '".PFX."l10n_textpattern_groups'" );
-		return ($result);
+		return LocalisationWizardView::installed();
 		}
 
 	function _process_string_callbacks( $event , $step , $pre , $func )
@@ -1438,6 +1429,12 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Add the language native textpattern tables',
 			'cleanup' => 'Drop the language native textpattern tables'),
 	);
+
+	function installed()
+		{
+		$result = getThing( "show tables like '".PFX."l10n_textpattern_groups'" );
+		return ($result);
+		}
 
 	function setup_1()
 		{
