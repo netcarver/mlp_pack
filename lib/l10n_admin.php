@@ -149,6 +149,7 @@ function _l10n_chooser( $permitted_langs )
 	#	See if there are any languages selected. If not, select them all -- to give the user something to look at!
 	#
 	$showlangs = array();
+	$count = 0;
 	foreach( $langs as $lang )
 		{
 		$rw = '';
@@ -156,6 +157,8 @@ function _l10n_chooser( $permitted_langs )
 			$checked = cs( $lang ) ? 'checked' : '' ;
 		else
 			$checked = ps( $lang ) ? 'checked' : '' ;
+
+		$count = (!empty($checked)) ? $count+1 : $count;
 		$lang_name = LanguageHandler::get_native_name_of_lang( $lang );
 
 		if( !in_array( $lang , $permitted_langs ) )
@@ -164,9 +167,22 @@ function _l10n_chooser( $permitted_langs )
 			$checked = '';
 			}
 
-		if( strlen( $checked ) > 0 )
-			$count++;
+		$showlangs[$lang]['lang_name']	= $lang_name;
+		$showlangs[$lang]['rw'] 	= $rw;
+		$showlangs[$lang]['checked']	= $checked;
 
+		}
+
+	$override_check = false;
+	if( $count === 0 )
+		{
+		$override_check = true;
+		}
+
+	foreach( $showlangs as $lang=>$record )
+		{
+		extract( $record );
+		$checked = ($override_check) ? 'checked' : $checked;
 		$o[] = t . '<input type="checkbox" class="checkbox" '.$rw.' '.$checked.' value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' . n;
 		$o[] = t . '<label for="'.$lang.'">'.$lang_name.'</label>' . n;
 		}
