@@ -94,16 +94,28 @@ function l10n_list_filter( $event, $step )
 		{
 		case '':
 		case 'list':
-			#
-			#	Create a temporary 'textpattern' table, filtered by this txp_user's
-			# language permissions AND their view choices ...
-			#
 			$langs = LanguageHandler::get_site_langs();
 			$selected = array();
+			$use_cookies = (ps( 'l10n_filter_method' ) !== 'post');
 			foreach( $langs as $lang )
 				{
-				if( ps( $lang ) )
-					$selected[] = "'$lang'";
+				if( $use_cookies )
+					{
+					if( cs($lang) )
+						$selected[] = "'$lang'";
+					}
+				else
+					{
+					if( ps($lang) )
+						{
+						$selected[] = "'$lang'";
+						$time = time() + (3600 * 24 * 365);
+						}
+					else
+						$time = time() - 3600;
+
+					$ok = setcookie( $lang , $lang , $time );
+					}
 				}
 			$languages = join( ',' , $selected );
 			_l10n_create_temp_textpattern( $languages );
@@ -131,10 +143,19 @@ function _l10n_chooser( $permitted_langs )
 	$count = 0;
 	$langs = LanguageHandler::get_site_langs();
 	$o[] = '<div style="text-align: center;" ><fieldset style="margin: 0px auto;"><legend>' . 'Show languages&#8230;' . '</legend>' . n;
+	$use_cookies = (ps( 'l10n_filter_method' ) !== 'post');
+
+	#
+	#	See if there are any languages selected. If not, select them all -- to give the user something to look at!
+	#
+	$showlangs = array();
 	foreach( $langs as $lang )
 		{
 		$rw = '';
-		$checked = ps( $lang ) ? 'checked' : '' ;
+		if( $use_cookies )
+			$checked = cs( $lang ) ? 'checked' : '' ;
+		else
+			$checked = ps( $lang ) ? 'checked' : '' ;
 		$lang_name = LanguageHandler::get_native_name_of_lang( $lang );
 
 		if( !in_array( $lang , $permitted_langs ) )
@@ -149,18 +170,11 @@ function _l10n_chooser( $permitted_langs )
 		$o[] = t . '<input type="checkbox" class="checkbox" '.$rw.' '.$checked.' value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' . n;
 		$o[] = t . '<label for="'.$lang.'">'.$lang_name.'</label>' . n;
 		}
-	$o[] = eInput( 'list' );
+	$o[] = hInput( 'l10n_filter_method' , 'post' );
 	$o[] = t.'<input type="submit" value="'.gTxt('go').'" class="smallerbox" />' . n;
 	$o[] = '</fieldset></div>' . n;
 
-	//if( 0 === $count )
-		#
-		#	No checked boxes => nothing to show here!
-		#
-		//$o = '';
-
-	$o = form( join( '' , $o ) );
-
+	$o = join( '' , $o );
 	return $o;
 	}
 function l10n_list_buffer_processor( $buffer )
@@ -170,7 +184,7 @@ function l10n_list_buffer_processor( $buffer )
 
 	#	Inject the language chooser...
 	$chooser = _l10n_chooser( LanguageHandler::get_site_langs() );
-	$f = '<form action="index.php" method="post" style="margin: auto; text-align: center;"><p><label for="list-search">';
+	$f = '<p><label for="list-search">';
 	$buffer = str_replace( $f , $chooser.br.n.$f , $buffer );
 
 	#	Inject the language markers...
@@ -438,7 +452,8 @@ function l10n_post_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
 	$method   = ps('edit_method');
-	$redirect = false;
+	$redirect = true;	#	Always redirect to the 'list' event. This forces a re-draw of the screen
+						#	with the correct language filters applied.
 	$update   = true;
 
 	#
