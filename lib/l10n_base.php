@@ -411,15 +411,14 @@ class LocalisationView extends GBPPlugin
 			if( NULL === $langs )
 				{
 				# Make sure the currently selected admin-side language is the site default...
-				$this->set_preference('l10n-languages', array(LANG));
+				$languages = array(LANG);
 
 				# Get the remaining admin-side langs...
-				$installed_langs = safe_column('lang','txp_lang',"1 GROUP BY 'lang'");
-				foreach( $installed_langs as $lang )
-					{
-					if( !in_array( $lang , $this->pref('l10n-languages') ) )
-						$this->set_preference('l10n-languages', array($lang));
-					}
+				$installed_langs = safe_column('lang','txp_lang',"lang != '".LANG."' GROUP BY 'lang'");
+				$languages = array_merge( $languages, array_values($installed_langs) );
+
+				# Finally set the preference
+				$this->set_preference('l10n-languages', $languages);
 				}
 
 			$textarray = array_merge( $textarray , $this->perm_strings );
@@ -577,7 +576,10 @@ class LocalisationView extends GBPPlugin
 				}
 
 			if (!gps(gbp_language))
-				$_GET[gbp_language] = array_shift($this->pref('l10n-languages'));
+				{
+				$langs = $this->pref('l10n-languages');
+				$_GET[gbp_language] = $langs[0];
+				}
 
 			setcookie(gbp_language, gps(gbp_language), time() + 3600 * 24 * 365);
 
