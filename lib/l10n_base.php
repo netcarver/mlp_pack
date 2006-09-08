@@ -390,6 +390,9 @@ class LocalisationView extends GBPPlugin
 		'l10n-xlate_to'				=> 'Translating into: ',
 		'l10n-done'					=> 'Done',
 		'l10n-failed'				=> 'Failed',
+		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} article{s} transferred to you.',
+		'l10n-email_body_other'		=> "{txp_username} has transferred the following article{s} to you...\r\n\r\n",
+		'l10n-email_body_self'		=> "You transferred the following article{s} to yourself...\r\n\r\n",
 		);
 	var $permissions = '1,2,3,6';
 
@@ -1428,6 +1431,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		'7' => array(
 			'setup' => 'Add the language native textpattern tables',
 			'cleanup' => 'Drop the language native textpattern tables'),
+		'8' => array ( 'cleanup' => 'Delete cookies' ),
 	);
 
 	function installed()
@@ -1548,7 +1552,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		# Drop the per-language textpattern_XX tables...
 		global $prefs;
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( 'Drop the language native textpattern tables' );
+		$this->add_report_item( 'Drop the language native textpattern tables&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
@@ -1559,6 +1563,17 @@ class LocalisationWizardView extends GBPWizardTabView
 			}
 		}
 
+	function cleanup_8()
+		{
+		$langs = $this->pref('l10n-languages');
+		$this->add_report_item( 'Delete the cookies&#8230;' );
+		foreach( $langs as $lang )
+			{
+			$time = time() - 3600;
+			$ok = setcookie( $lang , $lang , $time );
+			$this->add_report_item( 'Delete the '. LanguageHandler::get_native_name_of_lang( $lang ) . ' cookie' , $ok , true );
+			}
+		}
 	# TODO : get user choice as to which language to revert the site to...
 	# revert_content( form_table , field_list , validated_language_choice );
 		# revert_content will ...

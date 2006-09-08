@@ -443,7 +443,8 @@ function l10n_changeauthor_notify_routine()
 				extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
 				$lang   = LanguageHandler::get_native_name_of_lang( $Lang );
 				$status = $statuses[$Status];
-				$msg = "\"$Title\"\r\nStatus: $status , Language: $lang [$Lang] , Group: $Group.\r\n";
+				$msg = 	gTxt('title')  . ": \"$Title\"\r\n" .
+						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [$Lang] , " . gTxt('group' ) . ": $Group.\r\n";
 				$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 				$links[] = $msg;
 				}
@@ -454,14 +455,21 @@ function l10n_changeauthor_notify_routine()
 
 		$count = count( $links );
 		$s = (($count===1) ? '' : 's');
-		if( $same )
-			$body = "To\t: $txp_username\r\nFrom\t: Self\r\n\r\nYou transferred the following article$s to yourself...\r\n\r\n";
-		else
-			$body = "To\t: $new_user\r\nFrom\t: $txp_username\r\n\r\nI have transferred the following article$s to you...\r\n\r\n";
-		$body.= join( "\r\n" , $links ) . "\r\n\r\nThank You.\r\n--\r\n$txp_username.";
-		$subject = "[$sitename] Notice: $count article$s transferred to you.";
+		
+		$subs = array(	'{sitename}' => $sitename ,
+						'{count}' => $count ,
+						'{s}' => $s ,
+						'{txp_username}' => $txp_username,
+						);
 
-		txpMail($email, $subject, $body, $replyto);
+		if( $same )
+			$body = gbp_gTxt( 'l10n-email_body_self' , $subs );
+		else
+			$body = gbp_gTxt( 'l10n-email_body_other' , $subs );
+		$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
+		$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
+
+		$ok = txpMail($email, $subject, $body, $replyto);
 		}
 	}
 function l10n_post_multi_edit_cb( $event , $step )
