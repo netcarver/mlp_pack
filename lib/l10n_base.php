@@ -298,6 +298,104 @@ class GroupManager
 
 		return true;
 		}
+	function get_articles( $criteria , $sort_sql='ID' , $offset='0' , $limit='' )
+		{
+		if( $offset == '0' and $limit == '' )
+			$rs = safe_rows_start('*', 'l10n_textpattern_groups', "$criteria order by $sort_sql" );
+		else
+			$rs = safe_rows_start('*', 'l10n_textpattern_groups', "$criteria order by $sort_sql limit $offset, $limit" );
+		return $rs;
+		}
+	function check_groups()
+		{
+		#
+		#	index => array( add|delete|skip , trans-id , group-id , description );
+		#
+		$result = array();
+
+		$members_count = 0;
+		$langs = LanguageHandler::get_site_langs();
+
+		#
+		#	Examing the groups table...
+		#
+		$articles = GroupManager::get_articles( '1=1' );
+		if( count( $articles ) )
+			{
+			while( $article = nextRow($articles) )
+				{
+				#
+				#	Get the group members...
+				#
+				extract( $article );
+				$members = unserialize( $members );
+				$m_count = count( $members );
+				$members_count += $m_count;
+
+				#
+				#	Find the members from the textpattern table too...
+				#
+				$translations = safe_column( 'ID', 'textpattern' , "`Group`='$ID'" );
+				$t_count = count( $translations );
+
+				#
+				#	Check the counts are the same...
+				#
+				if( $t_count !== $m_count )
+					{
+					#
+					#	Take the diffs...
+					#
+					$diff_members_translations = array_diff( $members , $translations );
+					$diff_translations_members = array_diff( $translations , $members );
+					$count_m_t = count($diff_members_translations);
+					$count_t_m = count($diff_translations_members);
+
+					if( $count_m_t > 0 )
+						{
+						#
+						#	Need to delete translations from the groups table...
+						#
+						foreach( $diff_members_translations as $lang=>$translation )
+							{
+							unset( $members[$lang] );
+							$result[] = array( 'delete' , $translation , $ID , "Deleted translation $translation from group $ID" );
+							}
+						GroupManager::_update_group( $ID , $names , $members );
+						}
+					if( $count_t_m > 0 )
+						{
+						#
+						#	Need to add missing translations to the group table...
+						#
+						foreach( $diff_translations_members as $translation )
+							{
+							$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+							$lang = $details['Lang'];
+
+							#
+							#	Check it's a valid site language...
+							#
+							if( !in_array( $lang , $langs ) )
+								{
+								$result[] = array( 'skip' , $translation , $ID , "Skipped translation $translation while processing group $ID as it uses unsupported language $lang" );
+								continue;
+								}
+							$members[$lang] = $translation;
+							GroupManager::_update_group( $ID , $names , $members );
+							$result[] = array( 'add' , $translation , $ID , "Added translation $translation to group $ID" );
+							}
+						}
+					}
+				}
+			}
+		return $result;
+		}
+	function get_total()
+		{
+		return safe_count('l10n_textpattern_groups', "1" );
+		}
+
 	}
 
 class LocalisationView extends GBPPlugin
@@ -307,8 +405,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
-		'l10n-article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
-		'l10n-article_hidden_vars' => array('value' => array('textile_body', 'textile_excerpt'), 'type' => 'gbp_array_text'),
+		//'l10n-article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
+		//'l10n-article_hidden_vars' => array('value' => array('textile_body', 'textile_excerpt'), 'type' => 'gbp_array_text'),
 
 		'categories' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
@@ -457,14 +555,14 @@ class LocalisationView extends GBPPlugin
 		if ($this->pref('forms') and has_privs('form') )
 			new LocalisationStringView( gTxt('forms') , 'form' , $this );
 		if ($this->pref('articles') and has_privs('article.edit') )
-			new LocalisationTabView( gTxt('articles'), 'article', $this, true );
+			new LocalisationArticleTabView( gTxt('articles'), 'article', $this, true );
 		if ($this->pref('categories') and has_privs('category') )
 			new LocalisationTabView( gTxt('categories'), 'category', $this );
 		// if ($this->pref('links') and has_privs('link') )
 		// 	new LocalisationTabView('links', 'link', $this );
 		if ($this->pref('sections') and has_privs('section') )
-			new LocalisationTabView( gTxt('sections'), 'section', $this );	
-		
+			new LocalisationTabView( gTxt('sections'), 'section', $this );
+
 		new GBPPreferenceTabView($this);
 		new LocalisationWizardView($this);
 		}
@@ -1412,6 +1510,259 @@ class LocalisationTabView extends GBPAdminTabView
 		}
 
 	}
+
+class LocalisationArticleTabView extends GBPAdminTabView
+	{
+
+	function preload()
+		{
+		$step = gps('step');
+		if( $step )
+			{
+			switch( $step )
+				{
+				case 'gbp_save':
+					$this->save_post();
+				break;
+
+				case 'l10n_change_pageby':
+					event_change_pageby('article');
+				break;
+				}
+			}
+
+		//$results = GroupManager::check_groups();
+		//if( !empty( $results ) )
+		//	$this->parent->message = 'Groups rebuilt.';
+		//else
+		//	$this->parent->message = 'Groups ok.';
+		}
+
+
+	function main()
+		{
+		switch ($this->event)
+			{
+			case 'article':
+				$this->render_article_table();
+			break;
+			}
+		}
+
+	function render_article_table()
+		{
+		$event = $this->parent->event;
+		extract( get_prefs() );		#	Need to do this to keep the articles/page count in sync.
+		extract(gpsa(array('page')));
+
+		#
+		#	Get the statuses array...
+		#
+		global $txpcfg;
+		include_once $txpcfg['txpath'].'/include/txp_list.php';
+		global $statuses;
+
+		$langs = LanguageHandler::get_site_langs();
+		$full_lang_count = count( $langs );
+		$default_lang = LanguageHandler::get_site_default_lang();
+
+		$o[] = <<<css
+<style type="text/css">
+.status_1 { background: #ccf; }
+.status_2 { background: #eee; }
+.status_3 { background: #fc9; }
+.status_4 { background: #fff; }
+.status_5 { background: #ff9; }
+.full     { background: #cfc; }
+.empty    { background: #eee; }
+.warning  { background: #f99; }
+.count    { text-align: right; background: #ccf; }
+table#l10n_articles_table
+	{
+	border-color: #999;
+	border-style: solid;
+	border-width: 1px 1px 0 0;
+	}
+table#l10n_articles_table td, table#l10n_articles_table th
+	{
+	border-color: #999;
+	border-style: solid;
+	border-width: 0 0 1px 1px;
+	width: 150px;
+	}
+.id       { text-align: right; width: 80px !important; }
+td.legend dt { margin: 2px 2px 2px 10px; padding: 0 5px; border: 1px solid #333; float:left; }
+td.legend dd { margin: 2px 0; float:left; }
+</style>'
+css;
+
+		$o[] = startTable( /*id*/ 'l10n_articles_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
+		$o[] = '<caption><strong>'.gTxt('articles').'</strong></caption>';
+
+		#
+		#	Setup the colgroup/thead...
+		#
+		$colgroup[] = n.t.'<col id="id" />';
+		$thead[] = tag( gTxt('articles') , 'th' , ' class="id"' );
+		foreach( $langs as $lang )
+			{
+			$colgroup[] = n.t.'<col id="'.$lang.'" />';
+			$name = LanguageHandler::get_native_name_of_lang($lang);
+			if( $lang === $default_lang )
+				$name .= br . gTxt('default');
+			$thead[] = hCell( $name );
+			$counts[$lang] = 0;
+			}
+		$o[] = n . tag( join( '' , $colgroup ) , 'colgroup' );
+		$o[] = n .  tr( join( '' , $thead ) );
+
+		#
+		#	Pager...
+		#
+		$total = GroupManager::get_total();
+		$limit = max(@$article_list_pageby, 15);
+		list($page, $offset, $numPages) = pager($total, $limit, $page);
+
+		#
+		#	Process the articles (textpattern_groups) table...
+		#
+		$articles = GroupManager::get_articles( '1=1' , 'ID' , $offset , $limit );
+		$counts['id'] = 0;
+		$w = '';
+		if( count( $articles ) )
+			{
+			while( $article = nextRow($articles) )
+				{
+				$vis_count = 0;
+				$trclass = '';
+				$counts['id'] += 1;
+				$cells = array();
+				$sections = array();
+				extract( $article );
+				$members = unserialize( $members );
+				$cells[] = td( $ID , '' , 'id' );
+				foreach( $langs as $lang )
+					{
+					if( array_key_exists( $lang , $members ) )
+						{
+						$tdclass = '';
+						$msg = '';
+						$id = $members[$lang];
+
+						#
+						#	Get the details for this translation
+						#
+						$details = safe_row( '*' , 'textpattern' , "`ID`='$id'" );
+						$status_no = $details['Status'];
+						if( $status_no >= 4 )
+							$vis_count++;
+
+						$tdclass .= 'status_'.$status_no;
+						$status = !empty($status_no) ? $statuses[$status_no] : '';
+						if( empty($details['Title']) )
+							$title = '<em>'.eLink('article', 'edit', 'ID', $id, gTxt('untitled')).'</em>';
+						else
+							$title = eLink('article', 'edit', 'ID', $id, $details['Title'] );
+
+						#
+						#	Check for consistency with the group data...
+						#
+						if( $details['Group'] != $ID )
+							{
+							$tdclass .= 'warning';
+							$msg = br . strong('Group mismatch.');
+							}
+						else if( $details['Lang'] != $lang )
+							{
+							$tdclass .= 'warning';
+							$msg = br . strong('Language mismatch.') . br . "Art[$lang] vs tsl[{$details['Lang']}]";
+							}
+
+						#
+						#	Grab the section and check for consistency across the row...
+						#
+						$section = $details['Section'];
+						$sections[$section] = $ID;
+
+						$content = strong( $title ) . br . $section . ' &#8212; ' . $status . $msg;
+						$cells[] = td( $content , $w , trim($tdclass) );
+						$counts[$lang] += 1;
+						}
+					else
+						{
+						if( $lang === $default_lang )
+							$cells[] = td( gTxt('default') . ' missing!' , $w , 'warning' );
+						else
+							$cells[] = td( '' , $w , 'empty' );
+						}
+					}
+
+
+				#
+				#	Tag rows which are full or have warnings...
+				#
+				if( count( $sections ) != 1 )
+					{
+					$trclass .= ' warning';
+					$cells[0] = td( $ID . br . 'Section mismatch' , $w , 'id' );
+					}
+				else if( $vis_count == $full_lang_count )
+					{
+					$trclass .= ' full';
+					}
+				$trclass .= (0 == ($counts['id'] & 0x01)) ? '' : ' odd';
+				$body[] = n.tr( n.join('' , $cells) , ' class="'.trim($trclass).'"' );
+				}
+			}
+
+		#
+		#	Show the counts for the page...
+		#
+		$cells = array();
+		$cells[] = td( $counts['id'] , '' , 'id count' );
+		foreach( $langs as $lang )
+			{
+			$cells[] = td( $counts[$lang] , '' , 'count' );
+			}
+		$body[] = n.tr( n.join('' , $cells) );
+
+		#
+		#	Show the table legend...
+		#
+		$cells = array();
+		$l[] = $this->add_legend_item( 'status_1' , $statuses[1] );
+		$l[] = $this->add_legend_item( 'status_2' , $statuses[2] . '/'. gTxt('none') );
+		$l[] = $this->add_legend_item( 'status_3' , $statuses[3] );
+		$l[] = $this->add_legend_item( 'status_4' , $statuses[4] );
+		$l[] = $this->add_legend_item( 'status_5' , $statuses[5] );
+		$l[] = br.br;
+		$l[] = $this->add_legend_item( 'full' , "Visible in all languages." );
+		$l[] = $this->add_legend_item( 'warning' , "Warning/error." );
+		$l = tag( n.join('',$l) , 'dl' );
+		$cells[] = tdcs( $l , $full_lang_count+1, '' , 'legend' );
+		$body[] = n.tr( n.join('' , $cells) );
+
+		$o[] = tag( join( '' , $body) , 'tbody' );
+		$o[] = endTable();
+		$o[] = n.nav_form( $event, $page, $numPages, '', '', '', '');
+		$o[] = n.pageby_form( $event, $article_list_pageby );
+
+		echo join( '' , $o );
+		}
+
+	function add_legend_item( $id , $text )
+		{
+		$r[] = t.tag( '&#160;' , 'dt' , " class=\"$id\"" ).n;
+		$r[] = t.tag( $text , 'dd' ).n;
+		return join( '' , $r );
+		}
+
+	function save_post()
+		{
+		}
+
+	}
+
 
 class LocalisationWizardView extends GBPWizardTabView
 	{
