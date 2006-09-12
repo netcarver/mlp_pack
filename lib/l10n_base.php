@@ -451,7 +451,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-category_vars'		=> 'Category variables ',
 		'l10n-category_hidden_vars'	=> 'Hidden category variables ',
 		'l10n-clone'				=> 'Clone',
-		'l10n-clone_and_translate'	=> 'Clone for translation&#8230;',
+		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
 		'l10n-section_vars'			=> 'Section variables ',
 		'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
@@ -502,7 +502,19 @@ class LocalisationView extends GBPPlugin
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} article{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following article{s} to you...\r\n\r\n",
 		'l10n-email_body_self'		=> "You transferred the following article{s} to yourself...\r\n\r\n",
-		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you re-title the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}."
+		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you re-title the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
+		//'l10n-delete_article_title' => 'Delete this row',
+		//'l10n-delete_trans_title'	=> 'Delete this translation',
+		//'l10n-clone_title'			=> 'Clone this article for translation',
+		'l10n-legend_warning'		=> 'Warning/Error',
+		'l10n-legend_fully_visible'	=> 'Visible in all languages',
+		'l10n-translations'			=> 'Translations',
+		'l10n-warn_section_mismatch' => 'Section mismatch',
+		'l10n-warn_lang_mismatch'	=> 'Language mismatch',
+		'l10n-missing' 				=> ' missing!',
+		'l10n-missing_translation'	=> 'Article: {id} missing a translation.',
+		'l10n-by'					=> 'by',
+		'l10n-into'					=> 'into',
 		);
 	var $permissions = '1,2,3,6';
 
@@ -1846,6 +1858,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 	function render_article_table()
 		{
 		$event = $this->parent->event;
+		//$d_art_title = gTxt( 'l10n-delete_article_title' );
+		//$d_trn_title = gTxt( 'l10n-delete_trans_title' );
+		//$clone_title = gTxt( 'l10n-clone_title' );
 
 		#
 		#	Pager calculations...
@@ -1859,8 +1874,8 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	User permissions...
 		#
-		$can_delete = true;
-		$can_clone = true;
+		$can_delete = has_privs( 'article.delete' );
+		$can_clone  = has_privs( 'l10n.clone' );
 
 		#
 		#	Get the statuses array...
@@ -1977,7 +1992,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					#
 					if( !array_key_exists( $lang , $members ) )
 						{
-						$this->parent->message = "Article: $ID missing a translation.";
+						$this->parent->message = gbp_gTxt( 'l10n-missing_translation' , array( '{id}'=>$ID ) );
 						$members[$lang] = $translations[$i]['ID'];
 						GroupManager::_update_group( $ID , $names , $members );
 						$n_valid_translations++;
@@ -1987,10 +2002,10 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				#
 				#	Does the article info disagree with the translation set?
 				#
-				if( $n_valid_translations !== $n_translations_expected )
-					{
-					echo br , "Warning: article $ID recorded $n_translations_expected but there are $n_translations of which $n_valid_translations are valid!";
-					}
+				//if( $n_valid_translations !== $n_translations_expected )
+				//	{
+				//	echo br , "Warning: article $ID recorded $n_translations_expected but there are $n_translations of which $n_valid_translations are valid!";
+				//	}
 
 				#
 				#	Are all expected translations present?
@@ -2003,7 +2018,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					if( !array_key_exists( $lang , $members ) )
 						{
 						if( $lang === $default_lang )
-							$cells[] = td( gTxt('default') . ' missing!' , $w , 'warning' );
+							$cells[] = td( gTxt('default') . gTxt('l10n-missing') , $w , 'warning' );
 						else
 							$cells[] = td( '' , $w , 'empty' );
 						}
@@ -2039,7 +2054,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						if( $details['Lang'] != $lang )
 							{
 							$tdclass .= 'warning';
-							$msg = br . strong('Language mismatch.') . br . "Art[$lang] vs tsl[{$details['Lang']}]";
+							$msg = br . strong( gTxt('l10n-warn_lang_mismatch') ) . br . "Art[$lang] : tsl[{$details['Lang']}]";
 							}
 
 						#
@@ -2083,7 +2098,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				if( count( $sections ) != 1 )
 					{
 					$trclass .= ' warning';
-					$cells[0] = td( $ID . br . 'Section mismatch' , $w , 'id' );
+					$cells[0] = td( $ID . br . gTxt('l10n-warn_section_mismatch') , $w , 'id' );
 					}
 				else if( $num_visible == $full_lang_count )
 					{
@@ -2119,13 +2134,20 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$l[] = $this->add_legend_item( 'status_4' , $statuses[4] );
 		$l[] = $this->add_legend_item( 'status_5' , $statuses[5] );
 		$l[] = br.br;
-		$l[] = $this->add_legend_item( 'fully_visible' , "Visible in all languages." );
-		$l[] = $this->add_legend_item( 'warning' , "Warning/error." );
-		$l[] = br.br;
-		$l[] = t.tag( '<img src="txp_img/l10n_delete.png" />' , 'dt' ).n;
-		$l[] = t.tag( gTxt('delete') , 'dd' ).n;
-		$l[] = t.tag( '<img src="txp_img/l10n_clone.png" />' , 'dt' ).n;
-		$l[] = t.tag( gTxt('Clone') , 'dd' ).n;
+		$l[] = $this->add_legend_item( 'fully_visible' , gTxt('l10n-legend_fully_visible') );
+		$l[] = $this->add_legend_item( 'warning' , gTxt('l10n-legend_warning') );
+		if( $can_delete or $can_clone )
+			$l[] = br.br;
+		if( $can_delete )
+			{
+			$l[] = t.tag( '<img src="txp_img/l10n_delete.png" />' , 'dt' ).n;
+			$l[] = t.tag( gTxt('delete') , 'dd' ).n;
+			}
+		if( $can_clone )
+			{
+			$l[] = t.tag( '<img src="txp_img/l10n_clone.png" />' , 'dt' ).n;
+			$l[] = t.tag( gTxt('l10n-clone') , 'dd' ).n;
+			}
 		$l = tag( n.join('',$l) , 'dl' );
 		$cells[] = tdcs( $l , $full_lang_count+1, '' , 'legend' );
 		$body[] = n.tr( n.join('' , $cells) );
@@ -2168,7 +2190,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
-		$o[] = '<caption><strong>'.$title.sp.gTxt('l10n-xlate_to').'</strong></caption>';
+		$o[] = '<caption><strong>'.gbp_gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
 
 		#
 		#	If there is only one available unused language, check it by default.
@@ -2178,6 +2200,13 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			{
 			$checked = 'checked';
 			}
+
+		#
+		#	Build the thead...
+		#
+		$thead[] = hCell( gTxt('l10n-into').'&#8230;' );
+		$thead[] = hCell( gTxt('l10n-by').'&#8230;' );
+		$o[] = n .  tr( join( '' , $thead ) );
 
 		#
 		#	Build the clone selection form...
@@ -2193,7 +2222,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Submit and hidden entries...
 		#
-		$s = '<input type="submit" value="'.gTxt('l10n-clone').'" class="smallerbox" />' . n;
+		$s = '<input type="submit" value="'.gTxt('l10n-clone').'" class="publish" />' . n;
 		$s .= eInput( $this->parent->event );
 		$s .= sInput( 'clone' );
 		$s .= hInput( 'translation' , $translation );
