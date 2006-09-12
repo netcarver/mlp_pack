@@ -2,7 +2,6 @@
 
 /*	To do...
 Article filtering by language
-	add cookie tracking?
 	User permissions to set/filter by language
 	ID	Group				Clone4xl18n		List restrictions		Article creation lang
 	0	Others				No access		No access				No access
@@ -12,9 +11,6 @@ Article filtering by language
 	4	Staff writer		No				Known site langs		Known site langs
 	5	Freelancer			No				Known site langs		No access
 	6	Designer			No				No access				No access
-
-	404 error handling
-
 */
 
 global $l10n_vars;
@@ -30,7 +26,6 @@ if( $l10n_view->installed() )
 	#
 	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
 	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
-	//register_callback( 'l10n_generate_lang_tables'				, 'article' );
 
 	#
 	#	Article list handlers...
@@ -373,7 +368,7 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#
 			#	Update the language table for the target language...
 			#
-			_l10n_generate_lang_table( $new_lang );
+			/* WIP OPTIMISE THIS */			_l10n_generate_lang_table( $new_lang );
 
 			#
 			#	Read the variables to continue the edit...
@@ -401,7 +396,7 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#
 			#	Now we can setup the tables again...
 			#
-			_l10n_generate_lang_table( $new_lang );
+			/* OPTIMISE THIS */			_l10n_generate_lang_table( $new_lang );
 			if( $new_lang != $current_lang )
 				_l10n_generate_lang_table( $current_lang );
 
@@ -455,7 +450,7 @@ function l10n_changeauthor_notify_routine()
 
 		$count = count( $links );
 		$s = (($count===1) ? '' : 's');
-		
+
 		$subs = array(	'{sitename}' => $sitename ,
 						'{count}' => $count ,
 						'{s}' => $s ,
