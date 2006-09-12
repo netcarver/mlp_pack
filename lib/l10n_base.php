@@ -33,6 +33,9 @@ if( !defined( 'L10N_NAME' ))
 	define( 'L10N_NAME' , 'l10n' );
 if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_l10n-languages' );
+//if( !defined( 'L10N_ARTICLES_TABLE' ) )
+	//define( 'L10N_ARTICLES_TABLE' , 'l10n_textpattern_groups' );
+
 
 class GroupManager
 	{
@@ -67,6 +70,10 @@ class GroupManager
 		$members = serialize( $members );
 		$group = safe_insert( 'l10n_textpattern_groups' , "`names`='$title', `members`='$members'" );
 		return $group;
+		}
+	function destroy_group( $group )
+		{
+		return safe_delete( 'l10n_textpattern_groups' , "`ID`='$group'" );
 		}
 	function _update_group( $group , $title , $members )
 		{
@@ -405,6 +412,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
+		//'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
+		//'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		//'l10n-article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
 		//'l10n-article_hidden_vars' => array('value' => array('textile_body', 'textile_excerpt'), 'type' => 'gbp_array_text'),
 
@@ -434,6 +443,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-localisation'			=> 'Localisation',
 		);
 	var $strings = array(
+		'l10n-send_notifications'	=> 'Email user when you assign them a translation?',
+		'l10n-send_notice_to_self'	=> 'Send when assigning to yourself?',
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 		'l10n-article_vars'			=> 'Article variables ',
 		'l10n-article_hidden_vars'	=> 'Hidden article variables ',
@@ -1521,12 +1532,20 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			{
 			switch( $step )
 				{
-				case 'gbp_save':
-					$this->save_post();
+				case 'clone':
+					$this->clone_translation();
 				break;
 
 				case 'l10n_change_pageby':
 					event_change_pageby('article');
+				break;
+
+				case 'delete_article':
+					$this->delete_article();
+				break;
+
+				case 'delete_translation':
+					$this->delete_translation();
 				break;
 				}
 			}
@@ -1538,13 +1557,250 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		//	$this->parent->message = 'Groups ok.';
 		}
 
+	function clone_translation()
+		{
+		$vars = array( 'translation' );
+		extract( gpsa( $vars ) );
+		$this->parent->message = 'cloning translation:' . $translation;
+
+		$langs = LanguageHandler::get_site_langs();
+
+		$clone_to = array();
+		foreach( $langs as $lang )
+			{
+			$clone = ( $lang === gps( $lang ));
+			if( $clone )
+				{
+				$new_author = gps( $lang.'-AuthorID' );
+				$clone_to[$lang] = $new_author;
+				}
+			}
+
+		if( count( $clone_to ) < 1 )
+			{
+			$this->parent->message = 'No languages selected for clone.';
+			return;
+			}
+
+		#
+		#	Prepare the source translation data...
+		#
+		$source = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$article_id = $source['Group'];
+
+		#
+		#	Create the articles, substituting new authors and status as needed...
+		#
+		$notify   = array();		#	For email notices.
+		foreach( $clone_to as $lang=>$new_author )
+			{
+			unset( $source['ID' ] );
+			$source['AuthorID'] = $new_author;
+			$source['Lang'] = doSlash($lang);
+			$source['Status'] = 1;
+			$source['Posted'] = 'now()';
+			$source['LastMod'] = 'now()';
+			$source['feed_time'] = 'now()';
+			$source['uid'] = md5(uniqid(rand(),true));
+
+			$insert = array();
+			foreach( $source as $k => $v )
+				{
+				if( $v === 'now()' )
+					$insert[] = "`$k`= $v";
+				else
+					$insert[] = "`$k`='$v'";
+				}
+			$insert = join( ', ' , $insert );
+
+			#
+			#	Insert into the master textpattern table...
+			#
+			safe_insert( 'textpattern' , $insert );
+			$translation_id = mysql_insert_id();
+
+			#
+			#	Add this to the group (article) table...
+			#
+			GroupManager::add_article( $article_id , $translation_id , $lang );
+
+			#
+			#	Add into the translation table for this lang ensure this has the ID of the
+			# just added master entry!
+			#
+			$source['ID'] = $translation_id;
+			$insert = array();
+			foreach( $source as $k => $v )
+				{
+				if( $v === 'now()' )
+					$insert[] = "`$k`= $v";
+				else
+					$insert[] = "`$k`='$v'";
+				}
+			$insert = join( ', ' , $insert );
+			$table_name = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
+			safe_insert( $table_name , $insert );
+
+			#
+			#	Now we know the article ID, store this against the author for email notification...
+			#
+			$notify[$new_author][$lang] = array( 'id' => $translation_id , 'title'=>$source['Title'] );
+			}
+
+		#
+		#	Send the notifications?
+		#
+		//echo br , "Processing notifications." , br , var_dump( $notify ) , br;
+		$send_notifications = false;
+		if( $send_notifications )
+			{
+			global $sitename, $siteurl, $txp_user;
+
+			extract(safe_row('RealName AS txp_username,email AS replyto','txp_users',"name='$txp_user'"));
+
+			foreach( $notify as $new_user => $list )
+				{
+				$count = count( $list );
+				if( $count < 1 )
+					continue;
+
+				$same = ($new_user == $txp_user);
+
+				#
+				#	Construct a list of links to the translations...
+				#
+				$links = array();
+				foreach( $list as $lang => $record )
+					{
+					$id = $record['id'];
+					$msg = 	gTxt('title')  . ": \"{$record['title']}\"\r\n";
+					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
+					$links[] = $msg;
+					}
+
+				extract(safe_row('RealName AS new_user,email','txp_users',"name='$new_user'"));
+
+				$s = (($count===1) ? '' : 's');
+
+				$subs = array(	'{sitename}' => $sitename ,
+								'{count}' => $count ,
+								'{s}' => $s ,
+								'{txp_username}' => $txp_username,
+								);
+
+				if( $same )
+					$body = gbp_gTxt( 'l10n-email_body_self' , $subs );
+				else
+					$body = gbp_gTxt( 'l10n-email_body_other' , $subs );
+				$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
+				$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
+
+				txpMail($email, $subject, $body, $replyto);
+				}
+			}
+		}
+	function delete_article()
+		{
+		#
+		#	Deletes an article (multiple translations) from the DB.
+		#
+		$vars = array( 'article' );
+		extract( gpsa( $vars ) );
+
+		#
+		#	Read the translation from the master table, extracting Group and Lang...
+		#
+		$translations = safe_rows( '*' , 'textpattern' , "`Group`='$article'" );
+
+		#
+		#	Delete from the master table...
+		#
+		$master_deleted = safe_delete( 'textpattern' , "`Group`='$article'" );
+
+		#
+		#	Delete from the translation tables...
+		#
+		foreach( $translations as $translation )
+			{
+			$lang = $translation['Lang'];
+			$translation_table = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
+			safe_delete( $translation_table , "`Group`='$article'" );
+			}
+
+		#
+		#	Delete from the articles table...
+		#
+		GroupManager::destroy_group( $article );
+		}
+
+	function delete_translation()
+		{
+		$vars = array( 'translation' );
+		extract( gpsa( $vars ) );
+
+		#
+		#	Read the translation from the master table, extracting Group and Lang...
+		#
+		$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$lang = $details['Lang'];
+		$article = $details['Group'];
+
+		#
+		#	Delete from the master table...
+		#
+		$master_deleted = safe_delete( 'textpattern' , "`ID`='$translation'" );
+
+		#
+		#	Delete from the correct language translation table...
+		#
+		$translation_table = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
+		$translation_deleted = safe_delete( $translation_table , "`ID`='$translation'" );
+
+		#
+		#	Delete from the article table...
+		#
+		$article_updated = GroupManager::remove_article( $article , $translation , $lang );
+
+		if( $master_deleted and $translation_deleted and $article_updated )
+			$this->parent->message = 'Translation: '.$translation.' deleted OK.';
+		else
+			{
+			$results = GroupManager::check_groups();
+			if( !empty( $results ) )
+				{
+				$this->parent->message = $results[0][3];
+				'Groups rebuilt.';
+				}
+			else
+				{
+				$this->parent->message = 'Groups ok.';
+				}
+			}
+		}
 
 	function main()
 		{
 		switch ($this->event)
 			{
 			case 'article':
-				$this->render_article_table();
+				{
+				$step = gps('step');
+				if( $step )
+					{
+					switch( $step )
+						{
+						case 'start_clone':
+							$this->render_start_clone();
+						break;
+
+						default:
+							$this->render_article_table();
+						break;
+						}
+					}
+				else
+					$this->render_article_table();
+				}
 			break;
 			}
 		}
@@ -1552,50 +1808,44 @@ class LocalisationArticleTabView extends GBPAdminTabView
 	function render_article_table()
 		{
 		$event = $this->parent->event;
-		extract( get_prefs() );		#	Need to do this to keep the articles/page count in sync.
+
+		#
+		#	Pager calculations...
+		#
+		extract( get_prefs() );				#	Keep the articles/page count in sync.
 		extract(gpsa(array('page')));
+		$total = GroupManager::get_total();
+		$limit = max(@$article_list_pageby, 15);
+		list($page, $offset, $numPages) = pager($total, $limit, $page);
+
+		#
+		#	User permissions...
+		#
+		$can_delete = true;
+		$can_clone = true;
 
 		#
 		#	Get the statuses array...
 		#
-		global $txpcfg;
-		include_once $txpcfg['txpath'].'/include/txp_list.php';
-		global $statuses;
+		$statuses = array(
+			1 => gTxt('draft'),
+			2 => gTxt('hidden'),
+			3 => gTxt('pending'),
+			4 => gTxt('live'),
+			5 => gTxt('sticky'),
+			);
 
+		#
+		#	Init language related vars...
+		#
 		$langs = LanguageHandler::get_site_langs();
 		$full_lang_count = count( $langs );
 		$default_lang = LanguageHandler::get_site_default_lang();
 
-		$o[] = <<<css
-<style type="text/css">
-.status_1 { background: #ccf; }
-.status_2 { background: #eee; }
-.status_3 { background: #fc9; }
-.status_4 { background: #fff; }
-.status_5 { background: #ff9; }
-.full     { background: #cfc; }
-.empty    { background: #eee; }
-.warning  { background: #f99; }
-.count    { text-align: right; background: #ccf; }
-table#l10n_articles_table
-	{
-	border-color: #999;
-	border-style: solid;
-	border-width: 1px 1px 0 0;
-	}
-table#l10n_articles_table td, table#l10n_articles_table th
-	{
-	border-color: #999;
-	border-style: solid;
-	border-width: 0 0 1px 1px;
-	width: 150px;
-	}
-.id       { text-align: right; width: 80px !important; }
-td.legend dt { margin: 2px 2px 2px 10px; padding: 0 5px; border: 1px solid #333; float:left; }
-td.legend dd { margin: 2px 0; float:left; }
-</style>'
-css;
-
+		#
+		#	Link our css file and start building the table...
+		#
+		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 		$o[] = startTable( /*id*/ 'l10n_articles_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
 		$o[] = '<caption><strong>'.gTxt('articles').'</strong></caption>';
 
@@ -1608,43 +1858,122 @@ css;
 			{
 			$colgroup[] = n.t.'<col id="'.$lang.'" />';
 			$name = LanguageHandler::get_native_name_of_lang($lang);
+
+			#
+			#	Default language markup -- if needed.
+			#
 			if( $lang === $default_lang )
 				$name .= br . gTxt('default');
+
 			$thead[] = hCell( $name );
 			$counts[$lang] = 0;
 			}
 		$o[] = n . tag( join( '' , $colgroup ) , 'colgroup' );
 		$o[] = n .  tr( join( '' , $thead ) );
 
-		#
-		#	Pager...
-		#
-		$total = GroupManager::get_total();
-		$limit = max(@$article_list_pageby, 15);
-		list($page, $offset, $numPages) = pager($total, $limit, $page);
+		$counts['article'] = 0;		#	Initialise the article count.
+		$w = '';					#	Var for td width -- set empty to skip its inclusion / other val overrides css.
 
 		#
 		#	Process the articles (textpattern_groups) table...
 		#
+		#	Use values from the pager to grab the right sections of the table.
+		#
 		$articles = GroupManager::get_articles( '1=1' , 'ID' , $offset , $limit );
-		$counts['id'] = 0;
-		$w = '';
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
 				{
-				$vis_count = 0;
-				$trclass = '';
-				$counts['id'] += 1;
-				$cells = array();
-				$sections = array();
+				$num_visible = 0;		# 	Holds a count of Sticky/Live translations of this article.
+				$trclass = '';			#	Class for the row (=article)
+				$counts['article']+= 1;	#	Increment the article count.
+				$cells = array();		#	List of table cells (=translations) in this row
+				$sections = array();	#	Holds a list of the unique sections used by translations in this article.
+
+				#
+				#	Pull out the article (NB: Not translation!)...
+				#
 				extract( $article );
 				$members = unserialize( $members );
-				$cells[] = td( $ID , '' , 'id' );
+				$n_translations_expected = count( $members );
+
+
+				if( $can_delete )
+					$delete_art_link = '<a href="'. $this->parent->url( array('page'=>$page,'step'=>'delete_article', 'article'=>$ID), true ) .
+										'" class="clone-link" onclick="return verify(\'' .
+										doSlash(gTxt('confirm_delete_popup')) .
+										'\')"><img src="txp_img/l10n_delete.png" /></a>';
+				else
+					$delete_art_link = '';
+
+				#
+				#	Compose the leading (article) cell...
+				#
+				$cells[] = td( $delete_art_link . $ID , '' , 'id' );
+
+				#
+				#	Pull the translations for this article from the master translations table
+				# (that is, from the textpattern table)...
+				#
+				$translations = safe_rows( '*' , 'textpattern' , "`Group`='$ID'" );
+				$n_translations = count( $translations );
+				$n_valid_translations = 0;
+
+				#
+				#	Index the translations for later use...
+				#
+				$index = array();
+				for( $i=0 ; $i < $n_translations ; $i++ )
+					{
+					$lang = $translations[$i]['Lang'];
+					if( in_array( $lang , $langs ) )
+						{
+						$n_valid_translations++;
+						$index[$lang] = $i;
+						}
+					else
+						continue;
+
+					#
+					#	Check that the translation is recorded in the article members!
+					#
+					if( !array_key_exists( $lang , $members ) )
+						{
+						$this->parent->message = "Article: $ID missing a translation.";
+						$members[$lang] = $translations[$i]['ID'];
+						GroupManager::_update_group( $ID , $names , $members );
+						$n_valid_translations++;
+						}
+					}
+
+				#
+				#	Does the article info disagree with the translation set?
+				#
+				if( $n_valid_translations !== $n_translations_expected )
+					{
+					echo br , "Warning: article $ID recorded $n_translations_expected but there are $n_translations of which $n_valid_translations are valid!";
+					}
+
+				#
+				#	Are all expected translations present?
+				#
+				$all_translations_present = ($n_valid_translations === $full_lang_count);
+
+
 				foreach( $langs as $lang )
 					{
-					if( array_key_exists( $lang , $members ) )
+					if( !array_key_exists( $lang , $members ) )
 						{
+						if( $lang === $default_lang )
+							$cells[] = td( gTxt('default') . ' missing!' , $w , 'warning' );
+						else
+							$cells[] = td( '' , $w , 'empty' );
+						}
+					else
+						{
+						#
+						#	Ok, there is a translation for this language so...
+						#
 						$tdclass = '';
 						$msg = '';
 						$id = $members[$lang];
@@ -1652,10 +1981,12 @@ css;
 						#
 						#	Get the details for this translation
 						#
-						$details = safe_row( '*' , 'textpattern' , "`ID`='$id'" );
+						$i = $index[$lang];
+ 						$details = $translations[$i];
+						$author  = $details['AuthorID'];
 						$status_no = $details['Status'];
 						if( $status_no >= 4 )
-							$vis_count++;
+							$num_visible++;
 
 						$tdclass .= 'status_'.$status_no;
 						$status = !empty($status_no) ? $statuses[$status_no] : '';
@@ -1666,13 +1997,8 @@ css;
 
 						#
 						#	Check for consistency with the group data...
-						#
-						if( $details['Group'] != $ID )
-							{
-							$tdclass .= 'warning';
-							$msg = br . strong('Group mismatch.');
-							}
-						else if( $details['Lang'] != $lang )
+						#	Deprecated?
+						if( $details['Lang'] != $lang )
 							{
 							$tdclass .= 'warning';
 							$msg = br . strong('Language mismatch.') . br . "Art[$lang] vs tsl[{$details['Lang']}]";
@@ -1684,34 +2010,53 @@ css;
 						$section = $details['Section'];
 						$sections[$section] = $ID;
 
-						$content = strong( $title ) . br . $section . ' &#8212; ' . $status . $msg;
+						#
+						#	Make a clone link if possible...
+						#
+						$status_ok = ( $status_no > 2 );
+						if( !$can_clone or !$status_ok or $all_translations_present )
+							$clone_link = '';
+						else
+							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','translation'=>$id,'article'=>$ID), true ) .
+											'" class="clone-link"><img src="txp_img/l10n_clone.png" /></a>';
+
+						#
+						#	Make the delete link...
+						#
+						if( $can_delete )
+							$delete_trans_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'delete_translation', 'translation'=>$id), true ) .
+													'" class="delete-link" onclick="return verify(\'' .
+													doSlash(gTxt('confirm_delete_popup')) .
+													'\')"><img src="txp_img/l10n_delete.png" /></a>';
+						else
+							$delete_trans_link = '';
+
+						$content = 	$delete_trans_link . strong( $title ) . br . $section . ' &#8212; ' . $author .
+									$msg . $clone_link;
 						$cells[] = td( $content , $w , trim($tdclass) );
 						$counts[$lang] += 1;
-						}
-					else
-						{
-						if( $lang === $default_lang )
-							$cells[] = td( gTxt('default') . ' missing!' , $w , 'warning' );
-						else
-							$cells[] = td( '' , $w , 'empty' );
 						}
 					}
 
 
 				#
-				#	Tag rows which are full or have warnings...
+				#	Tag articles which are fully visible or have warnings...
 				#
 				if( count( $sections ) != 1 )
 					{
 					$trclass .= ' warning';
 					$cells[0] = td( $ID . br . 'Section mismatch' , $w , 'id' );
 					}
-				else if( $vis_count == $full_lang_count )
+				else if( $num_visible == $full_lang_count )
 					{
-					$trclass .= ' full';
+					$trclass .= ' fully_visible';
 					}
-				$trclass .= (0 == ($counts['id'] & 0x01)) ? '' : ' odd';
-				$body[] = n.tr( n.join('' , $cells) , ' class="'.trim($trclass).'"' );
+				$trclass .= (0 == ($counts['article'] & 0x01)) ? '' : ' odd';
+				$trclass = trim( $trclass );
+				if( !empty( $trclass ) )
+					$trclass = ' class="' . $trclass . '"';
+				$css_id = ' id="article_' . $ID . '"';
+				$body[] = n.tr( n.join('' , $cells) , $css_id . $trclass );
 				}
 			}
 
@@ -1719,7 +2064,7 @@ css;
 		#	Show the counts for the page...
 		#
 		$cells = array();
-		$cells[] = td( $counts['id'] , '' , 'id count' );
+		$cells[] = td( $counts['article'] , '' , 'id count' );
 		foreach( $langs as $lang )
 			{
 			$cells[] = td( $counts[$lang] , '' , 'count' );
@@ -1736,8 +2081,13 @@ css;
 		$l[] = $this->add_legend_item( 'status_4' , $statuses[4] );
 		$l[] = $this->add_legend_item( 'status_5' , $statuses[5] );
 		$l[] = br.br;
-		$l[] = $this->add_legend_item( 'full' , "Visible in all languages." );
+		$l[] = $this->add_legend_item( 'fully_visible' , "Visible in all languages." );
 		$l[] = $this->add_legend_item( 'warning' , "Warning/error." );
+		$l[] = br.br;
+		$l[] = t.tag( '<img src="txp_img/l10n_delete.png" />' , 'dt' ).n;
+		$l[] = t.tag( gTxt('delete') , 'dd' ).n;
+		$l[] = t.tag( '<img src="txp_img/l10n_clone.png" />' , 'dt' ).n;
+		$l[] = t.tag( gTxt('Clone') , 'dd' ).n;
 		$l = tag( n.join('',$l) , 'dl' );
 		$cells[] = tdcs( $l , $full_lang_count+1, '' , 'legend' );
 		$body[] = n.tr( n.join('' , $cells) );
@@ -1750,15 +2100,80 @@ css;
 		echo join( '' , $o );
 		}
 
+	function render_start_clone()
+		{
+		$vars = array( 'translation' , 'page' );
+		extract( gpsa( $vars ) );
+
+		#
+		#	Get the un-translated languages for the article that owns this translation...
+		#
+		$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$title   = $details['Title'];
+		$article = $details['Group'];
+		$author  = $details['AuthorID'];
+		$to_do = GroupManager::get_remaining_langs( $article );
+		$count = count( $to_do );
+
+		#
+		#	Get the list of possible authors...
+		#
+		$assign_authors = false;
+		$authors = safe_column('name', 'txp_users', "privs not in(0,6)");
+		if( $authors )
+			{
+			$assign_authors = true;
+			}
+
+		#
+		#	Link our css file and start building ...
+		#
+		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
+		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
+		$o[] = '<caption><strong>'.$title.sp.gTxt('l10n-xlate_to').'</strong></caption>';
+
+		#
+		#	If there is only one available unused language, check it by default.
+		#
+		$checked = '';
+		if( $count === 1 )
+			{
+			$checked = 'checked';
+			}
+
+		#
+		#	Build the clone selection form...
+		#
+		foreach( $to_do as $lang=>$name )
+			{
+			$r = td(	'<input type="checkbox" class="checkbox" '.$checked.' value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' .
+						'<label for="'.$lang.'">'.$name.'</label>' );
+			$r .= td( stripslashes(selectInput($lang.'-AuthorID' , $authors , $author , false )) );
+			$f[] =	tr( $r );
+			}
+
+		#
+		#	Submit and hidden entries...
+		#
+		$s = '<input type="submit" value="'.gTxt('l10n-clone').'" class="smallerbox" />' . n;
+		$s .= eInput( $this->parent->event );
+		$s .= sInput( 'clone' );
+		$s .= hInput( 'translation' , $translation );
+		$s .= hInput( 'page' , $page );
+
+		$f[] = tr( tdrs( $s , 2 ) );
+
+		$o[] = tag( form( join( '' , $f )) , 'tbody' );
+		$o[] = endTable();
+
+		echo join( '' , $o );
+		}
+
 	function add_legend_item( $id , $text )
 		{
 		$r[] = t.tag( '&#160;' , 'dt' , " class=\"$id\"" ).n;
 		$r[] = t.tag( $text , 'dd' ).n;
 		return join( '' , $r );
-		}
-
-	function save_post()
-		{
 		}
 
 	}
