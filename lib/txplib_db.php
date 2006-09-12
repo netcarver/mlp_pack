@@ -42,9 +42,16 @@ class DB {
 $DB = new DB;
 
 //-------------------------------------------------------------
+	function safe_redirect($table) {
+		global $prefs;
+		if (@txpinterface==='public' && isset($prefs['db_redirect_func']) and is_callable($prefs['db_redirect_func']))
+			$table = doSlash(call_user_func($prefs['db_redirect_func'], $table));
+		return $table;
+	}
+
+//-------------------------------------------------------------
 	function safe_pfx($table) {
-		if (@txpinterface==='public' && isset($prefs['l10n_redirect_func']) and is_callable($prefs['l10n_redirect_func']))
-			$table = call_user_func($prefs['l10n_redirect_func'], $table);
+		$table = safe_redirect($table);
 		$name = PFX.$table;
 		if (preg_match('@[^\w._$]@', $name))
 			return '`'.$name.'`';
@@ -56,8 +63,7 @@ $DB = new DB;
 	{
 		$ts = array();
 		foreach (explode(',', $table) as $t) {
-			if (@txpinterface==='public' && isset($prefs['l10n_redirect_func']) and is_callable($prefs['l10n_redirect_func']))
-				$t = call_user_func($prefs['l10n_redirect_func'], $t);
+			$t = safe_redirect($t);
 			$name = PFX.trim($t);
 			if (preg_match('@[^\w._$]@', $name))
 				$ts[] = "`$name`".(PFX ? " as `$t`" : '');
