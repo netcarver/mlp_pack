@@ -343,7 +343,7 @@ if (@txpinterface == 'public')
 			#	If we are still missing a language for the session, try to get the prefered selection
 			# from the user agent's HTTP header.
 			#
-			//echo br , "Processing user agent request...";
+			//echo br,br,br,br , "Processing user agent request...";
 			$req_lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
@@ -354,16 +354,30 @@ if (@txpinterface == 'public')
 					foreach( $chunks as $chunk )
 						{
 						$info = split( ';' , $chunk );
-						//echo br, "Langs: " , var_dump($info);
-						if( $info[0] )
+						if( false === $info )
 							{
-							$lang = LanguageHandler::expand_code( $info[0] );
-							$lang = LanguageHandler::compact_code( $lang );
-							//echo br , "trying " , var_dump($lang), " in " , var_dump( $site_langs );
+							//echo br,br, "Could not split on ';' boundaries!";
+							$info[] = $chunk;
+							}
+						$code = $info[0];
+						if( $code )
+							{
+							$len = strlen( $code );
+							if( $len === 2 )
+								{
+								$lang = LanguageHandler::expand_code( $info[0] );
+								$lang = LanguageHandler::compact_code( $lang );
+								}
+							elseif( $len === 5 )
+								$lang = LanguageHandler::compact_code( $info[0] );
+							else
+								continue;
+
+							//echo br,br , "trying " , var_dump($lang), " in " , var_dump( $site_langs );
 							if( in_array( $lang['long'] , $site_langs ) )
 								{
 								$_SESSION['lang'] = $lang['short'];
-								//echo " ... Setting language to {$_SESSION['lang']} [$lang], from user-agent request." , br;
+								//echo br,br," ... Setting language to {$_SESSION['lang']} [",var_dump($lang),"], from user-agent request." , br;
 								break;
 								}
 							}
