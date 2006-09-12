@@ -1731,7 +1731,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 				$body.= join( "\r\n" , $links ) . "\r\n" . gbp_gTxt( 'l10n-email_end' , $subs );
 				$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
-				
+
 				@txpMail($email, $subject, $body, $replyto);
 				//echo br,"Sent email to $email",br,"Reply to: $replyto",br,"Subject: $subject",br,br,"Body: $body",br,br;
 				}
@@ -2475,6 +2475,7 @@ class LanguageHandler
 		$result = array();
 		$result['short'] 	= @substr( $long_code , 0 , 2 );
 		$result['country']  = @substr( $long_code , 3 , 2 );
+		$result['long'] = '';
 
 		if( isset( $result['country'] ) and (2 == strlen($result['country'])) )
 			$result['long'] = $long_code;
