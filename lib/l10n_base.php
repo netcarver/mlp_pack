@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /*	TO DO...
 	Add new categorisasation feature to the setup wizard -- allow language spec on section prefix/cat/custom field
@@ -412,8 +412,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
-		//'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
-		//'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
+		'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
+		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		//'l10n-article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
 		//'l10n-article_hidden_vars' => array('value' => array('textile_body', 'textile_excerpt'), 'type' => 'gbp_array_text'),
 
@@ -502,6 +502,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} article{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following article{s} to you...\r\n\r\n",
 		'l10n-email_body_self'		=> "You transferred the following article{s} to yourself...\r\n\r\n",
+		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you re-title the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}."
 		);
 	var $permissions = '1,2,3,6';
 
@@ -1617,7 +1618,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			{
 			unset( $source['ID' ] );
 			$source['AuthorID'] = $new_author;
-			$source['Lang'] = doSlash($lang);
+			$source['Lang'] = $lang;
 			$source['Status'] = 1;
 			$source['Posted'] = 'now()';
 			$source['LastMod'] = 'now()';
@@ -1627,6 +1628,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			$insert = array();
 			foreach( $source as $k => $v )
 				{
+				$v = doSlash( $v );
 				if( $v === 'now()' )
 					$insert[] = "`$k`= $v";
 				else
@@ -1653,6 +1655,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			$insert = array();
 			foreach( $source as $k => $v )
 				{
+				$v = doSlash( $v );
 				if( $v === 'now()' )
 					$insert[] = "`$k`= $v";
 				else
@@ -1665,14 +1668,17 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Now we know the article ID, store this against the author for email notification...
 			#
-			$notify[$new_author][$lang] = array( 'id' => $translation_id , 'title'=>$source['Title'] );
+			$language = LanguageHandler::get_native_name_of_lang( $lang );
+			$notify[$new_author][$lang] = array( 'id' => $translation_id , 'title'=>$source['Title'] , 'language'=>$language );
 			}
 
 		#
 		#	Send the notifications?
 		#
-		//echo br , "Processing notifications." , br , var_dump( $notify ) , br;
-		$send_notifications = false;
+		$send_notifications = ( '1' == $this->pref('l10n-send_notifications') ) ? true : false;
+		$notify_self = ( '1' == $this->pref('l10n-send_notice_to_self') ) ? true : false;
+		//echo br , "\$send_notifications = ", var_dump($send_notifications);
+		//echo br , "\$notify_self = ", var_dump($notify_self);
 		if( $send_notifications )
 			{
 			global $sitename, $siteurl, $txp_user;
@@ -1681,11 +1687,19 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 			foreach( $notify as $new_user => $list )
 				{
+				#
+				#	Skip if no articles...
+				#
 				$count = count( $list );
 				if( $count < 1 )
 					continue;
 
+				#
+				#	Skip if users are the same and no notifications are to be sent in that case...
+				#
 				$same = ($new_user == $txp_user);
+				if( $same and !$notify_self )
+					continue;
 
 				#
 				#	Construct a list of links to the translations...
@@ -1693,8 +1707,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				$links = array();
 				foreach( $list as $lang => $record )
 					{
-					$id = $record['id'];
-					$msg = 	gTxt('title')  . ": \"{$record['title']}\"\r\n";
+					extract( $record );
+					$msg = 	gTxt('title')  . ": \"$title\"\r\n";
+					$msg.= "For translation into $language [$lang].\r\n";
 					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 					$links[] = $msg;
 					}
@@ -1713,10 +1728,12 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					$body = gbp_gTxt( 'l10n-email_body_self' , $subs );
 				else
 					$body = gbp_gTxt( 'l10n-email_body_other' , $subs );
-				$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
-				$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
 
-				txpMail($email, $subject, $body, $replyto);
+				$body.= join( "\r\n" , $links ) . "\r\n" . gbp_gTxt( 'l10n-email_end' , $subs );
+				$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
+				
+				@txpMail($email, $subject, $body, $replyto);
+				//echo br,"Sent email to $email",br,"Reply to: $replyto",br,"Subject: $subject",br,br,"Body: $body",br,br;
 				}
 			}
 		}
