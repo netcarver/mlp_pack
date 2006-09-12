@@ -41,35 +41,10 @@ class DB {
 }
 $DB = new DB;
 
-
-//-------------------------------------------------------------
-	function _redirect_textpattern($table)
-		{
-		# Only redirect public interface calls to the textpattern table...
-		if( @txpinterface==='public' )
-			{
-			if( 'textpattern' === $table )
-				{
-				global $gbp_language;
-
-				$language_set 	= isset( $gbp_language );
-				$language_ok	= true;
-				if( $language_set and $language_ok )
-					{
-					$table = $table.'_'.$gbp_language['long'];
-					}
-				}
-			elseif( 'l10n_master_textpattern' === $table )
-				{
-				$table = 'textpattern';
-				}
-			}
-		return $table;
-		}
-
 //-------------------------------------------------------------
 	function safe_pfx($table) {
-		$table = _redirect_textpattern($table);
+		if (@txpinterface==='public' && isset($prefs['l10n_redirect_func']) and is_callable($prefs['l10n_redirect_func']))
+			$table = call_user_func($prefs['l10n_redirect_func'], $table);
 		$name = PFX.$table;
 		if (preg_match('@[^\w._$]@', $name))
 			return '`'.$name.'`';
@@ -81,7 +56,8 @@ $DB = new DB;
 	{
 		$ts = array();
 		foreach (explode(',', $table) as $t) {
-			$t = _redirect_textpattern($t);
+			if (@txpinterface==='public' && isset($prefs['l10n_redirect_func']) and is_callable($prefs['l10n_redirect_func']))
+				$t = call_user_func($prefs['l10n_redirect_func'], $t);
 			$name = PFX.trim($t);
 			if (preg_match('@[^\w._$]@', $name))
 				$ts[] = "`$name`".(PFX ? " as `$t`" : '');

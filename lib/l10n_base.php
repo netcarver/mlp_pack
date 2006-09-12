@@ -578,6 +578,27 @@ class LocalisationView extends GBPPlugin
 		new LocalisationWizardView($this);
 		}
 
+	function _redirect_textpattern($table)
+		{
+		# Only redirect calls to the textpattern table...
+		if( 'textpattern' === $table )
+			{
+			global $gbp_language;
+
+			$language_set 	= isset( $gbp_language );
+			$language_ok	= true;
+			if( $language_set and $language_ok )
+				{
+				$table = $table.'_'.$gbp_language['long'];
+				}
+			}
+		elseif ( 'l10n_master_textpattern' === $table )
+			{
+			$table = 'textpattern';
+			}
+		return $table;
+		}
+
 	function installed()
 		{
 		return LocalisationWizardView::installed();
@@ -2393,8 +2414,9 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	}
 
-global $l10n_view;
+global $l10n_view, $prefs;
 $l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
+$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
 
 class LanguageHandler
 	{
