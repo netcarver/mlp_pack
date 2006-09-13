@@ -33,8 +33,10 @@ if( !defined( 'L10N_NAME' ))
 	define( 'L10N_NAME' , 'l10n' );
 if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_l10n-languages' );
-//if( !defined( 'L10N_ARTICLES_TABLE' ) )
-	//define( 'L10N_ARTICLES_TABLE' , 'l10n_textpattern_groups' );
+if( !defined( 'L10N_ARTICLES_TABLE' ) )
+	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
+if( !defined( 'L10N_SUBS_TABLE' ) )
+	define( 'L10N_SUBS_TABLE' , 'l10n_gbp_translations' );
 
 
 class GroupManager
@@ -42,7 +44,7 @@ class GroupManager
 	function create_table()
 		{
 		$sql = array();
-		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'l10n_textpattern_groups` (';
+		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_ARTICLES_TABLE.'` (';
 		$sql[] = '`ID` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY , ';
 		$sql[] = '`names` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
 		$sql[] = '`members` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL';
@@ -51,16 +53,16 @@ class GroupManager
 		}
 	function destroy_table()
 		{
-		$sql = 'drop table `'.PFX.'l10n_textpattern_groups`';
+		$sql = 'drop table `'.PFX.L10N_ARTICLES_TABLE.'`';
 		return @safe_query( $sql );
 		}
 	function make_textpattern_name( $full_code )
 		{
-		return 'textpattern_' . $full_code['long'];
+		return 'l10n_textpattern_' . $full_code['long'];
 		}
 	function _get_group_info( $id )
 		{
-		$info = safe_row( '*' , 'l10n_textpattern_groups' , "`ID`='$id'" );
+		$info = safe_row( '*' , L10N_ARTICLES_TABLE , "`ID`='$id'" );
 		if( !empty($info) )
 			$info['members'] = unserialize( $info['members'] );
 		return $info;
@@ -68,19 +70,19 @@ class GroupManager
 	function create_group( $title , $members )
 		{
 		$members = serialize( $members );
-		$group = safe_insert( 'l10n_textpattern_groups' , "`names`='$title', `members`='$members'" );
+		$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
 		return $group;
 		}
 	function destroy_group( $group )
 		{
-		return safe_delete( 'l10n_textpattern_groups' , "`ID`='$group'" );
+		return safe_delete( L10N_ARTICLES_TABLE , "`ID`='$group'" );
 		}
 	function _update_group( $group , $title , $members )
 		{
 		//echo br , "_update_group( $group , $title ," , var_dump( $members ), " )";
 		$members = serialize( $members );
 		$title = doSlash( $title );
-		$group = safe_update( 'l10n_textpattern_groups' , "`names`='$title', `members`='$members'" , "`ID`='$group'" );
+		$group = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`='$group'" );
 		return $group;
 		}
 	function change_article_language( $group , $article_id , $article_lang , $target_lang )
@@ -143,7 +145,7 @@ class GroupManager
 			}
 		else
 			{
-			$result = safe_delete( 'l10n_textpattern_groups' , "`ID`='$ID'" );
+			$result = safe_delete( L10N_ARTICLES_TABLE , "`ID`='$ID'" );
 			if(!$result)
 				$result = "Could not delete group $group.";
 			}
@@ -308,9 +310,9 @@ class GroupManager
 	function get_articles( $criteria , $sort_sql='ID' , $offset='0' , $limit='' )
 		{
 		if( $offset == '0' and $limit == '' )
-			$rs = safe_rows_start('*', 'l10n_textpattern_groups', "$criteria order by $sort_sql" );
+			$rs = safe_rows_start('*', L10N_ARTICLES_TABLE, "$criteria order by $sort_sql" );
 		else
-			$rs = safe_rows_start('*', 'l10n_textpattern_groups', "$criteria order by $sort_sql limit $offset, $limit" );
+			$rs = safe_rows_start('*', L10N_ARTICLES_TABLE, "$criteria order by $sort_sql limit $offset, $limit" );
 		return $rs;
 		}
 	function check_groups()
@@ -400,7 +402,7 @@ class GroupManager
 		}
 	function get_total()
 		{
-		return safe_count('l10n_textpattern_groups', "1" );
+		return safe_count(L10N_ARTICLES_TABLE, "1" );
 		}
 
 	}
@@ -602,7 +604,8 @@ class LocalisationView extends GBPPlugin
 			$language_ok	= true;
 			if( $language_set and $language_ok )
 				{
-				$table = $table.'_'.$gbp_language['long'];
+				$table = GroupManager::make_textpattern_name( $gbp_language );
+				//$table = $table.'_'.$gbp_language['long'];
 				}
 			}
 		elseif ( 'l10n_master_textpattern' === $table )
@@ -1391,7 +1394,7 @@ class LocalisationTabView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 50%;" class="gbp_i18n_list">';
 
 		// SQL used in both queries
-		$sql = "FROM ".PFX."$table AS source, ".PFX."gbp_l10n AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(gbp_language)."' AND $where";
+		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(gbp_language)."' AND $where";
 
 		// Localised
 		$rows = startRows("SELECT DISTINCT source.$key as k, source.$value as v ".$sql);
@@ -1434,7 +1437,7 @@ class LocalisationTabView extends GBPAdminTabView
 				$entry_value = '';
 				$rs2 = safe_row(
 					'id, entry_value',
-					'gbp_l10n',
+					L10N_SUBS_TABLE,
 					"`language` = '".gps(gbp_language)."' AND `entry_id` = '$entry_id' AND `entry_column` = '$field' AND `table` = '".PFX."$table'"
 					);
 
@@ -1543,10 +1546,10 @@ class LocalisationTabView extends GBPAdminTabView
 			switch(gps('step'))
 				{
 				case 'gbp_post':
-					$rs = safe_insert('gbp_l10n', "`id` = '$id', `table` = '$table', `language` = '$language', `entry_id` = '$entry_id', `entry_column` = '$field', `entry_value` = '$value', `entry_value_html` = '$value_html'");
+					$rs = safe_insert(L10N_SUBS_TABLE, "`id` = '$id', `table` = '$table', `language` = '$language', `entry_id` = '$entry_id', `entry_column` = '$field', `entry_value` = '$value', `entry_value_html` = '$value_html'");
 				break;
 				case 'gbp_save':
-					$rs = safe_update('gbp_l10n', "`entry_value` = '$value', `entry_value_html` = '$value_html'",
+					$rs = safe_update(L10N_SUBS_TABLE, "`entry_value` = '$value', `entry_value_html` = '$value_html'",
 						"`table` = '$table' AND `language` = '$language' AND `entry_id` = '$entry_id' AND `entry_column` = '$field'"
 					);
 				break;
@@ -2257,11 +2260,11 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Add `Lang` and `Group` fields to textpattern table',
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table'),
 		'4' => array(
-			'setup' => 'Add the gbp_l10n table',
-			'cleanup' => 'Drop the gbp_l10n table'),
+			'setup' => 'Add the substitutions table',
+			'cleanup' => 'Drop the substitutions table'),
 		'5' => array(
-			'setup' => 'Add the l10n_textpattern_groups table',
-			'cleanup' => 'Drop the l10n_textpattern_groups table'),
+			'setup' => 'Add the articles table',
+			'cleanup' => 'Drop the articles table'),
 		'6' => array('setup' => 'Process articles'),
 		'7' => array(
 			'setup' => 'Add the language native textpattern tables',
@@ -2271,7 +2274,7 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function installed()
 		{
-		$result = getThing( "show tables like '".PFX."l10n_textpattern_groups'" );
+		$result = getThing( 'show tables like \''.PFX.L10N_ARTICLES_TABLE.'\'' );
 		return ($result);
 		}
 
@@ -2305,9 +2308,8 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function setup_4()
 		{
-		# Create the l10n tables...
 		$sql = array();
-			$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.'gbp_l10n` (';
+			$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_SUBS_TABLE.'` (';
 			$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
 			$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
 			$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
@@ -2318,13 +2320,13 @@ class LocalisationWizardView extends GBPWizardTabView
 			$sql[] = 'PRIMARY KEY (`id`)';
 			$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
 		$ok = safe_query(join('', $sql));
-		$this->add_report_item( 'Add the gbp_l10n table' , $ok );
+		$this->add_report_item( 'Add the "'.L10N_SUBS_TABLE.'" table' , $ok );
 		}
 
 	function setup_5()
 		{
 		$ok = GroupManager::create_table();
-		$this->add_report_item( 'Add the l10n_textpattern_groups table' , $ok );
+		$this->add_report_item( 'Add the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
 		}
 
 	function setup_6()
@@ -2371,15 +2373,15 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function cleanup_4()
 		{
-		$sql = 'drop table `'.PFX.'gbp_l10n`';
+		$sql = 'drop table `'.PFX.L10N_SUBS_TABLE.'`';
 		$ok = @safe_query( $sql );
-		$this->add_report_item( 'Delete the gbp_l10n table' , $ok );
+		$this->add_report_item( 'Delete the "'.L10N_SUBS_TABLE.'" table' , $ok );
 		}
 
 	function cleanup_5()
 		{
 		$ok = GroupManager::destroy_table();
-		$this->add_report_item( 'Delete the l10n_textpattern_groups table' , $ok );
+		$this->add_report_item( 'Delete the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
 		}
 
 	function cleanup_7()
@@ -2823,7 +2825,7 @@ class SnippetHandler
 			break;
 
 			case 'insert' :
-			return '<txp:l10n_localise>'.n.n.$thing.n.n.'</txp:l10n_localise>';
+			return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
 			break;
 
 			default:
