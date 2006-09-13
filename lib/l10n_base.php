@@ -35,8 +35,6 @@ if( !defined( 'GBP_PREFS_LANGUAGES' ))
 	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_l10n-languages' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
-if( !defined( 'L10N_SUBS_TABLE' ) )
-	define( 'L10N_SUBS_TABLE' , 'l10n_gbp_translations' );
 
 
 class GroupManager
@@ -598,14 +596,14 @@ class LocalisationView extends GBPPlugin
 		# Only redirect calls to the textpattern table...
 		if( 'textpattern' === $table )
 			{
-			global $gbp_language;
+			global $l10n_language;
 
-			$language_set 	= isset( $gbp_language );
+			$language_set 	= isset( $l10n_language );
 			$language_ok	= true;
 			if( $language_set and $language_ok )
 				{
-				$table = GroupManager::make_textpattern_name( $gbp_language );
-				//$table = $table.'_'.$gbp_language['long'];
+				$table = GroupManager::make_textpattern_name( $l10n_language );
+				//$table = $table.'_'.$l10n_language['long'];
 				}
 			}
 		elseif ( 'l10n_master_textpattern' === $table )
@@ -990,7 +988,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( !in_array( $iso_code , $site_langs ) )
 				{
 				$extras_found = true;
-				$remove[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
+				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
 				$remove[] = sInput( 'gbp_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
 				$remove[] = hInput( 'lang_code' , $iso_code );
@@ -1004,7 +1002,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( false !== $details )
 				{
 				$details = unserialize( $details );
-				$export[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
+				$export[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
 				$export[] = sInput( 'gbp_export_languageset');
 				$export[] = $this->parent->form_inputs();
 				$export[] = hInput( 'language' , $iso_code );
@@ -1026,7 +1024,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$import[] = gTxt('l10n-import_title') . br;
 			$import[] = '<textarea name="data" cols="60" rows="2" id="gbp_l10n_string_import">';
 			$import[] = '</textarea>' .br . br;
-			$import[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
+			$import[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
 			$import[] = sInput( 'gbp_import_languageset');
 			$import[] = $this->parent->form_inputs();
 			$import[] = hInput( 'plugin' , gps('plugin') );
@@ -1048,7 +1046,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
 
-		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_plugin_list">';
+		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->parent->url( array( gbp_plugin => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
@@ -1060,7 +1058,7 @@ class LocalisationStringView extends GBPAdminTabView
 		# Render default view details in right hand pane...
  		if( empty( $string_name ) )
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 			$out[] = $this->_render_string_stats( $plugin , $stats );
 
 			# If the plugin is not present offer to delete the lot
@@ -1069,7 +1067,7 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				$out[] = '<h3>'.gTxt('l10n-no_plugin_heading').'</h3>'.n;
 				$del[] = graf( gTxt('l10n-remove_plugin') );
-				$del[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</div>';
+				$del[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</div>';
 				$del[] = sInput('gbp_remove_stringset');
 				$del[] = $this->parent->form_inputs();
 				$del[] = hInput(gbp_plugin, $plugin);
@@ -1096,7 +1094,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 		$can_edit = $this->pref('l10n-inline_editing');
 
-		$out[] = '<div style="float: left; width: 25%;" class="gbp_i18n_string_list">';
+		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->parent->url( array( 'owner' => $owner ) , true ) . '">' .
@@ -1115,7 +1113,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$step = gps('step');
  		if( empty( $id ) and empty( $step ) )
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 			$out[] = $this->_render_string_stats( '' , $stats );
 			$out[] = '</div>';
 			}
@@ -1125,7 +1123,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
 		{
-		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 		$out[] = '<h3>'.l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
@@ -1134,7 +1132,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( !$localised )
 			{
 			$l[] = '<p>'.gTxt('l10n-add_tags').n;
-			$l[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
+			$l[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
 			$l[] = sInput('gbp_localise_pageform').n;
 			$l[] = $this->parent->form_inputs();
 			$l[] = hInput('owner', $owner);
@@ -1145,7 +1143,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$f[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' .
 			 $data .
 			 '</textarea></p>'.br.n;
-		$f[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+		$f[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 		$f[] = sInput('gbp_save_pageform');
 		$f[] = $this->parent->form_inputs();
 		$f[] = hInput('owner', $owner);
@@ -1160,7 +1158,7 @@ class LocalisationStringView extends GBPAdminTabView
 		/*
 		Render the edit controls for all localisations of the chosen string.
 		*/
-		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
+		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$string_event = 'snippet';
@@ -1202,7 +1200,7 @@ class LocalisationStringView extends GBPAdminTabView
 			}
 
 		$out[] = '</dl>';
-		$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+		$out[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 		$out[] = sInput('gbp_save_strings');
 		$out[] = $this->parent->form_inputs();
 		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
@@ -1246,7 +1244,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\"/>") ) .n ;
 				}
 
-			$f2[] = '<span class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
+			$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
 			$content = join( '' , $f1 ) . tag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
 			$o[] = form( $content , '' ,
 						"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
@@ -1391,7 +1389,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 	function render_list($key, $value, $table, $where)
 		{
-		$out[] = '<div style="float: left; width: 50%;" class="gbp_i18n_list">';
+		$out[] = '<div style="float: left; width: 50%;" class="l10n_list">';
 
 		// SQL used in both queries
 		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(gbp_language)."' AND $where";
@@ -1430,7 +1428,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 		if ($rs1 = safe_row($fields, $table, $where))
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="gbp_l10n_edit">';
+			$out[] = '<div style="float: right; width: 50%;" class="l10n_edit">';
 
 			foreach($rs1 as $field => $value)
 				{
@@ -1451,21 +1449,21 @@ class LocalisationTabView extends GBPAdminTabView
 
 				if (in_array($field_type, array('blob')))
 					{
-					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
-					$out[] = '<div class="gbp_l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
-					$out[] = '<div class="gbp_l10n_value">'.text_area($field, 200, 420, $entry_value).'</div><br/>';
+					$out[] = '<p class="l10n_field">'.gTxt($field).'</p>';
+					$out[] = '<div class="l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
+					$out[] = '<div class="l10n_value">'.text_area($field, 200, 420, $entry_value).'</div><br/>';
 					}
 				else if (in_array($field_type, array('string')))
 					{
-					$out[] = '<p class="gbp_l10n_field">'.gTxt($field).'</p>';
-					$out[] = '<div class="gbp_l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
-					$out[] = '<div class="gbp_l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div><br/>';
+					$out[] = '<p class="l10n_field">'.gTxt($field).'</p>';
+					$out[] = '<div class="l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
+					$out[] = '<div class="l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div><br/>';
 					}
 				else
 					$out[] = hInput($field, $value);
 				}
 
-			$out[] = '<div class="gbp_l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
+			$out[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 			$out[] = '</div>';
 
 			$out[] = $this->parent->form_inputs();
@@ -2784,10 +2782,10 @@ class SnippetHandler
 		$out = preg_replace_callback( 	SnippetHandler::get_pattern('snippet') ,
 										create_function(
 							           '$match',
-								       'global $gbp_language;
+								       'global $l10n_language;
 										global $textarray;
-										if( $gbp_language )
-											$lang = $gbp_language[\'long\'];
+										if( $l10n_language )
+											$lang = $l10n_language[\'long\'];
 										else
 											$lang = "??";
 										$snippet = strtolower($match[1]);
@@ -3358,9 +3356,9 @@ class StringHandler
 		Given a string name, will pull the string out of the $textarray and perform any argument replacements needed.
 		*/
 		global $textarray;
-		global $gbp_language;
+		global $l10n_language;
 
-		$lang = $gbp_language;
+		$lang = $l10n_language;
 		if( !$lang )
 			$lang = LanguageHandler::get_site_default_lang();
 
