@@ -1,10 +1,10 @@
 <?php
 
-$plugin['name'] = 'gbp_l10n';
+$plugin['name'] = 'l10n';
 $plugin['version'] = '0.6';
-$plugin['author'] = 'Graeme Porteous';
+$plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_l10n/';
-$plugin['description'] = 'Textpattern content localisation.';
+$plugin['description'] = 'Textpattern Multi-Lingual Publishing.';
 $plugin['type'] = '1';
 
 $plugin['url'] = '$HeadURL$';
@@ -210,7 +210,7 @@ Cut and paste the rows you need into the iso_693_1_langs() function in the langu
 # --- BEGIN PLUGIN CODE ---
 
 if( !defined( 'L10N_SUBS_TABLE' ) )
-	define( 'L10N_SUBS_TABLE' , 'l10n_gbp_translations' );
+	define( 'L10N_SUBS_TABLE' , 'l10n_substitutions' );
 
 global $txpcfg;
 
