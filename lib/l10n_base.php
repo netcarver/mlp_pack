@@ -453,6 +453,7 @@ class LocalisationView extends GBPPlugin
 		);
 	var $strings_lang = 'en-gb';
 	var $strings_prefix = L10N_NAME;
+	var $insert_in_debug_mode = false;
 	var $perm_strings = array( # These strings are always needed.
 		'l10n-localisation'			=> 'Localisation',
 		);
@@ -516,10 +517,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} article{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following article{s} to you...\r\n\r\n",
 		'l10n-email_body_self'		=> "You transferred the following article{s} to yourself...\r\n\r\n",
-		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you re-title the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
-		//'l10n-delete_article_title' => 'Delete this row',
-		//'l10n-delete_trans_title'	=> 'Delete this translation',
-		//'l10n-clone_title'			=> 'Clone this article for translation',
+		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
 		'l10n-translations'			=> 'Translations',
@@ -535,7 +533,7 @@ class LocalisationView extends GBPPlugin
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' )
 		{
-		global $textarray;
+		global $textarray , $production_status;
 
 		if( @txpinterface == 'admin' )
 			{
@@ -557,9 +555,9 @@ class LocalisationView extends GBPPlugin
 				$this->set_preference('l10n-languages', $languages);
 				}
 
+			#	Merge the string that is always needed for the localisation tab title...
 			$textarray = array_merge( $textarray , $this->perm_strings );
 
-			#	Merge the string that is always needed for the localisation tab title...
 			#	Only merge and load the rest of the strings if this view's event is active.
 			$txp_event = gps('event');
 			if( $txp_event === $event )
@@ -569,6 +567,14 @@ class LocalisationView extends GBPPlugin
 					# Merge the default language strings into the textarray so that non-English
 					# users at least see an English message in the plugin.
 					$textarray = array_merge( $textarray , $this->strings );
+					}
+
+				#	To ease development, allow new strings to be inserted...
+				if( $this->installed() and $this->insert_in_debug_mode and ('debug' === @$production_status) )
+					{
+					$this->strings = array_merge( $this->strings , $this->perm_strings );
+					$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin.l10n' );
+					$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'l10n' , true );
 					}
 
 				# Load the strings from the store to the $textarray. This will override the
@@ -1704,8 +1710,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		$send_notifications = ( '1' == $this->pref('l10n-send_notifications') ) ? true : false;
 		$notify_self = ( '1' == $this->pref('l10n-send_notice_to_self') ) ? true : false;
-		//echo br , "\$send_notifications = ", var_dump($send_notifications);
-		//echo br , "\$notify_self = ", var_dump($notify_self);
 		if( $send_notifications )
 			{
 			global $sitename, $siteurl, $txp_user;
@@ -2263,7 +2267,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 class LocalisationWizardView extends GBPWizardTabView
 	{
-	var $installation_steps = array(
+ 	var $installation_steps = array(
 		'1' => array('setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT'),
 		'2' => array(
 			'setup' => 'Insert the strings for this plugin',
