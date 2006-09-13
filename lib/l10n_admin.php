@@ -458,11 +458,11 @@ function l10n_changeauthor_notify_routine()
 						);
 
 		if( $same )
-			$body = gbp_gTxt( 'l10n-email_body_self' , $subs );
+			$body = l10n_gTxt( 'l10n-email_body_self' , $subs );
 		else
-			$body = gbp_gTxt( 'l10n-email_body_other' , $subs );
+			$body = l10n_gTxt( 'l10n-email_body_other' , $subs );
 		$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
-		$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
+		$subject = l10n_gTxt( 'l10n-email_xfer_subject' , $subs );
 
 		$ok = txpMail($email, $subject, $body, $replyto);
 		}

@@ -12,8 +12,8 @@
 	//$_POST['custom_3'] = 'Value!';
 	//$_POST['from_view'] = 'text';	# Needed to force the section picklist from reseting to 'article'.
 	//$_POST['Keywords'] = 'Hello World';
-	//$_POST['Body'] = "<txp:gbp_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:gbp_if_lang>";
-	//$_POST['Excerpt'] = "<txp:gbp_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:gbp_if_lang>";
+	//$_POST['Body'] = "<txp:l10n_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:l10n_if_lang>";
+	//$_POST['Excerpt'] = "<txp:l10n_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:l10n_if_lang>";
 */
 
 // require_plugin() will reset the $txp_current_plugin global
@@ -993,7 +993,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$remove[] = hInput( 'lang_code' , $iso_code );
 				$remove = form( join( '' , $remove ) ,
 								'' ,
-								"verify('" . doSlash(gbp_gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
+								"verify('" . doSlash(l10n_gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
 								 doSlash(gTxt('are_you_sure')) . "')");
 				}
 
@@ -1101,7 +1101,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
 					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' .
-					 gbp_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
+					 l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
@@ -1123,7 +1123,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
 		{
 		$out[] = '<div style="float: right; width: 50%;" class="gbp_i18n_values_list">';
-		$out[] = '<h3>'.gbp_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
+		$out[] = '<h3>'.l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
 		$localised = SnippetHandler::do_localise( $data );
@@ -1737,12 +1737,12 @@ class LocalisationArticleTabView extends GBPAdminTabView
 								);
 
 				if( $same )
-					$body = gbp_gTxt( 'l10n-email_body_self' , $subs );
+					$body = l10n_gTxt( 'l10n-email_body_self' , $subs );
 				else
-					$body = gbp_gTxt( 'l10n-email_body_other' , $subs );
+					$body = l10n_gTxt( 'l10n-email_body_other' , $subs );
 
-				$body.= join( "\r\n" , $links ) . "\r\n" . gbp_gTxt( 'l10n-email_end' , $subs );
-				$subject = gbp_gTxt( 'l10n-email_xfer_subject' , $subs );
+				$body.= join( "\r\n" , $links ) . "\r\n" . l10n_gTxt( 'l10n-email_end' , $subs );
+				$subject = l10n_gTxt( 'l10n-email_xfer_subject' , $subs );
 
 				@txpMail($email, $subject, $body, $replyto);
 				//echo br,"Sent email to $email",br,"Reply to: $replyto",br,"Subject: $subject",br,br,"Body: $body",br,br;
@@ -1992,7 +1992,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					#
 					if( !array_key_exists( $lang , $members ) )
 						{
-						$this->parent->message = gbp_gTxt( 'l10n-missing_translation' , array( '{id}'=>$ID ) );
+						$this->parent->message = l10n_gTxt( 'l10n-missing_translation' , array( '{id}'=>$ID ) );
 						$members[$lang] = $translations[$i]['ID'];
 						GroupManager::_update_group( $ID , $names , $members );
 						$n_valid_translations++;
@@ -2190,7 +2190,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
-		$o[] = '<caption><strong>'.gbp_gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
+		$o[] = '<caption><strong>'.l10n_gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
 
 		#
 		#	If there is only one available unused language, check it by default.
@@ -2412,7 +2412,7 @@ class LocalisationWizardView extends GBPWizardTabView
 	# TODO : get user choice as to which language to revert the site to...
 	# revert_content( form_table , field_list , validated_language_choice );
 		# revert_content will ...
-		# 	remove gbp_localise tags,
+		# 	remove l10n_localise tags,
 		#	revert any found snippets with their language replacement (if any)
 		#	leave only blocks marked with matching if_lang statements
 		#	change all get_lang tags to the chosen lang
@@ -2752,11 +2752,11 @@ class SnippetHandler
 		static $snippet_pattern = "/##([\w|\.|\-]+)##/";
 		//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
-		# The following pattern is used to match any gbp_snippet tags in pages and forms.
-		static $snippet_tag_pattern = "/\<txp:gbp_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+		# The following pattern is used to match any l10n_snippet tags in pages and forms.
+		static $snippet_tag_pattern = "/\<txp:l10n_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
 
 		# The following are the localise tag pattern(s)...
-		static $tag_pattern = '/\<\/*txp:gbp_localise\s*\>/';
+		static $tag_pattern = '/\<\/*txp:l10n_localise\s*\>/';
 
 		switch( $name )
 			{
@@ -2823,7 +2823,7 @@ class SnippetHandler
 			break;
 
 			case 'insert' :
-			return '<txp:gbp_localise>'.n.n.$thing.n.n.'</txp:gbp_localise>';
+			return '<txp:l10n_localise>'.n.n.$thing.n.n.'</txp:l10n_localise>';
 			break;
 
 			default:
@@ -2919,7 +2919,7 @@ class StringHandler
 	{
 	function make_legend( $title , $args = null )
 		{
-		$title = gbp_gTxt( $title , $args );
+		$title = l10n_gTxt( $title , $args );
 		$title = mb_convert_case( $title , MB_CASE_TITLE , 'utf-8' );
 		$title = tag( $title.'&#8230;', 'legend' );
 		return $title;
@@ -3377,7 +3377,7 @@ class StringHandler
 	} // End class StringHandler
 
 #	PUBLIC/ADMIN WRAPPER ROUTINES...
-function gbp_gTxt( $name , $args = null )
+function l10n_gTxt( $name , $args = null )
 	{
 	/*
 	Plugin authors can define strings with embedded variables that get preg_replaced
@@ -3386,7 +3386,7 @@ function gbp_gTxt( $name , $args = null )
 	So a string : 'plugin_name_hello' => 'Hello there $name.'
 
 	could be replaced like this from within the plugin...
-	gbp_gTxt( 'plugin_name_hello' , array( '$name'=>$name ) );
+	l10n_gTxt( 'plugin_name_hello' , array( '$name'=>$name ) );
 	*/
 	return StringHandler::gTxt( $name , $args );
 	}
