@@ -37,15 +37,15 @@ h1. l10n Internationalisation Plugin Instructions.
 
 Under the content tab, there is a new localisation subtab. Here you can find a list of every article, category title and section titles which needs tobe localised.
 
-To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:gbp_localise>@ ... @</txp:gbp_localise>@
+To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:l10n_localise>@ ... @</txp:l10n_localise>@
 
-You can also use @<txp:gbp_localise section="foo" />@ or @<txp:gbp_localise category="bar" />@ to output localised sections and categories
+You can also use @<txp:l10n_localise section="foo" />@ or @<txp:l10n_localise category="bar" />@ to output localised sections and categories
 
 h2. Snippets
 
 To add snippets to pages or forms...
 
-# Make sure the page/form is wrapped with the @<txp:gbp_localise>@ ... @</txp:gbp_localise>@ statements.
+# Make sure the page/form is wrapped with the @<txp:l10n_localise>@ ... @</txp:l10n_localise>@ statements.
 # Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
 # On the *content > localise* tab, look for your page or form on the pages or form subtab.
 # Click on the page/form name to bring up a list of all snippets therein.
@@ -233,7 +233,7 @@ if (@txpinterface == 'public')
 	register_callback( '_l10n_pretext' 					, 'pretext' );
 	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
 
-	function gbp_l10n_set_browse_language( $short_code , $debug=0 )
+	function _l10n_set_browse_language( $short_code , $debug=0 )
 		{
 		#
 		#	Call this function with the SHORT language code.
@@ -248,7 +248,7 @@ if (@txpinterface == 'public')
 		$tmp = LanguageHandler::expand_code( $short_code );
 
 		if( $debug )
-			echo br, "gbp_l10n_set_browse_language( $short_code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
+			echo br, "_l10n_set_browse_language( $short_code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
 
 		if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
 			{
@@ -396,7 +396,7 @@ if (@txpinterface == 'public')
 			$_SESSION['lang'] = $def;
 			}
 
-		gbp_l10n_set_browse_language( $_SESSION['lang'] );
+		_l10n_set_browse_language( $_SESSION['lang'] );
 
 		//echo br , "\$gbp_language = " , var_dump($gbp_language);
 		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
@@ -468,7 +468,7 @@ if (@txpinterface == 'public')
 	/*
 	TAG HANDLERS FOLLOW
 	*/
-	function gbp_translation_list( $atts )
+	function l10n_translation_list( $atts )
 		{
 		global $thisarticle , $gbp_language, $is_article_list , $pretext;
 
@@ -626,7 +626,7 @@ if (@txpinterface == 'public')
 		return $title . $list;
 		}
 
-	function gbp_snippet($atts)
+	function l10n_snippet($atts)
 		{
 		/*
 		Tag handler: Outputs a localised snippet. This is a strict alternative to using
@@ -646,7 +646,7 @@ if (@txpinterface == 'public')
 		return $out;
 		}
 
-	function gbp_if_lang( $atts , $thing )
+	function l10n_if_lang( $atts , $thing )
 	    {
 		/*
 		Basic markup tag. Use this to wrap blocks of content you only want to appear
@@ -682,35 +682,7 @@ if (@txpinterface == 'public')
 		return $out;
 	    }
 
-	function gbp_render_lang_list( $atts )
-		{
-		/*
-		DEPRECATED. DO NOT USE.
-		Renders a list of links that can be used to switch this page to another supported language.
-		*/
-		global $gbp_language;
-
-		$result = array();
-
-		$site_langs = LanguageHandler::get_site_langs();
-		if( !empty($site_langs) )
-			{
-			foreach( $site_langs as $code )
-				{
-				extract( LanguageHandler::compact_code($code) );
-				$native_name = LanguageHandler::get_native_name_of_lang( $code );
-				$dir = LanguageHandler::get_lang_direction_markup( $code );
-				$class = ($gbp_language === $code) ? 'gbp_current_language' : '';
-				$native_name = doTag( $native_name , 'span' , $class , ' lang="'.$code.'"'.$dir );
-
-				$result[] = '<a href="'.hu.$short.$_SERVER['REQUEST_URI'].'">'.$native_name.'</a>'.n;
-				}
-			}
-
-		return doWrap( $result , 'ul' , 'li' );
-		}
-
-	function gbp_get_language( $atts )
+	function l10n_get_language( $atts )
 		{
 		/*
 		Outputs the current language. Use in page/forms to output the language needed by the doctype/html decl.
@@ -724,23 +696,23 @@ if (@txpinterface == 'public')
 		return $gbp_language[$type];
 		}
 
-	function _gbp_feed_link_cb( $matches )
+	function _l10n_feed_link_cb( $matches )
 		{
-		global $gbp_feed_link_lang;
+		global $l10n_feed_link_lang;
 
 		#
 		#	$matches[0] is the entire pattern...
 		#	$matches[1] is the href...
 		#
 		$path = trim( str_replace( trim(hu, '/'), '', $matches[1] ), '/' );
-		$path = $gbp_feed_link_lang['short'].'/'.$path;
+		$path = $l10n_feed_link_lang['short'].'/'.$path;
 		$path = ' href="'.hu.$path.'"';
 		return $path;
 		}
-	function gbp_feed_link( $atts )
+	function l10n_feed_link( $atts )
 		{
-		global $gbp_language, $gbp_feed_link_lang;
-		$gbp_feed_link_lang = $gbp_language;
+		global $gbp_language, $l10n_feed_link_lang;
+		$l10n_feed_link_lang = $gbp_language;
 
 		if( isset($atts['code']) )
 			{
@@ -750,7 +722,7 @@ if (@txpinterface == 'public')
 			if( $code === 'none' )
 				return feed_link( $atts );
 
-			$gbp_feed_link_lang = LanguageHandler::compact_code( $code );
+			$l10n_feed_link_lang = LanguageHandler::compact_code( $code );
 			}
 
 		#
@@ -762,12 +734,12 @@ if (@txpinterface == 'public')
 		#	Inject the language code into the url...
 		#
 		$pattern = '/ href="(.*)" /';
-		$result = preg_replace_callback( $pattern , '_gbp_feed_link_cb' , $result );
+		$result = preg_replace_callback( $pattern , '_l10n_feed_link_cb' , $result );
 
 		return $result;
 		}
 
-	function gbp_get_lang_dir( $atts )
+	function l10n_get_lang_dir( $atts )
 		{
 		/*
 		Outputs the direction (rtl/ltr) of the current language.
@@ -786,7 +758,7 @@ if (@txpinterface == 'public')
 		return $dir;
 		}
 
-	function gbp_localise($atts, $thing = '')
+	function l10n_localise($atts, $thing = '')
 		{
 		/*
 		Graeme's original localisation container tag. Still very much needed.
