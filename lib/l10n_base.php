@@ -18,21 +18,21 @@
 
 // require_plugin() will reset the $txp_current_plugin global
 global $txp_current_plugin;
-$gbp_current_plugin = $txp_current_plugin;
+$l10n_current_plugin = $txp_current_plugin;
 require_plugin('gbp_admin_library');
-$txp_current_plugin = $gbp_current_plugin;
+$txp_current_plugin = $l10n_current_plugin;
 
 // Constants
-if( !defined( 'gbp_language' ))
-	define('gbp_language', 'language');
-if( !defined( 'gbp_plugin' ))
-	define('gbp_plugin', 'plugin');
+if( !defined( 'L10N_LANGUAGE_CONST' ))
+	define('L10N_LANGUAGE_CONST', 'language');
+if( !defined( 'L10N_PLUGIN_CONST' ))
+	define('L10N_PLUGIN_CONST', 'plugin');
 if( !defined( 'L10N_SEP' ))
 	define( 'L10N_SEP' , '-' );
 if( !defined( 'L10N_NAME' ))
 	define( 'L10N_NAME' , 'l10n' );
-if( !defined( 'GBP_PREFS_LANGUAGES' ))
-	define( 'GBP_PREFS_LANGUAGES', $gbp_current_plugin.'_l10n-languages' );
+if( !defined( 'L10N_PREFS_LANGUAGES' ))
+	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
 
@@ -65,10 +65,13 @@ class GroupManager
 			$info['members'] = unserialize( $info['members'] );
 		return $info;
 		}
-	function create_group( $title , $members )
+	function create_group( $title , $members , $group_id=0 )
 		{
 		$members = serialize( $members );
-		$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
+		if( 0 === $group_id )
+			$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
+		else
+			$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members', `ID`='$group_id'" );
 		return $group;
 		}
 	function destroy_group( $group )
@@ -101,12 +104,23 @@ class GroupManager
 		$ok = GroupManager::_update_group( $group , $names , $members );
 		return $ok;
 		}
-	function add_article( $group , $article_id , $article_lang , $check_membership = true )
+	function add_article( $group , $article_id , $article_lang , $check_membership = true , $insert_group = false )
 		{
 		# get the group info...
 		$info = GroupManager::_get_group_info( $group );
 		if( empty( $info ) )
-			return "Group $group does not exist";
+			{
+			if( $insert_group )
+				{
+				$group = GroupManager::create_group( '' , array() , $group );
+				$info = GroupManager::_get_group_info( $group );
+				if( empty( $info ) )
+					return "Group $group does not exist and could not be added";
+				}
+			else
+				return "Group $group does not exist";
+			}
+
 		extract( $info );
 
 		if( array_key_exists( $article_lang , $members ) )
@@ -407,7 +421,7 @@ class GroupManager
 
 class LocalisationView extends GBPPlugin
 	{
-	var $gp = array(gbp_language);
+	var $gp = array(L10N_LANGUAGE_CONST);
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
@@ -719,19 +733,19 @@ class LocalisationView extends GBPPlugin
 				$languages['value'][$safe_key] = gTxt($safe_key);
 				}
 
-			if (!gps(gbp_language))
+			if (!gps(L10N_LANGUAGE_CONST))
 				{
 				$langs = $this->pref('l10n-languages');
-				$_GET[gbp_language] = $langs[0];
+				$_GET[L10N_LANGUAGE_CONST] = $langs[0];
 				}
 
-			setcookie(gbp_language, gps(gbp_language), time() + 3600 * 24 * 365);
+			setcookie(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST), time() + 3600 * 24 * 365);
 
 			#	Render the top of page div.
 			$out[] = form(
 				fLabelCell( gTxt('language').': ' ).
-				selectInput(gbp_language, $languages['value'], gps(gbp_language), 0, 1).
-				'<br /><a href="'.hu.gps(gbp_language).'/">'.gTxt('l10n-view_site').'</a>'.
+				selectInput(L10N_LANGUAGE_CONST, $languages['value'], gps(L10N_LANGUAGE_CONST), 0, 1).
+				'<br /><a href="'.hu.gps(L10N_LANGUAGE_CONST).'/">'.gTxt('l10n-view_site').'</a>'.
 				$this->form_inputs()
 				);
 			}
@@ -772,34 +786,34 @@ class LocalisationStringView extends GBPAdminTabView
 			switch( $step )
 				{
 				# Called to save the stringset the user has been editing.
-				case 'gbp_save_strings' :
+				case 'l10n_save_strings' :
 				$this->save_strings();
 				break;
 
 				# Called if the user chooses to delete the string set for a removed plugin.
-				case 'gbp_remove_stringset' :
+				case 'l10n_remove_stringset' :
 				$this->remove_strings();
 				break;
 
 				# Called if the user chooses to remove a specific languages' strings.
 				# eg if they entered some french translations but later drop french from the site.
-				case 'gbp_remove_languageset' :
+				case 'l10n_remove_languageset' :
 				$this->remove_strings();
 				break;
 
-				case 'gbp_save_pageform':
+				case 'l10n_save_pageform':
 				$this->save_pageform();
 				break;
 
-				case 'gbp_localise_pageform':
+				case 'l10n_localise_pageform':
 				$this->localise_pageform();
 				break;
 
-				case 'gbp_export_languageset':
+				case 'l10n_export_languageset':
 				$this->export_languageset();
 				break;
 
-				case 'gbp_import_languageset':
+				case 'l10n_import_languageset':
 				$this->import_languageset();
 				break;
 				}
@@ -810,8 +824,8 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		$id = gps(gbp_id);
 		$step = gps('step');
-		$pf_steps = array('gbp_save_pageform', 'edit_pageform', 'gbp_localise_pageform');
-		$pl_steps = array('gbp_import_languageset');
+		$pf_steps = array('l10n_save_pageform', 'l10n_edit_pageform', 'l10n_localise_pageform');
+		$pl_steps = array('l10n_import_languageset');
 		$can_edit = $this->pref('l10n-inline_editing');
 
 		switch ($this->event)
@@ -846,7 +860,7 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				$this->render_import_list();
 				}
-			elseif( $owner = gps(gbp_plugin) and $prefix = gps('prefix') )
+			elseif( $owner = gps(L10N_PLUGIN_CONST) and $prefix = gps('prefix') )
 				{
 				$this->render_plugin_string_list( $owner , $id , $prefix );
 				if( $id )
@@ -899,7 +913,7 @@ class LocalisationStringView extends GBPAdminTabView
 				extract( $vals );
 				$marker = ( !array_search( $plugin, $plugins ) )
 					? ' <strong>*</strong>' : '';
-				$out[] = '<li><a href="' . $this->parent->url( array(gbp_plugin=>$plugin,'prefix'=>$pfx) , true ) . '">' .
+				$out[] = '<li><a href="' . $this->parent->url( array(L10N_PLUGIN_CONST=>$plugin,'prefix'=>$pfx) , true ) . '">' .
 						$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
 						'</a></li>';
 				}
@@ -915,7 +929,7 @@ class LocalisationStringView extends GBPAdminTabView
 		/*
 		Renders a list of resource owners for the left-hand pane.
 		*/
-		$out[] = '<div style="float: left; width: 20%;" class="gbp_i18n_owner_list">';
+		$out[] = '<div style="float: left; width: 20%;" class="l10n_owner_list">';
 
 		switch( $type )
 			{
@@ -989,7 +1003,7 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				$extras_found = true;
 				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
-				$remove[] = sInput( 'gbp_remove_languageset');
+				$remove[] = sInput( 'l10n_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
 				$remove[] = hInput( 'lang_code' , $iso_code );
 				$remove = form( join( '' , $remove ) ,
@@ -1003,7 +1017,7 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				$details = unserialize( $details );
 				$export[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
-				$export[] = sInput( 'gbp_export_languageset');
+				$export[] = sInput( 'l10n_export_languageset');
 				$export[] = $this->parent->form_inputs();
 				$export[] = hInput( 'language' , $iso_code );
 				$export[] = hInput( 'prefix' , $details['pfx'] );
@@ -1022,10 +1036,10 @@ class LocalisationStringView extends GBPAdminTabView
 		if( !empty( $string_name ) )
 			{
 			$import[] = gTxt('l10n-import_title') . br;
-			$import[] = '<textarea name="data" cols="60" rows="2" id="gbp_l10n_string_import">';
+			$import[] = '<textarea name="data" cols="60" rows="2" id="l10n_string_import">';
 			$import[] = '</textarea>' .br . br;
 			$import[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
-			$import[] = sInput( 'gbp_import_languageset');
+			$import[] = sInput( 'l10n_import_languageset');
 			$import[] = $this->parent->form_inputs();
 			$import[] = hInput( 'plugin' , gps('plugin') );
 			$import[] = hInput( 'prefix' , gps('prefix') );
@@ -1049,10 +1063,10 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
-				 $this->parent->url( array( gbp_plugin => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
+				 $this->parent->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
-		$out[] = br . n . $this->_render_string_list( $strings , gbp_plugin , $plugin , $prefix );
+		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix );
 		$out[] = '</div>';
 
 		# Render default view details in right hand pane...
@@ -1068,9 +1082,9 @@ class LocalisationStringView extends GBPAdminTabView
 				$out[] = '<h3>'.gTxt('l10n-no_plugin_heading').'</h3>'.n;
 				$del[] = graf( gTxt('l10n-remove_plugin') );
 				$del[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</div>';
-				$del[] = sInput('gbp_remove_stringset');
+				$del[] = sInput('l10n_remove_stringset');
 				$del[] = $this->parent->form_inputs();
-				$del[] = hInput(gbp_plugin, $plugin);
+				$del[] = hInput(L10N_PLUGIN_CONST, $plugin);
 
 				$out[] = form(	join('', $del) ,
 								'border: 1px solid grey; padding: 0.5em; margin: 1em;' ,
@@ -1101,7 +1115,7 @@ class LocalisationStringView extends GBPAdminTabView
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
-					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'edit_pageform' ) , true ) . '">' .
+					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'l10n_edit_pageform' ) , true ) . '">' .
 					 l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
@@ -1133,7 +1147,7 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			$l[] = '<p>'.gTxt('l10n-add_tags').n;
 			$l[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
-			$l[] = sInput('gbp_localise_pageform').n;
+			$l[] = sInput('l10n_localise_pageform').n;
 			$l[] = $this->parent->form_inputs();
 			$l[] = hInput('owner', $owner);
 			$l[] = hInput('data', $data);
@@ -1144,7 +1158,7 @@ class LocalisationStringView extends GBPAdminTabView
 			 $data .
 			 '</textarea></p>'.br.n;
 		$f[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
-		$f[] = sInput('gbp_save_pageform');
+		$f[] = sInput('l10n_save_pageform');
 		$f[] = $this->parent->form_inputs();
 		$f[] = hInput('owner', $owner);
 		$out[] = form( join('', $f) , 'padding: 0.5em; margin: 1em;' );
@@ -1162,7 +1176,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<h3>'.gTxt('l10n-translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$string_event = 'snippet';
-		if( $type == gbp_plugin )
+		if( $type == L10N_PLUGIN_CONST )
 			$string_event = $owner;
 		$x = StringHandler::get_string_set( $id );
 		$final_codes = array();
@@ -1201,16 +1215,16 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$out[] = '</dl>';
 		$out[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
-		$out[] = sInput('gbp_save_strings');
+		$out[] = sInput('l10n_save_strings');
 		$out[] = $this->parent->form_inputs();
 		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
-		$out[] = hInput(gbp_language, gps(gbp_language));
+		$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
 		$out[] = hInput('prefix', gps('prefix'));
 		if( $type === 'plugin' )
-			$out[] = hInput(gbp_plugin, $owner);
+			$out[] = hInput(L10N_PLUGIN_CONST, $owner);
 		else
 			$out[] = hInput('owner', $owner);
-		$out[] = hInput('gbp_type', $type );
+		$out[] = hInput('l10n_type', $type );
 		$out[] = hInput('string_event', $string_event);
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form></div>';
@@ -1234,7 +1248,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$f1[] = hInput( 'plugin' , $d['plugin'] );
 			$f1[] = hInput( 'prefix' , $d['prefix'] );
 			$f1[] = hInput( 'language' , gps('language') );
-			$f1[] = sInput( 'gbp_import_languageset');
+			$f1[] = sInput( 'l10n_import_languageset');
 			$f1[] = hInput( 'commit', 'true' );
 			$f1[] = $this->parent->form_inputs();
 
@@ -1256,7 +1270,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function remove_strings()
 		{
 		$remove_langs 	= gps('lang_code');
-		$plugin 		= gps(gbp_plugin);
+		$plugin 		= gps( L10N_PLUGIN_CONST );
 		StringHandler::remove_strings( $plugin , $remove_langs );
 		}
 
@@ -1352,8 +1366,8 @@ class LocalisationTabView extends GBPAdminTabView
 			{
 			switch( $step )
 				{
-				case 'gbp_save':
-				case 'gbp_post':
+				case 'l10n_subs_save':
+				case 'l10n_subs_post':
 					$this->save_post();
 				break;
 				}
@@ -1392,7 +1406,7 @@ class LocalisationTabView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 50%;" class="l10n_list">';
 
 		// SQL used in both queries
-		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(gbp_language)."' AND $where";
+		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(L10N_LANGUAGE_CONST)."' AND $where";
 
 		// Localised
 		$rows = startRows("SELECT DISTINCT source.$key as k, source.$value as v ".$sql);
@@ -1436,7 +1450,7 @@ class LocalisationTabView extends GBPAdminTabView
 				$rs2 = safe_row(
 					'id, entry_value',
 					L10N_SUBS_TABLE,
-					"`language` = '".gps(gbp_language)."' AND `entry_id` = '$entry_id' AND `entry_column` = '$field' AND `table` = '".PFX."$table'"
+					"`language` = '".gps(L10N_LANGUAGE_CONST)."' AND `entry_id` = '$entry_id' AND `entry_column` = '$field' AND `table` = '".PFX."$table'"
 					);
 
 				$field_type = mysql_field_type(mysql_query("SELECT $field FROM ".PFX.$table), 0);
@@ -1467,10 +1481,10 @@ class LocalisationTabView extends GBPAdminTabView
 			$out[] = '</div>';
 
 			$out[] = $this->parent->form_inputs();
-			$out[] = sInput(((isset($id)) || (gps('step') == 'gbp_save')) ? 'gbp_save' : 'gbp_post');
+			$out[] = sInput(((isset($id)) || (gps('step') == 'l10n_subs_save')) ? 'l10n_subs_save' : 'l10n_subs_post');
 
-			$out[] = hInput('gbp_table', $table);
-			$out[] = hInput(gbp_language, gps(gbp_language));
+			$out[] = hInput('l10n_table', $table);
+			$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
 			$out[] = hInput(gbp_id, $entry_id);
 
 			echo form(join('', $out));
@@ -1487,8 +1501,8 @@ class LocalisationTabView extends GBPAdminTabView
 		if( !empty( $hidden_vars ) )
 			extract( $hidden_vars );
 
-		$table = PFX.$_POST['gbp_table'];
-		$language = $_POST[gbp_language];
+		$table = PFX.$_POST['l10n_table'];
+		$language = $_POST[L10N_LANGUAGE_CONST];
 		$entry_id = $_POST[gbp_id];
 
 		include_once $txpcfg['txpath'].'/lib/classTextile.php';
@@ -1543,10 +1557,10 @@ class LocalisationTabView extends GBPAdminTabView
 
 			switch(gps('step'))
 				{
-				case 'gbp_post':
+				case 'l10n_subs_post':
 					$rs = safe_insert(L10N_SUBS_TABLE, "`id` = '$id', `table` = '$table', `language` = '$language', `entry_id` = '$entry_id', `entry_column` = '$field', `entry_value` = '$value', `entry_value_html` = '$value_html'");
 				break;
-				case 'gbp_save':
+				case 'l10n_subs_save':
 					$rs = safe_update(L10N_SUBS_TABLE, "`entry_value` = '$value', `entry_value_html` = '$value_html'",
 						"`table` = '$table' AND `language` = '$language' AND `entry_id` = '$entry_id' AND `entry_column` = '$field'"
 					);
@@ -2268,7 +2282,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Add the language native textpattern tables',
 			'cleanup' => 'Drop the language native textpattern tables'),
 		'8' => array ( 'cleanup' => 'Delete cookies' ),
-	);
+		);
 
 	function installed()
 		{
@@ -2289,7 +2303,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		# Make sure we only call insert_strings() once!
 		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
-		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $this->parent->strings , $this->parent->strings_lang , 'admin' , 'gbp_l10n' );
+		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $this->parent->strings , $this->parent->strings_lang , 'admin' , 'l10n' );
 		$this->add_report_item( 'Insert the strings for this plugin' , $ok );
 		}
 
@@ -2362,11 +2376,16 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function cleanup_3()
 		{
-		# Strip extra columns out of the textpattern table...
-		# ?? Should we still do this ??
-		$sql = "drop `Lang`, drop `Group`";
-		$ok = @safe_alter( 'textpattern' , $sql );
-		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
+		$drop = 'true';
+		//$drop = gps( 'l10n_drop_textpattern_extensions' );
+		if( !empty($drop) )
+			{
+			$sql = "drop `Lang`, drop `Group`";
+			$ok = @safe_alter( 'textpattern' , $sql );
+			$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
+			}
+		else
+			$this->add_report_item( 'Skipped dropping the `Lang` and `Group` fields from the textpattern table' , $ok );
 		}
 
 	function cleanup_4()
@@ -2444,7 +2463,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		$rs = safe_rows_start( 'ID , Title' , 'textpattern' , $where );
 		$count = @mysql_num_rows($rs);
 
-		$lang = $this->pref('l10n-languages');
+		//$lang = $this->pref('l10n-languages');
 		$i = 0;
 		if( $rs && $count > 0 )
 			{
@@ -2704,16 +2723,16 @@ class LanguageHandler
 		*/
 		global $prefs;
 
-		$exists = array_key_exists(GBP_PREFS_LANGUAGES, $prefs);
+		$exists = array_key_exists(L10N_PREFS_LANGUAGES, $prefs);
 		if( $set_if_empty and !$exists )
 			{
-			$prefs[GBP_PREFS_LANGUAGES] = array( LANG );
+			$prefs[L10N_PREFS_LANGUAGES] = array( LANG );
 			$exists = true;
 			}
 
 		if( $exists )
 			{
-			$lang_codes = $prefs[GBP_PREFS_LANGUAGES];
+			$lang_codes = $prefs[L10N_PREFS_LANGUAGES];
 			if( !is_array( $lang_codes ) )
 				{
 				$lang_codes = explode( ',' , $lang_codes );
