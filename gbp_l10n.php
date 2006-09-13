@@ -209,6 +209,9 @@ Cut and paste the rows you need into the iso_693_1_langs() function in the langu
 }
 # --- BEGIN PLUGIN CODE ---
 
+if( !defined( 'L10N_SUBS_TABLE' ) )
+	define( 'L10N_SUBS_TABLE' , 'l10n_gbp_translations' );
+
 global $txpcfg;
 
 
@@ -241,7 +244,7 @@ if (@txpinterface == 'public')
 		#	Takes care of storing the global language variable and also tries to do extra stuff like
 		#	setting up the correct locale for the requested language.
 		#
-		global $gbp_language;
+		global $l10n_language;
 		$result = false;
 
 		$site_langs = LanguageHandler::get_site_langs();
@@ -254,25 +257,25 @@ if (@txpinterface == 'public')
 			{
 			if( $debug )
 				echo " ... in IF() ... " ;
-			$gbp_language = LanguageHandler::compact_code($tmp);
+			$l10n_language = LanguageHandler::compact_code($tmp);
 			$result = true;
-			getlocale( $gbp_language['long'] );
+			getlocale( $l10n_language['long'] );
 			if( $debug )
-				echo "\$tmp [$tmp] used to set \$gbp_language to " , var_dump($gbp_language['long']) , " returning TRUE", br ;
+				echo "\$tmp [$tmp] used to set \$l10n_language to " , var_dump($l10n_language['long']) , " returning TRUE", br ;
 			}
 		else
 			{
 			if( $debug )
 				echo " ... in ELSE ... " ;
-			if( !isset($gbp_language) or !in_array( $gbp_language['long'] , $site_langs ))
+			if( !isset($l10n_language) or !in_array( $l10n_language['long'] , $site_langs ))
 				{
-				$gbp_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
-				getlocale( $gbp_language['long'] );
+				$l10n_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+				getlocale( $l10n_language['long'] );
 				$result = (!empty($tmp));
 				}
 			}
 		if( $debug )
-			echo br , "Input='$short_code', Site Language set to " , var_dump( $gbp_language ) , " Returning ", var_dump($result),  br;
+			echo br , "Input='$short_code', Site Language set to " , var_dump( $l10n_language ) , " Returning ", var_dump($result),  br;
 
 		return $result;
 		}
@@ -280,12 +283,12 @@ if (@txpinterface == 'public')
 
 	function _l10n_process_url()
 		{
-		global $gbp_language;
+		global $l10n_language;
 
 		$new_first_path = '';
 
 		session_start();
-		//$gbp_language = @$_SESSION['lang'];
+		//$l10n_language = @$_SESSION['lang'];
 		$site_langs = LanguageHandler::get_site_langs();
 
 		if (!defined('rhu'))
@@ -398,7 +401,7 @@ if (@txpinterface == 'public')
 
 		_l10n_set_browse_language( $_SESSION['lang'] );
 
-		//echo br , "\$gbp_language = " , var_dump($gbp_language);
+		//echo br , "\$l10n_language = " , var_dump($l10n_language);
 		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
 
 		return $new_first_path;
@@ -407,7 +410,7 @@ if (@txpinterface == 'public')
 
 	function _l10n_textpattern_comment_submit()
 		{
-		global $pretext, $gbp_language;
+		global $pretext, $l10n_language;
 
 		#
 		#	Detect comment submission and update master textpattern table...
@@ -441,13 +444,13 @@ if (@txpinterface == 'public')
 				$prefs[$name] = $r;
 				}
 			}
-		global $gbp_language;
+		global $l10n_language;
 
 		$first_chunk = _l10n_process_url();
 		//echo br,br,br,br,br,"First chunk=",$first_chunk;
 
 		# Load the localised set of strings based on the selected language...
-		StringHandler::load_strings_into_textarray( $gbp_language['long'] );
+		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
 
 		#	Load the site name and slogan into the $prefs[] array in the right place...
 		load_localised_pref( 'sitename' );
@@ -470,7 +473,7 @@ if (@txpinterface == 'public')
 	*/
 	function l10n_translation_list( $atts )
 		{
-		global $thisarticle , $gbp_language, $is_article_list , $pretext;
+		global $thisarticle , $l10n_language, $is_article_list , $pretext;
 
 		extract(lAtts(array(
 							'title'				=> '',					#	Title will be prepended as a paragraph.
@@ -565,7 +568,7 @@ if (@txpinterface == 'public')
 				#	No individual ID but we should be able to serve all the languages
 				# so use the current url and inject the language component into each one...
 				#
-				$current = ($gbp_language['long'] === $lang);
+				$current = ($l10n_language['long'] === $lang);
 				$text    = $lname;
 
 				#
@@ -594,7 +597,7 @@ if (@txpinterface == 'public')
 				#
 				if( array_key_exists( $lang , $alangs ) )
 					{
-					$current = ($gbp_language['long'] === $lang);
+					$current = ($l10n_language['long'] === $lang);
 					$text    = $lname;
 
 					#
@@ -637,11 +640,11 @@ if (@txpinterface == 'public')
 		$out = '';
 		if( array_key_exists('name', $atts) )
 			{
-			global $gbp_language;
+			global $l10n_language;
 
 			$out = gTxt( $atts['name'] );
 			if( $out === $atts['name'] )
-				$out = '('.(($gbp_language['long'])?$gbp_language['long']:'??').')'.$out;
+				$out = '('.(($l10n_language['long'])?$l10n_language['long']:'??').')'.$out;
 			}
 		return $out;
 		}
@@ -653,14 +656,14 @@ if (@txpinterface == 'public')
 		when the specified language is set or if the direction of the selected language matches
 		what you want. (Output different css files for rtl layouts for example).
 		*/
-		global $gbp_language;
+		global $l10n_language;
 		$out = '';
 
-		if( !$gbp_language )
+		if( !$l10n_language )
 			return $out;
 
 		extract(lAtts(array(
-							'lang' => $gbp_language['short'] ,
+							'lang' => $l10n_language['short'] ,
 							'dir'  => '',
 							'wraptag' => 'div' ,
 							),$atts));
@@ -669,10 +672,10 @@ if (@txpinterface == 'public')
 			{
 			#	Does the direction of the currently selected site language match that requested?
 			#	If so, parse the contained content.
-			if( $dir == LanguageHandler::get_lang_direction( $gbp_language['short'] ) )
+			if( $dir == LanguageHandler::get_lang_direction( $l10n_language['short'] ) )
 				$out = parse($thing) . n;
 			}
-		elseif( $lang == $gbp_language['short'] or $lang == $gbp_language['long'] )
+		elseif( $lang == $l10n_language['short'] or $lang == $l10n_language['long'] )
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
 			$dir = LanguageHandler::get_lang_direction_markup( $lang );
@@ -687,13 +690,13 @@ if (@txpinterface == 'public')
 		/*
 		Outputs the current language. Use in page/forms to output the language needed by the doctype/html decl.
 		*/
-		global $gbp_language;
+		global $l10n_language;
 
 		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
 
-		if( !$gbp_language )
+		if( !$l10n_language )
 			return '';
-		return $gbp_language[$type];
+		return $l10n_language[$type];
 		}
 
 	function _l10n_feed_link_cb( $matches )
@@ -711,8 +714,8 @@ if (@txpinterface == 'public')
 		}
 	function l10n_feed_link( $atts )
 		{
-		global $gbp_language, $l10n_feed_link_lang;
-		$l10n_feed_link_lang = $gbp_language;
+		global $l10n_language, $l10n_feed_link_lang;
+		$l10n_feed_link_lang = $l10n_language;
 
 		if( isset($atts['code']) )
 			{
@@ -745,14 +748,14 @@ if (@txpinterface == 'public')
 		Outputs the direction (rtl/ltr) of the current language.
 		Use in page/forms to output the direction needed by xhtml elements.
 		*/
-		global $gbp_language;
+		global $l10n_language;
 
 		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
 
-		if( !$gbp_language )
+		if( !$l10n_language )
 			$lang = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
 		else
-			$lang = $gbp_language;
+			$lang = $l10n_language;
 
 		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
@@ -760,17 +763,13 @@ if (@txpinterface == 'public')
 
 	function l10n_localise($atts, $thing = '')
 		{
-		/*
-		Graeme's original localisation container tag. Still very much needed.
-		Some mods to include direct snippet localisation for any contained content.
-		*/
-		global $gbp_language, $thisarticle, $thislink;
+		global $l10n_language, $thisarticle, $thislink;
 
-		if ($gbp_language) {
+		if ($l10n_language) {
 			if (array_key_exists('category', $atts)) {
 				$id = $atts['category'];
 				$table = PFX.'txp_category';
-				$rs = safe_field('entry_value', 'gbp_l10n', "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '$gbp_language'");
+				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
 
 				if ($rs && !empty($rs))
 					return $rs;
@@ -781,7 +780,7 @@ if (@txpinterface == 'public')
 
 				$id = $atts['section'];
 				$table = PFX.'txp_section';
-				$rs = safe_field('entry_value', 'gbp_l10n', "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '$gbp_language'");
+				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
 
 				if ($rs && !empty($rs))
 					return $rs;
@@ -796,7 +795,7 @@ if (@txpinterface == 'public')
 				/*
 				if (isset($thisarticle))
 					{
-					$rs = safe_rows('entry_value, entry_value_html, entry_column', 'gbp_l10n', '`language` = \''.$gbp_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
+					$rs = safe_rows('entry_value, entry_value_html, entry_column', L10N_SUBS_TABLE, '`language` = \''.$l10n_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
 					if( $rs )
 						foreach( $rs as $row )
 							{
@@ -807,7 +806,7 @@ if (@txpinterface == 'public')
 
 				*/
 				$html = parse($thing);
-				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $gbp_language['short'].'/'.'$1', $html);
+				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $l10n_language['short'].'/'.'$1', $html);
 				return $html;
 			}
 		}
