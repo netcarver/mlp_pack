@@ -273,7 +273,11 @@ function l10n_article_buffer_processor( $buffer )
 	$remaining	= GroupManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
-	$cloning_permitted	= has_privs( 'l10n.clone' );
+	#
+	#	Disallow cloning in the write tab now...
+	#
+	//$cloning_permitted	= has_privs( 'l10n.clone' );
+	$cloning_permitted	= false;
 
 	$lang 		= $l10n_vars['article_lang'];
 	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() , true );
