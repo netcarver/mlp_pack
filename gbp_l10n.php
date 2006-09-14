@@ -347,7 +347,7 @@ if (@txpinterface == 'public')
 			# from the user agent's HTTP header.
 			#
 			//echo br,br,br,br , "Processing user agent request...";
-			$req_lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
 			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
 				$chunks = split( ',' , $req_lang );
