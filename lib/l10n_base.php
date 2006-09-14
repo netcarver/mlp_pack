@@ -428,8 +428,7 @@ class LocalisationView extends GBPPlugin
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
-		//'l10n-article_vars' => array('value' => array('Title', 'Body', 'Excerpt'), 'type' => 'gbp_array_text'),
-		//'l10n-article_hidden_vars' => array('value' => array('textile_body', 'textile_excerpt'), 'type' => 'gbp_array_text'),
+		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 
 		'categories' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
@@ -459,7 +458,8 @@ class LocalisationView extends GBPPlugin
 		);
 	var $strings = array(
 		'l10n-send_notifications'	=> 'Email user when you assign them a translation?',
-		'l10n-send_notice_to_self'	=> 'Send when assigning to yourself?',
+		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
+		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > articles list?',
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 		'l10n-article_vars'			=> 'Article variables ',
 		'l10n-article_hidden_vars'	=> 'Hidden article variables ',
@@ -1579,7 +1579,6 @@ class LocalisationTabView extends GBPAdminTabView
 
 class LocalisationArticleTabView extends GBPAdminTabView
 	{
-
 	function preload()
 		{
 		$step = gps('step');

@@ -414,11 +414,14 @@ function l10n_add_article_to_group_cb( $event , $step )
 
 function l10n_changeauthor_notify_routine()
 	{
-	#	Permissions for email...
-	$notify_new_authors = true;
-	$notify_self = true;
+	global $l10n_view;
 
-	if( !$notify_new_authors )
+	#	Permissions for email...
+	$send_notifications	= ( '1' == $l10n_view->pref('l10n-send_notifications') ) ? true : false;
+	$on_changeauthor	= ( '1' == $l10n_view->pref('l10n-send_notice_on_changeauthor') ) ? true : false;
+	$notify_self 		= ( '1' == $l10n_view->pref('l10n-send_notice_to_self') ) ? true : false;
+
+	if( !$send_notifications or !$on_changeauthor )
 		return false;
 
 	global $statuses, $sitename, $siteurl, $txp_user;
@@ -468,16 +471,21 @@ function l10n_changeauthor_notify_routine()
 		$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
 		$subject = l10n_gTxt( 'l10n-email_xfer_subject' , $subs );
 
-		$ok = txpMail($email, $subject, $body, $replyto);
+		$ok = @txpMail($email, $subject, $body, $replyto);
+
+		//echo br,br,"To :$email",br,"Reply To :$replyto",br,"Subject :$subject",br,br,htmlspecialchars($body),br;
+		//exit;
 		}
 	}
 function l10n_post_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
-	$method   = ps('edit_method');
-	$redirect = true;	#	Always redirect to the 'list' event. This forces a re-draw of the screen
-						#	with the correct language filters applied.
-	$update   = true;
+	global $l10n_view;
+
+	$method   		= ps('edit_method');
+	$redirect 		= true;	#	Always redirect to the 'list' event. This forces a re-draw of the screen
+							#	with the correct language filters applied.
+	$update   		= true;
 
 	#
 	#	Special cases...
@@ -485,7 +493,7 @@ function l10n_post_multi_edit_cb( $event , $step )
 	switch( $method )
 		{
 		case 'changeauthor':
-		l10n_changeauthor_notify_routine();
+			l10n_changeauthor_notify_routine();
 		break;
 		}
 
@@ -515,7 +523,6 @@ function l10n_post_multi_edit_cb( $event , $step )
 		$search['event'] = 'list';
 		$search['step'] = '';
 
-		global $l10n_view;
 		$l10n_view->redirect( $search );
 		}
 	}
