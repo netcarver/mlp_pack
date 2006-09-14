@@ -429,6 +429,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
+		'l10n-allow_writetab_changes' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 
 		'categories' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
@@ -457,6 +458,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-localisation'			=> 'Localisation',
 		);
 	var $strings = array(
+		'l10n-allow_writetab_changes' => "Power users can change a translation's language or group",
 		'l10n-send_notifications'	=> 'Email user when you assign them a translation?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > articles list?',

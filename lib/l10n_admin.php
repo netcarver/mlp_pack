@@ -265,6 +265,8 @@ function l10n_setup_article_buffer_processor( $event , $step )
 function l10n_article_buffer_processor( $buffer )
 	{
 	global $l10n_vars;
+	global $l10n_view;
+	global $l10n_article_message;
 	global $txp_user;
 
 	#
@@ -282,7 +284,8 @@ function l10n_article_buffer_processor( $buffer )
 	$lang 		= $l10n_vars['article_lang'];
 	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() , true );
 
-	$reassigning_permitted = has_privs( 'l10n.reassign' );
+	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
+	$has_reassign_privs = has_privs( 'l10n.reassign' );
 
 	$id_no		= '-';
 	if( $l10n_vars['article_id'] )
@@ -312,7 +315,6 @@ function l10n_article_buffer_processor( $buffer )
 	$f = '<p><input type="text" id="title"';
 
 	$r = '';
-	global $l10n_article_message;
 	if( isset($l10n_article_message) )
 		{
 		$r = strong( htmlspecialchars($l10n_article_message) ) . n . br;
@@ -327,7 +329,7 @@ function l10n_article_buffer_processor( $buffer )
 		}
 	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
 		{
-		if( $reassigning_permitted )
+		if( $reassigning_permitted and $has_reassign_privs )
 			{
 			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
 			$r .=	gTxt('group')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
