@@ -426,7 +426,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
-		'l10n-send_notifications'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
+		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-allow_writetab_changes' => array( 'value' => 0, 'type' => 'yesnoradio' ),
