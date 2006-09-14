@@ -35,7 +35,8 @@ if( !defined( 'L10N_PREFS_LANGUAGES' ))
 	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
-
+if( !defined( 'L10N_TRANSLATION_TABLE_PREFIX' ) )
+	define( 'L10N_TRANSLATION_TABLE_PREFIX' , 'l10n_textpattern_' );
 
 class GroupManager
 	{
@@ -56,7 +57,7 @@ class GroupManager
 		}
 	function make_textpattern_name( $full_code )
 		{
-		return 'l10n_textpattern_' . $full_code['long'];
+		return L10N_TRANSLATION_TABLE_PREFIX . $full_code['long'];
 		}
 	function _get_group_info( $id )
 		{
@@ -613,6 +614,65 @@ class LocalisationView extends GBPPlugin
 		new LocalisationWizardView($this);
 		}
 
+	function prefs_save_cb( $event='' , $step='' )
+		{
+		#
+		#	Update the set of translation tables based on any changes made to the site
+		# languages...
+		#
+		$langs = LanguageHandler::get_site_langs();
+		$tables = getThings( 'show tables like \''.PFX.L10N_TRANSLATION_TABLE_PREFIX.'%\'' );
+
+		#
+		#	Expand language names to match translation table name format...
+		#
+		$names = array();
+		if( count( $langs ) )
+			foreach( $langs as $name )
+				{
+				$names[] = PFX.L10N_TRANSLATION_TABLE_PREFIX.$name;
+				}
+
+		#
+		#	Perform the diffs and detect additions/deletions needed...
+		#
+		$diff_names_tables = array_diff( $names  , $tables );
+		$diff_tables_names = array_diff( $tables , $names );
+		$add_count = count($diff_names_tables);
+		$del_count = count($diff_tables_names);
+
+		if( $add_count )
+			{
+			#
+			#	Add language tables as needed and populate them as far as possible...
+			#
+			foreach( $diff_names_tables as $full_name )
+				{
+				$lang = str_replace( PFX.L10N_TRANSLATION_TABLE_PREFIX , '' , $full_name );
+				if( !LanguageHandler::is_valid_code( $lang ) )
+					continue;
+
+				//echo br , "Adding $full_name -> $lang [" , LanguageHandler::get_native_name_of_lang( $lang ) , '].';
+				$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
+				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where Lang='$lang'";
+				//echo br , "Using $sql";
+				$ok = @safe_query( $sql );
+				}
+			}
+		if( $del_count )
+			{
+			#
+			#	Drop language tables that are no longer needed...
+			#
+			foreach( $diff_tables_names as $full_name )
+				{
+				$sql = 'drop table `'.$full_name.'`';
+				//echo br , "Using $sql";
+				$ok = @safe_query( $sql );
+				}
+			}
+		}
+
 	function _redirect_textpattern($table)
 		{
 		# Only redirect calls to the textpattern table...
@@ -770,6 +830,7 @@ class LocalisationView extends GBPPlugin
 			switch( $step )
 				{
 				case 'prefs_save':
+					$this->prefs_save_cb();
 					#	Force a redirect to ourself to refresh the view with any tab changes as needed.
 					return $this->redirect( '' );
 				break;
