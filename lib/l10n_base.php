@@ -565,7 +565,8 @@ class LocalisationView extends GBPPlugin
 			$txp_event = gps('event');
 			if( $txp_event === $event )
 				{
-				if( !$this->installed() or ($this->strings_lang != LANG) )
+				$installed = $this->installed();
+				if( !$installed or ($this->strings_lang != LANG) )
 					{
 					# Merge the default language strings into the textarray so that non-English
 					# users at least see an English message in the plugin.
@@ -573,7 +574,7 @@ class LocalisationView extends GBPPlugin
 					}
 
 				#	To ease development, allow new strings to be inserted...
-				if( $this->installed() and $this->insert_in_debug_mode and ('debug' === @$production_status) )
+				if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 					{
 					$this->strings = array_merge( $this->strings , $this->perm_strings );
 					$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin.l10n' );
@@ -676,7 +677,8 @@ class LocalisationView extends GBPPlugin
 	function _redirect_textpattern($table)
 		{
 		# Only redirect calls to the textpattern table...
-		if( 'textpattern' === $table )
+		$installed = $this->installed();
+		if( 'textpattern' === $table && $installed )
 			{
 			global $l10n_language;
 
@@ -688,16 +690,19 @@ class LocalisationView extends GBPPlugin
 				//$table = $table.'_'.$l10n_language['long'];
 				}
 			}
-		elseif ( 'l10n_master_textpattern' === $table )
+		elseif ( 'l10n_master_textpattern' === $table && $installed )
 			{
 			$table = 'textpattern';
 			}
 		return $table;
 		}
 
-	function installed()
+	function installed( $recheck=false )
 		{
-		return LocalisationWizardView::installed();
+		static $result;
+		if (!isset($result) || $recheck)
+			$result = LocalisationWizardView::installed();
+		return $result;
 		}
 
 	function _process_string_callbacks( $event , $step , $pre , $func )
@@ -792,7 +797,7 @@ class LocalisationView extends GBPPlugin
 		require_privs($this->event);
 
 		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
-		if( $this->installed() )
+		if( $this->installed(1) )
 			{
 			# Only render the common area at the head of the tabs if the table is installed ok.
 			foreach( $this->pref('l10n-languages') as $key )
