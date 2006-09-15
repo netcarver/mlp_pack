@@ -2398,11 +2398,51 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		# Extend the textpattern table...
 		$sql = array();
+
+		$desc = 'COLUMNS';
+		$result = @safe_show( $desc , 'textpattern' );
+		$lang_found  = false;
+		$group_found = false;
+
+		if( count( $result ) )
+			{
+			foreach( $result as $r )
+				{
+				if( !$lang_found and $r['Field'] === 'Lang' )
+					$lang_found = true;
+				if( !$group_found and $r['Field'] === 'Group' )
+					$group_found = true;
+
+				if( $group_found and $lang_found )
+					break;
+				}
+			}
+
+		if( !$lang_found )
+			{
 			$sql[] = " ADD `Lang` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci ";
 			$sql[] = " NOT NULL DEFAULT '-' AFTER `LastModID` , ";
+			}
+
+		if( !$group_found )
 			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
-		$ok = @safe_alter( 'textpattern' , join('', $sql) );
-		$this->add_report_item( 'Add `Lang` and `Group` fields to textpattern table' , $ok );
+
+		$this->add_report_item( 'Add fields to the "textpattern" table' );
+		if( !empty( $sql ) )
+			{
+			$ok = @safe_alter( 'textpattern' , join('', $sql) );
+
+			if( $lang_found )
+				$this->add_report_item( 'Skip adding the `Lang` field -- it already exists' , $ok , true );
+			else
+				$this->add_report_item( 'Add the `Lang` field' , $ok , true );
+			if( $group_found )
+				$this->add_report_item( 'Skip adding the `Group` field -- it already exists' , $ok , true );
+			else
+				$this->add_report_item( 'Add the `Group` field' , $ok , true );
+			}
+		else
+			$this->add_report_item( 'Skip adding `Lang` and `Group` fields, they already exist.' , true , true );
 		}
 
 	function setup_4()
