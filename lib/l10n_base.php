@@ -2472,7 +2472,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
 			}
 		else
-			$this->add_report_item( 'Skipped dropping the `Lang` and `Group` fields from the textpattern table' , $ok );
+			$this->add_report_item( 'Skipped dropping the `Lang` and `Group` fields from the textpattern table' , true );
 		}
 
 	function cleanup_4()
