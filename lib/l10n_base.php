@@ -2585,18 +2585,36 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		# 	Scans the articles, creating a group for each and adding it and setting the
 		# language to the site default...
-
 		$where = "1";
-		$rs = safe_rows_start( 'ID , Title' , 'textpattern' , $where );
+		$rs = @safe_rows_start( 'ID , Title , Lang , `Group`' , 'textpattern' , $where );
 		$count = @mysql_num_rows($rs);
 
-		//$lang = $this->pref('l10n-languages');
 		$i = 0;
 		if( $rs && $count > 0 )
 			{
 			while ( $a = nextRow($rs) )
-				if( GroupManager::create_group_and_add( $a ) )
-					$i++;
+				{
+				$lang  = $a['Lang'];
+				$group = $a['Group'];
+				$id    = $a['ID'];
+
+				if( $lang !== '-' and $group !== 0 )
+					{
+					#
+					#	Use any existing Lang/Group data there might be...
+					#
+					if( true === GroupManager::add_article( $group , $id , $lang , true , true ) )
+						$i++;
+					}
+				else
+					{
+					#
+					#	Create a fresh group and add the info...
+					#
+					if( GroupManager::create_group_and_add( $a ) )
+						$i++;
+					}
+				}
 			}
 		if( $i === $count )
 			return true;
