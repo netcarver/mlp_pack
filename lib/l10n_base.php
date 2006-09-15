@@ -2356,6 +2356,27 @@ class LocalisationWizardView extends GBPWizardTabView
 		return ($result);
 		}
 
+	function get_required_versions()
+		{
+		global $prefs;
+
+		$tests = array(
+					'TxP' => array(
+						'current'	=> $prefs['version'] ,
+						'min'		=> '4.0.4' ,
+						),
+					'PHP' => array(
+						'current'	=> PHP_VERSION ,
+						'min'		=> '4.1.0' ,
+						),
+					'MySQL'  => array(
+						'current'	=> mysql_get_server_info() ,
+						'min'		=> '4.0' ,
+						),
+					);
+		return $tests;
+		}
+
 	function setup_1()
 		{
 		# Extend the txp_lang table to allow text instead of tinytext in the data field.
