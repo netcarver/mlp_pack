@@ -1,17 +1,5 @@
 <?php
 
-/*	To do...
-Article filtering by language
-	User permissions to set/filter by language
-	ID	Group				Clone4xl18n		List restrictions		Article creation lang
-	0	Others				No access		No access				No access
-	1	Publishers			Yes				None					Any
-	2	Managing editor		Yes				None					Any
-	3	Copy editor			No				None					Known site langs
-	4	Staff writer		No				Known site langs		Known site langs
-	5	Freelancer			No				Known site langs		No access
-	6	Designer			No				No access				No access
-*/
 
 global $l10n_vars;
 $l10n_vars = array();
