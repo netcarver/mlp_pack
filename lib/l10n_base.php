@@ -2039,6 +2039,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 				if( $can_delete )
 					$delete_art_link = '<a href="'. $this->parent->url( array('page'=>$page,'step'=>'delete_article', 'article'=>$ID), true ) .
+										'" title="' . gTxt('delete') . ' ' . gTxt('article') .
 										'" class="clone-link" onclick="return verify(\'' .
 										doSlash(gTxt('confirm_delete_popup')) .
 										'\')"><img src="txp_img/l10n_delete.png" /></a>';
@@ -2048,7 +2049,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				#
 				#	Compose the leading (article) cell...
 				#
-				$cells[] = td( $delete_art_link . $ID , '' , 'id' );
+				$cells[] = td( $delete_art_link . $ID . br . htmlspecialchars($names) , '' , 'id' );
 
 				#
 				#	Pull the translations for this article from the master translations table
@@ -2157,13 +2158,14 @@ class LocalisationArticleTabView extends GBPAdminTabView
 							$clone_link = '';
 						else
 							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','translation'=>$id,'article'=>$ID), true ) .
-											'" class="clone-link"><img src="txp_img/l10n_clone.png" /></a>';
+											'" class="clone-link" title="' . gTxt('l10n-clone') . '"><img src="txp_img/l10n_clone.png" /></a>';
 
 						#
 						#	Make the delete link...
 						#
 						if( $can_delete )
 							$delete_trans_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'delete_translation', 'translation'=>$id), true ) .
+													'" title="' . gTxt('delete') .
 													'" class="delete-link" onclick="return verify(\'' .
 													doSlash(gTxt('confirm_delete_popup')) .
 													'\')"><img src="txp_img/l10n_delete.png" /></a>';
