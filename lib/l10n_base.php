@@ -4,16 +4,8 @@
 	Add new categorisasation feature to the setup wizard -- allow language spec on section prefix/cat/custom field
 	Convert the render_lang_list tag handler to use the new group model.
 
-	Add new plugin to handle section/user templates
-	//$prefs['custom_3_set'] = 'Injected Name!';
-	//$_POST['Category1'] = 'lingua';
-	//$_POST['override_form'] = 'lofi';
-	//$_POST['Section'] = 'test';
-	//$_POST['custom_3'] = 'Value!';
-	//$_POST['from_view'] = 'text';	# Needed to force the section picklist from reseting to 'article'.
-	//$_POST['Keywords'] = 'Hello World';
-	//$_POST['Body'] = "<txp:l10n_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:l10n_if_lang>";
-	//$_POST['Excerpt'] = "<txp:l10n_if_lang lang=\"en\">\n\t##snip_no_translation##\n</txp:l10n_if_lang>";
+	MERGE	Forms/Pages into Snippets tab?
+	ADD		Snippet export/import?
 */
 
 // require_plugin() will reset the $txp_current_plugin global
@@ -427,29 +419,28 @@ class LocalisationView extends GBPPlugin
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
+		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-allow_writetab_changes' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 
-		'categories' => array('value' => 1, 'type' => 'yesnoradio'),
-		'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
-		'l10n-category_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
+		//'categories' => array('value' => 1, 'type' => 'yesnoradio'),
+		//'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
+		//'l10n-category_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		// 'links' => array('value' => 0, 'type' => 'yesnoradio'),
 		// 'link_vars' => array('value' => array('linkname', 'description'), 'type' => 'gbp_array_text'),
 		// 'link_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
-		'sections' => array('value' => 1, 'type' => 'yesnoradio'),
-		'l10n-section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
-		'l10n-section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
-
-		'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
-
-		'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		//'sections' => array('value' => 1, 'type' => 'yesnoradio'),
+		//'l10n-section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
+		//'l10n-section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 
+		'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		);
 	var $strings_lang = 'en-gb';
@@ -459,10 +450,11 @@ class LocalisationView extends GBPPlugin
 		'l10n-localisation'			=> 'Localisation',
 		);
 	var $strings = array(
-		'l10n-allow_writetab_changes' => "Power users can change a translation's language or group",
+		'l10n-allow_writetab_changes' => "Power users can change a translation's language or group?",
 		'l10n-send_notifications'	=> 'Email user when you assign them a translation?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > articles list?',
+		'l10n-show_legends' 		=> 'Show article legend?',
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 		'l10n-article_vars'			=> 'Article variables ',
 		'l10n-article_hidden_vars'	=> 'Hidden article variables ',
@@ -1647,6 +1639,19 @@ class LocalisationTabView extends GBPAdminTabView
 
 class LocalisationArticleTabView extends GBPAdminTabView
 	{
+	var	$statuses = array();
+	function LocalisationArticleTabView( $title, $event, &$parent, $is_default = NULL )
+		{
+		$this->statuses = array(
+			1 => gTxt('draft'),
+			2 => gTxt('hidden'),
+			3 => gTxt('pending'),
+			4 => gTxt('live'),
+			5 => gTxt('sticky'),
+			);
+		GBPAdminTabView::GBPAdminTabView( $title , $event , $parent , $is_default );
+		}
+
 	function preload()
 		{
 		$step = gps('step');
@@ -1681,6 +1686,13 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 	function clone_translation()
 		{
+		$has_privs = has_privs( 'l10n.clone' );
+		if( !$has_privs )
+			{
+			$this->parent->message( 'You cannot clone articles.' );
+			return;
+			}
+
 		$vars = array( 'translation' );
 		extract( gpsa( $vars ) );
 		$this->parent->message = 'cloning translation:' . $translation;
@@ -1837,6 +1849,13 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		}
 	function delete_article()
 		{
+		$has_privs = has_privs( 'article.delete' );
+		if( !$has_privs )
+			{
+			$this->parent->message( 'You cannot delete articles.' );
+			return;
+			}
+
 		#
 		#	Deletes an article (multiple translations) from the DB.
 		#
@@ -1871,6 +1890,13 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 	function delete_translation()
 		{
+		$has_privs = has_privs( 'article.delete' );
+		if( !$has_privs )
+			{
+			$this->parent->message( 'You cannot delete translations.' );
+			return;
+			}
+
 		$vars = array( 'translation' );
 		extract( gpsa( $vars ) );
 
@@ -1941,18 +1967,105 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			}
 		}
 
+
+	function _apply_filter( $name , $set , $langs )
+		{
+		#
+		#	This function works by reducing a working set, eliminating translations that don't match the criteria...
+		#
+		$string = gps($name);
+		if( empty($string) or empty($langs) )
+			return $langs;
+
+		//echo br,"Name = $name",br,"Langs = ",var_dump($langs),br,"Matches = ",var_dump($matches),br,"Set = ",var_dump($set),br;
+
+		if( 'match_status' === $name )
+			{
+			#
+			#	Convert to title case for the comparison...
+			#
+			$matches = do_list( mb_convert_case( $string, MB_CASE_TITLE, "UTF-8" ) );
+
+			#
+			#	Status strings to status codes...
+			#
+			$sesutats = array_flip( $this->statuses );
+			foreach( $matches as $key=>$status )
+				{
+				if( is_numeric( $status ) )
+					continue;
+
+				if( array_key_exists( $status , $sesutats ) )
+					$matches[$key] = $sesutats[$status];
+				}
+			}
+		else
+			{
+			#
+			#	Convert names or sections to lower case for the comparison...
+			#
+			$matches = do_list( mb_convert_case( $string, MB_CASE_LOWER, "UTF-8" ) );
+			}
+
+		#
+		#	Do the comparison here...
+		#
+		foreach( $set as $lang=>$item )
+			{
+			$item = mb_convert_case( $item, MB_CASE_LOWER, "UTF-8" );
+			if( !in_array($item , $matches) )
+				unset($langs[$lang]);
+			}
+
+		//echo "Returning ",var_dump($langs),br;
+		return $langs;
+		}
+	function _render_filter_form()
+		{
+		$f[] = '<label for="match_section">'.gTxt('Section').'</label>'.sp.
+				fInput( /*type*/ 	'input',
+						/*name*/	'match_section',
+						/*value*/	gps('match_section'),
+						/*class*/	'',
+						/*title*/	'',
+						/*onClick*/	'',
+						/*size*/	'',
+						/*tab*/		'1',
+						/*id*/		'match_section' ).sp.n;
+		$f[] = '<label for="match_author">'.gTxt('Author').'</label>'.sp.
+				fInput( /*type*/ 	'input',
+						/*name*/	'match_author',
+						/*value*/	gps('match_author'),
+						/*class*/	'',
+						/*title*/	'',
+						/*onClick*/	'',
+						/*size*/	'',
+						/*tab*/		'2',
+						/*id*/		'match_author' ).sp.n;
+		$f[] = '<label for="match_status">'.gTxt('Status').'</label>'.sp.
+				fInput( /*type*/ 	'input',
+						/*name*/	'match_status',
+						/*value*/	gps('match_status'),
+						/*class*/	'',
+						/*title*/	'',
+						/*onClick*/	'',
+						/*size*/	'',
+						/*tab*/		'3',
+						/*id*/		'match_status' ).n;
+		$f[] = $this->form_inputs().n;
+		$f[] = fInput('submit', 'search', gTxt('go'), 'smallerbox');
+
+		return n.n.form( graf( n.join('', $f).n ).br.n , 'margin: auto; text-align: center;' );
+		}
 	function render_article_table()
 		{
 		$event = $this->parent->event;
-		//$d_art_title = gTxt( 'l10n-delete_article_title' );
-		//$d_trn_title = gTxt( 'l10n-delete_trans_title' );
-		//$clone_title = gTxt( 'l10n-clone_title' );
 
 		#
 		#	Pager calculations...
 		#
 		extract( get_prefs() );				#	Keep the articles/page count in sync.
-		extract(gpsa(array('page')));
+		extract( gpsa(array('page')) );
 		$total = GroupManager::get_total();
 		$limit = max(@$article_list_pageby, 15);
 		list($page, $offset, $numPages) = pager($total, $limit, $page);
@@ -1962,17 +2075,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		$can_delete = has_privs( 'article.delete' );
 		$can_clone  = has_privs( 'l10n.clone' );
-
-		#
-		#	Get the statuses array...
-		#
-		$statuses = array(
-			1 => gTxt('draft'),
-			2 => gTxt('hidden'),
-			3 => gTxt('pending'),
-			4 => gTxt('live'),
-			5 => gTxt('sticky'),
-			);
 
 		#
 		#	Init language related vars...
@@ -1985,6 +2087,30 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#	Link our css file and start building the table...
 		#
 		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
+
+		#
+		#	Render the menu...
+		#
+		$li = array(
+						gTxt('change_status'),
+						'<hr />',
+						gTxt('l10n-clone'),
+						'<hr />',
+						gTxt('delete'),
+					);
+		foreach( $li as $item )
+			$menu[] = n.t.tag( $item , 'li' );
+		$menu = tag( join('',$menu) , 'ul' );
+		//$o[] = tag( $menu , 'div' , ' class="l10n_popmenu"' );
+
+		#
+		#	Render the filter/search form...
+		#
+		$o[] = $this->_render_filter_form();
+
+		#
+		#	Start the table...
+		#
 		$o[] = startTable( /*id*/ 'l10n_articles_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
 		$o[] = '<caption><strong>'.gTxt('articles').'</strong></caption>';
 
@@ -2012,9 +2138,10 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 		$counts['article'] = 0;		#	Initialise the article count.
 		$w = '';					#	Var for td width -- set empty to skip its inclusion / other val overrides css.
+		$body = array();
 
 		#
-		#	Process the articles (textpattern_groups) table...
+		#	Process the articles table...
 		#
 		#	Use values from the pager to grab the right sections of the table.
 		#
@@ -2023,9 +2150,8 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			{
 			while( $article = nextRow($articles) )
 				{
-				$num_visible = 0;		# 	Holds a count of Sticky/Live translations of this article.
+				$num_visible = 0;		# 	Holds a count of visible (=Sticky/Live) translations of this article.
 				$trclass = '';			#	Class for the row (=article)
-				$counts['article']+= 1;	#	Increment the article count.
 				$cells = array();		#	List of table cells (=translations) in this row
 				$sections = array();	#	Holds a list of the unique sections used by translations in this article.
 
@@ -2035,21 +2161,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				extract( $article );
 				$members = unserialize( $members );
 				$n_translations_expected = count( $members );
-
-
-				if( $can_delete )
-					$delete_art_link = '<a href="'. $this->parent->url( array('page'=>$page,'step'=>'delete_article', 'article'=>$ID), true ) .
-										'" title="' . gTxt('delete') . ' ' . gTxt('article') .
-										'" class="clone-link" onclick="return verify(\'' .
-										doSlash(gTxt('confirm_delete_popup')) .
-										'\')"><img src="txp_img/l10n_delete.png" /></a>';
-				else
-					$delete_art_link = '';
-
-				#
-				#	Compose the leading (article) cell...
-				#
-				$cells[] = td( $delete_art_link . $ID . br . htmlspecialchars($names) , '' , 'id' );
 
 				#
 				#	Pull the translations for this article from the master translations table
@@ -2063,6 +2174,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				#	Index the translations for later use...
 				#
 				$index = array();
+				$tr_statuses = array();
+				$tr_sections = array();
+				$tr_authors  = array();
 				for( $i=0 ; $i < $n_translations ; $i++ )
 					{
 					$lang = $translations[$i]['Lang'];
@@ -2070,6 +2184,13 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						{
 						$n_valid_translations++;
 						$index[$lang] = $i;
+
+						#
+						#	Record the sections/status for possible filtering...
+						#
+						$tr_sections[$lang] = $translations[$i]['Section'];
+						$tr_statuses[$lang] = $translations[$i]['Status'];
+						$tr_authors[$lang]  = $translations[$i]['AuthorID'];
 						}
 					else
 						continue;
@@ -2087,19 +2208,40 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					}
 
 				#
-				#	Does the article info disagree with the translation set?
-				#
-				//if( $n_valid_translations !== $n_translations_expected )
-				//	{
-				//	echo br , "Warning: article $ID recorded $n_translations_expected but there are $n_translations of which $n_valid_translations are valid!";
-				//	}
-
-				#
 				#	Are all expected translations present?
 				#
 				$all_translations_present = ($n_valid_translations === $full_lang_count);
 
+				#
+				#	Apply filters...
+				#
+ 				$res = $this->_apply_filter( 'match_section' , $tr_sections , $tr_sections );
+				$res = $this->_apply_filter( 'match_author'  , $tr_authors  , $res );
+				$res = $this->_apply_filter( 'match_status'  , $tr_statuses , $res );
+				if( empty($res) )
+					continue;
 
+				#
+				#	This article has at least one translation that passes the filter so increment the article count...
+				#
+				$counts['article']+= 1;
+
+				#
+				#	Compose the leading (article) cell...
+				#
+				if( $can_delete )
+					$delete_art_link = '<a href="'. $this->parent->url( array('page'=>$page,'step'=>'delete_article', 'article'=>$ID), true ) .
+										'" title="' . gTxt('delete') . ' ' . gTxt('article') .
+										'" class="clone-link" onclick="return verify(\'' .
+										doSlash(gTxt('confirm_delete_popup')) .
+										'\')"><img src="txp_img/l10n_delete.png" /></a>';
+				else
+					$delete_art_link = '';
+				$cells[] = td( $delete_art_link . $ID . br . htmlspecialchars($names) , '' , 'id' );
+
+				#
+				#	Compose the rest of the row - one cell per translation...
+				#
 				foreach( $langs as $lang )
 					{
 					if( !array_key_exists( $lang , $members ) )
@@ -2129,7 +2271,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 							$num_visible++;
 
 						$tdclass .= 'status_'.$status_no;
-						$status = !empty($status_no) ? $statuses[$status_no] : '';
+						$status = !empty($status_no) ? $this->statuses[$status_no] : '';
 						if( empty($details['Title']) )
 							$title = '<em>'.eLink('article', 'edit', 'ID', $id, gTxt('untitled')).'</em>';
 						else
@@ -2172,7 +2314,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						else
 							$delete_trans_link = '';
 
-						$content = 	$delete_trans_link . strong( $title ) . br . $section . ' &#8212; ' . $author .
+						$content = 	$delete_trans_link . strong( $title ) . br . small($section . ' &#8212; ' . $author) .
 									$msg . $clone_link;
 						$cells[] = td( $content , $w , trim($tdclass) );
 						$counts[$lang] += 1;
@@ -2204,41 +2346,46 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Show the counts for the page...
 		#
-		$cells = array();
-		$cells[] = td( $counts['article'] , '' , 'id count' );
-		foreach( $langs as $lang )
-			{
-			$cells[] = td( $counts[$lang] , '' , 'count' );
-			}
-		$body[] = n.tr( n.join('' , $cells) );
+		$show_legend = ( '1' == $this->pref('l10n-show_legends') ) ? true : false;
 
-		#
-		#	Show the table legend...
-		#
-		$cells = array();
-		$l[] = $this->add_legend_item( 'status_1' , $statuses[1] );
-		$l[] = $this->add_legend_item( 'status_2' , $statuses[2] . '/'. gTxt('none') );
-		$l[] = $this->add_legend_item( 'status_3' , $statuses[3] );
-		$l[] = $this->add_legend_item( 'status_4' , $statuses[4] );
-		$l[] = $this->add_legend_item( 'status_5' , $statuses[5] );
-		$l[] = br.br;
-		$l[] = $this->add_legend_item( 'fully_visible' , gTxt('l10n-legend_fully_visible') );
-		$l[] = $this->add_legend_item( 'warning' , gTxt('l10n-legend_warning') );
-		if( $can_delete or $can_clone )
+		if( $show_legend )
+			{
+			$cells = array();
+			$cells[] = td( $counts['article'] , '' , 'id count' );
+			foreach( $langs as $lang )
+				{
+				$cells[] = td( $counts[$lang] , '' , 'count' );
+				}
+			$body[] = n.tr( n.join('' , $cells) );
+
+			#
+			#	Show the table legend...
+			#
+			$cells = array();
+			$l[] = $this->add_legend_item( 'status_1' , $this->statuses[1] );
+			$l[] = $this->add_legend_item( 'status_2' , $this->statuses[2] . '/'. gTxt('none') );
+			$l[] = $this->add_legend_item( 'status_3' , $this->statuses[3] );
+			$l[] = $this->add_legend_item( 'status_4' , $this->statuses[4] );
+			$l[] = $this->add_legend_item( 'status_5' , $this->statuses[5] );
 			$l[] = br.br;
-		if( $can_delete )
-			{
-			$l[] = t.tag( '<img src="txp_img/l10n_delete.png" />' , 'dt' ).n;
-			$l[] = t.tag( gTxt('delete') , 'dd' ).n;
+			$l[] = $this->add_legend_item( 'fully_visible' , gTxt('l10n-legend_fully_visible') );
+			$l[] = $this->add_legend_item( 'warning' , gTxt('l10n-legend_warning') );
+			if( $can_delete or $can_clone )
+				$l[] = br.br;
+			if( $can_delete )
+				{
+				$l[] = t.tag( '<img src="txp_img/l10n_delete.png" />' , 'dt' ).n;
+				$l[] = t.tag( gTxt('delete') , 'dd' ).n;
+				}
+			if( $can_clone )
+				{
+				$l[] = t.tag( '<img src="txp_img/l10n_clone.png" />' , 'dt' ).n;
+				$l[] = t.tag( gTxt('l10n-clone') , 'dd' ).n;
+				}
+			$l = tag( n.join('',$l) , 'dl' );
+			$cells[] = tdcs( $l , $full_lang_count+1, '' , 'legend' );
+			$body[] = n.tr( n.join('' , $cells) );
 			}
-		if( $can_clone )
-			{
-			$l[] = t.tag( '<img src="txp_img/l10n_clone.png" />' , 'dt' ).n;
-			$l[] = t.tag( gTxt('l10n-clone') , 'dd' ).n;
-			}
-		$l = tag( n.join('',$l) , 'dl' );
-		$cells[] = tdcs( $l , $full_lang_count+1, '' , 'legend' );
-		$body[] = n.tr( n.join('' , $cells) );
 
 		$o[] = tag( join( '' , $body) , 'tbody' );
 		$o[] = endTable();
