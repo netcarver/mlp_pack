@@ -442,7 +442,7 @@ if (@txpinterface == 'public')
 		{
 		function load_localised_pref( $name )
 			{
-			global $prefs;
+			global $prefs,$pretext;
 			$k = "snip-$name";
 			$r = gTxt( $k );
 			if( $r !== $k )
@@ -450,6 +450,7 @@ if (@txpinterface == 'public')
 				$GLOBALS[$name] = $r;
 				$GLOBALS['prefs'][$name] = $r;
 				$prefs[$name] = $r;
+				$pretext[$name] = $r;
 				}
 			}
 		global $l10n_language;
@@ -461,7 +462,7 @@ if (@txpinterface == 'public')
 		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
 
 		#	Load the site name and slogan into the $prefs[] array in the right place...
-		load_localised_pref( 'sitename' );
+		//load_localised_pref( 'sitename' );
 		load_localised_pref( 'site_slogan' );
 
 		#
