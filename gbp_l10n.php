@@ -346,7 +346,7 @@ if (@txpinterface == 'public')
 
 		$new_first_path = '';
 
-		session_start();
+		@session_start();
 		//$l10n_language = @$_SESSION['lang'];
 		$site_langs = LanguageHandler::get_site_langs();
 
@@ -375,6 +375,7 @@ if (@txpinterface == 'public')
 				#
 				//echo " ... setting lang=$tmp from path." , br;
 				$_SESSION['lang'] = $tmp;
+				$_SESSION['llang'] = $temp;
 				}
 			else
 				{
@@ -439,6 +440,7 @@ if (@txpinterface == 'public')
 							if( in_array( $lang['long'] , $site_langs ) )
 								{
 								$_SESSION['lang'] = $lang['short'];
+								$_SESSION['llang'] = $lang['long'];
 								//echo br,br," ... Setting language to {$_SESSION['lang']} [",var_dump($lang),"], from user-agent request." , br;
 								break;
 								}
