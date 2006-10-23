@@ -1723,7 +1723,8 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 		if( count( $clone_to ) < 1 )
 			{
-			$this->parent->message = 'No languages selected for clone.';
+			$this->parent->message = gTxt('l10n-no_langs_selected');
+			$_POST['step'] = 'start_clone';
 			return;
 			}
 
