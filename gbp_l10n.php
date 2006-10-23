@@ -35,11 +35,62 @@ if (0) {
 
 h1. l10n Internationalisation Plugin Instructions.
 
-Under the content tab, there is a new localisation subtab. Here you can find a list of every article, category title and section titles which needs tobe localised.
+Under the content tab, there is a new *MLP* subtab.
 
-To see your localised content you need to surround *everything* in all of your page and form templates with @<txp:l10n_localise>@ ... @</txp:l10n_localise>@
+h2. Terminology
 
-You can also use @<txp:l10n_localise section="foo" />@ or @<txp:l10n_localise category="bar" />@ to output localised sections and categories
+|_. Term |_. Definition |
+| Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
+| Rendition | The expression of an authors _work_ in a single language. |
+| Article | The *set* of _renditions_ of a given author's _work_. An article always has at least one _rendition_. |
+| Translate | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into it's first _rendition_. |
+| Translator | The person or persons doing the translation (could be the author of the original _work_ but doesn't have to be.) |
+| Translation | The act of translating one rendition to form a new rendition. |
+
+ <br>
+
+To avoid confusion, the noun 'translation' *always* refers to the act of translating, *never* to the result of translating something.
+
+A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
+
+Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work. So, what TxP calls an 'article' has to be replaced in the MLP environment which needs to distinguish between them.
+
+In effect this means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles. The content > write tab still allows the editing of renditions.
+
+h2. What the MLP Plugin provides.
+
+On the admin side...
+* Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
+* Support for 'snippets' to simplify page/form editing and writing.
+* Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
+* Support for Articles (groups of renditions).
+* Support for cloning of renditions and their translation into other languages using the existing write tab.
+* Email notifications sent to translators when articles are cloned or have their author changed.
+* Extra filtering of the list of renditions by language.
+* No need to over-load the 'sections' to accommodate language differences.
+* No hijacking of existing fields (categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
+* Setup and Cleanup wizards.
+
+On the public side...
+* Detection of the language the user wants to view a site in via the url or browser headers.
+* Persistance of the langauge selection so that the urls don't need re-writing.
+* Automatic selection of the correct renditions of snippets in pages and forms.
+* Fully functional search/commenting/feeds for each language the site supports.
+* 404 support for finding renditions that are not available in the requested language.
+* A tag listing available renditions of a given article and allowing switching between them.
+* Tags for accessing language codes and direction information.
+
+
+h2. Translation of Renditions.
+
+Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. However, this would mean big changes to the existing write tab, or replacing the write tab with a complicated substitute.
+
+However, I happened upon Mary's 'Save New' plugin and that inspired the current solution that allows the write tab to remain virtually untouched and yet still allow translation. This is done by 'cloning' a source rendition and then translating the clone *in situ* in the write tab.
+
+This means that the translator edits the clone, replacing the source text as they go, until it is all replaced with the target language. At that point the clone is a new rendition of the original author's work.
+
+It's much easier on the translators as they get to keep the interface they are used to.
+
 
 h2. Snippets
 
@@ -540,7 +591,7 @@ if (@txpinterface == 'public')
 
 		if( !$article_list )
 			{
-			$alangs = GroupManager::get_alternate_mappings( $id , 'nothing' , true );
+			$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
 			}
 
 		if( !empty( $title ) )
