@@ -945,12 +945,13 @@ class LocalisationStringView extends GBPAdminTabView
 			while ( $a = nextRow($rs) )
 				{
 				$snippets 	= array();
-				$snippets = SnippetHandler::find_snippets_in_block( $a['data'] );
+				$raw_count = 0;
+				$snippets = SnippetHandler::find_snippets_in_block( $a['data'] , $raw_count );
 				$localised = SnippetHandler::do_localise( $a['data'] );
 				$count = count( $snippets );
 				$marker = ($count) ? '['.$count.']' : '';
 				$guts = $a['name'].' '.$marker;
-				if( !$localised and ($count) )
+				if( !$localised and ($raw_count) )
 					{
 					$guts .= ' *';
 					$explain = true;
@@ -1170,7 +1171,8 @@ class LocalisationStringView extends GBPAdminTabView
 		*/
 		$stats 	= array();
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
-		$snippets = SnippetHandler::find_snippets_in_block( $data );
+		$raw_count = 0;
+		$snippets = SnippetHandler::find_snippets_in_block( $data , $raw_count );
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 		$can_edit = $this->pref('l10n-inline_editing');
 
@@ -3072,7 +3074,8 @@ class SnippetHandler
 		//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
 		# The following pattern is used to match any l10n_snippet tags in pages and forms.
-		static $snippet_tag_pattern = "/\<txp:l10n_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+		//static $snippet_tag_pattern = "/\<txp:l10n_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
+		static $snippet_tag_pattern = "/\<txp:text item=\"([\w|\.|\-]+)\"\s*\/\>/";
 
 		# The following are the localise tag pattern(s)...
 		static $tag_pattern = '/\<\/*txp:l10n_localise\s*\>/';
@@ -3152,7 +3155,7 @@ class SnippetHandler
 			}
 		}
 
-	function find_snippets_in_block( &$thing , $merge = false , $get_data = false )
+	function find_snippets_in_block( &$thing , &$raw_snippet_count , $merge = false , $get_data = false )
 		{
 		/*
 		Scans the given block ($thing) for snippets and returns their names as the values of an array.
@@ -3170,6 +3173,7 @@ class SnippetHandler
 		array_shift( $out );
 		$out = $out[0];
 		$out = doArray( $out , 'strtolower' );
+		$raw_snippet_count = count( $out );
 		array_shift( $tags );
 		$tags = $tags[0];
 		$tags = doArray( $tags , 'strtolower' );
