@@ -232,6 +232,14 @@ if( @txpinterface == 'admin' )
 # -- Public code section follows...
 if (@txpinterface == 'public')
 	{
+	global $l10n_view;
+
+	$installed = $l10n_view->installed();
+	if( !$installed )
+		{
+		return '';
+		}
+
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
 	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
