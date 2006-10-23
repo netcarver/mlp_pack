@@ -1074,7 +1074,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$remove[] = hInput( 'lang_code' , $iso_code );
 				$remove = form( join( '' , $remove ) ,
 								'' ,
-								"verify('" . doSlash(l10n_gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
+								"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
 								 doSlash(gTxt('are_you_sure')) . "')");
 				}
 
@@ -1182,7 +1182,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
 					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'l10n_edit_pageform' ) , true ) . '">' .
-					 l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
+					 gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
@@ -1204,7 +1204,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
 		{
 		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
-		$out[] = '<h3>'.l10n_gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
+		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
 		$localised = SnippetHandler::do_localise( $data );
@@ -1689,7 +1689,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$has_privs = has_privs( 'l10n.clone' );
 		if( !$has_privs )
 			{
-			$this->parent->message( 'You cannot clone articles.' );
+			//$this->parent->message( 'You cannot clone articles.' );
 			return;
 			}
 
@@ -1819,7 +1819,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					{
 					extract( $record );
 					$msg = 	gTxt('title')  . ": \"$title\"\r\n";
-					$msg.= "For translation into $language [$lang].\r\n";
+					$msg.= gTxt( 'l10n-xlate_to' ) . "$language [$lang].\r\n";
 					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 					$links[] = $msg;
 					}
@@ -1835,12 +1835,12 @@ class LocalisationArticleTabView extends GBPAdminTabView
 								);
 
 				if( $same )
-					$body = l10n_gTxt( 'l10n-email_body_self' , $subs );
+					$body = gTxt( 'l10n-email_body_self' , $subs );
 				else
-					$body = l10n_gTxt( 'l10n-email_body_other' , $subs );
+					$body = gTxt( 'l10n-email_body_other' , $subs );
 
-				$body.= join( "\r\n" , $links ) . "\r\n" . l10n_gTxt( 'l10n-email_end' , $subs );
-				$subject = l10n_gTxt( 'l10n-email_xfer_subject' , $subs );
+				$body.= join( "\r\n" , $links ) . "\r\n" . gTxt( 'l10n-email_end' , $subs );
+				$subject = gTxt( 'l10n-email_xfer_subject' , $subs );
 
 				@txpMail($email, $subject, $body, $replyto);
 				//echo br,"Sent email to $email",br,"Reply to: $replyto",br,"Subject: $subject",br,br,"Body: $body",br,br;
@@ -1852,7 +1852,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
 			{
-			$this->parent->message( 'You cannot delete articles.' );
+			//$this->parent->message( 'You cannot delete articles.' );
 			return;
 			}
 
@@ -1893,7 +1893,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
 			{
-			$this->parent->message( 'You cannot delete translations.' );
+			//$this->parent->message( 'You cannot delete translations.' );
 			return;
 			}
 
@@ -1931,7 +1931,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			if( !empty( $results ) )
 				{
 				$this->parent->message = $results[0][3];
-				'Groups rebuilt.';
+				//'Groups rebuilt.';
 				}
 			else
 				{
@@ -2064,7 +2064,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Pager calculations...
 		#
-		extract( get_prefs() );				#	Keep the articles/page count in sync.
+		extract( get_prefs() );				#	Need to do this to keep the articles/page count in sync.
 		extract( gpsa(array('page')) );
 		$total = GroupManager::get_total();
 		$limit = max(@$article_list_pageby, 15);
@@ -2091,6 +2091,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Render the menu...
 		#
+		/*
 		$li = array(
 						gTxt('change_status'),
 						'<hr />',
@@ -2101,8 +2102,8 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		foreach( $li as $item )
 			$menu[] = n.t.tag( $item , 'li' );
 		$menu = tag( join('',$menu) , 'ul' );
-		//$o[] = tag( $menu , 'div' , ' class="l10n_popmenu"' );
-
+			$o[] = tag( $menu , 'div' , ' class="l10n_popmenu"' );
+		*/
 		#
 		#	Render the filter/search form...
 		#
@@ -2425,7 +2426,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
-		$o[] = '<caption><strong>'.l10n_gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
+		$o[] = '<caption><strong>'.gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
 
 		#
 		#	If there is only one available unused language, check it by default.
@@ -3237,7 +3238,7 @@ class StringHandler
 	{
 	function make_legend( $title , $args = null )
 		{
-		$title = l10n_gTxt( $title , $args );
+		$title = gTxt( $title , $args );
 		$title = mb_convert_case( $title , MB_CASE_TITLE , 'utf-8' );
 		$title = tag( $title.'&#8230;', 'legend' );
 		return $title;
@@ -3667,36 +3668,36 @@ class StringHandler
 		return $result;
 		}
 
-	function gTxt( $alias, $args=null )
-		{
+	//function gTxt( $alias, $args=null )
+		//{
 		/*
 		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
 		Given a string name, will pull the string out of the $textarray and perform any argument replacements needed.
 		*/
-		global $textarray;
-		global $l10n_language;
+		//global $textarray;
+		//global $l10n_language;
 
-		$lang = $l10n_language;
-		if( !$lang )
-			$lang = LanguageHandler::get_site_default_lang();
+		//$lang = $l10n_language;
+		//if( !$lang )
+		//	$lang = LanguageHandler::get_site_default_lang();
 
-		$out = @$textarray[ $alias ];
-		if( !$out or ($out === $alias) )
-			$out = "($lang) $alias";
+		//$out = @$textarray[ $alias ];
+		//if( !$out or ($out === $alias) )
+		//	$out = "($lang) $alias";
 
-		if( isset( $args ) and is_array( $args ) and count($args) )
-			{
-			foreach( $args as $pattern=>$value )
-				$out = preg_replace( '/\\'.$pattern.'/' , $value , $out );
-			}
+		//if( isset( $args ) and is_array( $args ) and count($args) )
+		//	{
+		//	foreach( $args as $pattern=>$value )
+		//		$out = preg_replace( '/\\'.$pattern.'/' , $value , $out );
+		//	}
 
-		return $out;
-		}
+		//return $out;
+		//}
 	} // End class StringHandler
 
 #	PUBLIC/ADMIN WRAPPER ROUTINES...
-function l10n_gTxt( $name , $args = null )
-	{
+	//function l10n_gTxt( $name , $args = null )
+	//{
 	/*
 	Plugin authors can define strings with embedded variables that get preg_replaced
 	based on the the argument array.
@@ -3706,7 +3707,7 @@ function l10n_gTxt( $name , $args = null )
 	could be replaced like this from within the plugin...
 	l10n_gTxt( 'plugin_name_hello' , array( '$name'=>$name ) );
 	*/
-	return StringHandler::gTxt( $name , $args );
-	}
+	//return StringHandler::gTxt( $name , $args );
+	//}
 
 ?>

@@ -263,6 +263,7 @@ function l10n_article_buffer_processor( $buffer )
 	$remaining	= GroupManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
+	
 	#
 	#	Disallow cloning in the write tab now...
 	#
@@ -362,7 +363,8 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#
 			#	Update the language table for the target language...
 			#
-			/* WIP OPTIMISE THIS */			_l10n_generate_lang_table( $new_lang );
+			/* WIP OPTIMISE THIS */
+			_l10n_generate_lang_table( $new_lang );
 
 			#
 			#	Read the variables to continue the edit...
@@ -390,7 +392,8 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#
 			#	Now we can setup the tables again...
 			#
-			/* OPTIMISE THIS */			_l10n_generate_lang_table( $new_lang );
+			/* OPTIMISE THIS */
+			_l10n_generate_lang_table( $new_lang );
 			if( $new_lang != $current_lang )
 				_l10n_generate_lang_table( $current_lang );
 
@@ -455,11 +458,11 @@ function l10n_changeauthor_notify_routine()
 						);
 
 		if( $same )
-			$body = l10n_gTxt( 'l10n-email_body_self' , $subs );
+			$body = gTxt( 'l10n-email_body_self' , $subs );
 		else
-			$body = l10n_gTxt( 'l10n-email_body_other' , $subs );
+			$body = gTxt( 'l10n-email_body_other' , $subs );
 		$body.= join( "\r\n" , $links ) . "\r\n\r\n" . gTxt( 'thanks' ) . "\r\n--\r\n$txp_username.";
-		$subject = l10n_gTxt( 'l10n-email_xfer_subject' , $subs );
+		$subject = gTxt( 'l10n-email_xfer_subject' , $subs );
 
 		$ok = @txpMail($email, $subject, $body, $replyto);
 
