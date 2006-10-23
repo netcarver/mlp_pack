@@ -121,6 +121,10 @@ class ArticleManager
 			return "Rendition $rendition_id is already a member of article $article_id.";
 
 		$members[$rendition_lang] = $rendition_id;
+		$lang_match = ($rendition_lang === LanguageHandler::get_site_default_lang());
+
+		if( !empty( $name ) and $lang_match and $insert_group )
+			$names = $name;
 		$ok = ArticleManager::_update_article( $ID , $names , $members );
 		if( !$ok )
 			$ok = "Could not update article $article_id.";
