@@ -1992,7 +1992,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Convert to title case for the comparison...
 			#
-			$matches = do_list( mb_convert_case( $string, MB_CASE_TITLE, "UTF-8" ) );
+			$matches = do_list( StringHandler::convert_case( $string, MB_CASE_TITLE ) );
 
 			#
 			#	Status strings to status codes...
@@ -2012,7 +2012,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Convert names or sections to lower case for the comparison...
 			#
-			$matches = do_list( mb_convert_case( $string, MB_CASE_LOWER, "UTF-8" ) );
+			$matches = do_list( StringHandler::convert_case( $string, MB_CASE_LOWER ) );
 			}
 
 		#
@@ -2020,7 +2020,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		foreach( $set as $lang=>$item )
 			{
-			$item = mb_convert_case( $item, MB_CASE_LOWER, "UTF-8" );
+			$item = StringHandler::convert_case( $item, MB_CASE_LOWER );
 			if( !in_array($item , $matches) )
 				unset($langs[$lang]);
 			}
@@ -3242,10 +3242,38 @@ class SnippetHandler
 
 class StringHandler
 	{
+	function convert_case( $string , $convert = MB_CASE_TITLE )
+		{
+		static $exists;
+
+		$exists = function_exists('mb_convert_case');
+
+		$result = $string;
+
+		if( $exists )
+			$result = mb_convert_case( $result, $convert, "UTF-8" );
+		else
+			{
+			switch( $convert )
+				{
+				case MB_CASE_TITLE:
+					$result = ucwords( $result );
+					break;
+				case MB_CASE_UPPER:
+					$result = strtoupper( $result );
+					break;
+				case MB_CASE_LOWER:
+					$result = strtolower( $result );
+					break;
+				}
+			}
+
+		return $result;
+		}
 	function make_legend( $title , $args = null )
 		{
 		$title = gTxt( $title , $args );
-		$title = mb_convert_case( $title , MB_CASE_TITLE , 'utf-8' );
+		$title = StringHandler::convert_case( $title , MB_CASE_TITLE );
 		$title = tag( $title.'&#8230;', 'legend' );
 		return $title;
 		}
