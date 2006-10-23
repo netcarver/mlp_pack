@@ -590,6 +590,10 @@ class LocalisationView extends GBPPlugin
 		GBPPlugin::GBPPlugin( gTxt($title_alias) , $event , $parent_tab );
 		}
 
+	function _insert_css()
+		{
+		return n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
+		}
 	function preload()
 		{
 		if ($this->pref('plugins') and has_privs('plugin') )
@@ -793,6 +797,7 @@ class LocalisationView extends GBPPlugin
 		require_privs($this->event);
 
 		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
+		$out[] = $this->_insert_css();
 		if( $this->installed(1) )
 			{
 			# Only render the common area at the head of the tabs if the table is installed ok.
@@ -2079,11 +2084,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$langs = LanguageHandler::get_site_langs();
 		$full_lang_count = count( $langs );
 		$default_lang = LanguageHandler::get_site_default_lang();
-
-		#
-		#	Link our css file and start building the table...
-		#
-		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 
 		#
 		#	Render the menu...
