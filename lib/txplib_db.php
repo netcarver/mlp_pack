@@ -449,13 +449,70 @@ $DB = new DB;
 	}
 
 //-------------------------------------------------------------
+	function l10n_installed( $check_plugin_active = false )
+		{
+		$active 	= true;
+		$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
+
+		if( $installed and $check_plugin_active )
+			{
+			$res 	= safe_field( 'status', 'txp_plugin', "name='l10n'");
+			$active	= ($res == 1);
+			}
+
+		return ($installed && $active);
+		}
+
 	function get_prefs()
 	{
 		$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1');
-		if ($r) {
-			while ($a = nextRow($r)) {
+		if( $r )
+			{
+			while( $a = nextRow($r) )
+				{
 				$out[$a['name']] = $a['val'];
 			}
+
+
+			if( !defined( 'LANG' ) )
+				{
+				if( l10n_installed( false ) )
+					{
+					$dynamic_lang_selection = false;
+					switch( txpinterface )
+						{
+						case 'public':
+							$dynamic_lang_selection = true;
+							break;
+						//case 'admin' :
+						//	break;
+						}
+
+					if( $dynamic_lang_selection )
+						{
+						#
+						#	First call and the plugin is installed and active so guess
+						# which language the user is browsing in based on the long session variable.
+						# This will not be set for the first visit to a page but it does reduce the need
+						# for reloading the strings.
+						#
+						# If this guess later proves to be wrong -- for example, on the first call or when
+						# the user switches browse language -- then the textarray (strings) will get
+						# reloaded then.
+						#
+						@session_start();
+						//echo br, "Guessing at language from session variable.";
+						$language = '';
+						$language = @$_SESSION['llang'];
+						if( !empty( $language ) )
+							{
+							//echo " Setting \$language = $language";
+							$out['language'] = $language;
+							}
+						}
+					}
+				}
+
 			return $out;
 		}
 		return false;
