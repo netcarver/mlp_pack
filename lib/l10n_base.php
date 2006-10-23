@@ -2769,6 +2769,10 @@ class LocalisationWizardView extends GBPWizardTabView
 		'9' => array (
 			'setup' => 'Rename the \'Articles\' tab label.',
 			'cleanup' => 'Restore the \'Articles\' tab label.' ),
+		'10' =>array (
+			'setup' => 'Clear the default comment invitation.',
+			'cleanup' => 'Restore the default comment invitation.'
+			),
 		);
 
 	function installed()
@@ -2923,6 +2927,19 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
 		$this->add_report_item( 'Restore the \'Articles\' tab label.' , $ok );
+		}
+
+	function setup_10()
+		{
+		$default = @$GLOBALS['prefs']['comments_default_invite'];
+		$ok = set_pref( 'comments_default_invite', '', 'comments', 0 );
+		$this->add_report_item( 'Clear the default comment invitation.' , $ok );
+		}
+	function cleanup_10()
+		{
+		$default = gTxt('comment');
+		$ok = set_pref( 'comments_default_invite', $default, 'comments', 0 );
+		$this->add_report_item( 'Restore the default comment invitation.' , $ok );
 		}
 
 	function cleanup_2()
