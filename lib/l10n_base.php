@@ -4,7 +4,6 @@
 	Add new categorisasation feature to the setup wizard -- allow language spec on section prefix/cat/custom field
 	Convert the render_lang_list tag handler to use the new group model.
 
-	MERGE	Forms/Pages into Snippets tab?
 	ADD		Snippet export/import?
 */
 
@@ -442,8 +441,9 @@ class LocalisationView extends GBPPlugin
 
 		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 
-		'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
-		'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		'l10n-snippets_tab' => array( 'value' => 1, 'type' => 'yesnoradio'),
+		//'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		//'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		);
 	var $strings_lang = 'en-gb';
@@ -602,16 +602,20 @@ class LocalisationView extends GBPPlugin
 		{
 		if ($this->pref('plugins') and has_privs('plugin') )
 			new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-		if ($this->pref('pages') and has_privs('page') )
-			new LocalisationStringView( gTxt('pages') , 'page' , $this );
-		if ($this->pref('forms') and has_privs('form') )
-			new LocalisationStringView( gTxt('forms') , 'form' , $this );
+		if ($this->pref('l10n-snippets_tab') and (has_privs('page') or has_privs('form') ) )
+			{
+			$snippet_tab = new SnippetTabView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
+			new LocalisationStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
+			if (has_privs('page'))
+				new LocalisationStringView( gTxt('pages') , 'page' , $snippet_tab , true );
+			if (has_privs('form'))
+				new LocalisationStringView( gTxt('forms') , 'form' , $snippet_tab );
+			new SnippetInOutView( gTxt( 'l10n-inout' ) , 'inout' , $snippet_tab );
+			}
 		if ($this->pref('articles') and has_privs('article.edit') )
 			new LocalisationArticleTabView( gTxt('articles'), 'article', $this, true );
 		if ($this->pref('categories') and has_privs('category') )
 			new LocalisationTabView( gTxt('categories'), 'category', $this );
-		// if ($this->pref('links') and has_privs('link') )
-		// 	new LocalisationTabView('links', 'link', $this );
 		if ($this->pref('sections') and has_privs('section') )
 			new LocalisationTabView( gTxt('sections'), 'section', $this );
 
@@ -850,12 +854,139 @@ class LocalisationView extends GBPPlugin
 
 	}
 
+class SnippetTabView extends GBPAdminTabView
+	{
+	var $tabs = array();
+	var $active_tab = 0;
+	var $use_tabs = false;
+
+	function &add_tab($tab, $is_default = NULL)
+		{
+		// Check to see if the tab is active
+		$gps_tab = gps(gbp_tab);
+		$sub_tab = gps('subtab');
+
+		if (($is_default && !$gps_tab) || ($gps_tab == $tab->event && $sub_tab == $tab->sub_tab) )
+			$this->active_tab = count($this->tabs);
+
+		// Store the tab
+		$this->tabs[] = $tab;
+
+		// We've got a tab, lets assume we want to use it
+		$this->use_tabs = true;
+
+		return $this;
+		}
+	function preload()
+		{
+		//$step = gps('step');
+		//if( $step )
+		//	{
+		//	}
+
+		// Let the active_tab know it's active and call it's preload()
+		$tab = &$this->tabs[$this->active_tab];
+		$tab->is_active = 1;
+		$tab->preload();
+		}
+
+	function main()
+		{
+		$this->render_tabs();
+		$this->render_tab_main();
+		}
+	function render_tab_main()
+		{
+		// Call main() for the active_tab
+		$tab = &$this->tabs[$this->active_tab];
+		$tab->main();
+		}
+	function render_tabs()
+		{
+		// This table, which contains the tags, will have to be changed if any improvements
+		// happen to the admin interface
+		$out[] = '<table cellpadding="0" cellspacing="0" width="100%" style="margin-top:-2em;margin-bottom:2em;">';
+		$out[] = '<tr><td align="center" class="tabs">';
+		$out[] = '<table cellpadding="0" cellspacing="0" align="center"><tr>';
+
+		// Force the wizard to be the only tab if the plugin isn't installed
+		foreach (array_keys($this->tabs) as $key)
+			{
+			$tab = &$this->tabs[$key];
+			$out[] = $tab->render_tab();
+			}
+
+		$out[] = '</tr></table>';
+		$out[] = '</td></tr>';
+		$out[] = '</table><div style="padding: 0 30px;">';
+
+		echo join('', $out);
+		}
+	}
+class GBPAdminSubTabView extends GBPAdminTabView
+	{
+	var $sub_tab = '';
+	function GBPAdminSubTabView( $title, $event, &$parent, $is_default = NULL , $subtab = '' )
+		{
+		if( !empty($subtab) )
+			$this->sub_tab = $subtab;
+		GBPAdminTabView::GBPAdminTabView( $title , $event , $parent , $is_default );
+		}
+
+	function render_tab()
+		{
+		// Grab the url to this tab
+		$url = $this->url(array(gbp_tab => $this->event), true);
+
+		// Will need updating if any improvements happen to the admin interface
+		$out[] = '<td class="' . ($this->is_active ? 'tabup' : 'tabdown2');
+		$out[] = '" onclick="window.location.href=\'' .$url. '\'">';
+		$out[] = '<a href="' .$url. '" class="plain">' .$this->title. '</a></td>';
+
+		return join('', $out);
+		}
+	function url( $vars, $gp=false )
+		{
+		$vars = array_merge( $vars , array('subtab'=>$this->sub_tab) );
+		return $this->parent->url( $vars , $gp );
+		}
+	}
 class LocalisationStringView extends GBPAdminTabView
 	{
 	/*
 	Implements a three-pane view for the categorisation, selection and editing of string based
 	data from the txp_lang table.
 	*/
+
+	var $sub_tab = '';
+	function render_tab()
+		{
+		// Grab the url to this tab
+		$url = $this->url(array(gbp_tab => $this->event), true);
+
+		// Will need updating if any improvements happen to the admin interface
+		$out[] = '<td class="' . ($this->is_active ? 'tabup' : 'tabdown2');
+		$out[] = '" onclick="window.location.href=\'' .$url. '\'">';
+		$out[] = '<a href="' .$url. '" class="plain">' .$this->title. '</a></td>';
+
+		return join('', $out);
+		}
+	function url( $vars, $gp=false )
+		{
+		$vars = array_merge( $vars , array('subtab'=>$this->sub_tab) );
+		return $this->parent->url( $vars , $gp );
+		}
+
+	function LocalisationStringView($title, $event, &$parent, $is_default = NULL)
+		{
+		if( $event !== 'plugin' )
+			{
+			$this->sub_tab = $event;
+			GBPAdminTabView::GBPAdminTabView( $title, 'snippets', $parent, $is_default );
+			}
+		else
+			GBPAdminTabView::GBPAdminTabView( $title, $event, $parent, $is_default );
+		}
 
 	function preload()
 		{
@@ -907,8 +1038,18 @@ class LocalisationStringView extends GBPAdminTabView
 		$pl_steps = array('l10n_import_languageset');
 		$can_edit = $this->pref('l10n-inline_editing');
 
+		if( !empty($this->sub_tab) )
+			$this->event = $this->sub_tab;
+
 		switch ($this->event)
 			{
+			case 'special':
+			$this->render_owner_list('special');
+			$this->render_specials_list( $id );
+			if( $owner = gps('owner') and $id )
+				$this->render_string_edit( 'special', 'special' , $id );
+			break;
+
 			case 'page':
 			$this->render_owner_list('page');
 			if ($owner = gps('owner'))
@@ -971,7 +1112,7 @@ class LocalisationStringView extends GBPAdminTabView
 					}
 				if( $localised or ($count) )
 					$guts = '<strong>'.$guts.'</strong>';
-				$out[] = '<li><a href="'.$this->parent->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
+				$out[] = '<li><a href="'.$this->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
 			if( $explain )
@@ -1013,25 +1154,40 @@ class LocalisationStringView extends GBPAdminTabView
 
 		switch( $type )
 			{
+			case 'special':
+				$out[] = 	'<h3>' . gTxt('l10n-specials') . '</h3>' . n .
+							'<div id="l10n_specials">' . n .
+							graf( gTxt( 'l10n-explain_specials' ) );
+				break;
+
 			case 'plugin':
-			$out[] = '<h3>'.gTxt('l10n-registered_plugins').'</h3>'.n.'<ol>'.n;
+				$out[] = 	'<h3>' . gTxt('l10n-registered_plugins') . '</h3>' . n .
+							'<div id="l10n_plugins">' . n .
+							'<ol>' . n;
 			$out[] = $this->_generate_plugin_list();
+				$out[] = n . '</ol>';
 			break;
 
 			case 'page':
-			$out[] = '<h3>'.gTxt('pages').'</h3>'.n.'<ol>'.n;
+				$out[] = 	'<h3>' . gTxt('pages') . '</h3>' . n .
+							'<div id="l10n_pages"' . n .
+							'<ol>' . n;
 			$out[] = $this->_generate_list( 'txp_page' , 'name' , 'user_html' );
+				$out[] = n . '</ol>';
 			break;
 
 			default:
 			case 'form':
-			$out[] = '<h3>'.gTxt('forms').'</h3>'.n.'<ol>'.n;
+				$out[] = 	'<h3>' . gTxt('forms') . '</h3>' . n .
+							'<div id="l10n_forms">' . n .
+							'<ol>' . n;
 			$out[] = $this->_generate_list( 'txp_form' , 'name' , 'Form' );
+				$out[] = n . '</ol>';
 			break;
 			}
 
-		$out[] = '</ol>';
-		$out[] = '</div>';
+		$out[] = n . '</div>';
+		$out[] = n . '</div>';
 		echo join('', $out);
 		}
 
@@ -1056,7 +1212,7 @@ class LocalisationStringView extends GBPAdminTabView
 				if( !$complete )
 					$guts = '<strong>'. $guts . '</strong>';
 				$out[]= '<li><a href="' .
-					$this->parent->url( array($owner_label=>$owner_name, gbp_id=>$string, 'prefix'=>$prefix) , true ) .
+					$this->url( array($owner_label=>$owner_name, gbp_id=>$string, 'prefix'=>$prefix) , true ) .
 					'">' . $guts . '</a></li>';
 				}
 			}
@@ -1086,6 +1242,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$remove[] = sInput( 'l10n_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
 				$remove[] = hInput( 'lang_code' , $iso_code );
+				$remove[] = hInput( 'subtab' , $this->sub_tab );
 				$remove = form( join( '' , $remove ) ,
 								'' ,
 								"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
@@ -1124,6 +1281,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$import[] = hInput( 'plugin' , gps('plugin') );
 			$import[] = hInput( 'prefix' , gps('prefix') );
 			$import[] = hInput( 'language' , gps('language') );
+			$import[] = hInput( 'subtab' , $this->sub_tab );
 			$out[] = form( join( '' , $import ) , 'border: 1px solid #ccc; padding:1em; margin:1em;' );
 			}
 
@@ -1143,7 +1301,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
-				 $this->parent->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
+				 $this->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
 		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix );
@@ -1192,11 +1350,11 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
-				 $this->parent->url( array( 'owner' => $owner ) , true ) . '">' .
+				 $this->url( array( 'owner' => $owner ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
-					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'l10n_edit_pageform' ) , true ) . '">' .
+					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'l10n_edit_pageform' , 'subtab'=>$this->sub_tab ) , true ) . '">' .
 					 gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
@@ -1216,6 +1374,39 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
+	function render_specials_list( $id='')
+		{
+		/*
+		Renders a list of special strings...
+		*/
+		$stats 	= array();
+		$owner = 'special';
+		$data 	= '##snip-site_slogan##';
+		$raw_count = 0;
+		$snippets = SnippetHandler::find_snippets_in_block( $data , $raw_count );
+		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
+
+		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
+		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
+		$out[] = '<span style="float:right;"><a href="' .
+				 $this->url( array( 'owner' => $owner ) , true ) . '">' .
+				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
+
+		#	Render the list...
+		$out[] = br . n . $this->_render_string_list( $strings , 'owner', $owner , '' ) . n;
+		$out[] = '</div>';
+
+		#	Render default view details in right hand pane...
+		$step = gps('step');
+ 		if( empty( $id ) and empty( $step ) )
+			{
+			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+			$out[] = $this->_render_string_stats( '' , $stats );
+			$out[] = '</div>';
+			}
+
+		echo join('', $out);
+		}
 	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
 		{
 		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
@@ -1232,6 +1423,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$l[] = $this->parent->form_inputs();
 			$l[] = hInput('owner', $owner);
 			$l[] = hInput('data', $data);
+			$l[] = hInput('subtab' , $this->sub_tab );
 			$out[] = form( join('', $l) , 'border: 1px solid grey; padding: 0.5em; margin: 1em;' );
 			}
 
@@ -1242,6 +1434,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$f[] = sInput('l10n_save_pageform');
 		$f[] = $this->parent->form_inputs();
 		$f[] = hInput('owner', $owner);
+		$f[] = hInput('subtab' , $this->sub_tab );
 		$out[] = form( join('', $f) , 'padding: 0.5em; margin: 1em;' );
 
 		$out[] = '</div>';
@@ -1304,7 +1497,10 @@ class LocalisationStringView extends GBPAdminTabView
 		if( $type === 'plugin' )
 			$out[] = hInput(L10N_PLUGIN_CONST, $owner);
 		else
+			{
 			$out[] = hInput('owner', $owner);
+			$out[] = hInput('subtab' , $this->sub_tab );
+			}
 		$out[] = hInput('l10n_type', $type );
 		$out[] = hInput('string_event', $string_event);
 		$out[] = hInput(gbp_id, $id);
@@ -1330,6 +1526,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$f1[] = hInput( 'prefix' , $d['prefix'] );
 			$f1[] = hInput( 'language' , gps('language') );
 			$f1[] = sInput( 'l10n_import_languageset');
+			$fl[] = hInput( 'subtab' , $this->sub_tab );
 			$f1[] = hInput( 'commit', 'true' );
 			$f1[] = $this->parent->form_inputs();
 
@@ -1392,6 +1589,10 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		$data = doSlash( gps('data') );
 		$owner = doSlash( gps('owner') );
+
+		if( !empty( $this->sub_tab) )
+			$tab = doSlash( gps( 'subtab' ) );
+		else
 		$tab = doSlash( gps( gbp_tab ) );
 
 		if( $tab === 'form' )
@@ -1432,6 +1633,65 @@ class LocalisationStringView extends GBPAdminTabView
 			$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
 			StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['plugin'] , true );
 			unset( $_POST['step'] );
+			}
+		}
+
+	}
+
+class SnippetInOutView extends GBPAdminSubTabView
+	{
+	function SnippetInOutView($title, $event, &$parent, $is_default = NULL)
+		{
+		GBPAdminSubTabView::GBPAdminSubTabView( $title , 'snippets' , $parent , $is_default , $event );
+		}
+
+	function preload()
+		{
+		$step = gps('step');
+		if( $step )
+			{
+			switch( $step )
+				{
+				case 'l10n_export_languageset':
+					$this->export_languageset();
+					break;
+
+				case 'l10n_import_languageset':
+					$this->import_languageset();
+					break;
+				}
+			}
+		}
+
+	function main()
+		{
+		echo "In/Out";
+		}
+
+	function export_languageset()
+		{
+		$plugin = gps('plugin');
+		$lang   = gps('language');
+		$prefix = gps('prefix');
+
+		$details =  StringHandler::if_plugin_registered( $plugin , $lang );
+		if( false !== $details )
+			{
+			//$details = unserialize( $details );
+			//$data = StringHandler::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
+			//$this->parent->serve_file( $data , $plugin . '.' . $lang . '.inc' );
+			}
+		}
+
+	function import_languageset()
+		{
+		$commit = gps( 'commit' );
+		if( !empty($commit) and ('true' === $commit) )
+			{
+			//$d 	= gps( 'data' );
+			//$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
+			//StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['plugin'] , true );
+			//unset( $_POST['step'] );
 			}
 		}
 
