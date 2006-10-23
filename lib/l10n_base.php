@@ -816,12 +816,12 @@ class LocalisationView extends GBPPlugin
 			setcookie(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST), time() + 3600 * 24 * 365);
 
 			#	Render the top of page div.
-			$out[] = form(
-				fLabelCell( gTxt('language').': ' ).
-				selectInput(L10N_LANGUAGE_CONST, $languages['value'], gps(L10N_LANGUAGE_CONST), 0, 1).
-				'<br /><a href="'.hu.gps(L10N_LANGUAGE_CONST).'/">'.gTxt('l10n-view_site').'</a>'.
-				$this->form_inputs()
-				);
+			//$out[] = form(
+			//	fLabelCell( gTxt('language').': ' ).
+			//	selectInput(L10N_LANGUAGE_CONST, $languages['value'], gps(L10N_LANGUAGE_CONST), 0, 1).
+			//	'<br /><a href="'.hu.gps(L10N_LANGUAGE_CONST).'/">'.gTxt('l10n-view_site').'</a>'.
+			//	$this->form_inputs()
+			//	);
 			}
 		$out[] = '</div>';
 
