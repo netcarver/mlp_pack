@@ -27,10 +27,10 @@ if( !defined( 'L10N_PREFS_LANGUAGES' ))
 	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
-if( !defined( 'L10N_TRANSLATION_TABLE_PREFIX' ) )
-	define( 'L10N_TRANSLATION_TABLE_PREFIX' , 'l10n_textpattern_' );
+if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
+	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_textpattern_' );
 
-class GroupManager
+class ArticleManager
 	{
 	function create_table()
 		{
@@ -49,117 +49,116 @@ class GroupManager
 		}
 	function make_textpattern_name( $full_code )
 		{
-		return L10N_TRANSLATION_TABLE_PREFIX . $full_code['long'];
+		return L10N_RENDITION_TABLE_PREFIX . $full_code['long'];
 		}
-	function _get_group_info( $id )
+	function _get_article_info( $id )
 		{
 		$info = safe_row( '*' , L10N_ARTICLES_TABLE , "`ID`='$id'" );
 		if( !empty($info) )
 			$info['members'] = unserialize( $info['members'] );
 		return $info;
 		}
-	function create_group( $title , $members , $group_id=0 )
+	function create_article( $title , $members , $article_id=0 )
 		{
 		$members = serialize( $members );
-		if( 0 === $group_id )
-			$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
+		if( 0 === $article_id )
+			$article = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
 		else
-			$group = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members', `ID`='$group_id'" );
-		return $group;
+			$article = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members', `ID`='$article_id'" );
+		return $article;
 		}
-	function destroy_group( $group )
+	function destroy_article( $article_id )
 		{
-		return safe_delete( L10N_ARTICLES_TABLE , "`ID`='$group'" );
+		return safe_delete( L10N_ARTICLES_TABLE , "`ID`='$article_id'" );
 		}
-	function _update_group( $group , $title , $members )
+	function _update_article( $article_id , $title , $members )
 		{
-		//echo br , "_update_group( $group , $title ," , var_dump( $members ), " )";
+		//echo br , "_update_article( $article_id , $title ," , var_dump( $members ), " )";
 		$members = serialize( $members );
 		$title = doSlash( $title );
-		$group = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`='$group'" );
-		return $group;
+		$article = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`='$article_id'" );
+		return $article;
 		}
-	function change_article_language( $group , $article_id , $article_lang , $target_lang )
+	function change_rendition_language( $article_id , $rendition_id , $rendition_lang , $target_lang )
 		{
-		//echo br , "change_article_language( $group , $article_id , $article_lang -> $target_lang ) ... ";
-		# get the group info...
-		extract( GroupManager::_get_group_info( $group ) );
+		//echo br , "change_rendition_language( $article_id , $rendition_id , $rendition_lang -> $target_lang ) ... ";
+		extract( ArticleManager::_get_article_info( $article_id ) );
 
 		if( array_key_exists( $target_lang , $members ) )
-			return "Group $group already has a translation for $target_lang.";
+			return "Article $article_id already has a rendition for $target_lang.";
 
-		if( !array_key_exists( $article_lang , $members ) )
-			return "Article $article_id in $article_lang does not belong to group $group.";
-		unset( $members[$article_lang] );
+		if( !array_key_exists( $rendition_lang , $members ) )
+			return "Rendition $rendition_id in $rendition_lang does not belong to article $article_id.";
+		unset( $members[$rendition_lang] );
 
-		$members[$target_lang] = $article_id;
+		$members[$target_lang] = $rendition_id;
 
-		$ok = GroupManager::_update_group( $group , $names , $members );
+		$ok = ArticleManager::_update_article( $article_id , $names , $members );
 		return $ok;
 		}
-	function add_article( $group , $article_id , $article_lang , $check_membership = true , $insert_group = false )
+	function add_rendition( $article_id , $rendition_id , $rendition_lang , $check_membership = true , $insert_group = false , $name = '' )
 		{
-		# get the group info...
-		$info = GroupManager::_get_group_info( $group );
+		$info = ArticleManager::_get_article_info( $article_id );
 		if( empty( $info ) )
 			{
 			if( $insert_group )
 				{
-				$group = GroupManager::create_group( '' , array() , $group );
-				$info = GroupManager::_get_group_info( $group );
+				$title = '';
+				$article_id = ArticleManager::create_article( $title , array() , $article_id );
+				$info = ArticleManager::_get_article_info( $article_id );
 				if( empty( $info ) )
-					return "Group $group does not exist and could not be added";
+					return "Article $article_id does not exist and could not be added";
 				}
 			else
-				return "Group $group does not exist";
+				return "Article $article_id does not exist";
 			}
 
 		extract( $info );
 
-		if( array_key_exists( $article_lang , $members ) )
-			return "A translation in $article_lang is already present in group $group.";
-		if( $check_membership and in_array( $article_id , $members ) )
-			return "Article $article_id is already a member of group $group.";
+		if( array_key_exists( $rendition_lang , $members ) )
+			return "A rendition in $rendition_lang is already present in article $article_id.";
+		if( $check_membership and in_array( $rendition_id , $members ) )
+			return "Rendition $rendition_id is already a member of article $article_id.";
 
-		$members[$article_lang] = $article_id;
-		$ok = GroupManager::_update_group( $ID , $names , $members );
+		$members[$rendition_lang] = $rendition_id;
+		$ok = ArticleManager::_update_article( $ID , $names , $members );
 		if( !$ok )
-			$ok = "Could not update group $group.";
+			$ok = "Could not update article $article_id.";
 		return $ok;
 		}
-	function remove_article( $group , $article_id , $article_lang )
+	function remove_rendition( $article_id , $rendition_id , $rendition_lang )
 		{
-		$g_info = GroupManager::_get_group_info( $group );
+		$g_info = ArticleManager::_get_article_info( $article_id );
 		if( empty($g_info) )
-			return "Group $group does not exist";
+			return "Article $article_id does not exist";
 
 		extract( $g_info );
 
-		if( $members[$article_lang] != $article_id )	# Article is not in this group under this language!
+		if( $members[$rendition_lang] != $rendition_id )	# Rendition is not in this article under this language!
 			{
-			return "Article $article_lang, not $article_lang translation in group $group.";
+			return "No $rendition_lang rendition in article $article_id.";
 			}
 
-		unset( $members[$article_lang] );
+		unset( $members[$rendition_lang] );
 
 		if( !empty( $members ) )
 			{
-			$result = GroupManager::_update_group( $ID , $names , $members );
+			$result = ArticleManager::_update_article( $ID , $names , $members );
 			if(!$result)
-				$result = "Could not update group $group.";
+				$result = "Could not update article $article_id.";
 			}
 		else
 			{
 			$result = safe_delete( L10N_ARTICLES_TABLE , "`ID`='$ID'" );
 			if(!$result)
-				$result = "Could not delete group $group.";
+				$result = "Could not delete article $article_id.";
 			}
 
 		return $result;
 		}
-	function _add_mapping( $group , $mapping )
+	function _add_mapping( $article_id , $mapping )
 		{
-		$info = GroupManager::_get_group_info( $group );
+		$info = ArticleManager::_get_article_info( $article_id );
 		if( empty( $info ) or (count($mapping)!==1) )
 			return false;
 
@@ -173,45 +172,45 @@ class GroupManager
 
 		$mappings[$lang] = $id;
 
-		GroupManager::_update_group( $group , $info['names'] , $mappings );
+		ArticleManager::_update_article( $article_id , $info['names'] , $mappings );
 		return true;
 		}
-	function create_group_and_add( $article )
+	function create_article_and_add( $rendition )
 		{
-		//echo br , "create_group_and_add(\$article) ... ", var_dump ($article) ,br,br;
+		//echo br , "create_article_and_add(\$rendition) ... ", var_dump ($rendition) ,br,br;
 		$result = false;
-		$name = doSlash($article['Title']);
-		$lang = (@$article['Lang']) ? $article['Lang'] : LanguageHandler::get_site_default_lang();
+		$name = doSlash($rendition['Title']);
+		$lang = (@$rendition['Lang']) ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
 		$id = @$GLOBALS['ID'];
 		if( !isset( $id ) or empty( $id ) )
-			$id = $article['ID'];
+			$id = $rendition['ID'];
 		$mapping =  array( $lang=>strval($id) );
 
-		if( isset( $article['Group'] ) and !empty($article['Group']) )
+		if( isset( $rendition['Group'] ) and !empty($rendition['Group']) )
 			{
-			$group = $article['Group'];
-			GroupManager::_add_mapping( $group , $mapping );
+			$article_id = $rendition['Group'];
+			ArticleManager::_add_mapping( $article_id , $mapping );
 			}
 		else
 			{
-			$group = GroupManager::create_group( $name , $mapping );
+			$article_id = ArticleManager::create_article( $name , $mapping );
 			}
 
-		if( $group !== false and $group !== true )
+		if( $article_id !== false and $article_id !== true )
 			{
-			//	echo br, "Added group '$name'[$group], updating article $id ... `Lang` = '$lang',`Group` = '$group'";
-			#	Update the article to point to its group and have a translation accounted to it...
-			$result = @safe_update( 'textpattern', "`Lang` = '$lang',`Group` = '$group'" , "ID='$id'" );
+			//	echo br, "Added article '$name'[$article_id], updating rendition $id ... `Lang` = '$lang',`Group` = '$article_id'";
+			#	Update the rendition to point to its article and have a translation accounted to it...
+			$result = @safe_update( 'textpattern', "`Lang` = '$lang',`Group` = '$article_id'" , "ID='$id'" );
 			}
 		return $result;
 		}
-	function get_group_members( $group , $exclude_lang )
+	function get_group_members( $article_id , $exclude_lang )
 		{
 		#
-		#	Returns an array of the lang->article mappings for all members of the
+		#	Returns an array of the lang->rendition mappings for all members of the
 		# given group...
 		#
-		$info		= GroupManager::_get_group_info( $group );
+		$info		= ArticleManager::_get_article_info( $article_id );
 		$members 	= array();
 
 		if( !empty( $info ) )
@@ -234,17 +233,17 @@ class GroupManager
 			return false;
 			}
 
-		$group = $info['Group'];
-		$alternatives = GroupManager::get_group_members( $group , $exclude_lang );
+		$article_id = $info['Group'];
+		$alternatives = ArticleManager::get_group_members( $article_id , $exclude_lang );
 		return $alternatives;
 		}
-	function get_remaining_langs( $group )
+	function get_remaining_langs( $article_id )
 		{
 		#
-		#	Returns an array of the site languages that do not have existing translations in this group...
+		#	Returns an array of the site languages that do not have existing renditions in this article...
 		#
 		$langs 	= LanguageHandler::get_site_langs();
-		$info 	= GroupManager::_get_group_info( $group );
+		$info 	= ArticleManager::_get_article_info( $article_id );
 		$to_do	= array();
 
 		if( !empty( $info ) and !empty($langs) )
@@ -259,34 +258,34 @@ class GroupManager
 
 		return $to_do;
 		}
-	function move_to_group( $article )
+	function move_to_article( $rendition )
 		{
 		global $l10n_article_message;
-		//echo br , "move_to_group( $article ) ... ";
+		//echo br , "move_to_article( $rendition ) ... ";
 
 		#	Get the new entries...
-		$new_group	= $article['Group'];
-		$new_lang	= (@$article['Lang']) ? $article['Lang'] : LanguageHandler::get_site_default_lang();
-		$article_id	= $article['ID'];
+		$new_article	= $rendition['Group'];
+		$new_lang		= (@$rendition['Lang']) ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
+		$rendition_id	= $rendition['ID'];
 
-		#	Read the existing article entries...
-		$info = safe_row( '*' , 'textpattern' , "`ID`='$article_id'" );
+		#	Read the existing rendition entries...
+		$info = safe_row( '*' , 'textpattern' , "`ID`='$rendition_id'" );
 		if( $info === false )
 			{
-			$l10n_article_message = "Error: failed to read article $article_id data.";
+			$l10n_article_message = "Error: failed to read rendition $rendition_id data.";
 			return false;
 			}
 
-		$current_group	= $info['Group'];
+		$current_article	= $info['Group'];
 		$current_lang	= $info['Lang'];
 
-		if( ($new_group == $current_group) and ($new_lang == $current_lang) )
+		if( ($new_article == $current_article) and ($new_lang == $current_lang) )
 			{
 			return true;
 			}
 
-		#	Add article to new group...
-		$result = GroupManager::add_article( $new_group , $article_id , $new_lang , false );
+		#	Add rendition to new article...
+		$result = ArticleManager::add_rendition( $new_article , $rendition_id , $new_lang , false );
 		if( $result !== true )
 			{
 			$l10n_article_message = 'Error: ' . $result;
@@ -294,21 +293,21 @@ class GroupManager
 			}
 
 		#	Remove article from existing group...
-		$result = GroupManager::remove_article( $current_group , $article_id , $current_lang );
+		$result = ArticleManager::remove_rendition( $current_article , $rendition_id , $current_lang );
 		if( $result !== true )
 			{
-			#	Attempt to remove from the group we just added to...
-			remove_article( $new_group , $article_id , $new_lang );
+			#	Attempt to remove from the article we just added to...
+			ArticleManager::remove_rendition( $new_article , $rendition_id , $new_lang );
 			$l10n_article_message = 'Error: ' . $result;
 			return false;
 			}
 
 		# 	Update the entries in the article...
-		$ok = safe_update( 'textpattern', "`Group`='$new_group' , `Lang`='$new_lang'" , "`ID`='$article_id'" );
+		$ok = safe_update( 'textpattern', "`Group`='$new_article' , `Lang`='$new_lang'" , "`ID`='$rendition_id'" );
 		if( $ok )
-			$l10n_article_message = "Language: {$current_lang}->{$new_lang}, group:{$current_group}->{$new_group}";
+			$l10n_article_message = "Language: {$current_lang}->{$new_lang}, article:{$current_article}->{$new_article}";
 		else
-			$l10n_article_message = 'Warning: Failed to record changes to article table';
+			$l10n_article_message = 'Warning: Failed to record changes to renditions table';
 
 		return true;
 		}
@@ -333,13 +332,13 @@ class GroupManager
 		#
 		#	Examing the groups table...
 		#
-		$articles = GroupManager::get_articles( '1=1' );
+		$articles = ArticleManager::get_articles( '1=1' );
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
 				{
 				#
-				#	Get the group members...
+				#	Get the article's members...
 				#
 				extract( $article );
 				$members = unserialize( $members );
@@ -349,8 +348,8 @@ class GroupManager
 				#
 				#	Find the members from the textpattern table too...
 				#
-				$translations = safe_column( 'ID', 'textpattern' , "`Group`='$ID'" );
-				$t_count = count( $translations );
+				$renditions = safe_column( 'ID', 'textpattern' , "`Group`='$ID'" );
+				$t_count = count( $renditions );
 
 				#
 				#	Check the counts are the same...
@@ -360,31 +359,31 @@ class GroupManager
 					#
 					#	Take the diffs...
 					#
-					$diff_members_translations = array_diff( $members , $translations );
-					$diff_translations_members = array_diff( $translations , $members );
-					$count_m_t = count($diff_members_translations);
-					$count_t_m = count($diff_translations_members);
+					$diff_members_renditions = array_diff( $members , $renditions );
+					$diff_renditions_members = array_diff( $renditions , $members );
+					$count_m_r = count($diff_members_renditions);
+					$count_r_m = count($diff_renditions_members);
 
-					if( $count_m_t > 0 )
+					if( $count_m_r > 0 )
 						{
 						#
-						#	Need to delete translations from the groups table...
+						#	Need to delete extra renditions from the articles table...
 						#
-						foreach( $diff_members_translations as $lang=>$translation )
+						foreach( $diff_members_renditions as $lang=>$rendition )
 							{
 							unset( $members[$lang] );
-							$result[] = array( 'delete' , $translation , $ID , "Deleted translation $translation from group $ID" );
+							$result[] = array( 'delete' , $rendition , $ID , "Deleted rendition $rendition from article $ID" );
 							}
-						GroupManager::_update_group( $ID , $names , $members );
+						ArticleManager::_update_article( $ID , $names , $members );
 						}
-					if( $count_t_m > 0 )
+					if( $count_r_m > 0 )
 						{
 						#
-						#	Need to add missing translations to the group table...
+						#	Need to add missing renditions to the articles table...
 						#
-						foreach( $diff_translations_members as $translation )
+						foreach( $diff_translations_members as $rendition )
 							{
-							$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+							$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 							$lang = $details['Lang'];
 
 							#
@@ -392,12 +391,12 @@ class GroupManager
 							#
 							if( !in_array( $lang , $langs ) )
 								{
-								$result[] = array( 'skip' , $translation , $ID , "Skipped translation $translation while processing group $ID as it uses unsupported language $lang" );
+								$result[] = array( 'skip' , $rendition , $ID , "Skipped rendition $rendition while processing article $ID as it uses unsupported language $lang" );
 								continue;
 								}
-							$members[$lang] = $translation;
-							GroupManager::_update_group( $ID , $names , $members );
-							$result[] = array( 'add' , $translation , $ID , "Added translation $translation to group $ID" );
+							$members[$lang] = $rendition;
+							ArticleManager::_update_article( $ID , $names , $members );
+							$result[] = array( 'add' , $rendition , $ID , "Added rendition $rendition to article $ID" );
 							}
 						}
 					}
@@ -450,78 +449,83 @@ class LocalisationView extends GBPPlugin
 		'l10n-localisation'			=> 'Localisation',
 		);
 	var $strings = array(
-		'l10n-allow_writetab_changes' => "Power users can change a translation's language or group?",
-		'l10n-send_notifications'	=> 'Email user when you assign them a translation?',
-		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
-		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > articles list?',
-		'l10n-show_legends' 		=> 'Show article legend?',
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
-		'l10n-article_vars'			=> 'Article variables ',
-		'l10n-article_hidden_vars'	=> 'Hidden article variables ',
-		'l10n-category_vars'		=> 'Category variables ',
-		'l10n-category_hidden_vars'	=> 'Hidden category variables ',
+		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or group?",
+		//'l10n-article_vars'			=> 'Article variables ',
+		//'l10n-article_hidden_vars'	=> 'Hidden article variables ',
+		'l10n-by'					=> 'by',
+		//'l10n-category_vars'		=> 'Category variables ',
+		//'l10n-category_hidden_vars'	=> 'Hidden category variables ',
 		'l10n-clone'				=> 'Clone',
 		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
-		'l10n-section_vars'			=> 'Section variables ',
-		'l10n-section_hidden_vars'	=> 'Hidden section variables ',
-		'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
+		//'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
 		'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
 		'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
-		'l10n-cannot_delete_all'	=> 'Must have 1+ translations.',
+		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
+		'l10n-done'					=> 'Done',
 		'l10n-edit_resource'		=> 'Edit $type: $owner ',
+		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
+		'l10n-email_body_other'		=> "{txp_username} has transferred the following rendition{s} to you...\r\n\r\n",
+		'l10n-email_body_self'		=> "You transferred the following rendition{s} to yourself...\r\n\r\n",
+		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the rendition{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
 		'l10n-empty'				=> 'empty',
-		'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 		'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
+		'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
+		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 		'l10n-export'				=> 'Export',
+		'l10n-failed'				=> 'Failed',
 		'l10n-import'				=> 'Import',
 		'l10n-import_title'			=> '<h2>Import Strings</h2><br/><p>Paste exported files into the box below and click the button.</p>',
 		'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
+		'l10n-into'					=> 'into',
+		'l10n-inout'				=> 'Input/Output',
 		'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
-		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
-		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
-		'l10n-languages' 			=> 'Languages ',
-		'l10n-localised'			=> 'Localised',
-		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
-		'l10n-missing'				=> ' missing.',
-		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
-		'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
-		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
-		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
-		'l10n-setup_verify'			=> 'This will add some tables to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT. It will then insert some new fields into the textpattern table.',
-		'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
-		'l10n-setup_wiz_title'		=> 'Setup Wizard',
-		'l10n-snippets'				=> ' snippets.',
-		'l10n-statistics'			=> 'Show Statistics ',
-		'l10n-strings'				=> ' strings.',
-		'l10n-summary'				=> 'Statistics.',
-		'l10n-textbox_title'		=> 'Type in the text here.',
-		'l10n-translations_for'		=> 'Translations for ',
-		'l10n-total'				=> 'Total',
-		'l10n-unlocalised'			=> 'Unlocalised',
-		'l10n-view_site'			=> 'View localised site',
-		'l10n-wizard'				=> 'Wizards',
-		'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
 		'l10n-import_fixed_lang' 	=> 'use the default language',
 		'l10n-import_cat1_lang'		=> 'use category1 for language',
 		'l10n-import_cat2_lang'		=> 'use category2 for language',
 		'l10n-import_section_lang'	=> 'use section names for language',
-		'l10n-xlate_to'				=> 'Translating into: ',
-		'l10n-done'					=> 'Done',
-		'l10n-failed'				=> 'Failed',
-		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} article{s} transferred to you.',
-		'l10n-email_body_other'		=> "{txp_username} has transferred the following article{s} to you...\r\n\r\n",
-		'l10n-email_body_self'		=> "You transferred the following article{s} to yourself...\r\n\r\n",
-		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the article{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
+		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
+		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
+		'l10n-languages' 			=> 'Languages ',
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
-		'l10n-translations'			=> 'Translations',
+		'l10n-localised'			=> 'Localised',
+		'l10n-missing'				=> ' missing.',
+		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
+		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
+		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
+		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
+		'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
+		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
+		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
+		'l10n-renditions'			=> 'Renditions',
+		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
+		'l10n-renditions_for'		=> 'Renditions for ',
+		//'l10n-section_vars'			=> 'Section variables ',
+		//'l10n-section_hidden_vars'	=> 'Hidden section variables ',
+		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
+		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
+		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
+		//'l10n-setup_verify'			=> 'This will add some tables to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT. It will then insert some new fields into the textpattern table.',
+		'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
+		'l10n-setup_wiz_title'		=> 'Setup Wizard',
+		'l10n-show_legends' 		=> 'Show article table legend?',
+		'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
+		'l10n-snippets'				=> ' snippets.',
+		'l10n-snippets_tab'			=> 'Snippets',
+		'l10n-specials'				=> 'Specials',
+		'l10n-statistics'			=> 'Show Statistics ',
+		'l10n-strings'				=> ' strings.',
+		'l10n-summary'				=> 'Statistics.',
+		'l10n-textbox_title'		=> 'Type in the text here.',
+		'l10n-total'				=> 'Total',
+		'l10n-unlocalised'			=> 'Unlocalised',
+		'l10n-view_site'			=> 'View localised site',
 		'l10n-warn_section_mismatch' => 'Section mismatch',
 		'l10n-warn_lang_mismatch'	=> 'Language mismatch',
-		'l10n-missing' 				=> ' missing!',
-		'l10n-missing_translation'	=> 'Article: {id} missing a translation.',
-		'l10n-by'					=> 'by',
-		'l10n-into'					=> 'into',
+		'l10n-wizard'				=> 'Wizards',
+		'l10n-xlate_to'				=> 'Translating into: ',
 		);
 	var $permissions = '1,2,3,6';
 
@@ -614,7 +618,7 @@ class LocalisationView extends GBPPlugin
 		# languages...
 		#
 		$langs = LanguageHandler::get_site_langs();
-		$tables = getThings( 'show tables like \''.PFX.L10N_TRANSLATION_TABLE_PREFIX.'%\'' );
+		$tables = getThings( 'show tables like \''.PFX.L10N_RENDITION_TABLE_PREFIX.'%\'' );
 
 		#
 		#	Expand language names to match translation table name format...
@@ -623,7 +627,7 @@ class LocalisationView extends GBPPlugin
 		if( count( $langs ) )
 			foreach( $langs as $name )
 				{
-				$names[] = PFX.L10N_TRANSLATION_TABLE_PREFIX.$name;
+				$names[] = PFX.L10N_RENDITION_TABLE_PREFIX.$name;
 				}
 
 		#
@@ -641,7 +645,7 @@ class LocalisationView extends GBPPlugin
 			#
 			foreach( $diff_names_tables as $full_name )
 				{
-				$lang = str_replace( PFX.L10N_TRANSLATION_TABLE_PREFIX , '' , $full_name );
+				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
 				if( !LanguageHandler::is_valid_code( $lang ) )
 					continue;
 
@@ -678,7 +682,7 @@ class LocalisationView extends GBPPlugin
 			$language_ok	= true;
 			if( $language_set and $language_ok )
 				{
-				$table = GroupManager::make_textpattern_name( $l10n_language );
+				$table = ArticleManager::make_textpattern_name( $l10n_language );
 				//$table = $table.'_'.$l10n_language['long'];
 				}
 			}
@@ -1241,7 +1245,7 @@ class LocalisationStringView extends GBPAdminTabView
 		Render the edit controls for all localisations of the chosen string.
 		*/
 		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
-		$out[] = '<h3>'.gTxt('l10n-translations_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
+		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$string_event = 'snippet';
 		if( $type == L10N_PLUGIN_CONST )
@@ -1662,7 +1666,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			switch( $step )
 				{
 				case 'clone':
-					$this->clone_translation();
+					$this->clone_for_translation();
 				break;
 
 				case 'l10n_change_pageby':
@@ -1673,20 +1677,20 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					$this->delete_article();
 				break;
 
-				case 'delete_translation':
-					$this->delete_translation();
+				case 'delete_rendition':
+					$this->delete_rendition();
 				break;
 				}
 			}
 
-		//$results = GroupManager::check_groups();
+		//$results = ArticleManager::check_groups();
 		//if( !empty( $results ) )
 		//	$this->parent->message = 'Groups rebuilt.';
 		//else
 		//	$this->parent->message = 'Groups ok.';
 		}
 
-	function clone_translation()
+	function clone_for_translation()
 		{
 		$has_privs = has_privs( 'l10n.clone' );
 		if( !$has_privs )
@@ -1695,9 +1699,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			return;
 			}
 
-		$vars = array( 'translation' );
+		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
-		$this->parent->message = 'cloning translation:' . $translation;
+		//$this->parent->message = 'cloning rendition:' . $rendition;
 
 		$langs = LanguageHandler::get_site_langs();
 
@@ -1719,9 +1723,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			}
 
 		#
-		#	Prepare the source translation data...
+		#	Prepare the source rendition data...
 		#
-		$source = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$source = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 		$article_id = $source['Group'];
 
 		#
@@ -1748,42 +1752,33 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				else
 					$insert[] = "`$k`='$v'";
 				}
-			$insert = join( ', ' , $insert );
+			$insert_sql = join( ', ' , $insert );
 
 			#
 			#	Insert into the master textpattern table...
 			#
-			safe_insert( 'textpattern' , $insert );
-			$translation_id = mysql_insert_id();
+			safe_insert( 'textpattern' , $insert_sql );
+			$rendition_id = mysql_insert_id();
 
 			#
 			#	Add this to the group (article) table...
 			#
-			GroupManager::add_article( $article_id , $translation_id , $lang );
+			ArticleManager::add_rendition( $article_id , $rendition_id , $lang );
 
 			#
-			#	Add into the translation table for this lang ensure this has the ID of the
+			#	Add into the rendition table for this lang ensuring this has the ID of the
 			# just added master entry!
 			#
-			$source['ID'] = $translation_id;
-			$insert = array();
-			foreach( $source as $k => $v )
-				{
-				$v = doSlash( $v );
-				if( $v === 'now()' )
-					$insert[] = "`$k`= $v";
-				else
-					$insert[] = "`$k`='$v'";
-				}
-			$insert = join( ', ' , $insert );
-			$table_name = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
-			safe_insert( $table_name , $insert );
+			$insert[] = '`ID`=\''.doSlash( $rendition_id ).'\'';
+			$insert_sql = join( ', ' , $insert );
+			$table_name = ArticleManager::make_textpattern_name( array( 'long'=>$lang ) );
+			safe_insert( $table_name , $insert_sql );
 
 			#
 			#	Now we know the article ID, store this against the author for email notification...
 			#
 			$language = LanguageHandler::get_native_name_of_lang( $lang );
-			$notify[$new_author][$lang] = array( 'id' => $translation_id , 'title'=>$source['Title'] , 'language'=>$language );
+			$notify[$new_author][$lang] = array( 'id' => $rendition_id , 'title'=>$source['Title'] , 'language'=>$language );
 			}
 
 		#
@@ -1814,7 +1809,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					continue;
 
 				#
-				#	Construct a list of links to the translations...
+				#	Construct a list of links to the renditions...
 				#
 				$links = array();
 				foreach( $list as $lang => $record )
@@ -1859,7 +1854,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			}
 
 		#
-		#	Deletes an article (multiple translations) from the DB.
+		#	Deletes an article (multiple renditions) from the DB.
 		#
 		$vars = array( 'article' );
 		extract( gpsa( $vars ) );
@@ -1867,7 +1862,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
-		$translations = safe_rows( '*' , 'textpattern' , "`Group`='$article'" );
+		$renditions = safe_rows( '*' , 'textpattern' , "`Group`='$article'" );
 
 		#
 		#	Delete from the master table...
@@ -1875,22 +1870,22 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$master_deleted = safe_delete( 'textpattern' , "`Group`='$article'" );
 
 		#
-		#	Delete from the translation tables...
+		#	Delete from the rendition tables...
 		#
-		foreach( $translations as $translation )
+		foreach( $renditions as $rendition )
 			{
-			$lang = $translation['Lang'];
-			$translation_table = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
-			safe_delete( $translation_table , "`Group`='$article'" );
+			$lang = $rendition['Lang'];
+			$rendition_table = ArticleManager::make_textpattern_name( array( 'long'=>$lang ) );
+			safe_delete( $rendition_table , "`Group`='$article'" );
 			}
 
 		#
 		#	Delete from the articles table...
 		#
-		GroupManager::destroy_group( $article );
+		ArticleManager::destroy_article( $article );
 		}
 
-	function delete_translation()
+	function delete_rendition()
 		{
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
@@ -1899,37 +1894,37 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			return;
 			}
 
-		$vars = array( 'translation' );
+		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
 
 		#
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
-		$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 		$lang = $details['Lang'];
 		$article = $details['Group'];
 
 		#
 		#	Delete from the master table...
 		#
-		$master_deleted = safe_delete( 'textpattern' , "`ID`='$translation'" );
+		$master_deleted = safe_delete( 'textpattern' , "`ID`='$rendition'" );
 
 		#
-		#	Delete from the correct language translation table...
+		#	Delete from the correct language rendition table...
 		#
-		$translation_table = GroupManager::make_textpattern_name( array( 'long'=>$lang ) );
-		$translation_deleted = safe_delete( $translation_table , "`ID`='$translation'" );
+		$rendition_table = ArticleManager::make_textpattern_name( array( 'long'=>$lang ) );
+		$rendition_deleted = safe_delete( $rendition_table , "`ID`='$rendition'" );
 
 		#
 		#	Delete from the article table...
 		#
-		$article_updated = GroupManager::remove_article( $article , $translation , $lang );
+		$article_updated = ArticleManager::remove_rendition( $article , $rendition , $lang );
 
-		if( $master_deleted and $translation_deleted and $article_updated )
-			$this->parent->message = 'Translation: '.$translation.' deleted OK.';
+		if( $master_deleted and $rendition_deleted and $article_updated )
+			$this->parent->message = gTxt( 'l10n-rendition_delete_ok' , array('{rendition}' => $rendition) );
 		else
 			{
-			$results = GroupManager::check_groups();
+			$results = ArticleManager::check_groups();
 			if( !empty( $results ) )
 				{
 				$this->parent->message = $results[0][3];
@@ -2068,7 +2063,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		extract( get_prefs() );				#	Need to do this to keep the articles/page count in sync.
 		extract( gpsa(array('page')) );
-		$total = GroupManager::get_total();
+		$total = ArticleManager::get_total();
 		$limit = max(@$article_list_pageby, 15);
 		list($page, $offset, $numPages) = pager($total, $limit, $page);
 
@@ -2115,7 +2110,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#	Start the table...
 		#
 		$o[] = startTable( /*id*/ 'l10n_articles_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
-		$o[] = '<caption><strong>'.gTxt('articles').'</strong></caption>';
+		$o[] = '<caption><strong>'.gTxt('l10n-renditions').'</strong></caption>';
 
 		#
 		#	Setup the colgroup/thead...
@@ -2148,7 +2143,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Use values from the pager to grab the right sections of the table.
 		#
-		$articles = GroupManager::get_articles( '1=1' , 'ID' , $offset , $limit );
+		$articles = ArticleManager::get_articles( '1=1' , 'ID' , $offset , $limit );
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
@@ -2203,9 +2198,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					#
 					if( !array_key_exists( $lang , $members ) )
 						{
-						$this->parent->message = l10n_gTxt( 'l10n-missing_translation' , array( '{id}'=>$ID ) );
+						$this->parent->message = gTxt( 'l10n-missing_rendition' , array( '{id}'=>$ID ) );
 						$members[$lang] = $translations[$i]['ID'];
-						GroupManager::_update_group( $ID , $names , $members );
+						ArticleManager::_update_article( $ID , $names , $members );
 						$n_valid_translations++;
 						}
 					}
@@ -2302,14 +2297,14 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						if( !$can_clone or !$status_ok or $all_translations_present )
 							$clone_link = '';
 						else
-							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','translation'=>$id,'article'=>$ID), true ) .
+							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','rendition'=>$id,'article'=>$ID), true ) .
 											'" class="clone-link" title="' . gTxt('l10n-clone') . '"><img src="txp_img/l10n_clone.png" /></a>';
 
 						#
 						#	Make the delete link...
 						#
 						if( $can_delete )
-							$delete_trans_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'delete_translation', 'translation'=>$id), true ) .
+							$delete_trans_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'delete_rendition', 'rendition'=>$id), true ) .
 													'" title="' . gTxt('delete') .
 													'" class="delete-link" onclick="return verify(\'' .
 													doSlash(gTxt('confirm_delete_popup')) .
@@ -2400,17 +2395,17 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 	function render_start_clone()
 		{
-		$vars = array( 'translation' , 'page' );
+		$vars = array( 'rendition' , 'page' );
 		extract( gpsa( $vars ) );
 
 		#
-		#	Get the un-translated languages for the article that owns this translation...
+		#	Get the un-translated languages for the article that owns this rendition...
 		#
-		$details = safe_row( '*' , 'textpattern' , "`ID`='$translation'" );
+		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 		$title   = $details['Title'];
 		$article = $details['Group'];
 		$author  = $details['AuthorID'];
-		$to_do = GroupManager::get_remaining_langs( $article );
+		$to_do = ArticleManager::get_remaining_langs( $article );
 		$count = count( $to_do );
 
 		#
@@ -2463,7 +2458,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$s = '<input type="submit" value="'.gTxt('l10n-clone').'" class="publish" />' . n;
 		$s .= eInput( $this->parent->event );
 		$s .= sInput( 'clone' );
-		$s .= hInput( 'translation' , $translation );
+		$s .= hInput( 'rendition' , $rendition );
 		$s .= hInput( 'page' , $page );
 
 		$f[] = tr( tdrs( $s , 2 ) );
@@ -2500,7 +2495,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		'5' => array(
 			'setup' => 'Add the articles table',
 			'cleanup' => 'Drop the articles table'),
-		'6' => array('setup' => 'Process articles'),
+		'6' => array('setup' => 'Process existing articles'),
 		'7' => array(
 			'setup' => 'Add the language native textpattern tables',
 			'cleanup' => 'Drop the language native textpattern tables'),
@@ -2559,7 +2554,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		$desc = 'COLUMNS';
 		$result = @safe_show( $desc , 'textpattern' );
 		$lang_found  = false;
-		$group_found = false;
+		$article_id_found = false;
 
 		if( count( $result ) )
 			{
@@ -2567,10 +2562,10 @@ class LocalisationWizardView extends GBPWizardTabView
 				{
 				if( !$lang_found and $r['Field'] === 'Lang' )
 					$lang_found = true;
-				if( !$group_found and $r['Field'] === 'Group' )
-					$group_found = true;
+				if( !$article_id_found and $r['Field'] === 'Group' )
+					$article_id_found = true;
 
-				if( $group_found and $lang_found )
+				if( $article_id_found and $lang_found )
 					break;
 				}
 			}
@@ -2581,7 +2576,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			$sql[] = " NOT NULL DEFAULT '-' AFTER `LastModID` , ";
 			}
 
-		if( !$group_found )
+		if( !$article_id_found )
 			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
 
 		$this->add_report_item( 'Add fields to the "textpattern" table' );
@@ -2593,7 +2588,7 @@ class LocalisationWizardView extends GBPWizardTabView
 				$this->add_report_item( 'Skip adding the `Lang` field -- it already exists' , $ok , true );
 			else
 				$this->add_report_item( 'Add the `Lang` field' , $ok , true );
-			if( $group_found )
+			if( $article_id_found )
 				$this->add_report_item( 'Skip adding the `Group` field -- it already exists' , $ok , true );
 			else
 				$this->add_report_item( 'Add the `Group` field' , $ok , true );
@@ -2621,7 +2616,7 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function setup_5()
 		{
-		$ok = GroupManager::create_table();
+		$ok = ArticleManager::create_table();
 		$this->add_report_item( 'Add the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
 		}
 
@@ -2642,7 +2637,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = GroupManager::make_textpattern_name( $code );
+			$table_name = ArticleManager::make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
@@ -2681,7 +2676,7 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function cleanup_5()
 		{
-		$ok = GroupManager::destroy_table();
+		$ok = ArticleManager::destroy_table();
 		$this->add_report_item( 'Delete the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
 		}
 
@@ -2694,7 +2689,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = GroupManager::make_textpattern_name( $code );
+			$table_name = ArticleManager::make_textpattern_name( $code );
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
 			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
@@ -2751,16 +2746,17 @@ class LocalisationWizardView extends GBPWizardTabView
 			{
 			while ( $a = nextRow($rs) )
 				{
+				$title = $a['Title'];
 				$lang  = $a['Lang'];
-				$group = $a['Group'];
+				$article_id = $a['Group'];
 				$id    = $a['ID'];
 
-				if( $lang !== '-' and $group !== 0 )
+				if( $lang !== '-' and $article_id !== 0 )
 					{
 					#
 					#	Use any existing Lang/Group data there might be...
 					#
-					if( true === GroupManager::add_article( $group , $id , $lang , true , true ) )
+					if( true === ArticleManager::add_rendition( $article_id , $id , $lang , true , true , $title ) )
 						$i++;
 					}
 				else
@@ -2768,7 +2764,7 @@ class LocalisationWizardView extends GBPWizardTabView
 					#
 					#	Create a fresh group and add the info...
 					#
-					if( GroupManager::create_group_and_add( $a ) )
+					if( ArticleManager::create_article_and_add( $a ) )
 						$i++;
 					}
 				}

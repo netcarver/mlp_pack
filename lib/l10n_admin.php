@@ -13,7 +13,7 @@ if( $l10n_view->installed() )
 	#	Article handlers...
 	#
 	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
-	register_callback( 'l10n_add_article_to_group_cb' 			, 'article' );
+	register_callback( 'l10n_add_rendition_to_article_cb' 		, 'article' );
 
 	#
 	#	Article list handlers...
@@ -117,9 +117,9 @@ function _l10n_match_cb( $matches )
 	$id = $matches[1];
 	$rs = safe_row(	'*', 'textpattern', "ID=$id" );
 	$code	= $rs['Lang'];
-	$group	= $rs['Group'];
+	$article	= $rs['Group'];
 	$lang = LanguageHandler::get_native_name_of_lang( $code );
-	return $matches[0] . br . $lang . ' [' . gTxt('group'). ' :' .$group . ']';
+	return $matches[0] . br . $lang . ' [' . gTxt('article'). ' :' .$article . ']';
 	}
 function _l10n_chooser( $permitted_langs )
 	{
@@ -260,7 +260,7 @@ function l10n_article_buffer_processor( $buffer )
 	#
 	#	The buffer processing routine injects page elements when editing an article.
 	#
-	$remaining	= GroupManager::get_remaining_langs( $l10n_vars['article_group'] );
+	$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
 	
@@ -314,19 +314,19 @@ function l10n_article_buffer_processor( $buffer )
 	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
 		{
 		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
-		$r .= 	gTxt('group')    . ': ' . strong( $group_id );
+		$r .= 	gTxt('article')    . ': ' . strong( $group_id );
 		}
 	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
 		{
 		if( $reassigning_permitted and $has_reassign_privs )
 			{
 			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
-			$r .=	gTxt('group')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
+			$r .=	gTxt('article')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
 			}
 		else
 			{
 			$r .= 	hInput( 'Lang' , $lang )      . gTxt('language') . ': ' . strong( LanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
-			$r .= 	hInput( 'Group' , $group_id ) . gTxt('group')    . ': ' . strong( $group_id );
+			$r .= 	hInput( 'Group' , $group_id ) . gTxt('article')    . ': ' . strong( $group_id );
 			}
 		}
 	$r = graf( $r );
@@ -335,7 +335,7 @@ function l10n_article_buffer_processor( $buffer )
 	return $buffer;
 	}
 
-function l10n_add_article_to_group_cb( $event , $step )
+function l10n_add_rendition_to_article_cb( $event , $step )
 	{
 	require_privs('article');
 
@@ -351,14 +351,14 @@ function l10n_add_article_to_group_cb( $event , $step )
 	$incoming = psa($new_vars);
 	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : LanguageHandler::get_site_default_lang();
 
-	//echo br , "l10n_add_article_to_group_cb( $event , $step ) ... " ;
+	//echo br , "l10n_add_rendition_to_article_cb( $event , $step ) ... " ;
 	switch(strtolower($step))
 		{
 		case 'publish':
 			#
 			#	Create a group for this article
 			#
-			GroupManager::create_group_and_add( $incoming );
+			ArticleManager::create_article_and_add( $incoming );
 
 			#
 			#	Update the language table for the target language...
@@ -376,9 +376,9 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#	Record the old and new languages, if there are any changes we need to update
 			# both the old and new tables after moving the group/lang over...
 			#
-			$article_id	= $incoming['ID'];
+			$rendition_id	= $incoming['ID'];
 
-			$info = safe_row( '*' , 'textpattern' , "`ID`='$article_id'" );
+			$info = safe_row( '*' , 'textpattern' , "`ID`='$rendition_id'" );
 			if( $info !== false )
 				{
 				$current_lang	= $info['Lang'];
@@ -387,7 +387,7 @@ function l10n_add_article_to_group_cb( $event , $step )
 			#
 			#	Check for changes to the article language and groups ...
 			#
-			GroupManager::move_to_group( $incoming );
+			ArticleManager::move_to_article( $incoming );
 
 			#
 			#	Now we can setup the tables again...
@@ -539,11 +539,11 @@ function l10n_pre_multi_edit_cb( $event , $step )
 			$info = safe_row( '*' , 'textpattern' , "`ID`='$id'" );
 			if( $info !== false )
 				{
-				$group = $info['Group'];
+				$article	= $info['Group'];
 				$lang  = $info['Lang'];
 				$languages[$lang] = $lang;
 				if( 'delete' === $method )
-					GroupManager::remove_article( $group , $id , $lang );
+					ArticleManager::remove_rendition( $article , $id , $lang );
 				}
 			}
 		}
@@ -558,7 +558,7 @@ function l10n_pre_multi_edit_cb( $event , $step )
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	$code  = LanguageHandler::compact_code( $lang );
-	$table_name = GroupManager::make_textpattern_name( $code );
+	$table_name = ArticleManager::make_textpattern_name( $code );
 
 	//echo br , "Updating the $table_name table...";
 
