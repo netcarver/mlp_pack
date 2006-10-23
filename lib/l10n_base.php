@@ -450,7 +450,7 @@ class LocalisationView extends GBPPlugin
 	var $strings_prefix = L10N_NAME;
 	var $insert_in_debug_mode = false;
 	var $perm_strings = array( # These strings are always needed.
-		'l10n-localisation'			=> 'Localisation',
+		'l10n-localisation'			=> 'MLP',
 		);
 	var $strings = array(
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
@@ -2763,9 +2763,12 @@ class LocalisationWizardView extends GBPWizardTabView
 			'cleanup' => 'Drop the articles table'),
 		'6' => array('setup' => 'Process existing articles'),
 		'7' => array(
-			'setup' => 'Add the language native textpattern tables',
-			'cleanup' => 'Drop the language native textpattern tables'),
+			'setup' => 'Add new textpattern tables for each site language',
+			'cleanup' => 'Drop the extra site language textpattern tables'),
 		'8' => array ( 'cleanup' => 'Delete cookies' ),
+		'9' => array (
+			'setup' => 'Rename the \'Articles\' tab label.',
+			'cleanup' => 'Restore the \'Articles\' tab label.' ),
 		);
 
 	function installed()
@@ -2909,6 +2912,17 @@ class LocalisationWizardView extends GBPWizardTabView
 			$ok = @safe_query( $sql );
 			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
 			}
+		}
+
+	function setup_9()
+		{
+		$ok = @safe_update( 'txp_lang' , "`data` = 'Renditions'", "`name` = 'tab_list'" );
+		$this->add_report_item( 'Rename the \'Articles\' tab label.' , $ok );
+		}
+	function cleanup_9()
+		{
+		$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
+		$this->add_report_item( 'Restore the \'Articles\' tab label.' , $ok );
 		}
 
 	function cleanup_2()
