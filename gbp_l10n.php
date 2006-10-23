@@ -637,25 +637,25 @@ if (@txpinterface == 'public')
 		return $title . $list;
 		}
 
-	function l10n_snippet($atts)
-		{
+	//function l10n_snippet($atts)
+		//{
 		/*
 		Tag handler: Outputs a localised snippet. This is a strict alternative to using
 		direct snippets in pages/forms.
 		Atts: 'name' the name of the snippet to output.
 		*/
-
-		$out = '';
-		if( array_key_exists('name', $atts) )
-			{
-			global $l10n_language;
-
-			$out = gTxt( $atts['name'] );
-			if( $out === $atts['name'] )
-				$out = '('.(($l10n_language['long'])?$l10n_language['long']:'??').')'.$out;
-			}
-		return $out;
-		}
+		//
+		//$out = '';
+		//if( array_key_exists('name', $atts) )
+		//	{
+		//	global $l10n_language;
+		//
+		//	$out = gTxt( $atts['name'] );
+		//	if( $out === $atts['name'] )
+		//		$out = '('.(($l10n_language['long'])?$l10n_language['long']:'??').')'.$out;
+		//	}
+		//return $out;
+		//}
 
 	function l10n_if_lang( $atts , $thing )
 	    {
