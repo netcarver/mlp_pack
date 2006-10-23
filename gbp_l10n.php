@@ -504,10 +504,11 @@ if (@txpinterface == 'public')
 				$pretext[$name] = $r;
 				}
 			}
-		global $l10n_language;
+		global $l10n_language , $textarray , $prefs;
 
 		$first_chunk = _l10n_process_url();
 		//echo br,br,br,br,br,"First chunk=",$first_chunk;
+
 
 		# Load the localised set of strings based on the selected language...
 		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
@@ -515,6 +516,8 @@ if (@txpinterface == 'public')
 		#	Load the site name and slogan into the $prefs[] array in the right place...
 		//load_localised_pref( 'sitename' );
 		load_localised_pref( 'site_slogan' );
+
+		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
 		#
 		#	Don't know why, but there seems to be some whitespace getting into the
