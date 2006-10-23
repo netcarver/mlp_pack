@@ -1747,6 +1747,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			$source['LastMod'] = 'now()';
 			$source['feed_time'] = 'now()';
 			$source['uid'] = md5(uniqid(rand(),true));
+			$source['comments_count'] = 0;	//	Don't clone the comment count!
 
 			$insert = array();
 			foreach( $source as $k => $v )
