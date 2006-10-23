@@ -509,6 +509,19 @@ if (@txpinterface == 'public')
 		$first_chunk = _l10n_process_url();
 		//echo br,br,br,br,br,"First chunk=",$first_chunk;
 
+		#
+		#	Now we know what language this user is browsing in.
+		# If it is NOT the site's currently selected language then we need to re-load
+		# the textarray with the right language (otherwise some strings used in comment forms
+		# and older/newer tags will be wrong!
+		#
+		if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
+			{
+			//echo br , 'Re-loading $textarray.';
+
+			$textarray = load_lang( $l10n_language['long'] );
+			$prefs['language'] = $l10n_language['long'];
+			}
 
 		# Load the localised set of strings based on the selected language...
 		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
