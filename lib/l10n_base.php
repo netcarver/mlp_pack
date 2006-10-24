@@ -3613,13 +3613,8 @@ class StringHandler
 
 	function insert_strings( $pfx , $strings , $lang , $event='' , $plugin='' , $override = false )
 		{
-		/*
-		PLUGIN SUPPORT ROUTINE
-		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
-		Adds the given array of prefixed, aliased, strings to txp_lang
-		*/
 		global	$txp_current_plugin;
-		//echo br , "insert_strings( $pfx , $strings , $lang , $event , $plugin , $override )";
+		//echo br , "insert_strings( pfx($pfx) , strings($strings) , lang($lang) , event($event) , plugin($plugin) , override($override) )";
 		if( empty($strings) or !is_array($strings) or empty($lang) or empty($pfx) )
 			return null;
 
@@ -3633,6 +3628,7 @@ class StringHandler
 		elseif( !$override )
 			return false;
 		//echo "... plugin now registered";
+
 		# If the prefix doesn't end with the required sep character, add it...
 		$pfx_len = strlen( $pfx );
 		if( $pfx[$pfx_len-1] != L10N_SEP )
@@ -3645,6 +3641,7 @@ class StringHandler
 		if( !empty($plugin) and ($event=='public' or $event=='admin' or $event=='common') )
 			$event = $event.'.'.$plugin;
 		//echo "... prefix is $pfx, event is $event";
+
 		#	Iterate over the $strings and, for each that is not present, enter them into the sql table...
 		$lastmod 	= date('YmdHis');
 		$lang 		= doSlash( $lang );
@@ -3674,14 +3671,15 @@ class StringHandler
 	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' )
 		{
 		/*
-		ADMIN SUPPORT ROUTINE
-		For use by the localisation plugin.
 		Can create, delete or update a row in the DB depending upon the calling arguments.
 		*/
 		global	$txp_current_plugin;
 
 		if( empty($name) or empty($event) or empty($new_lang) )
+			{
+			//echo ' INPUT ERROR.';
 			return null;
+			}
 
 		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
 			$event = $event.'.'.$txp_current_plugin;
@@ -3709,32 +3707,6 @@ class StringHandler
 		return $result;
 		}
 
-	function store_translation_by_id( $id , $new_lang , $translation )
-		{
-		/*
-		ADMIN SUPPORT ROUTINE
-		For use by the localisation plugin. Clones the entry with the given id and stores the
-		translation in the data and sets the lang and date as given.
-		*/
-		# 	Check we have valid arguments...
-		if( empty($id) or empty($translation) or empty($new_lang) )
-			return null;
-
-		#	Does the row to copy exist?
-		$id = doSlash( $id );
-		$row = safe_row( '*' , 'txp_lang' , "`id`=$id" );
-		if( !$row )
-			return false;
-
-		extract( $row );
-		$translation	= doSlash( $translation );
-		$new_lang 		= doSlash( $new_lang );
-		$lastmod 		= date('YmdHis');
-		$set 			= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation'" ;
-
-		@safe_insert( 'txp_lang' , $set );
-		}
-
 	function remove_strings( $plugin , $remove_lang , $debug = '' )
 		{
 		/*
@@ -3760,8 +3732,6 @@ class StringHandler
 	function remove_strings_by_name( $strings , $event = '' )
 		{
 		/*
-		PLUGIN SUPPORT ROUTINE
-		Plugin authors: CALL THIS FROM THE IMMEDIATE PROCESSING SECTION OF YOUR PLUGIN'S ADMIN CODE.
 		Removes all of the named strings in ALL languages. (It uses the keys of the strings array).
 		*/
 		global	$txp_current_plugin , $prefs;
