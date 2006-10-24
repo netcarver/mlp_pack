@@ -622,7 +622,7 @@ class LocalisationView extends GBPPlugin
 			new LocalisationTabView( gTxt('sections'), 'section', $this );
 
 		new GBPPreferenceTabView($this);
-		new LocalisationWizardView($this);
+		new LocalisationWizardView($this, NULL , gTxt('l10n-wizard') );
 		}
 
 	function prefs_save_cb( $event='' , $step='' )
