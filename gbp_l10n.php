@@ -751,7 +751,11 @@ if (@txpinterface == 'public')
 
 		if( !$l10n_language )
 			return '';
-		return $l10n_language[$type];
+
+		$result = $l10n_language['short'];
+		if( strtolower($type) === 'long' )
+			$result = $l10n_language['long'];
+		return $result;
 		}
 
 	function _l10n_feed_link_cb( $matches )
