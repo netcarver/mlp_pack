@@ -2409,7 +2409,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Use values from the pager to grab the right sections of the table.
 		#
-		$articles = ArticleManager::get_articles( '1=1' , 'ID' , $offset , $limit );
+		$articles = ArticleManager::get_articles( '1=1' , 'ID DESC' , $offset , $limit );
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
