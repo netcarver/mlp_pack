@@ -2323,7 +2323,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						/*tab*/		'3',
 						/*id*/		'match_status' ).n;
 		$f[] = $this->form_inputs().n;
-		$f[] = fInput('submit', 'search', gTxt('go'), 'smallerbox');
+		$f[] = fInput( 'submit', 'search', gTxt('go'), 'smallerbox' , '', '', '', '4' );
 
 		return n.n.form( graf( n.join('', $f).n ).br.n , 'margin: auto; text-align: center;' );
 		}
@@ -2353,22 +2353,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$full_lang_count = count( $langs );
 		$default_lang = LanguageHandler::get_site_default_lang();
 
-		#
-		#	Render the menu...
-		#
-		/*
-		$li = array(
-						gTxt('change_status'),
-						'<hr />',
-						gTxt('l10n-clone'),
-						'<hr />',
-						gTxt('delete'),
-					);
-		foreach( $li as $item )
-			$menu[] = n.t.tag( $item , 'li' );
-		$menu = tag( join('',$menu) , 'ul' );
-			$o[] = tag( $menu , 'div' , ' class="l10n_popmenu"' );
-		*/
 		#
 		#	Render the filter/search form...
 		#
@@ -3995,46 +3979,6 @@ class StringHandler
 		return $result;
 		}
 
-	//function gTxt( $alias, $args=null )
-		//{
-		/*
-		PUBLIC/ADMIN INTERFACE SUPPORT ROUTINE
-		Given a string name, will pull the string out of the $textarray and perform any argument replacements needed.
-		*/
-		//global $textarray;
-		//global $l10n_language;
-
-		//$lang = $l10n_language;
-		//if( !$lang )
-		//	$lang = LanguageHandler::get_site_default_lang();
-
-		//$out = @$textarray[ $alias ];
-		//if( !$out or ($out === $alias) )
-		//	$out = "($lang) $alias";
-
-		//if( isset( $args ) and is_array( $args ) and count($args) )
-		//	{
-		//	foreach( $args as $pattern=>$value )
-		//		$out = preg_replace( '/\\'.$pattern.'/' , $value , $out );
-		//	}
-
-		//return $out;
-		//}
 	} // End class StringHandler
-
-#	PUBLIC/ADMIN WRAPPER ROUTINES...
-	//function l10n_gTxt( $name , $args = null )
-	//{
-	/*
-	Plugin authors can define strings with embedded variables that get preg_replaced
-	based on the the argument array.
-
-	So a string : 'plugin_name_hello' => 'Hello there $name.'
-
-	could be replaced like this from within the plugin...
-	l10n_gTxt( 'plugin_name_hello' , array( '$name'=>$name ) );
-	*/
-	//return StringHandler::gTxt( $name , $args );
-	//}
 
 ?>
