@@ -43,7 +43,7 @@ h2. Terminology
 | Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
 | Rendition | The expression of an authors _work_ in a single language. |
 | Article | The *set* of _renditions_ of a given author's _work_. An article always has at least one _rendition_. |
-| Translate | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into it's first _rendition_. |
+| Translate | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into its first _rendition_. |
 | Translator | The person or persons doing the translation (could be the author of the original _work_ but doesn't have to be.) |
 | Translation | The act of translating one rendition to form a new rendition. |
 
@@ -528,10 +528,7 @@ if (@txpinterface == 'public')
 		# Load the localised set of strings based on the selected language...
 		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
 
-		#	Load the site name and slogan into the $prefs[] array in the right place...
-		//load_localised_pref( 'sitename' );
 		load_localised_pref( 'site_slogan' );
-
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
 		#
