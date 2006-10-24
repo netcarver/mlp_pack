@@ -43,9 +43,8 @@ h2. Terminology
 | Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
 | Rendition | The expression of an authors _work_ in a single language. |
 | Article | The *set* of _renditions_ of a given author's _work_. An article always has at least one _rendition_. |
-| Translate | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into its first _rendition_. |
+| Translate/Translation | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into its first _rendition_. |
 | Translator | The person or persons doing the translation (could be the author of the original _work_ but doesn't have to be.) |
-| Translation | The act of translating one rendition to form a new rendition. |
 
  <br>
 
@@ -53,11 +52,13 @@ To avoid confusion, the noun 'translation' *always* refers to the act of transla
 
 A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
 
-Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work. So, what TxP calls an 'article' has to be replaced in the MLP environment which needs to distinguish between them.
+Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work and has no need to distinguish between multiple renditions of a work -- or any need to manage the set of renditions of that work (the _article_) as a whole.
 
-In effect this means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles. The content > write tab still allows the editing of renditions.
+In effect this means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work).
 
-h2. What the MLP Plugin provides.
+The content > write tab still allows the editing of renditions.
+
+h2. What the MLP(Multi-Lingual Publishing) Plugin provides.
 
 On the admin side...
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
@@ -67,8 +68,7 @@ On the admin side...
 * Support for cloning of renditions and their translation into other languages using the existing write tab.
 * Email notifications sent to translators when articles are cloned or have their author changed.
 * Extra filtering of the list of renditions by language.
-* No need to over-load the 'sections' to accommodate language differences.
-* No hijacking of existing fields (categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
+* No hijacking of existing fields (sections/categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
 * Setup and Cleanup wizards.
 
 On the public side...
@@ -98,7 +98,7 @@ To add snippets to pages or forms...
 
 # Make sure the page/form is wrapped with the @<txp:l10n_localise>@ ... @</txp:l10n_localise>@ statements.
 # Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
-# On the *content > localise* tab, look for your page or form on the pages or form subtab.
+# On the *content > MLP* tab, look for your page or form on the pages or form subtab.
 # Click on the page/form name to bring up a list of all snippets therein.
 # You should see your snippet "my_first_snippet" listed with no translations.
 # Click on the name of your snippet to bring up the edit boxes.
@@ -704,26 +704,6 @@ if (@txpinterface == 'public')
 		return $title . $list;
 		}
 
-	//function l10n_snippet($atts)
-		//{
-		/*
-		Tag handler: Outputs a localised snippet. This is a strict alternative to using
-		direct snippets in pages/forms.
-		Atts: 'name' the name of the snippet to output.
-		*/
-		//
-		//$out = '';
-		//if( array_key_exists('name', $atts) )
-		//	{
-		//	global $l10n_language;
-		//
-		//	$out = gTxt( $atts['name'] );
-		//	if( $out === $atts['name'] )
-		//		$out = '('.(($l10n_language['long'])?$l10n_language['long']:'??').')'.$out;
-		//	}
-		//return $out;
-		//}
-
 	function l10n_if_lang( $atts , $thing )
 	    {
 		/*
@@ -840,8 +820,10 @@ if (@txpinterface == 'public')
 		{
 		global $l10n_language, $thisarticle, $thislink;
 
-		if ($l10n_language) {
-			if (array_key_exists('category', $atts)) {
+		if ($l10n_language)
+			{
+			if (array_key_exists('category', $atts))
+				{
 				$id = $atts['category'];
 				$table = PFX.'txp_category';
 				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
@@ -851,8 +833,9 @@ if (@txpinterface == 'public')
 				else
 					return ucwords($atts['category']);
 
-			} else if (array_key_exists('section', $atts)) {
-
+				}
+			else if (array_key_exists('section', $atts))
+				{
 				$id = $atts['section'];
 				$table = PFX.'txp_section';
 				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
@@ -861,49 +844,36 @@ if (@txpinterface == 'public')
 					return $rs;
 				else
 					return ucwords($atts['section']);
-
-			} else if ($thing) {
-
+				}
+			else if ($thing)
+				{
 				# SED: Process the direct snippet substitutions needed in the contained content.
 				$thing = SnippetHandler::substitute_snippets( $thing );
-
-				/*
-				if (isset($thisarticle))
-					{
-					$rs = safe_rows('entry_value, entry_value_html, entry_column', L10N_SUBS_TABLE, '`language` = \''.$l10n_language['long'].'\' AND `entry_id` = \''.$thisarticle['thisid']."' AND `table` = '".PFX."textpattern'");
-					if( $rs )
-						foreach( $rs as $row )
-							{
-							if( $row['entry_value'] )
-								$thisarticle[strtolower($row['entry_column'])] = ($row['entry_value_html']) ? parse($row['entry_value_html']) : $row['entry_value'];
-							}
-					}
-
-				*/
 				$html = parse($thing);
 				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $l10n_language['short'].'/'.'$1', $html);
 				return $html;
 			}
 		}
 
-		if (array_key_exists('category', $atts)) {
-
+		if (array_key_exists('category', $atts))
+			{
 			$rs = safe_field('title', 'txp_category', '`name` = "'.$atts['category'].'"');
 			if ($rs && !empty($rs))
 				return $rs;
 			else
 				return ucwords($atts['category']);
 
-		} else if (array_key_exists('section', $atts)) {
-
+			}
+		else if (array_key_exists('section', $atts))
+			{
 			$rs = safe_field('title', 'txp_section', '`name` = "'.$atts['section'].'"');
 			if ($rs && !empty($rs))
 				return $rs;
 			else
 				return ucwords($atts['section']);
-
-		} else if ($thing) {
-
+			}
+		else if ($thing)
+			{
 			# SED: Process and string substitutions needed in the contained content.
 			$thing = SnippetHandler::substitute_snippets( $thing );
 			return parse($thing);
@@ -912,7 +882,6 @@ if (@txpinterface == 'public')
 		return null;
 		}
 	}
-
 
 # --- END PLUGIN CODE ---
 ?>
