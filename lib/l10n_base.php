@@ -207,37 +207,39 @@ class ArticleManager
 			}
 		return $result;
 		}
-	function get_group_members( $article_id , $exclude_lang )
+	function get_article_members( $article_id , $exclude_lang , $status='4' )
 		{
 		#
 		#	Returns an array of the lang->rendition mappings for all members of the
-		# given group...
+		# given article...
 		#
-		$info		= ArticleManager::_get_article_info( $article_id );
-		$members 	= array();
-
-		if( !empty( $info ) )
+		$result = array();
+		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
+		$rows = safe_rows_start( 'ID,Lang' , 'l10n_master_textpattern' , $where );
+		if( count( $rows ) )
 			{
-			$members = $info['members'];
-			if( $exclude_lang and !empty($exclude_lang) and array_key_exists( $exclude_lang , $members ) )
-				unset( $members[$exclude_lang] );
+			while( $row = nextRow($rows) )
+				{
+				$lang = $row['Lang'];
+				$result[$lang] = $row['ID'];
+				}
 			}
-		return $members;
+		return $result;
 		}
-	function get_alternate_mappings( $article_id , $exclude_lang , $use_master=false )
+	function get_alternate_mappings( $rendition_id , $exclude_lang , $use_master=false )
 		{
 		if( $use_master )
-			$info = safe_row( '`Group`' , 'l10n_master_textpattern' , "`ID`='$article_id'" );
+			$info = safe_row( '`Group`' , 'l10n_master_textpattern' , "`ID`='$rendition_id'" );
 		else
-			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$article_id'" );
-		if( $info === false )
+			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$rendition_id'" );
+		if( empty($info) )
 			{
 			//echo " ... returning: failed to read article data.";
-			return false;
+			return $info;
 			}
 
 		$article_id = $info['Group'];
-		$alternatives = ArticleManager::get_group_members( $article_id , $exclude_lang );
+		$alternatives = ArticleManager::get_article_members( $article_id , $exclude_lang );
 		return $alternatives;
 		}
 	function get_remaining_langs( $article_id )
