@@ -546,7 +546,7 @@ if (@txpinterface == 'public')
 	/*
 	TAG HANDLERS FOLLOW
 	*/
-	function l10n_translation_list( $atts )
+	function l10n_lang_list( $atts )
 		{
 		global $thisarticle , $l10n_language, $is_article_list , $pretext;
 
@@ -603,14 +603,21 @@ if (@txpinterface == 'public')
 			$id = (isset($thisarticle['thisid'])) ? $thisarticle['thisid'] : '' ;
 			}
 
+		$show_title = !empty( $title );
 
 		if( !$article_list )
 			{
+			//echo br , var_dump( $thisarticle ) , br , br;
 			$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
+
+			if( $show_title )
+				$show_title = !empty( $alangs );
 			}
 
-		if( !empty( $title ) )
+		if( $show_title )
 			$title = tag( $title , 'p' ) . n;
+		else
+			$title = '';
 
 		foreach( $slangs as $lang )
 			{
