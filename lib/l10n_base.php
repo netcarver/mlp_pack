@@ -1,12 +1,5 @@
 ﻿<?php
 
-/*	TO DO...
-	Add new categorisasation feature to the setup wizard -- allow language spec on section prefix/cat/custom field
-	Convert the render_lang_list tag handler to use the new group model.
-
-	ADD		Snippet export/import?
-*/
-
 // require_plugin() will reset the $txp_current_plugin global
 global $txp_current_plugin;
 $l10n_current_plugin = $txp_current_plugin;
@@ -1694,34 +1687,297 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 	function main()
 		{
-		echo "In/Out";
+		$step = gps('step');
+		switch( $step )
+			{
+			case 'l10n_import_languageset':
+				$this->render_import_list();
+				break;
+
+			default:
+				$this->render_main();
+				break;
+			}
+		}
+
+	function render_main()
+		{
+		$site_langs 	= LanguageHandler::get_site_langs();
+
+		$snip_string = gTxt('l10n-snippet');
+		$out[] = '<div style="float: left; width: 40%; border: 1px solid #ccc; padding:1em; margin:1em;" class="l10n_owner_list">';
+		$out[] = gTxt('l10n-export_title' , array( '{type}'=>$snip_string )). br;
+		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">'.sp.sp.gTxt('select').sp.'</td>' ).n.'</thead><tbody>';
+
+
+		foreach( $site_langs as $lang )
+			{
+			$name = t . '<label for="'.$lang.'">' . LanguageHandler::get_native_name_of_lang( $lang ) . '</label>';
+			$choice = t . '<input type="checkbox" class="checkbox" value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' . n;
+			$export[]= tr( td( $name ).td( $choice ) , ' style="text-align:right;" ' );
+			}
+		$export[] = sInput( 'l10n_export_languageset');
+		$export[] = $this->parent->form_inputs();
+		$export[] = hInput( 'subtab' , $this->sub_tab );
+		$export[] = tr( td(sp) . td(sp.sp.'<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>') );
+
+		$out[] = form( join( '' , $export) );
+		$out[] = '</tbody></table>'.n.'</div>'.n.n;
+
+		$import[] = '<div style="float: right; width: 40%; border: 1px solid #ccc; padding:1em; margin:1em;" class="l10n_owner_list">';
+		$import[] = gTxt('l10n-import_title' , array( '{type}'=>$snip_string) ) . br;
+		$import[] = '<textarea name="data" cols="40" rows="2" id="l10n_string_import">';
+		$import[] = '</textarea>' .br . br;
+		$import[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
+		$import[] = sInput( 'l10n_import_languageset');
+		$import[] = $this->parent->form_inputs();
+		//$import[] = hInput( 'plugin' , gps('plugin') );
+		//$import[] = hInput( 'prefix' , gps('prefix') );
+		$import[] = hInput( 'language' , gps('language') );
+		$import[] = hInput( 'subtab' , $this->sub_tab );
+		$out[] = form( join( '' , $import ) ).n.'</div>'.n.n;
+
+		echo join( '' , $out );
+		}
+
+	function _get_snippet_names( $table , $fname , $fdata )
+		{
+		$snippets 	= array();
+		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
+		if( $rs && mysql_num_rows($rs) > 0 )
+			{
+			$explain = false;
+			while ( $a = nextRow($rs) )
+				{
+				$raw_count = 0;
+				$snips = SnippetHandler::find_snippets_in_block( $a['data'] , $raw_count );
+				foreach( $snips as $k=>$v )
+					$snippets[$v] = $v;
+				//$snippets = array_merge( $snippets , $snips );
+				}
+			}
+		return $snippets;
+		}
+
+	function get_special_snippets()
+		{
+		$snippets = array();
+		$snips = SnippetHandler::get_special_snippets();
+		foreach( $snips as $k=>$v )
+			$snippets[$v] = $v;
+		return $snippets;
 		}
 
 	function export_languageset()
 		{
 		$plugin = gps('owner');
 		$lang   = gps('language');
-		$prefix = gps('prefix');
+		//$prefix = gps('prefix');
 
-		$details =  StringHandler::if_plugin_registered( $plugin , $lang );
-		if( false !== $details )
+		//echo br , "SnippetInOutView::export_languageset()";
+
+		$sources = array	(
+							array	(
+									'table'	=>	'txp_page',
+									'name'	=>	'name',
+									'data'	=>	'user_html',
+									'fn'	=>	'',
+									),
+							array	(
+									'table'	=>	'txp_form',
+									'name'	=>	'name',
+									'data'	=>	'Form',
+									'fn'	=>	'',
+									),
+							array	(
+									'table'	=>	'',
+									'name'	=>	'',
+									'data'	=>	'',
+									'fn'	=>	'get_special_snippets',
+									),
+							);
+		$snippet_names = array();
+
+		#
+		#	Scan sources for the name of snippets...
+		#
+		foreach( $sources as $source )
 			{
-			//$details = unserialize( $details );
-			//$data = StringHandler::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
-			//$this->parent->serve_file( $data , $plugin . '.' . $lang . '.inc' );
+			$snips = array();
+			extract( $source );
+			if( !empty( $fn ) )
+				{
+				$key = '';
+				if( is_callable( array($this,$fn) , false , $key ) )
+					$snips = call_user_func( array($this,$fn) );
+				//else
+				//	echo br , "Cannot call function $key";
+				}
+			else
+				{
+				$snips = $this->_get_snippet_names( $table , $name , $data );
+				}
+			if( is_array( $snips ) )
+				$snippet_names = array_merge( $snippet_names , $snips );
 			}
+
+		sort( $snippet_names );
+
+		//echo br,br,var_dump( $snippet_names );
+
+		$snippet_nameset = StringHandler::make_nameset($snippet_names);
+
+		#
+		#	For each selected language, grab the snippet strings from the txp_lang table and add it to the
+		# export structure...
+		#
+		$site_langs 	= LanguageHandler::get_site_langs();
+
+		$export_data = array();
+		foreach( $site_langs as $lang )
+			{
+			$lang_set = array( 'lang'=>$lang );
+			$present = ($lang === gps( $lang ) );
+			if( !$present )
+				continue;
+
+			//echo br , "Processing $lang snippets...";
+
+			$lang_set = StringHandler::get_set_by_lang( $snippet_nameset , $lang );
+
+			//echo br, var_dump( $lang_set ) , br,br,br;
+
+			$export_data[$lang] = $lang_set;
+			}
+
+		#
+		#	Serve the export data as a file...
+		#
+		$export_data = chunk_split( base64_encode( serialize($export_data) ) , 64 );
+		//echo br, "Export data (lang->name->data) ... " ,var_dump( $export_data ) , br,br,br;
+		$this->parent->parent->serve_file( $export_data , 'snippets.inc' );
+		}
+
+	function render_import_list()
+		{
+		//echo br, "render_import_list()";
+		$count = 0;
+		$site_langs = LanguageHandler::get_site_langs();
+		$d = gps( 'data' );
+		$d = @unserialize( @base64_decode( @str_replace( "\r\n", '', $d ) ) );
+		$subtab = gps('subtab');
+
+		//echo br,"Subtab is ",var_dump($subtab);
+
+		$o[] = '<div style="float:left;">';
+		$o[] = '<h2>'.gTxt('preview').' '.gTxt('file').'</h2>';
+
+		if( is_array( $d ) and !empty( $d ) )
+			{
+			$f[] = hInput( 'data' , gps('data') ).n;
+			$f[] = hInput( 'language' , gps('language') ).n;
+			$f[] = sInput( 'l10n_import_languageset').n;
+			$f[] = hInput( 'subtab' , $this->sub_tab );
+			//$f[] = hInput( 'subtab' , $subtab ).n;
+			$f[] = hInput( 'commit', 'true' ).n;
+			$f[] = $this->parent->form_inputs().n;
+
+			foreach( $d as $lang=>$set )
+				{
+				$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
+				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
+					{
+					$l[] = tr( n.td( sp ).n.td('Skipping: Language not supported.') ).n;
+					}
+				else
+					{
+					foreach( $set as $name=>$couplet )
+						{
+						$data	= htmlspecialchars($couplet[0]);
+						$event	= htmlspecialchars($couplet[1]);
+						//echo br,"$name => $event , $data";
+
+						if( empty( $name ) or empty($event) or empty($data) )
+							continue;
+
+						$l[] = tr( n.t.'<td style="text-align: right;">'.$name.' <em>('.$event.')</em> : </td>' . n.td("<input type=\"text\" readonly size=\"100\" value=\"$data\"/>") ) .n;
+						$count++;
+						}
+					}
+				$l[] = tr( n.t.tdcs( sp , 2 ) ).n;
+				}
+			}
+
+		$l[] = tr( n.tdcs( sp , 2 ) ).n;
+		$l[] = tr( n.tdcs( gTxt( 'l10n-total' ) . sp . ': ' . $count . sp . gTxt('strings') , 2 ) ).n;
+		$l[] = tr( n.tdcs( sp , 2 ) ).n;
+
+		$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
+		$content = join( '' , $f ) . tag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
+		$o[] = form( $content , '' ,
+					"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
+
+		$o[] = '</div>';
+		echo join( '' , $o );
 		}
 
 	function import_languageset()
 		{
 		$commit = gps( 'commit' );
-		if( !empty($commit) and ('true' === $commit) )
+		if( empty($commit) or ('true' !== $commit) )
 			{
-			//$d 	= gps( 'data' );
-			//$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
-			//StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['plugin'] , true );
-			//unset( $_POST['step'] );
+			return;
 			}
+
+		$site_langs 	= LanguageHandler::get_site_langs();
+
+		$d 	= gps( 'data' );
+		$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
+		$count = 0;
+		//echo br, "Data (lang->name->data) ... " ,var_dump( $d ) , br,br,br;
+
+		if( is_array( $d ) and !empty( $d ) )
+			{
+			foreach( $d as $lang=>$set )
+				{
+				//echo br,br,"Extracting language $lang...";
+				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
+					continue;
+
+				foreach( $set as $name=>$couplet )
+					{
+					$data = $couplet[0];
+					$event = $couplet[1];
+					//echo br,"$name => $event , $data";
+
+					if( empty( $name ) or empty($event) or empty($data) )
+						continue;
+
+					$name = doSlash( $name );
+					$event = doSlash( $event );
+					$data = doSlash( $data );
+
+					$set = "`lang`='$lang', `event`='$event', `data`='$data', `owner`='', `name`='$name'";
+
+					$id = safe_field( 'id' , 'txp_lang' , "`name`='$name' AND `lang`='$lang'" );
+					if( false === $id )
+						{
+						$res = @safe_insert( 'txp_lang', $set);
+						if( $res !== false and $res !== 0 )
+							$count++;
+						}
+					else
+						{
+						$res = @safe_update( 'txp_lang', $set, "`id`='$id'");
+						if( true === $res )
+							$count++;
+						}
+					}
+				}
+			}
+
+		$this->parent->parent->message = "Imported $count snippet strings.";
+		unset( $_POST['step'] );
 		}
 
 	}
@@ -4003,6 +4259,59 @@ class StringHandler
 					unset( $a['lang'] );	# will be used as key, no need to store it twice.
 					$result[ $lang ] = $a;
 					}
+				}
+			ksort( $result );
+			}
+		return $result;
+		}
+
+	function make_nameset( $names )
+		{
+		if( !is_array( $names ) )
+			$names = array( $names );
+
+		$name_set = '';
+		foreach( $names as $name )
+			{
+			$name = doSlash( $name );
+			$name_set .= "'$name', ";
+			}
+
+		$name_set = rtrim( $name_set , ', ' );
+		if ( empty( $name_set ) )
+			$name_set = "''";
+
+		return $name_set;
+		}
+	function get_set_by_lang( $nameset , $lang )
+		{
+		$result = array();
+
+		$where = ' `name` IN ('.$nameset.') AND `lang` = "'.doSlash($lang).'"';
+		$rs = safe_rows_start( 'name,data,event', 'txp_lang', $where );
+		if( $rs && mysql_num_rows($rs) > 0 )
+			{
+			while ( $a = nextRow($rs) )
+				{
+				extract( $a );
+				$result[$name] = array($data,$event);
+				}
+			ksort( $result );
+			}
+		return $result;
+		}
+	function get_set_by_name( $langset , $name )
+		{
+		$result = array();
+
+		$where = ' `lang` IN ('.$langset.') AND `name` = "'.doSlash($name).'"';
+		$rs = safe_rows_start( 'lang,data,event', 'txp_lang', $where );
+		if( $rs && mysql_num_rows($rs) > 0 )
+			{
+			while ( $a = nextRow($rs) )
+				{
+				extract( $a );
+				$result[$lang] = array($data,$event);
 				}
 			ksort( $result );
 			}
