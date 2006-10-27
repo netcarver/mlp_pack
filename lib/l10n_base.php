@@ -1233,12 +1233,14 @@ class LocalisationStringView extends GBPAdminTabView
 		$extras_found = false;
 		foreach( $stats as $iso_code=>$count )
 			{
+			$lang_extras_found = false;
 			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
 			$remove = '';
 			$export = '';
 			if( !in_array( $iso_code , $site_langs ) )
 				{
 				$extras_found = true;
+				$lang_extras_found = true;
 				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
 				$remove[] = sInput( 'l10n_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
@@ -1263,7 +1265,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$export = form( join( '' , $export ) );
 				}
 
-			$out[]= tr( td( ($extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
+			$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
 			}
 		$out[] = tr( td( gTxt('l10n-total') ).td(array_sum($stats).'&nbsp;').td('').td('') , ' style="text-align:right;" ' );
 		$out[] = '</tbody></table>';
