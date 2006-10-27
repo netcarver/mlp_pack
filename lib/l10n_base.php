@@ -496,7 +496,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-plugin'				=> 'Plugin',
 		//'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
-		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
+		'l10n-remove_plugin'		=> "This plugin is no longer installed or may be running from the cache directory.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
 		'l10n-renditions'			=> 'Renditions',
 		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
 		'l10n-renditions_for'		=> 'Renditions for ',
