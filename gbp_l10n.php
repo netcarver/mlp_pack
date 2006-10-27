@@ -3,8 +3,8 @@
 $plugin['name'] = 'l10n';
 $plugin['version'] = '0.6';
 $plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
-$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_l10n/';
-$plugin['description'] = 'Textpattern Multi-Lingual Publishing.';
+$plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
+$plugin['description'] = 'Multilingual Publishing Package.';
 $plugin['type'] = '1';
 
 $plugin['url'] = '$HeadURL$';
@@ -270,14 +270,14 @@ global $txpcfg;
 
 
 # -- The base classes are always needed so load them in...
-include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+@include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 
 
 # -- Include the admin file only if needed...
 if( @txpinterface == 'admin' )
 	{
-	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
+	@include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
 	}
 
 
