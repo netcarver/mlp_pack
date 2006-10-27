@@ -380,9 +380,6 @@ if (@txpinterface == 'public')
 			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
 		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-		//echo br.br.br.br.br , "_l10n_process_url() ...";
-		//echo "site langs = " , var_dump( $site_langs );
-
 		if( !empty( $path ) )
 			{
 			#
@@ -393,13 +390,11 @@ if (@txpinterface == 'public')
 			$reduce_uri = true;
 			$new_first_path = (isset($path[0])) ? $path[0] : '' ;
 
-			//echo br , " ... first item=$tmp [$temp] ";
 			if( !empty($temp) and in_array( $temp , $site_langs ) )
 				{
 				#
 				#	Hit! We can serve this language...
 				#
-				//echo " ... setting lang=$tmp from path." , br;
 				$_SESSION['lang'] = $tmp;
 				$_SESSION['llang'] = $temp;
 				}
@@ -432,12 +427,10 @@ if (@txpinterface == 'public')
 			#	If we are still missing a language for the session, try to get the prefered selection
 			# from the user agent's HTTP header.
 			#
-			//echo br,br,br,br , "Processing user agent request...";
 			$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
 			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
 				$chunks = split( ',' , $req_lang );
-				//echo br, "Agent request: " , var_dump($req_lang) , br , " chunks: " , var_dump($chunks);
 				if( count( $chunks ) )
 					{
 					foreach( $chunks as $chunk )
@@ -445,7 +438,6 @@ if (@txpinterface == 'public')
 						$info = split( ';' , $chunk );
 						if( false === $info )
 							{
-							//echo br,br, "Could not split on ';' boundaries!";
 							$info[] = $chunk;
 							}
 						$code = $info[0];
@@ -462,12 +454,10 @@ if (@txpinterface == 'public')
 							else
 								continue;
 
-							//echo br,br , "trying " , var_dump($lang), " in " , var_dump( $site_langs );
 							if( in_array( $lang['long'] , $site_langs ) )
 								{
-								$_SESSION['lang'] = $lang['short'];
+								$_SESSION['lang']  = $lang['short'];
 								$_SESSION['llang'] = $lang['long'];
-								//echo br,br," ... Setting language to {$_SESSION['lang']} [",var_dump($lang),"], from user-agent request." , br;
 								break;
 								}
 							}
@@ -482,14 +472,10 @@ if (@txpinterface == 'public')
 		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
 			{
 			$def = $site_langs[0];
-			//echo " ... setting to default lang: $def " , br;
 			$_SESSION['lang'] = $def;
 			}
 
 		_l10n_set_browse_language( $_SESSION['lang'] );
-
-		//echo br , "\$l10n_language = " , var_dump($l10n_language);
-		//echo br , ' setting $_SERVER[\'REQUEST_URI\'] to ', $_SERVER['REQUEST_URI'] , br , br;
 
 		return $new_first_path;
 		}
@@ -535,7 +521,6 @@ if (@txpinterface == 'public')
 		global $l10n_language , $textarray , $prefs;
 
 		$first_chunk = _l10n_process_url();
-		//echo br,br,br,br,br,"First chunk=",$first_chunk;
 
 		#
 		#	Now we know what language this user is browsing in.
@@ -545,8 +530,6 @@ if (@txpinterface == 'public')
 		#
 		if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
 			{
-			//echo br , 'Re-loading $textarray.';
-
 			$textarray = load_lang( $l10n_language['long'] );
 			$prefs['language'] = $l10n_language['long'];
 			}
@@ -630,7 +613,6 @@ if (@txpinterface == 'public')
 
 		if( !$article_list )
 			{
-			//echo br , var_dump( $thisarticle ) , br , br;
 			$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
 
 			if( $show_title )
@@ -648,7 +630,6 @@ if (@txpinterface == 'public')
 			$short = $codes['short'];
 			$long  = $codes['long'];
 			$dir   = LanguageHandler::get_lang_direction_markup($lang);
-			//$dir   = '';
 
 			switch( $display )
 				{
@@ -724,7 +705,6 @@ if (@txpinterface == 'public')
 					}
 				else
 					{
-					//echo 'no translation.';
 					if( $show_empty )
 						$list[] = tag( $lname , 'li' );
 					}
@@ -888,8 +868,8 @@ if (@txpinterface == 'public')
 				$html = parse($thing);
 				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $l10n_language['short'].'/'.'$1', $html);
 				return $html;
+				}
 			}
-		}
 
 		if (array_key_exists('category', $atts))
 			{
@@ -913,7 +893,7 @@ if (@txpinterface == 'public')
 			# SED: Process and string substitutions needed in the contained content.
 			$thing = SnippetHandler::substitute_snippets( $thing );
 			return parse($thing);
-		}
+			}
 
 		return null;
 		}
