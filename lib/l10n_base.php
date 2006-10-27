@@ -568,24 +568,23 @@ class LocalisationView extends GBPPlugin
 			if( $txp_event === $event )
 				{
 				$installed = $this->installed();
+				$installed = !empty( $installed );
+
 				if( !$installed or ($this->strings_lang != LANG) )
 					{
 					# Merge the default language strings into the textarray so that non-English
 					# users at least see an English message in the plugin.
-					$textarray = array_merge( $textarray , $this->strings );
+					$textarray = array_merge( $this->strings , $textarray );
 					}
 
 				#	To ease development, allow new strings to be inserted...
 				if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 					{
 					$this->strings = array_merge( $this->strings , $this->perm_strings );
-					$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin.l10n' );
+					$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' , 'l10n' );
 					$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'l10n' , true );
+					StringHandler::load_strings_into_textarray( LANG );
 					}
-
-				# Load the strings from the store to the $textarray. This will override the
-				# strings inserted above, if they have been translated or edited.
-				StringHandler::load_strings_into_textarray( LANG );
 				}
 			}
 		else
