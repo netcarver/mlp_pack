@@ -65,7 +65,6 @@ class ArticleManager
 		}
 	function _update_article( $article_id , $title , $members )
 		{
-		//echo br , "_update_article( $article_id , $title ," , var_dump( $members ), " )";
 		$members = serialize( $members );
 		$title = doSlash( $title );
 		$article = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`='$article_id'" );
@@ -73,7 +72,6 @@ class ArticleManager
 		}
 	function change_rendition_language( $article_id , $rendition_id , $rendition_lang , $target_lang )
 		{
-		//echo br , "change_rendition_language( $article_id , $rendition_id , $rendition_lang -> $target_lang ) ... ";
 		extract( ArticleManager::_get_article_info( $article_id ) );
 
 		if( array_key_exists( $target_lang , $members ) )
@@ -173,7 +171,6 @@ class ArticleManager
 		}
 	function create_article_and_add( $rendition )
 		{
-		//echo br , "create_article_and_add(\$rendition) ... ", var_dump ($rendition) ,br,br;
 		$result = false;
 		$name = doSlash($rendition['Title']);
 		$lang = (@$rendition['Lang']) ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
@@ -227,7 +224,6 @@ class ArticleManager
 			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$rendition_id'" );
 		if( empty($info) )
 			{
-			//echo " ... returning: failed to read article data.";
 			return $info;
 			}
 
@@ -259,7 +255,6 @@ class ArticleManager
 	function move_to_article( $rendition )
 		{
 		global $l10n_article_message;
-		//echo br , "move_to_article( $rendition ) ... ";
 
 		#	Get the new entries...
 		$new_article	= $rendition['Group'];
@@ -275,7 +270,7 @@ class ArticleManager
 			}
 
 		$current_article	= $info['Group'];
-		$current_lang	= $info['Lang'];
+		$current_lang		= $info['Lang'];
 
 		if( ($new_article == $current_article) and ($new_lang == $current_lang) )
 			{
@@ -658,10 +653,8 @@ class LocalisationView extends GBPPlugin
 				if( !LanguageHandler::is_valid_code( $lang ) )
 					continue;
 
-				//echo br , "Adding $full_name -> $lang [" , LanguageHandler::get_native_name_of_lang( $lang ) , '].';
 				$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where Lang='$lang'";
-				//echo br , "Using $sql";
 				$ok = @safe_query( $sql );
 				}
 			}
@@ -673,7 +666,6 @@ class LocalisationView extends GBPPlugin
 			foreach( $diff_tables_names as $full_name )
 				{
 				$sql = 'drop table `'.$full_name.'`';
-				//echo br , "Using $sql";
 				$ok = @safe_query( $sql );
 				}
 			}
@@ -692,7 +684,6 @@ class LocalisationView extends GBPPlugin
 			if( $language_set and $language_ok )
 				{
 				$table = ArticleManager::make_textpattern_name( $l10n_language );
-				//$table = $table.'_'.$l10n_language['long'];
 				}
 			}
 		elseif ( 'l10n_master_textpattern' === $table && $installed )
@@ -726,12 +717,10 @@ class LocalisationView extends GBPPlugin
 		$result = "Skipped insertion of strings for '$key'.";
 		if( $plugin and $prefix and $strings and $lang and $event and (count($strings)) )
 			{
-			//echo " ... attempting insertions ... ";
 			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $plugin ) )
 				$result = true;
 			}
 
-		//echo " ... returning " , (($result === true) ? 'added ok.' : $result) ;
 		return $result;
 		}
 
@@ -876,11 +865,6 @@ class SnippetTabView extends GBPAdminTabView
 		}
 	function preload()
 		{
-		//$step = gps('step');
-		//if( $step )
-		//	{
-		//	}
-
 		// Let the active_tab know it's active and call it's preload()
 		$tab = &$this->tabs[$this->active_tab];
 		$tab->is_active = 1;
@@ -1060,7 +1044,7 @@ class LocalisationStringView extends GBPAdminTabView
 				break;
 
 			case 'form':
-			$this->render_owner_list('form');
+				$this->render_owner_list('form');
 				if ($container = gps('container'))
 					{
 					$this->render_string_list( 'txp_form' , 'Form' , $container , $id );
@@ -1069,7 +1053,7 @@ class LocalisationStringView extends GBPAdminTabView
 					elseif( $can_edit and in_array($step , $pf_steps) )
 						$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $container );
 					}
-			break;
+				break;
 
 			case 'plugin':
 				$this->render_owner_list('plugin');
@@ -1090,7 +1074,7 @@ class LocalisationStringView extends GBPAdminTabView
 			}
 		}
 
-	function _generate_list( $table , $fname , $fdata )	# left pane subroutine
+	function _generate_list( $table , $fname , $fdata )						# left pane subroutine
 		{
 		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
 		if( $rs && mysql_num_rows($rs) > 0 )
@@ -1123,7 +1107,7 @@ class LocalisationStringView extends GBPAdminTabView
 		return join('', $out);
 		}
 
-	function _generate_plugin_list()	# left pane subroutine
+	function _generate_plugin_list()											# left pane subroutine
 		{
 		$rps = StringHandler::discover_registered_plugins();
 		if( count( $rps ) )
@@ -1145,7 +1129,7 @@ class LocalisationStringView extends GBPAdminTabView
 		return join('', $out);
 		}
 
-	function render_owner_list( $type )	#	Render the left pane
+	function render_owner_list( $type )										#	Render the left pane
 		{
 		/*
 		Renders a list of resource owners for the left-hand pane.
@@ -1164,26 +1148,26 @@ class LocalisationStringView extends GBPAdminTabView
 				$out[] = 	'<h3>' . gTxt('l10n-registered_plugins') . '</h3>' . n .
 							'<div id="l10n_plugins">' . n .
 							'<ol>' . n;
-			$out[] = $this->_generate_plugin_list();
+				$out[] = $this->_generate_plugin_list();
 				$out[] = n . '</ol>';
-			break;
+				break;
 
 			case 'page':
 				$out[] = 	'<h3>' . gTxt('pages') . '</h3>' . n .
 							'<div id="l10n_pages"' . n .
 							'<ol>' . n;
-			$out[] = $this->_generate_list( 'txp_page' , 'name' , 'user_html' );
+				$out[] = $this->_generate_list( 'txp_page' , 'name' , 'user_html' );
 				$out[] = n . '</ol>';
-			break;
+				break;
 
 			default:
-			case 'form':
+				case 'form':
 				$out[] = 	'<h3>' . gTxt('forms') . '</h3>' . n .
 							'<div id="l10n_forms">' . n .
 							'<ol>' . n;
-			$out[] = $this->_generate_list( 'txp_form' , 'name' , 'Form' );
+				$out[] = $this->_generate_list( 'txp_form' , 'name' , 'Form' );
 				$out[] = n . '</ol>';
-			break;
+				break;
 			}
 
 		$out[] = n . '</div>';
@@ -1223,7 +1207,7 @@ class LocalisationStringView extends GBPAdminTabView
 		return join('', $out);
 		}
 
-	function _render_string_stats( $string_name , &$stats )	# Right pane stats render subroutine
+	function _render_string_stats( $string_name , &$stats )					# Right pane stats render subroutine
 		{
 		$site_langs 	= LanguageHandler::get_site_langs();
 
@@ -1303,14 +1287,11 @@ class LocalisationStringView extends GBPAdminTabView
 		/*
 		Show all the strings and localisations for the given plugin.
 		*/
-		//echo br, "render_plugin_string_list( $plugin , $string_name , $prefix )";
 		$stats 			= array();
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
 		$details		= unserialize( StringHandler::if_plugin_registered( $plugin , '' ) );
 		$event			= $details['event'];
-
-		//echo br , "Event($event)" , br;
 
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
@@ -1349,7 +1330,7 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function render_string_list( $table , $fdata , $owner , $id='' )	# Center pane snippet wrapper
+	function render_string_list( $table , $fdata , $owner , $id='' )			# Center pane snippet wrapper
 		{
 		/*
 		Renders a list of strings belonging to the chosen owner in the center pane.
@@ -1420,7 +1401,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 		echo join('', $out);
 		}
-	function render_pageform_edit( $table , $fname, $fdata, $owner )	# Right pane page/form edit textarea.
+	function render_pageform_edit( $table , $fname, $fdata, $owner )			# Right pane page/form edit textarea.
 		{
 		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
@@ -1523,7 +1504,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function render_import_list()
 		{
-		$d 	= gps( 'data' );
+		$d = gps( 'data' );
 		$d = @unserialize( @base64_decode( @str_replace( "\r\n", '', $d ) ) );
 
 		$o[] = '<div style="float:left;">';
@@ -1611,7 +1592,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( !empty( $this->sub_tab) )
 			$tab = doSlash( gps( 'subtab' ) );
 		else
-		$tab = doSlash( gps( gbp_tab ) );
+			$tab = doSlash( gps( gbp_tab ) );
 
 		if( $tab === 'form' )
 			@safe_update( 'txp_form' , "`Form`='$data'" , "`name`='$owner'" );
@@ -1772,9 +1753,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 		{
 		$plugin = gps('owner');
 		$lang   = gps('language');
-		//$prefix = gps('prefix');
-
-		//echo br , "SnippetInOutView::export_languageset()";
 
 		$sources = array	(
 							array	(
@@ -1823,8 +1801,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 		sort( $snippet_names );
 
-		//echo br,br,var_dump( $snippet_names );
-
 		$snippet_nameset = StringHandler::make_nameset($snippet_names);
 
 		#
@@ -1841,11 +1817,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			if( !$present )
 				continue;
 
-			//echo br , "Processing $lang snippets...";
-
 			$lang_set = StringHandler::get_set_by_lang( $snippet_nameset , $lang );
-
-			//echo br, var_dump( $lang_set ) , br,br,br;
 
 			$export_data[$lang] = $lang_set;
 			}
@@ -1854,20 +1826,16 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#	Serve the export data as a file...
 		#
 		$export_data = chunk_split( base64_encode( serialize($export_data) ) , 64 );
-		//echo br, "Export data (lang->name->data) ... " ,var_dump( $export_data ) , br,br,br;
 		$this->parent->parent->serve_file( $export_data , 'snippets.inc' );
 		}
 
 	function render_import_list()
 		{
-		//echo br, "render_import_list()";
 		$count = 0;
 		$site_langs = LanguageHandler::get_site_langs();
 		$d = gps( 'data' );
 		$d = @unserialize( @base64_decode( @str_replace( "\r\n", '', $d ) ) );
 		$subtab = gps('subtab');
-
-		//echo br,"Subtab is ",var_dump($subtab);
 
 		$o[] = '<div style="float:left;">';
 		$o[] = '<h2>'.gTxt('preview').' '.gTxt('file').'</h2>';
@@ -1878,7 +1846,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 			$f[] = hInput( 'language' , gps('language') ).n;
 			$f[] = sInput( 'l10n_import_languageset').n;
 			$f[] = hInput( 'subtab' , $this->sub_tab );
-			//$f[] = hInput( 'subtab' , $subtab ).n;
 			$f[] = hInput( 'commit', 'true' ).n;
 			$f[] = $this->parent->form_inputs().n;
 
@@ -1895,7 +1862,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 						{
 						$data	= htmlspecialchars($couplet[0]);
 						$event	= htmlspecialchars($couplet[1]);
-						//echo br,"$name => $event , $data";
 
 						if( empty( $name ) or empty($event) or empty($data) )
 							continue;
@@ -1934,13 +1900,11 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$d 	= gps( 'data' );
 		$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
 		$count = 0;
-		//echo br, "Data (lang->name->data) ... " ,var_dump( $d ) , br,br,br;
 
 		if( is_array( $d ) and !empty( $d ) )
 			{
 			foreach( $d as $lang=>$set )
 				{
-				//echo br,br,"Extracting language $lang...";
 				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 					continue;
 
@@ -1948,7 +1912,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 					{
 					$data = $couplet[0];
 					$event = $couplet[1];
-					//echo br,"$name => $event , $data";
 
 					if( empty( $name ) or empty($event) or empty($data) )
 						continue;
@@ -2371,7 +2334,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				foreach( $list as $lang => $record )
 					{
 					extract( $record );
-					$msg = 	gTxt('title')  . ": \"$title\"\r\n";
+					$msg = gTxt('title')  . ": \"$title\"\r\n";
 					$msg.= gTxt( 'l10n-xlate_to' ) . "$language [$lang].\r\n";
 					$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 					$links[] = $msg;
@@ -2396,7 +2359,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				$subject = gTxt( 'l10n-email_xfer_subject' , $subs );
 
 				@txpMail($email, $subject, $body, $replyto);
-				//echo br,"Sent email to $email",br,"Reply to: $replyto",br,"Subject: $subject",br,br,"Body: $body",br,br;
 				}
 			}
 		}
@@ -2506,17 +2468,17 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						{
 						case 'start_clone':
 							$this->render_start_clone();
-						break;
+							break;
 
 						default:
 							$this->render_article_table();
-						break;
+							break;
 						}
 					}
 				else
 					$this->render_article_table();
 				}
-			break;
+				break;
 			}
 		}
 
@@ -2530,7 +2492,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		if( empty($string) or empty($langs) )
 			return $langs;
 
-		//echo br,"Name = $name",br,"Langs = ",var_dump($langs),br,"Matches = ",var_dump($matches),br,"Set = ",var_dump($set),br;
 
 		if( 'match_status' === $name )
 			{
@@ -2570,7 +2531,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				unset($langs[$lang]);
 			}
 
-		//echo "Returning ",var_dump($langs),br;
 		return $langs;
 		}
 	function _render_filter_form()
@@ -3649,7 +3609,7 @@ class SnippetHandler
 		{
 		return array('snip-site_slogan');
 		}
-	function  get_pattern( $name )
+	function get_pattern( $name )
 		{
 		# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
 		# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
@@ -3781,7 +3741,7 @@ class SnippetHandler
 						$lng = $a['lang'];
 						$temp[$name][$lng]['id'] 		= $a['id'];
 						$temp[$name][$lng]['lastmod'] 	= $a['lastmod'];
-						if( $get_data)
+						if( $get_data )
 							$temp[$name][$lng]['data'] 		= $a['data'];
 						}
 					}
@@ -3918,7 +3878,6 @@ class StringHandler
 	function insert_strings( $pfx , $strings , $lang , $event='' , $owner='' , $override = false )
 		{
 		global	$txp_current_plugin;
-		//echo br , "insert_strings( pfx($pfx) , strings($strings) , lang($lang) , event($event) , owner($owner) , override($override) )";
 		if( empty($strings) or !is_array($strings) or empty($lang) )
 			return null;
 
@@ -3932,8 +3891,8 @@ class StringHandler
 
 			# If needed, register the plugin...
 			$num = count($strings);
-				if( false === StringHandler::if_plugin_registered( $owner , $lang , $num ) )
-					StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event );
+			if( false === StringHandler::if_plugin_registered( $owner , $lang , $num ) )
+				StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event );
 			elseif( !$override )
 				return false;
 
@@ -3981,12 +3940,8 @@ class StringHandler
 
 		if( empty($name) or empty($event) or empty($new_lang) )
 			{
-			//echo ' INPUT ERROR.';
 			return null;
 			}
-
-		//if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-		//	$event = $event.'.'.$txp_current_plugin;
 
 		if( $owner === 'snippet' )
 			{
@@ -4126,16 +4081,14 @@ class StringHandler
 		{
 		$r = array	(
 					'owner'		=> $owner,		#	Name the plugin these strings are for.
-					'prefix'	=> $prefix,	#	Its unique string prefix
-					'lang'		=> $lang,	#	The language of the initial strings.
-					'event'		=> $event,	#	public/admin/common = which interface the strings will be loaded into
+					'prefix'	=> $prefix,		#	Its unique string prefix
+					'lang'		=> $lang,		#	The language of the initial strings.
+					'event'		=> $event,		#	public/admin/common = which interface the strings will be loaded into
 					);
 
-		//$filter = ' AND `name` LIKE "'.doSlash($prefix).L10N_SEP.'%"';
 		$filter = " AND `owner`='$owner'";
 		$r['strings'] = StringHandler::load_strings( $lang, $filter );
 		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
-		echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
 		return $result;
 		}
 
