@@ -471,7 +471,9 @@ class LocalisationView extends GBPPlugin
 		'l10n-export_title'			=> '<h2>Export {type} Strings</h2><br/><p>Select languages you wish to include and then click the button.</p>',
 		//'l10n-failed'				=> 'Failed',
 		'l10n-import'				=> 'Import',
+		'l10n-import_count'			=> 'Imported {count} {type} strings.',
 		'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',
+		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
 		'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 		'l10n-into'					=> 'into',
 		'l10n-inout'				=> 'Export/Import',
@@ -480,7 +482,6 @@ class LocalisationView extends GBPPlugin
 		//'l10n-import_cat1_lang'		=> 'use category1 for language',
 		//'l10n-import_cat2_lang'		=> 'use category2 for language',
 		//'l10n-import_section_lang'	=> 'use section names for language',
-		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
 		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
 		'l10n-language_not_supported' => 'Skipping: Language not supported.',
 		'l10n-languages' 			=> 'Languages ',
@@ -1934,7 +1935,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 				}
 			}
 
-		$this->parent->parent->message = "Imported $count snippet strings.";
+			$this->parent->parent->message = gTxt('l10n-import_count',array('{count}'=>$count,'{type}'=>gTxt('l10n-snippet')));
 		unset( $_POST['step'] );
 		}
 
