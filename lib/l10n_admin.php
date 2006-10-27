@@ -43,8 +43,6 @@ function _l10n_get_user_languages( $user_id = null )
 
 	$langs = array();
 
-	//echo br , "_l10n_get_user_languages() ... user: " . var_dump( $user_id );
-
 	#
 	#	Certain user groups get full rights...
 	#
@@ -56,7 +54,6 @@ function _l10n_get_user_languages( $user_id = null )
 	#
 	#	Stub... replace with lookup of the user's languages....
 	#
-	//$langs = array( 'fr-fr' , 'de-de' );
 	$langs = LanguageHandler::get_site_langs();
 
 	return $langs;
@@ -114,11 +111,11 @@ function _l10n_match_cb( $matches )
 	#	$matches[0] is the entire pattern...
 	#	$matches[1] is the article ID...
 	#
-	$id = $matches[1];
-	$rs = safe_row(	'*', 'textpattern', "ID=$id" );
-	$code	= $rs['Lang'];
+	$id 		= $matches[1];
+	$rs 		= safe_row(	'*', 'textpattern', "ID=$id" );
+	$code		= $rs['Lang'];
 	$article	= $rs['Group'];
-	$lang = LanguageHandler::get_native_name_of_lang( $code );
+	$lang 		= LanguageHandler::get_native_name_of_lang( $code );
 	return $matches[0] . br . $lang . ' [' . gTxt('article'). ' :' .$article . ']';
 	}
 function _l10n_chooser( $permitted_langs )
@@ -263,7 +260,7 @@ function l10n_article_buffer_processor( $buffer )
 	$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
-	
+
 	#
 	#	Disallow cloning in the write tab now...
 	#
@@ -351,7 +348,6 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 	$incoming = psa($new_vars);
 	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : LanguageHandler::get_site_default_lang();
 
-	//echo br , "l10n_add_rendition_to_article_cb( $event , $step ) ... " ;
 	switch(strtolower($step))
 		{
 		case 'publish':
@@ -370,7 +366,7 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 			#	Read the variables to continue the edit...
 			#
 			l10n_setup_vars( $event , $step );
-		break;
+			break;
 		case 'save':
 			#
 			#	Record the old and new languages, if there are any changes we need to update
@@ -401,7 +397,7 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 			#	Read the variables to continue the edit...
 			#
 			l10n_setup_vars( $event , $step );
-		break;
+			break;
 		}
 	}
 
@@ -465,9 +461,6 @@ function l10n_changeauthor_notify_routine()
 		$subject = gTxt( 'l10n-email_xfer_subject' , $subs );
 
 		$ok = @txpMail($email, $subject, $body, $replyto);
-
-		//echo br,br,"To :$email",br,"Reply To :$replyto",br,"Subject :$subject",br,br,htmlspecialchars($body),br;
-		//exit;
 		}
 	}
 function l10n_post_multi_edit_cb( $event , $step )
@@ -540,7 +533,7 @@ function l10n_pre_multi_edit_cb( $event , $step )
 			if( $info !== false )
 				{
 				$article	= $info['Group'];
-				$lang  = $info['Lang'];
+				$lang  		= $info['Lang'];
 				$languages[$lang] = $lang;
 				if( 'delete' === $method )
 					ArticleManager::remove_rendition( $article , $id , $lang );
@@ -560,8 +553,6 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$code  = LanguageHandler::compact_code( $lang );
 	$table_name = ArticleManager::make_textpattern_name( $code );
 
-	//echo br , "Updating the $table_name table...";
-
 	$where = '';
 	if( $filter )
 		$where = " where `Lang`='$lang'";
@@ -572,11 +563,9 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	@safe_query( $drop_sql );
 	$ok = @safe_query( $sql );
 	@safe_query( 'unlock tables' ) ;
-	//echo ($ok) ? ' done.' : ' failed.';
 	}
 function l10n_generate_lang_tables( $event , $step )
 	{
-	//echo br , "l10n_generate_lang_tables( $event , $step )";
 	global $l10n_vars;
 
 	$save = gps('save');
@@ -585,15 +574,12 @@ function l10n_generate_lang_tables( $event , $step )
 	$publish = gps('publish');
 	if ($publish) $step = 'publish';
 
-	//echo " ... new step: $step";
-
 	switch( $step )
 		{
 		case 'publish' :
 		case 'save' :
 			$lang = $l10n_vars['article_lang'];
 			$langs = LanguageHandler::get_site_langs();
-			//echo " ... Lang=$lang, Langs=" , var_dump( $langs ) , br;
 			if( in_array( $lang, $langs ) )
 				{
 				//_l10n_generate_lang_table( $lang );
@@ -611,15 +597,12 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 
 	if( $things )
 		{
-		//echo br , "pre-discuss-multi-edit($event, $step)... method is '$method'";
 		foreach( $things as $id )
 			{
 			$id = intval($id);
 			$comment = safe_row( 'parentid as id,visible as current_visibility' , 'txp_discuss' , "`discussid`='$id'" );
 			if( $comment !== false )
 				{
-				//echo br , "read discussion $id as " , var_dump( $comment ) , "VISIBLE=", VISIBLE;
-
 				$mark_lang = false;
 				extract( $comment );
 
@@ -639,7 +622,6 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 						{
 						$lang = $info['Lang'];
 						$languages[$lang] = $lang;
-						//echo br , "Marking language $lang for update.";
 						}
 					}
 				}
