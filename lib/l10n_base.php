@@ -1570,6 +1570,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$remove_langs 	= gps('lang_code');
 		$plugin 		= gps( L10N_PLUGIN_CONST );
 		StringHandler::remove_strings( $plugin , $remove_langs );
+		unset( $_POST['step'] );
 		}
 
 	function save_strings()
