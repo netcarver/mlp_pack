@@ -564,29 +564,6 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$ok = @safe_query( $sql );
 	@safe_query( 'unlock tables' ) ;
 	}
-function l10n_generate_lang_tables( $event , $step )
-	{
-	global $l10n_vars;
-
-	$save = gps('save');
-	if ($save) $step = 'save';
-
-	$publish = gps('publish');
-	if ($publish) $step = 'publish';
-
-	switch( $step )
-		{
-		case 'publish' :
-		case 'save' :
-			$lang = $l10n_vars['article_lang'];
-			$langs = LanguageHandler::get_site_langs();
-			if( in_array( $lang, $langs ) )
-				{
-				//_l10n_generate_lang_table( $lang );
-				}
-		break;
-		}
-	}
 function l10n_pre_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
