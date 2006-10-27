@@ -482,6 +482,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-import_section_lang'	=> 'use section names for language',
 		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
 		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
+		'l10n-language_not_supported' => 'Skipping: Language not supported.',
 		'l10n-languages' 			=> 'Languages ',
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
@@ -1784,8 +1785,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 				$key = '';
 				if( is_callable( array($this,$fn) , false , $key ) )
 					$snips = call_user_func( array($this,$fn) );
-				//else
-				//	echo br , "Cannot call function $key";
 				}
 			else
 				{
@@ -1850,7 +1849,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 				$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
 				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 					{
-					$l[] = tr( n.td( sp ).n.td('Skipping: Language not supported.') ).n;
+					$l[] = tr( n.td( sp ).n.td( gTxt('l10n-language_not_supported') ) ).n;
 					}
 				else
 					{
@@ -2980,19 +2979,19 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Insert the strings for this plugin',
 			'cleanup' => 'Remove plugin strings'),
 		'3' => array(
-			'setup' => 'Add `Lang` and `Group` fields to textpattern table',
+			'setup' => 'Add `Lang` and `Group` fields to the textpattern table',
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table'),
 		'4' => array(
-			'setup' => 'Add the substitutions table',
-			'cleanup' => 'Drop the substitutions table'),
+			'setup' => 'Add the l10n_substitutions table',
+			'cleanup' => 'Drop the l10n_substitutions table'),
 		'5' => array(
-			'setup' => 'Add the articles table',
-			'cleanup' => 'Drop the articles table'),
+			'setup' => 'Add the l10n_articles table',
+			'cleanup' => 'Drop the l10n_articles table'),
 		'6' => array(
 			'setup' => 'Process existing articles' ),
 		'7' => array(
-			'setup' => 'Add new textpattern tables for each site language',
-			'cleanup' => 'Drop the extra site language textpattern tables'),
+			'setup' => 'Add new l10n_textpattern tables for each site language',
+			'cleanup' => 'Drop the extra l10n_textpattern tables'),
 		'8' => array (
 			'cleanup' => 'Delete cookies' ),
 		'9' => array (
