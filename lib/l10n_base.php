@@ -480,12 +480,13 @@ class LocalisationView extends GBPPlugin
 		'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 		'l10n-export'				=> 'Export',
+		'l10n-export_title'			=> '<h2>Export {type} Strings</h2><br/><p>Select languages you wish to include and then click the button.</p>',
 		'l10n-failed'				=> 'Failed',
 		'l10n-import'				=> 'Import',
-		'l10n-import_title'			=> '<h2>Import Strings</h2><br/><p>Paste exported files into the box below and click the button.</p>',
+		'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',
 		'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 		'l10n-into'					=> 'into',
-		'l10n-inout'				=> 'Input/Output',
+		'l10n-inout'				=> 'Export/Import',
 		'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
 		'l10n-import_fixed_lang' 	=> 'use the default language',
 		'l10n-import_cat1_lang'		=> 'use category1 for language',
@@ -502,6 +503,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
 		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
 		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
+		'l10n-plugin'				=> 'Plugin',
 		'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
 		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
@@ -518,6 +520,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-setup_wiz_title'		=> 'Setup Wizard',
 		'l10n-show_legends' 		=> 'Show article table legend?',
 		'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
+		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
 		'l10n-snippets_tab'			=> 'Snippets',
 		'l10n-specials'				=> 'Specials',
@@ -1275,7 +1278,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 		if( !empty( $string_name ) )
 			{
-			$import[] = gTxt('l10n-import_title') . br;
+			$import[] = gTxt('l10n-import_title' , array( '{type}'=>gTxt('l10n-plugin') )) . br;
 			$import[] = '<textarea name="data" cols="60" rows="2" id="l10n_string_import">';
 			$import[] = '</textarea>' .br . br;
 			$import[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
@@ -3149,7 +3152,7 @@ class LanguageHandler
 		'eu'=>array( 'eu'=>'Euskera' ),
 		'fi'=>array( 'fi'=>'Suomi' ),
 		'fr'=>array( 'fr'=>'Français' ),
-		'he'=>array( 'he'=>'עברית / עִבְרִית' ,'dir'=>'rtl' ),
+		'he'=>array( 'he'=>'עִבְרִית' ,'dir'=>'rtl' ),
 		'hu'=>array( 'hu'=>'Magyar' ),
 		'id'=>array( 'id'=>'Bahasa Indonesia' ),
 		'is'=>array( 'is'=>'Íslenska' ),
@@ -3272,7 +3275,7 @@ class LanguageHandler
 		/*
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
-		$dir = '';
+		$dir = ' dir="ltr"';
 		if( !empty($lang) and ('rtl' == LanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = ' dir="rtl"';
 		return $dir;
@@ -3631,7 +3634,6 @@ class StringHandler
 			StringHandler::register_plugin( $plugin , $pfx , $num , $lang , $event );
 		elseif( !$override )
 			return false;
-		//echo "... plugin now registered";
 
 		# If the prefix doesn't end with the required sep character, add it...
 		$pfx_len = strlen( $pfx );
