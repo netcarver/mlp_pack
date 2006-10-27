@@ -551,9 +551,6 @@ if (@txpinterface == 'public')
 			$prefs['language'] = $l10n_language['long'];
 			}
 
-		# Load the localised set of strings based on the selected language...
-		StringHandler::load_strings_into_textarray( $l10n_language['long'] );
-
 		load_localised_pref( 'site_slogan' );
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
