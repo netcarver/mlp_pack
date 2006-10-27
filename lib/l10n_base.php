@@ -1382,9 +1382,8 @@ class LocalisationStringView extends GBPAdminTabView
 		*/
 		$stats 	= array();
 		$owner = 'special';
-		$data 	= '##snip-site_slogan##';
-		$raw_count = 0;
-		$snippets = SnippetHandler::find_snippets_in_block( $data , $raw_count );
+		$raw_count = 1;
+		$snippets = SnippetHandler::get_special_snippets();
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
@@ -3344,6 +3343,10 @@ class SnippetHandler
 	strings therein.
 	*/
 
+	function get_special_snippets()
+		{
+		return array('snip-site_slogan');
+		}
 	function  get_pattern( $name )
 		{
 		# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
