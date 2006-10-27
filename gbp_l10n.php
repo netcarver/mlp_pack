@@ -79,6 +79,8 @@ On the public side...
 * 404 support for finding renditions that are not available in the requested language.
 * A tag listing available renditions of a given article and allowing switching between them.
 * Tags for accessing language codes and direction information.
+* Conditional tag for testing the visitor's language or the directionality of the language.
+* Localised (and direction adjusted) feeds.
 
 
 h2. Translation of Renditions.
@@ -294,6 +296,30 @@ if (@txpinterface == 'public')
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
 	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
+	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
+	register_callback( '_l10n_tag_feeds'					, 'atom_entry' );
+
+	function _l10n_tag_feeds()
+		{
+		global $l10n_language , $thisarticle;
+
+		$syndicate_body_or_excerpt = $GLOBALS['prefs']['syndicate_body_or_excerpt'];
+
+		$dir = LanguageHandler::get_lang_direction_markup( $l10n_language['short'] );
+		$content = $thisarticle['body'];
+		$summary = $thisarticle['excerpt'];
+
+		if ($syndicate_body_or_excerpt)
+			{
+			# short feed: use body as summary if there's no excerpt
+			if( !trim($summary) )
+				$summary = $content;
+			$content = '';
+			}
+
+		$thisarticle['excerpt'] = tag( $summary , 'div' , $dir );
+		$thisarticle['body']    = (!empty($content)) ? tag( $content , 'div' , $dir ) : '';
+		}
 
 	function _l10n_set_browse_language( $short_code , $debug=0 )
 		{
@@ -624,6 +650,8 @@ if (@txpinterface == 'public')
 			$codes = LanguageHandler::compact_code($lang);
 			$short = $codes['short'];
 			$long  = $codes['long'];
+			$dir   = LanguageHandler::get_lang_direction_markup($lang);
+			//$dir   = '';
 
 			switch( $display )
 				{
@@ -651,7 +679,7 @@ if (@txpinterface == 'public')
 				# so use the current url and inject the language component into each one...
 				#
 				$current = ($l10n_language['long'] === $lang);
-				$text    = $lname;
+				$text    = tag( $lname , 'span' , $dir);
 
 				#
 				#	Prep the line class...
@@ -680,7 +708,7 @@ if (@txpinterface == 'public')
 				if( array_key_exists( $lang , $alangs ) )
 					{
 					$current = ($l10n_language['long'] === $lang);
-					$text    = $lname;
+					$text    = tag( $lname , 'span' , $dir);
 
 					#
 					#	Prep the line class...
