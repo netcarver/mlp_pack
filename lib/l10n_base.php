@@ -1048,49 +1048,52 @@ class LocalisationStringView extends GBPAdminTabView
 		switch ($this->event)
 			{
 			case 'special':
-			$this->render_owner_list('special');
-			$this->render_specials_list( $id );
-			if( $owner = gps('owner') and $id )
-				$this->render_string_edit( 'special', 'special' , $id );
-			break;
+				$this->render_owner_list('special');
+				$this->render_specials_list( $id );
+				if( $container = gps('container') and $id )
+					$this->render_string_edit( 'special', 'special' , $id );
+				break;
 
 			case 'page':
-			$this->render_owner_list('page');
-			if ($owner = gps('owner'))
-				{
-				$this->render_string_list( 'txp_page' , 'user_html' , $owner , $id );
-				if( $id )
-					$this->render_string_edit( 'page', $owner , $id );
-				elseif( $can_edit and in_array($step , $pf_steps) )
-					$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $owner );
-				}
-			break;
+				$this->render_owner_list('page');
+				if ($container = gps('container'))
+					{
+					$this->render_string_list( 'txp_page' , 'user_html' , $container , $id );
+					if( $id )
+						$this->render_string_edit( 'page', $container , $id );
+					elseif( $can_edit and in_array($step , $pf_steps) )
+						$this->render_pageform_edit( 'txp_page' , 'name' , 'user_html' , $container );
+					}
+				break;
 
 			case 'form':
 			$this->render_owner_list('form');
-			if ($owner = gps('owner'))
-				{
-				$this->render_string_list( 'txp_form' , 'Form' , $owner , $id );
-				if( $id )
-					$this->render_string_edit( 'form' , $owner , $id );
-				elseif( $can_edit and in_array($step , $pf_steps) )
-					$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $owner );
-				}
+				if ($container = gps('container'))
+					{
+					$this->render_string_list( 'txp_form' , 'Form' , $container , $id );
+					if( $id )
+						$this->render_string_edit( 'form' , $container , $id );
+					elseif( $can_edit and in_array($step , $pf_steps) )
+						$this->render_pageform_edit( 'txp_form' , 'name' , 'Form' , $container );
+					}
 			break;
 
 			case 'plugin':
-			$this->render_owner_list('plugin');
-			if( $step and in_array( $step , $pl_steps ) )
-				{
-				$this->render_import_list();
-				}
-			elseif( $owner = gps(L10N_PLUGIN_CONST) and $prefix = gps('prefix') )
-				{
-				$this->render_plugin_string_list( $owner , $id , $prefix );
-				if( $id )
-					$this->render_string_edit( 'plugin', $owner , $id );
-				}
-			break;
+				$this->render_owner_list('plugin');
+				if( $step and in_array( $step , $pl_steps ) )
+					{
+					$this->render_import_list();
+					}
+				elseif( $container = gps(L10N_PLUGIN_CONST) and $prefix = gps('prefix') )
+					{
+					$this->render_plugin_string_list( $container , $id , $prefix );
+					if( $id and $event=gps('string_event') )
+						{
+						$owner = $container;
+						$this->render_string_edit( 'plugin', $container , $id, $owner , $event );
+						}
+					}
+				break;
 			}
 		}
 
@@ -1116,7 +1119,7 @@ class LocalisationStringView extends GBPAdminTabView
 					}
 				if( $localised or ($count) )
 					$guts = '<strong>'.$guts.'</strong>';
-				$out[] = '<li><a href="'.$this->url( array('owner'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
+				$out[] = '<li><a href="'.$this->url( array('container'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
 			if( $explain )
@@ -1195,9 +1198,9 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function _render_string_list( $strings , $owner_label , $owner_name , $prefix )	# Center pane string render subroutine
+	function _render_string_list( $strings , $owner_label , $owner_name , $prefix , $event )	# Center pane string render subroutine
 		{
-		//echo br, "_render_string_list( $strings , $owner_label , $owner_name , $prefix )";
+		//echo br, "_render_string_list( $strings , $owner_label , $owner_name , $prefix , $event )";
 
 		$strings_exist 	= ( count( $strings ) > 0 );
 		if( !$strings_exist )
@@ -1216,7 +1219,7 @@ class LocalisationStringView extends GBPAdminTabView
 				if( !$complete )
 					$guts = '<strong>'. $guts . '</strong>';
 				$out[]= '<li><a href="' .
-					$this->url( array($owner_label=>$owner_name, gbp_id=>$string, 'prefix'=>$prefix) , true ) .
+					$this->url( array($owner_label=>$owner_name, gbp_id=>$string, 'prefix'=>$prefix, 'string_event'=>$event) , true ) .
 					'">' . $guts . '</a></li>';
 				}
 			}
@@ -1247,6 +1250,14 @@ class LocalisationStringView extends GBPAdminTabView
 				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
 				$remove[] = sInput( 'l10n_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
+				$plugin = gps( 'plugin' );
+				if( !empty( $plugin ) )
+					{
+					$remove[] = hInput( 'plugin' , $plugin );
+					$remove[] = hInput( 'prefix' , gps( 'prefix' ) );
+					}
+				else
+					$remove[] = hInput( 'container' , gps('container') );
 				$remove[] = hInput( 'lang_code' , $iso_code );
 				$remove[] = hInput( 'subtab' , $this->sub_tab );
 				$remove = form( join( '' , $remove ) ,
@@ -1303,6 +1314,10 @@ class LocalisationStringView extends GBPAdminTabView
 		$stats 			= array();
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
+		$details		= unserialize( StringHandler::if_plugin_registered( $plugin , '' ) );
+		$event			= $details['event'];
+
+		//echo br , "Event($event)" , br;
 
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
@@ -1310,7 +1325,7 @@ class LocalisationStringView extends GBPAdminTabView
 				 $this->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
-		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix );
+		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix, $event );
 		$out[] = '</div>';
 
 		# Render default view details in right hand pane...
@@ -1356,16 +1371,16 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
-				 $this->url( array( 'owner' => $owner ) , true ) . '">' .
+				 $this->url( array( 'container' => $owner ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
-					 $this->parent->url( array( 'owner'=>$owner , 'step'=>'l10n_edit_pageform' , 'subtab'=>$this->sub_tab ) , true ) . '">' .
+					 $this->parent->url( array( 'container'=>$owner , 'step'=>'l10n_edit_pageform' , 'subtab'=>$this->sub_tab ) , true ) . '">' .
 					 gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
-		$out[] = br . n . $this->_render_string_list( $strings , 'owner', $owner , '' ) . n;
+		$out[] = br . n . $this->_render_string_list( $strings , 'container', $owner , '' , 'public' ) . n;
 		$out[] = '</div>';
 
 		#	Render default view details in right hand pane...
@@ -1398,7 +1413,7 @@ class LocalisationStringView extends GBPAdminTabView
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
 		#	Render the list...
-		$out[] = br . n . $this->_render_string_list( $strings , 'owner', $owner , '' ) . n;
+		$out[] = br . n . $this->_render_string_list( $strings , 'container', $owner , '' , 'public' ) . n;
 		$out[] = '</div>';
 
 		#	Render default view details in right hand pane...
@@ -1426,7 +1441,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$l[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
 			$l[] = sInput('l10n_localise_pageform').n;
 			$l[] = $this->parent->form_inputs();
-			$l[] = hInput('owner', $owner);
+			$l[] = hInput('container', $owner);
 			$l[] = hInput('data', $data);
 			$l[] = hInput('subtab' , $this->sub_tab );
 			$out[] = form( join('', $l) , 'border: 1px solid grey; padding: 0.5em; margin: 1em;' );
@@ -1438,7 +1453,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$f[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 		$f[] = sInput('l10n_save_pageform');
 		$f[] = $this->parent->form_inputs();
-		$f[] = hInput('owner', $owner);
+		$f[] = hInput('container', $owner);
 		$f[] = hInput('subtab' , $this->sub_tab );
 		$out[] = form( join('', $f) , 'padding: 0.5em; margin: 1em;' );
 
@@ -1446,7 +1461,7 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function render_string_edit( $type , $owner , $id ) # Right pane string edit routine
+	function render_string_edit( $type , $container , $id, $owner = '' , $event='public' )	# Right pane string edit routine
 		{
 		/*
 		Render the edit controls for all localisations of the chosen string.
@@ -1454,9 +1469,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
-		$string_event = 'snippet';
-		if( $type == L10N_PLUGIN_CONST )
-			$string_event = $owner;
+		//if( $type == L10N_PLUGIN_CONST )
+		//	$string_event = $owner;
 		$x = StringHandler::get_string_set( $id );
 		$final_codes = array();
 
@@ -1473,8 +1487,8 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			$final_codes[] = $code;
 			$e = $data['event'];
-			if( !empty($e) and ($e != $string_event) )
-				$string_event = $e;
+			if( empty( $e ) )
+				$e = $event;
 			$lang = LanguageHandler::get_native_name_of_lang($code);
 
 			$warning = '';
@@ -1488,7 +1502,7 @@ class LocalisationStringView extends GBPAdminTabView
 						'<textarea name="' . $code . '-data" cols="60" rows="2" title="' .
 						gTxt('l10n-textbox_title') . '">' . $data['data'] . '</textarea>' .
 						hInput( $code.'-id' , $data['id'] ) .
-						hInput( $code.'-event' , $data['event'] ) .
+						hInput( $code.'-event' , $e ) .
 						'</p></dd>';
 			}
 
@@ -1500,14 +1514,15 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
 		$out[] = hInput('prefix', gps('prefix'));
 		if( $type === 'plugin' )
-			$out[] = hInput(L10N_PLUGIN_CONST, $owner);
+			$out[] = hInput(L10N_PLUGIN_CONST, $container);
 		else
 			{
-			$out[] = hInput('owner', $owner);
+			$out[] = hInput('container', $container);
 			$out[] = hInput('subtab' , $this->sub_tab );
 			}
 		$out[] = hInput('l10n_type', $type );
-		$out[] = hInput('string_event', $string_event);
+		$out[] = hInput('owner', $owner);
+		$out[] = hInput('string_event', $event);
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form></div>';
 		echo join('', $out);
@@ -1520,14 +1535,14 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$o[] = '<div style="float:left;">';
 		$o[] = '<h2>'.gTxt('preview').' '.gTxt('file').'</h2>';
-		if( !isset($d['plugin']) or !isset($d['prefix']) or !isset($d['event']) or !isset($d['strings']) )
+		if( !isset($d['owner']) or !isset($d['prefix']) or !isset($d['event']) or !isset($d['strings']) )
 			$o[] = gTxt('l10n-invalid_import_file');
 		else
 			{
-			$f1[] = gTxt('plugin') . ': <strong>'.$d['plugin'].'</strong>'.br.n;
+			$f1[] = gTxt('plugin') . ': <strong>'.$d['owner'].'</strong>'.br.n;
 			$f1[] = gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($d['lang']).' ['.$d['lang'].']</strong>'.br.br.n;
 			$f1[] = hInput( 'data' , gps('data') );
-			$f1[] = hInput( 'plugin' , $d['plugin'] );
+			$f1[] = hInput( 'plugin' , $d['owner'] );
 			$f1[] = hInput( 'prefix' , $d['prefix'] );
 			$f1[] = hInput( 'language' , gps('language') );
 			$f1[] = sInput( 'l10n_import_languageset');
@@ -1560,7 +1575,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function save_strings()
 		{
 		$string_name 	= gps( gbp_id );
-		$event       	= gps( 'string_event' );
+		$owner       	= gps( 'owner' );
 		$codes			= gps( 'codes' );
 		$lang_codes		= explode( ',' , $codes );
 		$i				= 0;
@@ -1582,18 +1597,22 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			$translation 	= gps( $code.'-data' );
 			$id 			= gps( $code.'-id' );
+			if( $owner == 'snippet' )
+				$event = 'public';
+			else
+				$event			= gps( $code.'-event' );
 			$exists			= !empty( $id );
 			if( !$exists and empty( $translation ) )
 				continue;
 
-			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id );
+			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id , $owner );
 			}
 		}
 
 	function save_pageform()
 		{
 		$data = doSlash( gps('data') );
-		$owner = doSlash( gps('owner') );
+		$owner = doSlash( gps('container') );
 
 		if( !empty( $this->sub_tab) )
 			$tab = doSlash( gps( 'subtab' ) );
@@ -1636,7 +1655,11 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			$d 	= gps( 'data' );
 			$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
-			StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['plugin'] , true );
+			if( is_array( $d ) )
+				{
+				if( array_key_exists( 'strings' , $d ) )
+					StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['owner'] , true );
+				}
 			unset( $_POST['step'] );
 			}
 		}
@@ -1675,7 +1698,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 	function export_languageset()
 		{
-		$plugin = gps('plugin');
+		$plugin = gps('owner');
 		$lang   = gps('language');
 		$prefix = gps('prefix');
 
@@ -2737,7 +2760,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 class LocalisationWizardView extends GBPWizardTabView
 	{
  	var $installation_steps = array(
-		'1' => array('setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT'),
+		'1' => array(
+			'setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT and add the \'owner\' field.',
+			'cleanup' => 'Drop the \'owner\' field from the txp_lang table.'	),
 		'2' => array(
 			'setup' => 'Insert the strings for this plugin',
 			'cleanup' => 'Remove plugin strings'),
@@ -2750,11 +2775,13 @@ class LocalisationWizardView extends GBPWizardTabView
 		'5' => array(
 			'setup' => 'Add the articles table',
 			'cleanup' => 'Drop the articles table'),
-		'6' => array('setup' => 'Process existing articles'),
+		'6' => array(
+			'setup' => 'Process existing articles' ),
 		'7' => array(
 			'setup' => 'Add new textpattern tables for each site language',
 			'cleanup' => 'Drop the extra site language textpattern tables'),
-		'8' => array ( 'cleanup' => 'Delete cookies' ),
+		'8' => array (
+			'cleanup' => 'Delete cookies' ),
 		'9' => array (
 			'setup' => 'Rename the \'Articles\' tab label.',
 			'cleanup' => 'Restore the \'Articles\' tab label.' ),
@@ -2793,10 +2820,23 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function setup_1()
 		{
+		$this->add_report_item( 'Change the txp_lang table...' );
+
 		# Extend the txp_lang table to allow text instead of tinytext in the data field.
 		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok );
+		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok , true );
+
+		$sql = "ADD `owner` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' AFTER `data`";
+		$ok = @safe_alter( 'txp_lang' , $sql );
+		$this->add_report_item( 'Add the \'owner\' field.' , $ok , true );
+		}
+
+	function cleanup_1()
+		{
+		$sql = "DROP `owner`";
+		$ok = @safe_alter( 'txp_lang' , $sql );
+		$this->add_report_item( 'Delete the \'owner\' field.' , $ok );
 		}
 
 	function setup_2()
@@ -2935,7 +2975,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		# Remove the strings...
 		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
-		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' );
+		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' , 'l10n' );
 		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true );
 		}
 
@@ -3518,7 +3558,7 @@ class SnippetHandler
 
 		//	$where = " `event`='snippet' AND `name` IN ($name_set)";
 		$where = " `name` IN ($name_set)";
-		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
+		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 
 		return array_merge( $result , StringHandler::get_strings( $rs , $stats ) );
 		}
@@ -3618,35 +3658,36 @@ class StringHandler
 		unset( $prefs[$name] );
 		}
 
-	function insert_strings( $pfx , $strings , $lang , $event='' , $plugin='' , $override = false )
+	function insert_strings( $pfx , $strings , $lang , $event='' , $owner='' , $override = false )
 		{
 		global	$txp_current_plugin;
-		//echo br , "insert_strings( pfx($pfx) , strings($strings) , lang($lang) , event($event) , plugin($plugin) , override($override) )";
-		if( empty($strings) or !is_array($strings) or empty($lang) or empty($pfx) )
+		//echo br , "insert_strings( pfx($pfx) , strings($strings) , lang($lang) , event($event) , owner($owner) , override($override) )";
+		if( empty($strings) or !is_array($strings) or empty($lang) )
 			return null;
 
-		if( empty( $plugin) )
-			$plugin = $txp_current_plugin;
-
-		# If needed, register the plugin...
-		$num = count($strings);
-		if( false === StringHandler::if_plugin_registered($plugin , $lang , $num ) )
-			StringHandler::register_plugin( $plugin , $pfx , $num , $lang , $event );
-		elseif( !$override )
-			return false;
-
-		# If the prefix doesn't end with the required sep character, add it...
-		$pfx_len = strlen( $pfx );
-		if( $pfx[$pfx_len-1] != L10N_SEP )
+		$owner_is_plugin = ( $owner !== '' and $owner !== 'snippets' );
+		if( $owner_is_plugin )
 			{
-			$pfx .= L10N_SEP;
-			$pfx_len += 1;
-			}
+			if( empty($owner) )
+				$owner = $txp_current_plugin;
+			if( empty( $pfx) )
+				$pfx = $owner;
 
-			# if the plugin is known, store it as a suffix to any strings stored...
-		if( !empty($plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-			$event = $event.'.'.$plugin;
-		//echo "... prefix is $pfx, event is $event";
+			# If needed, register the plugin...
+			$num = count($strings);
+				if( false === StringHandler::if_plugin_registered( $owner , $lang , $num ) )
+					StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event );
+			elseif( !$override )
+				return false;
+
+			# If the prefix doesn't end with the required sep character, add it...
+			$pfx_len = strlen( $pfx );
+			if( $pfx[$pfx_len-1] != L10N_SEP )
+				{
+				$pfx .= L10N_SEP;
+				$pfx_len += 1;
+				}
+			}
 
 		#	Iterate over the $strings and, for each that is not present, enter them into the sql table...
 		$lastmod 	= date('YmdHis');
@@ -3657,12 +3698,12 @@ class StringHandler
 			$data = doSlash($data);
 
 			# If the name isn't prefixed yet, add the prefix...
-			if( substr( $name , 0 , $pfx_len ) !== $pfx )
+			if( $owner_is_plugin and (substr( $name , 0 , $pfx_len ) !== $pfx) )
 				$name = doSlash($pfx . $name);
 			else
 				$name = doSlash( $name );
 
-			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data'";
+			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data', `owner`='$owner'";
 			$where 	= ", `name`='$name'";
 			@safe_insert( 'txp_lang' , $set . $where );
 			if( $override )
@@ -3674,7 +3715,7 @@ class StringHandler
 		return true;
 		}
 
-	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' )
+	function store_translation_of_string( $name , $event , $new_lang , $translation , $id='' , $owner = '' )
 		{
 		/*
 		Can create, delete or update a row in the DB depending upon the calling arguments.
@@ -3687,9 +3728,15 @@ class StringHandler
 			return null;
 			}
 
-		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-			$event = $event.'.'.$txp_current_plugin;
+		//if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
+		//	$event = $event.'.'.$txp_current_plugin;
 
+		if( $owner === 'snippet' )
+			{
+			$event = 'public';
+			}
+
+		$owner = doSlash( $owner );
 		$name = doSlash( $name );
 		$event = doSlash( $event );
 		$new_lang = doSlash( $new_lang );
@@ -3697,7 +3744,7 @@ class StringHandler
 		$id = doSlash( $id );
 
 		$lastmod 		= date('YmdHis');
-		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation'" ;
+		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation', `owner`='$owner'" ;
 
 		if( !empty( $id ) )
 			{
@@ -3722,20 +3769,20 @@ class StringHandler
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
 			{
-			$where = "(`lang` IN ('$remove_lang')) AND (`event` LIKE \"common.%\" OR `event` LIKE \"public.%\" OR `event` LIKE \"admin.%\" OR `event`='snippet')";
+			$where = "(`lang` IN ('$remove_lang')) ";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
 		elseif( $plugin and !empty( $plugin ) )
 			{
-			$where = "`event`=\"common.$plugin\" OR `event`=\"public.$plugin\" OR `event`=\"admin.$plugin\"";
+			$where = "`owner`=\'$plugin\'";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			StringHandler::unregister_plugin( $plugin );
 			}
 		}
 
-	function remove_strings_by_name( $strings , $event = '' )
+	function remove_strings_by_name( $strings , $event = '' , $plugin='' )
 		{
 		/*
 		Removes all of the named strings in ALL languages. (It uses the keys of the strings array).
@@ -3744,13 +3791,16 @@ class StringHandler
 		if( !$strings or !is_array( $strings ) or empty( $strings ) )
 			return null;
 
-		if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-			$event = $event.'.'.$txp_current_plugin;
+		if( empty( $plugin ) )
+			$plugin = $txp_current_plugin;
+
+		//if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
+		//	$event = $event.'.'.$txp_current_plugin;
 		$event 	= doSlash( $event );
 
 		$result = false;
 		$n_strings = count( $strings );
-		if( $n_strings )
+		if( $n_strings > 0 )
 			{
 			$deletes = 0;
 			foreach( $strings as $name=>$data )
@@ -3772,8 +3822,8 @@ class StringHandler
 			@safe_optimize( 'txp_lang' );
 			}
 
-		if( $txp_current_plugin )
-			StringHandler::unregister_plugin( $txp_current_plugin );
+		if( !empty($plugin) )
+			StringHandler::unregister_plugin( $plugin );
 
 		return $result;
 		}
@@ -3799,12 +3849,13 @@ class StringHandler
 		Loads all strings of the given language into an array and returns them.
 		*/
 		$extras = array();
-		$where  = ' AND ( event=\'snippet\' OR event LIKE "public.%" OR event LIKE "common.%" ';
+		//$where  = ' AND ( event=\'snippet\' OR event=\'public\' OR event=\'common\' ';
+		$where  = ' AND ( event=\'public\' OR event=\'common\' ';
 		$close = ')';
 		if( @txpinterface == 'admin' )
-			$close = 'OR event LIKE "admin.%" )';
+			$close = 'OR event=\'admin\' )';
 
-		$rs = safe_rows_start('name, data','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
+		$rs = safe_rows_start('name, data, owner','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
 		$count = @mysql_num_rows($rs);
 		if( $rs && $count > 0 )
 			{
@@ -3817,16 +3868,17 @@ class StringHandler
 	function serialize_strings( $lang , $owner , $prefix , $event )
 		{
 		$r = array	(
-					'plugin'	=> $owner,	#	Name the plugin these strings are for.
+					'owner'		=> $owner,		#	Name the plugin these strings are for.
 					'prefix'	=> $prefix,	#	Its unique string prefix
 					'lang'		=> $lang,	#	The language of the initial strings.
 					'event'		=> $event,	#	public/admin/common = which interface the strings will be loaded into
 					);
 
-		$filter = ' AND `name` LIKE "'.doSlash($prefix).L10N_SEP.'%"';
+		//$filter = ' AND `name` LIKE "'.doSlash($prefix).L10N_SEP.'%"';
+		$filter = " AND `owner`='$owner'";
 		$r['strings'] = StringHandler::load_strings( $lang, $filter );
 		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
-		//	echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
+		echo br, "serialize_strings( $lang , $owner , $prefix , $event ) ... \$filter=$filter", br, var_dump( $r ), br, var_dump( $result ), br;
 		return $result;
 		}
 
@@ -3910,8 +3962,9 @@ class StringHandler
 		*/
 		$plugin = doSlash( $plugin );
 		$prefix = doSlash( $prefix );
-		$where = ' `name` LIKE "'.$prefix.L10N_SEP.'%"';
-		$rs = safe_rows_start( 'lang, name', 'txp_lang', $where );
+		//$where = ' `name` LIKE "'.$prefix.L10N_SEP.'%"';
+		$where = " `owner`='$plugin'";
+		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 		return StringHandler::get_strings( $rs , $stats );
 		}
 
@@ -3938,7 +3991,7 @@ class StringHandler
 		$result = array();
 
 		$where = ' `name` = "'.doSlash($string_name).'"';
-		$rs = safe_rows_start( 'lang, id, event, data', 'txp_lang', $where );
+		$rs = safe_rows_start( 'lang, id, event, data, owner', 'txp_lang', $where );
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
 			while ( $a = nextRow($rs) )
