@@ -717,9 +717,9 @@ class LocalisationView extends GBPPlugin
 		extract( $r );
 
 		$result = "Skipped insertion of strings for '$key'.";
-		if( $plugin and $prefix and $strings and $lang and $event and (count($strings)) )
+		if( $owner and $prefix and $strings and $lang and $event and (count($strings)) )
 			{
-			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $plugin ) )
+			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $owner ) )
 				$result = true;
 			}
 
