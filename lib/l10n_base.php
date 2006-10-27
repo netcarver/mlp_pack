@@ -453,11 +453,11 @@ class LocalisationView extends GBPPlugin
 		'l10n-clone'				=> 'Clone',
 		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
 		//'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
-		'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
-		'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
+		//'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
+		//'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
-		'l10n-done'					=> 'Done',
+		//'l10n-done'					=> 'Done',
 		'l10n-edit_resource'		=> 'Edit $type: $owner ',
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following rendition{s} to you...\r\n\r\n",
@@ -469,19 +469,19 @@ class LocalisationView extends GBPPlugin
 		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 		'l10n-export'				=> 'Export',
 		'l10n-export_title'			=> '<h2>Export {type} Strings</h2><br/><p>Select languages you wish to include and then click the button.</p>',
-		'l10n-failed'				=> 'Failed',
+		//'l10n-failed'				=> 'Failed',
 		'l10n-import'				=> 'Import',
 		'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',
 		'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
 		'l10n-into'					=> 'into',
 		'l10n-inout'				=> 'Export/Import',
 		'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
-		'l10n-import_fixed_lang' 	=> 'use the default language',
-		'l10n-import_cat1_lang'		=> 'use category1 for language',
-		'l10n-import_cat2_lang'		=> 'use category2 for language',
-		'l10n-import_section_lang'	=> 'use section names for language',
+		//'l10n-import_fixed_lang' 	=> 'use the default language',
+		//'l10n-import_cat1_lang'		=> 'use category1 for language',
+		//'l10n-import_cat2_lang'		=> 'use category2 for language',
+		//'l10n-import_section_lang'	=> 'use section names for language',
 		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
-		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings/snippets in $var1. ',
+		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
 		'l10n-languages' 			=> 'Languages ',
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
@@ -492,7 +492,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
 		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
 		'l10n-plugin'				=> 'Plugin',
-		'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
+		//'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
 		'l10n-remove_plugin'		=> "This plugin is not installed.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
 		'l10n-renditions'			=> 'Renditions',
@@ -504,10 +504,10 @@ class LocalisationView extends GBPPlugin
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
 		//'l10n-setup_verify'			=> 'This will add some tables to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT. It will then insert some new fields into the textpattern table.',
-		'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
-		'l10n-setup_wiz_title'		=> 'Setup Wizard',
+		//'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
+		//'l10n-setup_wiz_title'		=> 'Setup Wizard',
 		'l10n-show_legends' 		=> 'Show article table legend?',
-		'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
+		//'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
 		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
 		'l10n-snippets_tab'			=> 'Snippets',
@@ -1220,21 +1220,16 @@ class LocalisationStringView extends GBPAdminTabView
 			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
 			$remove = '';
 			$export = '';
-			if( !in_array( $iso_code , $site_langs ) )
+			$plugin = gps( 'plugin' );
+			if( !empty($plugin) and !in_array( $iso_code , $site_langs ) )
 				{
 				$extras_found = true;
 				$lang_extras_found = true;
 				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
 				$remove[] = sInput( 'l10n_remove_languageset');
 				$remove[] = $this->parent->form_inputs();
-				$plugin = gps( 'plugin' );
-				if( !empty( $plugin ) )
-					{
-					$remove[] = hInput( 'plugin' , $plugin );
-					$remove[] = hInput( 'prefix' , gps( 'prefix' ) );
-					}
-				else
-					$remove[] = hInput( 'container' , gps('container') );
+				$remove[] = hInput( 'plugin' , $plugin );
+				$remove[] = hInput( 'prefix' , gps( 'prefix' ) );
 				$remove[] = hInput( 'lang_code' , $iso_code );
 				$remove[] = hInput( 'subtab' , $this->sub_tab );
 				$remove = form( join( '' , $remove ) ,
@@ -1256,7 +1251,8 @@ class LocalisationStringView extends GBPAdminTabView
 				$export = form( join( '' , $export ) );
 				}
 
-			$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
+			if( !empty($plugin) or in_array( $iso_code , $site_langs ) )
+				$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
 			}
 		$out[] = tr( td( gTxt('l10n-total') ).td(array_sum($stats).'&nbsp;').td('').td('') , ' style="text-align:right;" ' );
 		$out[] = '</tbody></table>';
@@ -3976,12 +3972,12 @@ class StringHandler
 		{
 		/*
 		PLUGIN SUPPORT ROUTINE
-		Either: Removes all the occurances of plugin and snippet strings in the given langs...
+		Either: Removes all the occurances of plugin strings in the given langs...
 		OR:		Removes all of the named plugin's strings.
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
 			{
-			$where = "(`lang` IN ('$remove_lang')) ";
+			$where = "(`lang` IN ('$remove_lang')) AND (`owner` <> '')";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
