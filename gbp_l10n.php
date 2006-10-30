@@ -269,15 +269,11 @@ global $txpcfg;
 
 
 
-# -- The base classes are always needed so load them in...
-@include_once $txpcfg['txpath'].'/lib/l10n_base.php';
-
-
-
 # -- Include the admin file only if needed...
 if( @txpinterface == 'admin' )
 	{
-	@include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
+	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
 	}
 
 
@@ -285,6 +281,8 @@ if( @txpinterface == 'admin' )
 # -- Public code section follows...
 if (@txpinterface == 'public')
 	{
+	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+
 	global $l10n_view;
 
 	$installed = $l10n_view->installed();
