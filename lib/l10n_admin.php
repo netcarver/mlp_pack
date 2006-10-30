@@ -116,7 +116,7 @@ function _l10n_match_cb( $matches )
 	$code		= $rs['Lang'];
 	$article	= $rs['Group'];
 	$lang 		= LanguageHandler::get_native_name_of_lang( $code );
-	return $matches[0] . br . $lang . ' [' . gTxt('article'). ' :' .$article . ']';
+	return $matches[0] . '<span class="articles_detail">' . $lang . ' [' . gTxt('article'). ' :' .$article . ']</span>';
 	}
 function _l10n_chooser( $permitted_langs )
 	{
@@ -129,16 +129,20 @@ function _l10n_chooser( $permitted_langs )
 	#	See if there are any languages selected. If not, select them all -- to give the user something to look at!
 	#
 	$showlangs = array();
+	$rendition_count = 0;
 	$count = 0;
 	foreach( $langs as $lang )
 		{
+		$table = ArticleManager::make_textpattern_name(array('long'=>$lang));
+		$lang_rendition_count = safe_count( $table , "`Lang`='$lang'" );
+		$lang_has_renditions = ($lang_rendition_count > 0);
+
 		$rw = '';
 		if( $use_cookies )
 			$checked = cs( $lang ) ? 'checked' : '' ;
 		else
 			$checked = ps( $lang ) ? 'checked' : '' ;
 
-		$count = (!empty($checked)) ? $count+1 : $count;
 		$lang_name = LanguageHandler::get_native_name_of_lang( $lang );
 
 		if( !in_array( $lang , $permitted_langs ) )
@@ -146,15 +150,21 @@ function _l10n_chooser( $permitted_langs )
 			$rw = 'disabled="disabled"';
 			$checked = '';
 			}
+		elseif( !$lang_has_renditions )
+			{
+			$rw = 'disabled="disabled"';
+			$checked = 'checked';
+			}
 
 		$showlangs[$lang]['lang_name']	= $lang_name;
 		$showlangs[$lang]['rw'] 	= $rw;
 		$showlangs[$lang]['checked']	= $checked;
-
+		if( !empty($checked) )
+			$rendition_count += $lang_rendition_count;
 		}
 
 	$override_check = false;
-	if( $count === 0 )
+	if( $rendition_count === 0 )
 		{
 		$override_check = true;
 		}
@@ -176,8 +186,8 @@ function _l10n_chooser( $permitted_langs )
 function l10n_list_buffer_processor( $buffer )
 	{
 	$count = 0;
-	$pattern = '/"><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
-
+    $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
+	
 	#	Inject the language chooser...
 	$chooser = _l10n_chooser( LanguageHandler::get_site_langs() );
 	$f = '<p><label for="list-search">';
