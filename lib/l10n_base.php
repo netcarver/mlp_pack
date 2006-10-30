@@ -173,7 +173,7 @@ class ArticleManager
 		{
 		$result = false;
 		$name = doSlash($rendition['Title']);
-		$lang = (@$rendition['Lang']) ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
+		$lang = (@$rendition['Lang'] !== '-') ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
 		$id = @$GLOBALS['ID'];
 		if( !isset( $id ) or empty( $id ) )
 			$id = $rendition['ID'];
@@ -457,7 +457,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
-		//'l10n-done'					=> 'Done',
+		'l10n-done'					=> 'Done',
 		'l10n-edit_resource'		=> 'Edit $type: $owner ',
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following rendition{s} to you...\r\n\r\n",
@@ -834,7 +834,7 @@ class LocalisationView extends GBPPlugin
 				case 'prefs_save':
 					$this->prefs_save_cb();
 					#	Force a redirect to ourself to refresh the view with any tab changes as needed.
-					return $this->redirect( '' );
+					$this->redirect( array() );
 				break;
 				}
 			}
@@ -1109,16 +1109,41 @@ class LocalisationStringView extends GBPAdminTabView
 		return join('', $out);
 		}
 
+	function _extend_plugin_list()
+		{
+		global $plugins_ver;
+		static $full_plugin_list;
+
+		if( !isset( $full_plugin_list ) )
+			{
+			#
+			#	Note the plugins_ver list only contains admin and library plugins at the moment.
+			# So expand the plugin list to include public plugins from the txp_plugin table.
+			# Cache directory is ignored to stop the eval() of the plugin.
+			#
+			$temps = @safe_column( 'name' , 'txp_plugin' , "`status`='1' and `type`='0'" );
+			$full_plugin_list = array_merge( $temps , $plugins_ver );
+			}
+
+		return $full_plugin_list;
+		}
+
 	function _generate_plugin_list()											# left pane subroutine
 		{
 		$rps = StringHandler::discover_registered_plugins();
 		if( count( $rps ) )
 			{
-			global $plugins;
+			$plugins = $this->_extend_plugin_list();
+
 			foreach( $rps as $plugin=>$vals )
 				{
+				if( !is_array( $vals ) )
+					continue;
+
 				extract( $vals );
-				$marker = ( !array_search( $plugin, $plugins ) )
+				$plugin_found = array_key_exists( $plugin, $plugins );
+
+				$marker = ( !$plugin_found )
 					? ' <strong>*</strong>' : '';
 				$out[] = '<li><a href="' . $this->parent->url( array(L10N_PLUGIN_CONST=>$plugin,'prefix'=>$pfx) , true ) . '">' .
 						$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
@@ -1307,8 +1332,8 @@ class LocalisationStringView extends GBPAdminTabView
 			$out[] = $this->_render_string_stats( $plugin , $stats );
 
 			# If the plugin is not present offer to delete the lot
-			global $plugins;
-			if( !array_search( $plugin, $plugins ) )
+			$plugins = $this->_extend_plugin_list();
+			if( !array_key_exists( $plugin, $plugins ) )
 				{
 				$out[] = '<h3>'.gTxt('l10n-no_plugin_heading').'</h3>'.n;
 				$del[] = graf( gTxt('l10n-remove_plugin') );
@@ -2978,7 +3003,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			'cleanup' => 'Drop the \'owner\' field from the txp_lang table.'	),
 		'2' => array(
 			'setup' => 'Insert the strings for this plugin',
-			'cleanup' => 'Remove plugin strings'),
+			'cleanup' => 'Remove l10n plugin strings and unregister plugins'),
 		'3' => array(
 			'setup' => 'Add `Lang` and `Group` fields to the textpattern table',
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table'),
@@ -3186,10 +3211,24 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function cleanup_2()
 		{
-		# Remove the strings...
+		# Remove the l10n strings...
+		$this->add_report_item( 'Cleaning up l10n strings and plugin registrations' );
 		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
 		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' , 'l10n' );
-		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true );
+		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true , true );
+
+		$rps = StringHandler::discover_registered_plugins();
+		if( count($rps) )
+			{
+			foreach($rps as $name=>$vals)
+				{
+				if( !is_array( $vals ) )
+					continue;
+
+				$ok = StringHandler::unregister_plugin( $name );
+				$this->add_report_item( "Unregistered plugin '$name'." , $ok , true );
+				}
+			}
 		}
 
 	function cleanup_3()
@@ -3859,16 +3898,31 @@ class StringHandler
 	function register_plugin( $plugin , $pfx , $string_count , $lang , $event )
 		{
 		$name = StringHandler::do_prefs_name( $plugin );
-		$vals = array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) );
-		return set_pref( doSlash($name) , serialize($vals) , L10N_NAME , 2 );
+		$vals = serialize( array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) ) );
+		$result = set_pref( doSlash($name) , $vals , L10N_NAME , 2 );
+		if( $result !== false )
+			{
+			global $prefs;
+			@$prefs[$name] = $vals;
+			}
+
+		#
+		#	Perform a one-shot update of the owner field of any existing string that
+		# has a matching prefix. This catches and re-enables residual strings on a re-install.
+		#
+		$where = ' `name` LIKE "'.$pfx.L10N_SEP.'%"';
+		@safe_update( 'txp_lang' , "`owner`='$plugin'" , $where );
+
+		return $result;
 		}
 
 	function unregister_plugin( $plugin )
 		{
 		global $prefs;
 		$name = doSlash( StringHandler::do_prefs_name( $plugin ) );
-		@safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
+		$ok = @safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
 		unset( $prefs[$name] );
+		return $ok;
 		}
 
 	function insert_strings( $pfx , $strings , $lang , $event='' , $owner='' , $override = false )
