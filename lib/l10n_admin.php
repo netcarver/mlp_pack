@@ -116,7 +116,7 @@ function _l10n_match_cb( $matches )
 	$code		= $rs['Lang'];
 	$article	= $rs['Group'];
 	$lang 		= LanguageHandler::get_native_name_of_lang( $code );
-	return $matches[0] . '<span class="articles_detail">' . $lang . ' [' . gTxt('article'). ' :' .$article . ']</span>';
+	return $matches[0] . br . '<span class="articles_detail">' . $lang . ' [' . gTxt('article'). ' :' .$article . ']</span>';
 	}
 function _l10n_chooser( $permitted_langs )
 	{
@@ -187,7 +187,7 @@ function l10n_list_buffer_processor( $buffer )
 	{
 	$count = 0;
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
-	
+
 	#	Inject the language chooser...
 	$chooser = _l10n_chooser( LanguageHandler::get_site_langs() );
 	$f = '<p><label for="list-search">';
