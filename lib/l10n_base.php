@@ -444,7 +444,7 @@ class LocalisationView extends GBPPlugin
 		);
 	var $strings = array(
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
-		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or group?",
+		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
 		//'l10n-article_vars'			=> 'Article variables ',
 		//'l10n-article_hidden_vars'	=> 'Hidden article variables ',
 		'l10n-by'					=> 'by',
