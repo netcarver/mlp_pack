@@ -2,7 +2,7 @@
 
 /*
 $HeadURL: http://svn.textpattern.com/development/4.0/textpattern/lib/txplib_db.php $
-$LastChangedRevision: 1802 $
+$LastChangedRevision: 1879 $
 */
 
 if (!defined('PFX')) {
