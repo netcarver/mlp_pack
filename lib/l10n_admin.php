@@ -27,6 +27,59 @@ if( $l10n_view->installed() )
 	#
 	register_callback( 'l10n_pre_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' , 1 );
 	register_callback( 'l10n_post_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' );
+
+	#
+	#	Language management handlers (to stop language strings from being deleted) ...
+	#
+	register_callback( 'l10_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
+	register_callback( 'l10_language_handler_callback_post' , 'prefs' , 'get_language' );
+	}
+
+#
+#	The following two routines were added to stop the TxP language update/intsall
+# from a file from trampling all over any other strings in that language.
+#
+function l10_language_handler_callback_pre( $event , $step )
+	{
+	global $l10n_file_import_details;
+	//echo br , "l10_language_handler_callback_pre( $event , $step )";
+
+	$force = gps( 'force' );
+	if( 'file' !== $force )
+		return;
+
+	$lang = gps('lang_code');
+	$lang_file = txpath.'/lang/'.$lang.'.txt';
+	if (is_file($lang_file) && is_readable($lang_file))
+		{
+		$lang_file = txpath.'/lang/'.$lang.'.txt';
+		if (!is_file($lang_file) || !is_readable($lang_file))
+			return;
+
+		$lastmod = filemtime($lang_file);
+		$lastmod = date('YmdHis',$lastmod);
+
+		#
+		#	Set the timestamp of all lines that will be deleted by the file import to a safe value.
+		# The 'post' routine will restore the timestamp.
+		#
+		$new_time = '19990101000000';
+		$ok = safe_update( 'txp_lang' , "`lastmod`='$new_time'" , "`lang`='$lang' and `lastmod` > $lastmod" );
+		}
+	}
+function l10_language_handler_callback_post( $event , $step )
+	{
+	$force = gps( 'force' );
+	if( 'file' !== $force )
+		return;
+
+	#
+	#	Restore the timestamp of all the lins that would have been deleted...
+	#
+	$lang = gps('lang_code');
+	$new_time = date('YmdHis');
+	$old_time = '19990101000000';
+	$ok = safe_update( 'txp_lang' , "`lastmod`='$new_time'" , "`lang`='$lang' and `lastmod` = '$old_time'" );
 	}
 
 function _l10n_get_user_languages( $user_id = null )
