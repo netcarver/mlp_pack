@@ -155,7 +155,7 @@ Cut and paste the rows you need into the iso_693_1_langs() function in the langu
 	'gn'=>array( 'gn'=>"Avañe'ẽ" ),	//	'en'=>'Guarani'
 	'gu'=>array( 'gu'=>'ગુજરાતી' ),	//	'en'=>'Gujarati'
 	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),	//	'en'=>'Hausa'
-	'he'=>array( 'he'=>'עברית / עִבְרִית' ,'dir'=>'rtl' ),	//	'en'=>'Hebrew'
+	'he'=>array( 'he'=>'עִבְרִית' ,'dir'=>'rtl' ),	//	'en'=>'Hebrew'
 	'hi'=>array( 'hi'=>'हिन्दी' ),	//	'en'=>'Hindi'
 	'hr'=>array( 'hr'=>'Hrvatski' ),	//	'en'=>'Croatian'
 	'hu'=>array( 'hu'=>'Magyar' ),	//	'en'=>'Hungarian'
@@ -565,6 +565,7 @@ if (@txpinterface == 'public')
 							'link_current'		=> '',					#	make the current language an active hyperlink?
 							'display'			=> 'native',			# 	How the language is displayed on the web page
 																		#	'native++' | 'native+' | 'native' | 'long' | 'short'
+							'article_list' 		=> $is_article_list,	#	Set to '1' to always output a site-wide list in this location
 							),$atts));
 
 		$on404			= !empty($on404);
@@ -574,7 +575,6 @@ if (@txpinterface == 'public')
 		$list = array();
 		$alangs = array();
 		$slangs = LanguageHandler::get_site_langs();
-		$article_list = $is_article_list;
 		$section = empty($pretext['s']) ? '' : '/'.$pretext['s'];
 
 		if( $on404 )
@@ -633,19 +633,19 @@ if (@txpinterface == 'public')
 				{
 				case 'short':
 					$lname = $short;
-				break;
+					break;
 				case 'long':
 					$lname = $long;
-				break;
+					break;
 				case 'native+':
 					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$short]";
-				break;
+					break;
 				case 'native++':
 					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$long]";
-				break;
+					break;
 				default:
 					$lname = LanguageHandler::get_native_name_of_lang( $lang );
-				break;
+					break;
 				}
 
 			if( $article_list )
@@ -757,14 +757,28 @@ if (@txpinterface == 'public')
 		*/
 		global $l10n_language;
 
-		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
+		extract( lAtts( array(
+								'type'=>'short' , # valid values = 'long','short','full'
+								) , $atts ) );
 
 		if( !$l10n_language )
 			return '';
 
-		$result = $l10n_language['short'];
-		if( strtolower($type) === 'long' )
-			$result = $l10n_language['long'];
+		$type = strtolower( $type );
+		switch( $type )
+			{
+			case 'full' :
+				$result = LanguageHandler::get_native_name_of_lang( $l10n_language['long'] );
+				break;
+			case 'long' :
+				$result = $l10n_language['long'];
+				break;
+			case 'short' :
+			default :
+				$result = $l10n_language['short'];
+				break;
+			}
+
 		return $result;
 		}
 
