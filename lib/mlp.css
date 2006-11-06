@@ -29,3 +29,18 @@ table#l10n_articles_table td, table#l10n_articles_table th
 .id				{ text-align: right; width: 80px !important; }
 td.legend dt	{ margin: 2px 2px 2px 10px; padding: 3px 5px 0; border: 1px solid #333; float:left; }
 td.legend dd	{ margin: 2px 0;            padding: 3px 0 0; float:left; }
+
+.l10n_values_list	{ float: right; width: 50%; }
+.l10n_string_list	{ float: left; width: 25%; }
+.l10n_main_tab		{ padding-bottom: 3em; text-align: center; }
+.l10n_subtab		{ padding: 0; }
+.l10n_list			{ float: left; width: 50%; }
+.l10n_edit			{ float: right; width: 50%; }
+.l10n_owner_list	{ float: left; width: 20%; }
+.l10n_export_list	{ float: left; width: 40%; }
+.l10n_import_list	{ float: right; width: 40%; }
+.l10n_bordered		{ border: 1px solid #ccc; padding:1em; margin:1em; }
+.l10n_plugin_list	{ float: left; width: 25%; }
+
+.l10n_extensions	{ text-align: center; }
+.l10n_extensions fieldset 		{ margin: 0px auto; }
