@@ -205,13 +205,13 @@ class ArticleManager
 		#
 		$result = array();
 		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
-		$rows = safe_rows_start( 'ID,Lang' , 'l10n_master_textpattern' , $where );
+		$rows = safe_rows_start( 'ID,Title,Lang' , 'l10n_master_textpattern' , $where );
 		if( count( $rows ) )
 			{
 			while( $row = nextRow($rows) )
 				{
 				$lang = $row['Lang'];
-				$result[$lang] = $row['ID'];
+				$result[$lang] = array( 'id' => $row['ID'] , 'title' => escape_title($row['Title']) );
 				}
 			}
 		return $result;
@@ -792,7 +792,7 @@ class LocalisationView extends GBPPlugin
 		{
 		require_privs($this->event);
 
-		$out[] = '<div style="padding-bottom: 3em; text-align: center;">';
+		$out[] = '<div class="l10n_main_tab">';
 		$out[] = $this->_insert_css();
 		if( $this->installed(1) )
 			{
@@ -901,7 +901,7 @@ class SnippetTabView extends GBPAdminTabView
 
 		$out[] = '</tr></table>';
 		$out[] = '</td></tr>';
-		$out[] = '</table><div style="padding: 0 30px;">';
+		$out[] = '</table><div class="l10n_subtab">';
 
 		echo join('', $out);
 		}
@@ -1161,7 +1161,7 @@ class LocalisationStringView extends GBPAdminTabView
 		/*
 		Renders a list of resource owners for the left-hand pane.
 		*/
-		$out[] = '<div style="float: left; width: 20%;" class="l10n_owner_list">';
+		$out[] = '<div class="l10n_owner_list">';
 
 		switch( $type )
 			{
@@ -1316,7 +1316,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$details		= unserialize( StringHandler::if_plugin_registered( $plugin , '' ) );
 		$event			= $details['event'];
 
-		$out[] = '<div style="float: left; width: 25%;" class="l10n_plugin_list">';
+		$out[] = '<div class="l10n_plugin_list">';
 		$out[] = '<h3>'.$plugin.' '.gTxt('l10n-strings').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
@@ -1328,7 +1328,7 @@ class LocalisationStringView extends GBPAdminTabView
 		# Render default view details in right hand pane...
  		if( empty( $string_name ) )
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+			$out[] = '<div class="l10n_values_list">';
 			$out[] = $this->_render_string_stats( $plugin , $stats );
 
 			# If the plugin is not present offer to delete the lot
@@ -1365,7 +1365,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 		$can_edit = $this->pref('l10n-inline_editing');
 
-		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
+		$out[] = '<div class="l10n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->url( array( 'container' => $owner ) , true ) . '">' .
@@ -1384,7 +1384,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$step = gps('step');
  		if( empty( $id ) and empty( $step ) )
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+			$out[] = '<div class="l10n_values_list">';
 			$out[] = $this->_render_string_stats( '' , $stats );
 			$out[] = '</div>';
 			}
@@ -1403,7 +1403,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$snippets = SnippetHandler::get_special_snippets();
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 
-		$out[] = '<div style="float: left; width: 25%;" class="l10n_string_list">';
+		$out[] = '<div class="l10n_string_list">';
 		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->url( array( 'owner' => $owner ) , true ) . '">' .
@@ -1417,7 +1417,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$step = gps('step');
  		if( empty( $id ) and empty( $step ) )
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+			$out[] = '<div class="l10n_values_list">';
 			$out[] = $this->_render_string_stats( '' , $stats );
 			$out[] = '</div>';
 			}
@@ -1426,7 +1426,7 @@ class LocalisationStringView extends GBPAdminTabView
 		}
 	function render_pageform_edit( $table , $fname, $fdata, $owner )			# Right pane page/form edit textarea.
 		{
-		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+		$out[] = '<div class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
@@ -1463,7 +1463,7 @@ class LocalisationStringView extends GBPAdminTabView
 		/*
 		Render the edit controls for all localisations of the chosen string.
 		*/
-		$out[] = '<div style="float: right; width: 50%;" class="l10n_values_list">';
+		$out[] = '<div class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		//if( $type == L10N_PLUGIN_CONST )
@@ -1709,7 +1709,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$site_langs 	= LanguageHandler::get_site_langs();
 
 		$snip_string = gTxt('l10n-snippet');
-		$out[] = '<div style="float: left; width: 40%; border: 1px solid #ccc; padding:1em; margin:1em;" class="l10n_owner_list">';
+		$out[] = '<div class="l10n_bordered l10n_export_list">';
 		$out[] = gTxt('l10n-export_title' , array( '{type}'=>$snip_string )). br;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">'.sp.sp.gTxt('select').sp.'</td>' ).n.'</thead><tbody>';
 
@@ -1728,7 +1728,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$out[] = form( join( '' , $export) );
 		$out[] = '</tbody></table>'.n.'</div>'.n.n;
 
-		$import[] = '<div style="float: right; width: 40%; border: 1px solid #ccc; padding:1em; margin:1em;" class="l10n_owner_list">';
+		$import[] = '<div class="l10n_bordered l10n_import_list">';
 		$import[] = gTxt('l10n-import_title' , array( '{type}'=>$snip_string) ) . br;
 		$import[] = '<textarea name="data" cols="40" rows="2" id="l10n_string_import">';
 		$import[] = '</textarea>' .br . br;
@@ -2013,7 +2013,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 	function render_list($key, $value, $table, $where)
 		{
-		$out[] = '<div style="float: left; width: 50%;" class="l10n_list">';
+		$out[] = '<div class="l10n_list">';
 
 		// SQL used in both queries
 		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(L10N_LANGUAGE_CONST)."' AND $where";
@@ -2052,7 +2052,7 @@ class LocalisationTabView extends GBPAdminTabView
 
 		if ($rs1 = safe_row($fields, $table, $where))
 			{
-			$out[] = '<div style="float: right; width: 50%;" class="l10n_edit">';
+			$out[] = '<div class="l10n_edit">';
 
 			foreach($rs1 as $field => $value)
 				{
@@ -2277,7 +2277,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			$source['AuthorID'] = $new_author;
 			$source['Lang'] = $lang;
 			$source['Status'] = 1;
-			$source['Posted'] = 'now()';
+			//$source['Posted'] = 'now()';	# Don't reset the time to now() as we want the articles to appear in the same order in both the cloned and original language sites.
 			$source['LastMod'] = 'now()';
 			$source['feed_time'] = 'now()';
 			$source['uid'] = md5(uniqid(rand(),true));
@@ -2934,10 +2934,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			$assign_authors = true;
 			}
 
-		#
-		#	Link our css file and start building ...
-		#
-		$o[] = n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
 		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
 		$o[] = '<caption><strong>'.gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
 
@@ -3005,8 +3001,9 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Insert the strings for this plugin',
 			'cleanup' => 'Remove l10n plugin strings and unregister plugins'),
 		'3' => array(
-			'setup' => 'Add `Lang` and `Group` fields to the textpattern table',
-			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table'),
+			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
+		'3a'=> array(
+			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you never want to re-install the MLP Pack.', 'optional' => true),
 		'4' => array(
 			'setup' => 'Add the l10n_substitutions table',
 			'cleanup' => 'Drop the l10n_substitutions table'),
@@ -3231,18 +3228,11 @@ class LocalisationWizardView extends GBPWizardTabView
 			}
 		}
 
-	function cleanup_3()
+	function cleanup_3a()
 		{
-		$drop = '';
-		//$drop = gps( 'l10n_drop_textpattern_extensions' );
-		if( !empty($drop) )
-			{
-			$sql = "drop `Lang`, drop `Group`";
-			$ok = @safe_alter( 'textpattern' , $sql );
-			$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
-			}
-		else
-			$this->add_report_item( 'Skipped dropping the `Lang` and `Group` fields from the textpattern table' , true );
+		$sql = "drop `Lang`, drop `Group`";
+		$ok = @safe_alter( 'textpattern' , $sql );
+		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
 		}
 
 	function cleanup_4()
@@ -3280,6 +3270,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( 'Delete the cookies&#8230;' );
 		foreach( $langs as $lang )
 			{
+			$lang = trim( $lang );
 			$time = time() - 3600;
 			$ok = setcookie( $lang , $lang , $time );
 			$this->add_report_item( 'Delete the '. LanguageHandler::get_native_name_of_lang( $lang ) . ' cookie' , $ok , true );
@@ -3430,10 +3421,152 @@ class LanguageHandler
 
 	function iso_693_1_langs ( $input, $to_return='lang' )
 		{
+		static $iso_693_1_langs = array(
+		'aa'=>array( 'aa'=>'Afaraf' ),
+		'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
+		'af'=>array( 'af'=>'Afrikaans' ),
+		'am'=>array( 'am'=>'አማርኛ' ),
+		'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),
+		'as'=>array( 'as'=>'অসমীয়া' ),
+		'ay'=>array( 'ay'=>'Aymar aru' ),
+		'az'=>array( 'az'=>'Azərbaycan dili' ),
+		'ba'=>array( 'ba'=>'башҡорт теле' ),
+		'be'=>array( 'be'=>'Беларуская мова' ),
+		'bg'=>array( 'bg'=>'Български' ),
+		'bh'=>array( 'bh'=>'भोजपुरी' ),
+		'bi'=>array( 'bi'=>'Bislama' ),
+		'bn'=>array( 'bn'=>'বাংলা' ),
+		'bo'=>array( 'bo'=>'Bod Skad' ) ,
+		'br'=>array( 'br'=>'ar Brezhoneg' ) ,
+		'ca'=>array( 'ca'=>'Català' ) ,
+		'co'=>array( 'co'=>'Corsu' ) ,
+		'cs'=>array( 'cs'=>'Čeština' ) ,
+		'cy'=>array( 'cy'=>'Cymraeg' ) ,
+		'da'=>array( 'da'=>'Dansk' ) ,
+		'de'=>array( 'de'=>'Deutsch' ) ,
+		'dz'=>array( 'dz'=>'Dzongkha' ) ,
+		'el'=>array( 'el'=>'Ελληνικά' ) ,
+		'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
+		'eo'=>array( 'eo'=>'Esperanto' ),
+		'es'=>array( 'es'=>'Español' ),
+		'et'=>array( 'et'=>'Eesti Keel' ),
+		'eu'=>array( 'eu'=>'Euskera' ),
+		'fa'=>array( 'fa'=>'Fārsī' ),
+		'fi'=>array( 'fi'=>'Suomi' ),
+		'fj'=>array( 'fj'=>'vaka-Viti' ),
+		'fo'=>array( 'fo'=>'Føroyska' ),
+		'fr'=>array( 'fr'=>'Français' ),
+		'fy'=>array( 'fy'=>'Frysk' ),
+		'ga'=>array( 'ga'=>'Gaeilge' ),
+		'gd'=>array( 'gd'=>'Gàidhlig' ),
+		'gl'=>array( 'gl'=>'Galego' ),
+		'gn'=>array( 'gn'=>"Avañe'ẽ" ),
+		'gu'=>array( 'gu'=>'ગુજરાતી' ),
+		'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),
+		'he'=>array( 'he'=>'עִבְרִית' ,'dir'=>'rtl' ),
+		'hi'=>array( 'hi'=>'हिन्दी' ),
+		'hr'=>array( 'hr'=>'Hrvatski' ),
+		'hu'=>array( 'hu'=>'Magyar' ),
+		'hy'=>array( 'hy'=>'Հայերէն' ),
+		'ia'=>array( 'ia'=>'Interlingua' ),
+		'id'=>array( 'id'=>'Bahasa Indonesia' ),
+		'ie'=>array( 'ie'=>'Interlingue' ),
+		'ik'=>array( 'ik'=>'Iñupiak' ),
+		'is'=>array( 'is'=>'Íslenska' ),
+		'it'=>array( 'it'=>'Italiano' ),
+		'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),
+		'ja'=>array( 'ja'=>'日本語' ),
+		'jw'=>array( 'jw'=>'basa Jawa' ),
+		'ka'=>array( 'ka'=>'ქართული' ),
+		'kk'=>array( 'kk'=>'Қазақ' ),
+		'kl'=>array( 'kl'=>'Kalaallisut' ),
+		'km'=>array( 'km'=>'ភាសាខ្មែរ' ),
+		'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),
+		'ko'=>array( 'ko'=>'한국어' ),
+		'ks'=>array( 'ks'=>'काऽशुर' ),
+		'ku'=>array( 'ku'=>'Kurdí' ),
+		'ky'=>array( 'ky'=>'Кыргызча' ),
+		'la'=>array( 'la'=>'Latine' ),
+		'ln'=>array( 'ln'=>'lokótá ya lingála' ),
+		'lo'=>array( 'lo'=>'ລາວ' ),
+		'lt'=>array( 'lt'=>'Lietuvių Kalba' ),
+		'lv'=>array( 'lv'=>'Latviešu' ),
+		'mg'=>array( 'mg'=>'Malagasy fiteny' ),
+		'mi'=>array( 'mi'=>'te Reo Māori' ),
+		'mk'=>array( 'mk'=>'Македонски' ),
+		'ml'=>array( 'ml'=>'മലയാളം' ),
+		'mn'=>array( 'mn'=>'Монгол' ),
+		'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),
+		'mr'=>array( 'mr'=>'मराठी' ),
+		'ms'=>array( 'ms'=>'Bahasa Melayu' ),
+		'mt'=>array( 'mt'=>'Malti' ),
+		'my'=>array( 'my'=>'ဗမာစကား' ),
+		'na'=>array( 'na'=>'Ekakairũ Naoero' ),
+		'ne'=>array( 'ne'=>'नेपाली' ),
+		'nl'=>array( 'nl'=>'Nederlands' ),
+		'no'=>array( 'no'=>'Norsk' ),
+		'oc'=>array( 'oc'=>'lenga occitana' ),
+		'om'=>array( 'om'=>'Afaan Oromo' ),
+		'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),
+		'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),
+		'pl'=>array( 'pl'=>'Polski' ),
+		'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),
+		'pt'=>array( 'pt'=>'Português' ),
+		'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),
+		'rm'=>array( 'en'=>'Rhaeto-Romance' ),
+		'rn'=>array( 'rn'=>'Kirundi' ),
+		'ro'=>array( 'ro'=>'Română' ),
+		'ru'=>array( 'ru'=>'Русский' ),
+		'rw'=>array( 'rw'=>'Kinyarwandi' ),
+		'sa'=>array( 'sa'=>'संस्कृतम्' ),
+		'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),
+		'sg'=>array( 'sg'=>'yângâ tî sängö' ),
+		'sh'=>array( 'sh'=>'Српскохрватски' ),
+		'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),
+		'sk'=>array( 'sk'=>'Slovenčina' ),
+		'sl'=>array( 'sl'=>'Slovenščina' ),
+		'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),
+		'sn'=>array( 'sn'=>'chiShona' ),
+		'so'=>array( 'so'=>'af Soomaali' ),
+		'sq'=>array( 'sq'=>'Shqip' ),
+		'sr'=>array( 'sr'=>'Srpski' ),
+		'ss'=>array( 'ss'=>'siSwati' ),
+		'st'=>array( 'st'=>'seSotho' ),
+		'su'=>array( 'su'=>'basa Sunda' ),
+		'sv'=>array( 'sv'=>'Svenska' ),
+		'sw'=>array( 'sw'=>'Kiswahili' ),
+		'ta'=>array( 'ta'=>'தமிழ்' ),
+		'te'=>array( 'te'=>'తెలుగు' ),
+		'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),
+		'th'=>array( 'th'=>'ภาษาไทย' ),
+		'ti'=>array( 'ti'=>'ትግርኛ' ),
+		'tk'=>array( 'tk'=>'Türkmençe' ),
+		'tl'=>array( 'tl'=>'Tagalog' ),
+		'tn'=>array( 'tn'=>'Setswana' ),
+		'to'=>array( 'to'=>'Faka-Tonga' ),
+		'tr'=>array( 'tr'=>'Türkçe' ),
+		'ts'=>array( 'ts'=>'xiTsonga' ),
+		'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),
+		'tw'=>array( 'tw'=>'Twi' ),
+		'ug'=>array( 'ug'=>'uyghur tili' ),
+		'uk'=>array( 'uk'=>"Українська" ),
+		'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),
+		'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),
+		'vi'=>array( 'vi'=>'Tiếng Việt' ),
+		'vo'=>array( 'vo'=>"vad'd'a tšeel" ),
+		'wo'=>array( 'wo'=>'Wollof' ),
+		'xh'=>array( 'xh'=>'isiXhosa' ),
+		'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),
+		'yo'=>array( 'yo'=>'Yorùbá' ),
+		'za'=>array( 'za'=>'Sawcuengh' ),
+		'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
+		'zu'=>array( 'zu'=>'isiZulu' ),
+
+
+		/*
 		# This is a subset of the full array, limited to known TxP admin-side translations.
 		# If you need a language not listed here, cut and paste from the help section of this plugin.
-		static $iso_693_1_langs = array(
-		'ca'=>array( 'ca'=>'Català' ) ,
+ 		'ca'=>array( 'ca'=>'Català' ) ,
 		'cs'=>array( 'cs'=>'Čeština' ) ,
 		'da'=>array( 'da'=>'Dansk' ) ,
 		'de'=>array( 'de'=>'Deutsch' ) ,
@@ -3462,6 +3595,7 @@ class LanguageHandler
 		'th'=>array( 'th'=>'ภาษาไทย' ),
 		'uk'=>array( 'uk'=>"Українська" ),
 		'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
+		*/
 		);
 
 		switch ( $to_return )
