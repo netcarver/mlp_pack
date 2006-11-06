@@ -4,7 +4,7 @@ $plugin['name'] = 'l10n';
 $plugin['version'] = '0.6';
 $plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
-$plugin['description'] = 'Multilingual Publishing Package.';
+$plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
 
 $plugin['url'] = '$HeadURL$';
@@ -24,7 +24,9 @@ if (0) {
 	div#l10n_help a:link, div#l10n_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
 	div#l10n_help a:hover, div#l10n_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
 	div#l10n_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
-	div#l10n_help h2 { border-bottom: 1px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
+	div#l10n_help h2 { border-bottom: 2px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
+	div#l10n_help h2 a { text-decoration: none; }
+	div#l10n_help ul ul { font-size:85%; }
 	div#l10n_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase;}
 	</style>
 # --- END PLUGIN CSS ---
@@ -33,11 +35,54 @@ if (0) {
 # --- BEGIN PLUGIN HELP ---
 <div id="l10n_help">
 
-h1. l10n Internationalisation Plugin Instructions.
+h1(#top). l10n MLP Pack Help.
 
-Under the content tab, there is a new *MLP* subtab.
+<br/>
+%=Copyright 2006 Graeme Porteous and Stephen Dickinson.%
+<br/>
 
-h2. Terminology
+h2. Table Of Contents.
+
+* "Introduction":#intro
+* "Terminology":#terms
+* "Translation Paradigm":#paradigm
+* "Features":#features
+* "Snippets":#snippets
+* "Tag Directory":#tags
+** "l10n_lang_list":#lang_list
+** "l10n_if_lang":#if_lang
+** "l10n_get_lang":#get_lang
+** "l10n_feed_link":#feed_link
+** "l10n_get_lang_dir":#get_lang_dir
+** "l10n_localise":#localise
+* "Credits":#credits
+
+<br/>
+
+h2(#intro). "Introduction(Jump to the top)":#top
+
+The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
+
+It is not implemented as a pure plugin as it&#8230;
+
+* exceeds the plugin size limit
+* uses an altered version of the txplib_db.php file
+
+If you are looking for a pure TxP plugin then this is not the option for you.
+
+<br/>
+
+Other things you might like to think about before installing the pack&#8230;
+
+* It makes some extensive additions to the underlying database, notably a new 'textpattern' table per language you run the site in.
+* The 'articles' tab output is filtered using a temporary SQL table that hides the underlying table and allows additional filtering by language.
+* Changes are made to the basic txp_lang and textpattern tables.
+
+All these are listed in the setup wizard (under the content > MLP tab).
+
+
+
+h2(#terms). "Terminology(Jump to the top)":#top
 
 |_. Term |_. Definition |
 | Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
@@ -58,7 +103,19 @@ In effect this means that the old 'Articles' tab on the contents page has been r
 
 The content > write tab still allows the editing of renditions.
 
-h2. What the MLP(Multi-Lingual Publishing) Plugin provides.
+h2(#paradigm). "Translation Paradigm.(Jump to the top)":#top
+
+Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. This meant _big_ changes to the existing write tab, or replacing the write tab with a complicated substitute.
+
+However, I happened upon Mary's 'Save New' plugin and that inspired the current solution that allows the write tab to remain virtually untouched and yet still allow translation. This is done by 'cloning' a source rendition and then translating the clone *in situ* in the write tab.
+
+The translator simply edits the clone, replacing the source text as they go, until it is all replaced with the target language. At that point the clone is a new rendition of the original author's work.
+
+It's much easier on the translators as they get to keep the interface they are used to.
+
+
+
+h2(#features). "What the MLP(Multi-Lingual Publishing) Plugin provides.(Jump to the top)":#top
 
 On the admin side...
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
@@ -83,177 +140,105 @@ On the public side...
 * Localised (and direction adjusted) feeds.
 
 
-h2. Translation of Renditions.
+h2(#snippets). "Snippets(Jump to the top)":#top
 
-Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. However, this would mean big changes to the existing write tab, or replacing the write tab with a complicated substitute.
+Snippets are named strings that you can reference within pages or forms.
 
-However, I happened upon Mary's 'Save New' plugin and that inspired the current solution that allows the write tab to remain virtually untouched and yet still allow translation. This is done by 'cloning' a source rendition and then translating the clone *in situ* in the write tab.
+They are very similar to strings that are output in pages and forms using TxP's 'text' tag. Indeed, the 'Snippets' tab (found under *Content > MLP*) will also detect and display the strings used in the TxP 'text' tag.
 
-This means that the translator edits the clone, replacing the source text as they go, until it is all replaced with the target language. At that point the clone is a new rendition of the original author's work.
-
-It's much easier on the translators as they get to keep the interface they are used to.
-
-
-h2. Snippets
+However, snippets differ a little from the 'text' tag as they are parsed before the rest of the page/form and thus, can be used to provide localised strings as attributes to other tags. They are also very easy to use *but* they will not work once MLP is uninstalled.
 
 To add snippets to pages or forms...
 
 # Make sure the page/form is wrapped with the @<txp:l10n_localise>@ ... @</txp:l10n_localise>@ statements.
 # Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
-# On the *content > MLP* tab, look for your page or form on the pages or form subtab.
-# Click on the page/form name to bring up a list of all snippets therein.
+# On the *content > MLP > Snippets* tab, look for your page or form on the pages or form subtab.
+# Click on the page/form name to bring up a list of all snippets in that container.
 # You should see your snippet "my_first_snippet" listed with no translations.
 # Click on the name of your snippet to bring up the edit boxes.
 # Supply appropriate translations and hit the save button.
 # Now looking at your site should give you the correct translation according to the url you type.
 
-h2. Full ISO-693-1 Array
+h2(#tags). "Tag Directory(Jump to the top)":#top
 
-Here is the full array for the 2-character ISO-693 part 1 language codes.
+|_. Tag |_. Description |
+| "*l10n_lang_list*":#lang_list    | Outputs an un-ordered list of languages. <br/> On an article list page, this outputs all of the site's available languages.<br/>On individual articles it lists only those languages the article has renditions for. |
+| "*l10n_if_lang*":#if_lang        | Conditional tag that tests the visitor's browse language against a target, or tests the visitor's language's _direction_ against the given direction. <br/> This is very useful for serving css files for Right-to-Left languages.  |
+| "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
+| "*l10n_feed_link*":#feed_link    | Outputs a language specific feed link. |
+| "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
+| "*l10n_localise*":#localise      | Used as a wrap tag on entire pages/forms to enable snippet support. |
 
-Cut and paste the rows you need into the iso_693_1_langs() function in the language handler...
+<hr/>
 
- <code><pre>static $iso_693_1_langs = array(
-	'aa'=>array( 'aa'=>'Afaraf' ),	//	'en'=>'Afar'
-	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),	//	'en'=>'Abkhazian'
-	'af'=>array( 'af'=>'Afrikaans' ),	//	'en'=>'Afrikaans'
-	'am'=>array( 'am'=>'አማርኛ' ),	//	'en'=>'Amharic'
-	'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),	//	'en'=>'Arabic'
-	'as'=>array( 'as'=>'অসমীয়া' ),	//	'en'=>'Assamese'
-	'ay'=>array( 'ay'=>'Aymar aru' ),	//	'en'=>'Aymara'
-	'az'=>array( 'az'=>'Azərbaycan dili' ),	//	'en'=>'Azerbaijani'
-	'ba'=>array( 'ba'=>'башҡорт теле' ),	//	'en'=>'Bashkir'
-	'be'=>array( 'be'=>'Беларуская мова' ),	//	'en'=>'Byelorussian'
-	'bg'=>array( 'bg'=>'Български' ),	//	'en'=>'Bulgarian'
-	'bh'=>array( 'bh'=>'भोजपुरी' ),	//	'en'=>'Bihari',
-	'bi'=>array( 'bi'=>'Bislama' ),	//	'en'=>'Bislama'
-	'bn'=>array( 'bn'=>'বাংলা' ),	//	'en'=>'Bengali; Bangla'
-	'bo'=>array( 'bo'=>'Bod Skad' ) ,	//	'en'=>'Tibetan'
-	'br'=>array( 'br'=>'ar Brezhoneg' ) ,	//	'en'=>'Breton'
-	'ca'=>array( 'ca'=>'Català' ) ,	//	'en'=>'Catalan'
-	'co'=>array( 'co'=>'Corsu' ) ,	//	'en'=>'Corsican'
-	'cs'=>array( 'cs'=>'Čeština' ) ,	//	'en'=>'Czech'
-	'cy'=>array( 'cy'=>'Cymraeg' ) ,	//	'en'=>'Welsh'
-	'da'=>array( 'da'=>'Dansk' ) ,	//	'en'=>'Danish'
-	'de'=>array( 'de'=>'Deutsch' ) ,	//	'en'=>'German'
-	'dz'=>array( 'dz'=>'Dzongkha' ) ,	//	'en'=>'Bhutani'
-	'el'=>array( 'el'=>'Ελληνικά' ) ,	//	'en'=>'Greek'
-	'en'=>array( 'en'=>'English' , 'en-gb'=>'British English' , 'en-us'=>'American English' ),
-	'eo'=>array( 'eo'=>'Esperanto' ),	//	'en'=>'Esperanto'
-	'es'=>array( 'es'=>'Español' ),	//	'en'=>'Spanish'
-	'et'=>array( 'et'=>'Eesti Keel' ),	//	'en'=>'Estonian'
-	'eu'=>array( 'eu'=>'Euskera' ),	//	'en'=>'Basque'
-	'fa'=>array( 'fa'=>'Fārsī' ),	//	'en'=>'Persian'
-	'fi'=>array( 'fi'=>'Suomi' ),	//	'en'=>'Finnish'
-	'fj'=>array( 'fj'=>'vaka-Viti' ),	//	'en'=>'Fiji'
-	'fo'=>array( 'fo'=>'Føroyska' ),	//	'en'=>'Faroese'
-	'fr'=>array( 'fr'=>'Français' ),	//	'en'=>'French'
-	'fy'=>array( 'fy'=>'Frysk' ),	//	'en'=>'Frisian'
-	'ga'=>array( 'ga'=>'Gaeilge' ),	//	'en'=>'Irish'
-	'gd'=>array( 'gd'=>'Gàidhlig' ),	//	'en'=>'Scots Gaelic'
-	'gl'=>array( 'gl'=>'Galego' ),	//	'en'=>'Galician'
-	'gn'=>array( 'gn'=>"Avañe'ẽ" ),	//	'en'=>'Guarani'
-	'gu'=>array( 'gu'=>'ગુજરાતી' ),	//	'en'=>'Gujarati'
-	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),	//	'en'=>'Hausa'
-	'he'=>array( 'he'=>'עִבְרִית' ,'dir'=>'rtl' ),	//	'en'=>'Hebrew'
-	'hi'=>array( 'hi'=>'हिन्दी' ),	//	'en'=>'Hindi'
-	'hr'=>array( 'hr'=>'Hrvatski' ),	//	'en'=>'Croatian'
-	'hu'=>array( 'hu'=>'Magyar' ),	//	'en'=>'Hungarian'
-	'hy'=>array( 'hy'=>'Հայերէն' ),	//	'en'=>'Armenian'
-	'ia'=>array( 'ia'=>'Interlingua' ),	//	'en'=>'Interlingua'
-	'id'=>array( 'id'=>'Bahasa Indonesia' ),	//	'en'=>'Indonesian'
-	'ie'=>array( 'ie'=>'Interlingue' ),	//	'en'=>'Interlingue'
-	'ik'=>array( 'ik'=>'Iñupiak' ),	//	'en'=>'Inupiak'
-	'is'=>array( 'is'=>'Íslenska' ),	//	'en'=>'Icelandic'
-	'it'=>array( 'it'=>'Italiano' ),	//	'en'=>'Italian'
-	'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),	//	'en'=>'Inuktitut'
-	'ja'=>array( 'ja'=>'日本語' ),	//	'en'=>'Japanese'
-	'jw'=>array( 'jw'=>'basa Jawa' ),	//	'en'=>'Javanese'
-	'ka'=>array( 'ka'=>'ქართული' ),	//	'en'=>'Georgian'
-	'kk'=>array( 'kk'=>'Қазақ' ),	//	'en'=>'Kazakh'
-	'kl'=>array( 'kl'=>'Kalaallisut' ),	//	'en'=>'Greenlandic'
-	'km'=>array( 'km'=>'ភាសាខ្មែរ' ),	//	'en'=>'Cambodian'
-	'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),	//	'en'=>'Kannada'
-	'ko'=>array( 'ko'=>'한국어' ),	//	'en'=>'Korean'
-	'ks'=>array( 'ks'=>'काऽशुर' ),	//	'en'=>'Kashmiri'
-	'ku'=>array( 'ku'=>'Kurdí' ),	//	'en'=>'Kurdish'
-	'ky'=>array( 'ky'=>'Кыргызча' ),	//	'en'=>'Kirghiz'
-	'la'=>array( 'la'=>'Latine' ),	//	'en'=>'Latin'
-	'ln'=>array( 'ln'=>'lokótá ya lingála' ),	//	'en'=>'Lingala'
-	'lo'=>array( 'lo'=>'ລາວ' ),	//	'en'=>'Laothian'
-	'lt'=>array( 'lt'=>'Lietuvių Kalba' ),	//	'en'=>'Lithuanian'
-	'lv'=>array( 'lv'=>'Latviešu' ),	//	'en'=>'Latvian'
-	'mg'=>array( 'mg'=>'Malagasy fiteny' ),	//	'en'=>'Malagasy'
-	'mi'=>array( 'mi'=>'te Reo Māori' ),	//	'en'=>'Maori'
-	'mk'=>array( 'mk'=>'Македонски' ),	//	'en'=>'Macedonian'
-	'ml'=>array( 'ml'=>'മലയാളം' ),	//	'en'=>'Malayalam'
-	'mn'=>array( 'mn'=>'Монгол' ),	//	'en'=>'Mongolian'
-	'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),	//	'en'=>'Moldavian'
-	'mr'=>array( 'mr'=>'मराठी' ),	//	'en'=>'Marathi'
-	'ms'=>array( 'ms'=>'Bahasa Melayu' ),	//	'en'=>'Malay'
-	'mt'=>array( 'mt'=>'Malti' ),	//	'en'=>'Maltese'
-	'my'=>array( 'my'=>'ဗမာစကား' ),	//	'en'=>'Burmese'
-	'na'=>array( 'na'=>'Ekakairũ Naoero' ),	//	'en'=>'Nauru'
-	'ne'=>array( 'ne'=>'नेपाली' ),	//	'en'=>'Nepali'
-	'nl'=>array( 'nl'=>'Nederlands' ),	//	'en'=>'Dutch'
-	'no'=>array( 'no'=>'Norsk' ),	//	'en'=>'Norwegian'
-	'oc'=>array( 'oc'=>'lenga occitana' ),	//	'en'=>'Occitan'
-	'om'=>array( 'om'=>'Afaan Oromo' ),	//	'en'=>'(Afan) Oromo'
-	'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),	//	'en'=>'Oriya'
-	'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),	//	'en'=>'Punjabi'
-	'pl'=>array( 'pl'=>'Polski' ),	//	'en'=>'Polish'
-	'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),	//	'en'=>'Pashto'
-	'pt'=>array( 'pt'=>'Português' ),	//	'en'=>'Portuguese'
-	'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),	//	'en'=>'Quechua'
-	'rm'=>array( 'en'=>'Rhaeto-Romance' ),
-	'rn'=>array( 'rn'=>'Kirundi' ),	//	'en'=>'Kirundi'
-	'ro'=>array( 'ro'=>'Română' ),	//	'en'=>'Romanian'
-	'ru'=>array( 'ru'=>'Русский' ),	//	'en'=>'Russian'
-	'rw'=>array( 'rw'=>'Kinyarwandi' ),	//	'en'=>'Kinyarwanda'
-	'sa'=>array( 'sa'=>'संस्कृतम्' ),	//	'en'=>'Sanskrit'
-	'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),	//	'en'=>'Sindhi'
-	'sg'=>array( 'sg'=>'yângâ tî sängö' ),	//	'en'=>'Sangho'
-	'sh'=>array( 'sh'=>'Српскохрватски' ),	//	'en'=>'Serbo-Croatian'
-	'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),	//	'en'=>'Sinhalese'
-	'sk'=>array( 'sk'=>'Slovenčina' ),	//	'en'=>'Slovak'
-	'sl'=>array( 'sl'=>'Slovenščina' ),	//	'en'=>'Slovenian'
-	'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),	//	'en'=>'Samoan'
-	'sn'=>array( 'sn'=>'chiShona' ),	//	'en'=>'Shona'
-	'so'=>array( 'so'=>'af Soomaali' ),	//	'en'=>'Somali'
-	'sq'=>array( 'sq'=>'Shqip' ),	//	'en'=>'Albanian'
-	'sr'=>array( 'sr'=>'Srpski' ),	//	'en'=>'Serbian'
-	'ss'=>array( 'ss'=>'siSwati' ),	//	'en'=>'Siswati'
-	'st'=>array( 'st'=>'seSotho' ),	//	'en'=>'Sesotho'
-	'su'=>array( 'su'=>'basa Sunda' ),	//	'en'=>'Sundanese'
-	'sv'=>array( 'sv'=>'Svenska' ),	//	'en'=>'Swedish'
-	'sw'=>array( 'sw'=>'Kiswahili' ),	//	'en'=>'Swahili'
-	'ta'=>array( 'ta'=>'தமிழ்' ),	//	'en'=>'Tamil'
-	'te'=>array( 'te'=>'తెలుగు' ),	//	'en'=>'Telugu'
-	'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),	//	'en'=>'Tajik'
-	'th'=>array( 'th'=>'ภาษาไทย' ),	//	'en'=>'Thai'
-	'ti'=>array( 'ti'=>'ትግርኛ' ),	//	'en'=>'Tigrinya'
-	'tk'=>array( 'tk'=>'Türkmençe' ),	//	'en'=>'Turkmen'
-	'tl'=>array( 'tl'=>'Tagalog' ),	//	'en'=>'Tagalog'
-	'tn'=>array( 'tn'=>'Setswana' ),	//	'en'=>'Setswana'
-	'to'=>array( 'to'=>'Faka-Tonga' ),	//	'en'=>'Tonga'
-	'tr'=>array( 'tr'=>'Türkçe' ),	//	'en'=>'Turkish'
-	'ts'=>array( 'ts'=>'xiTsonga' ),	//	'en'=>'Tsonga'
-	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),	//	'en'=>'Tatar'
-	'tw'=>array( 'tw'=>'Twi' ),	//	'en'=>'Twi'
-	'ug'=>array( 'ug'=>'uyghur tili' ),	//	'en'=>'Uighur'
-	'uk'=>array( 'uk'=>"Українська" ),	//	'en'=>'Ukrainian'
-	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),	//	'en'=>'Urdu'
-	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),	//	'en'=>'Uzbek'
-	'vi'=>array( 'vi'=>'Tiếng Việt' ),	//	'en'=>'Vietnamese'
-	'vo'=>array( 'vo'=>"vad'd'a tšeel" ),	//	'en'=>'Volapuk'
-	'wo'=>array( 'wo'=>'Wollof' ),	//	'en'=>'Wolof'
-	'xh'=>array( 'xh'=>'isiXhosa' ),	//	'en'=>'Xhosa'
-	'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),	//	'en'=>'Yiddish'
-	'yo'=>array( 'yo'=>'Yorùbá' ),	//	'en'=>'Yoruba'
-	'za'=>array( 'za'=>'Sawcuengh' ),	//	'en'=>'Zhuang'
-	'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),	// 'en'=>'Chinese'
-	'zu'=>array( 'zu'=>'isiZulu' ),	//	'en'=>'Zulu'
-	);</pre></code>
+h3(#lang_list). "l10n_lang_list(Jump to the tag list)":#tags
+
+Outputs an un-ordered list of languages.
+
+On an article list page, this outputs all of the site's available languages. On individual articles it lists only those languages the article has renditions for. At present it uses messy urls to avoid extra overhead on looking up multiple renditions and calling the permlink function on each just to populate the list. This might change in future versions.
+
+You can also use this tag on 404 pages to output a list of closely matching renditions.
+
+|_. Attribute |_. Default |_. Description |
+| title | '' | (Optional) This string will be output as a paragraph before the list of languages. |
+| on404 | '' | (Optional) If you want to use this tag on a 404 page to output a list of closely matching renditions and their titles (when possible) then set this to a non-blank value. |
+| list_class | l10n_lang_list | CSS class for entire list . |
+| current_class | l10n_current | (Optional) Names the css class to give to the language in the list that matches the language the visitor is browsing in. |
+| language_class | long | (Optional) CSS class name to apply to all list items. Valid values are 'long' (giving the long code such as 'en-gb') or 'short' (giving 'en'.) |
+| show_empty | '' | (Optional on single article pages) Set to non-blank value to force the output of all languages, even ones with no rendition. |
+| link_current | '' | (Optional) Set to a non-blank value to make the current language an active hyperlink |
+| display | native | (Optional) How the language is displayed on the web page. Valid values are 'native++', 'native+', 'native', 'long' and 'short'. |
+| article_list | TXP's @$is_article_list@ variable | (Optional on single article pages) Set to a non-blank value to always output a site-wide list (even on single article pages).<br/>Be careful though as setting this option could lead to 404 page not found errors if the visitor then attempts to click through to pages that have no rendition in selected language. |
+
+&nbsp;<br/>
+&nbsp;<br/>
+
+h3(#if_lang). "l10n_if_lang(Jump to the tag list)":#tags
+
+Conditional tag that tests the visitor's browse language against a target, or tests the _direction_ of the visitor's language against the given direction.
+
+This is very useful for serving css files for Right-to-Left languages or any other content you wish to make specific to language or language direction.
+
+This is used on the demo site to output a second CSS file for RTL languages. As the file is output after the default LTR file, it's CSS rules will override the LTR rules and the page layout is setup for correct RTL rendering.
+
+|_. Attribute |_. Default |_. Description |
+| lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
+| dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
+| wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
+
+h3(#get_lang). "l10n_get_lang(Jump to the tag list)":#tags
+
+Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's Doctype.
+
+|_. Attribute |_. Default |_. Description |
+| type | short | (Optional) How to format the resulting string. Valid values are 'long','short','native' |
+
+
+h3(#feed_link). "l10n_feed_link(Jump to the tag list)":#tags
+
+Outputs a language specific feed link.
+
+|_. Attribute |_. Default |_. Description |
+| code | The visitor's current browse language | (Optional) If you want to override the language of a given feed link, set this to the code of the language you want to output the feed in. |
+
+h3(#get_lang_dir). "l10n_get_lang_dir(Jump to the tag list)":#tags
+
+Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page.
+
+|_. Attribute |_. Default |_. Description |
+| type | short | (Optional) Which of the language's codes to use during the direction lookup.<br/>Valid values are 'long','short' <br/>In practice 'short' should be all you need. |
+
+h3(#localise). "l10n_localise(Jump to the tag list)":#tags
+
+Use this tag to wrap entire pages and forms in which you wish to use snippets.
+
+This tag has no attributes.
+
+h2(#credits). "Credits.(Jump to the top)":#top
+
+Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
+
+Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
 
 </div>
 # --- END PLUGIN HELP ---
@@ -552,11 +537,11 @@ if (@txpinterface == 'public')
 	*/
 	function l10n_lang_list( $atts )
 		{
-		global $thisarticle , $l10n_language, $is_article_list , $pretext;
+		global $thisarticle , $l10n_language, $is_article_list , $pretext, $prefs;
 
 		extract(lAtts(array(
 							'title'				=> '',					#	Title will be prepended as a paragraph.
-							'on404'				=> '', 					#	Article id to lookup. If explicitly defined
+							'on404'				=> '', 					#	Set this to non-blank to force special 404 processing
 							'current_class'		=> 'l10n_current',		#	Literal class markup for the current language
 							'language_class'	=> 'long',				#	How the class of the list item is marked up
 																		#	'long' => long lang eg: en-gb | 'short' eg. 'en'
@@ -568,24 +553,64 @@ if (@txpinterface == 'public')
 							'article_list' 		=> $is_article_list,	#	Set to '1' to always output a site-wide list in this location
 							),$atts));
 
-		$on404			= !empty($on404);
+		$on404			= !empty($on404);	# User marked this list as a 404 special lookup list.
 		$show_empty		= !empty($show_empty);
 		$link_current	= !empty($link_current);
 
+		$processing404	= ($pretext['status'] === '404');
+
 		$list = array();
-		$alangs = array();
+		static $alangs;
 		$slangs = LanguageHandler::get_site_langs();
-		$section = empty($pretext['s']) ? '' : '/'.$pretext['s'];
+		$section = empty($pretext['s']) ? '' : $pretext['s'];
+		$id = $pretext['id'];
+		$url = trim($_SERVER['REQUEST_URI'] , '/');
+		$parts = chopUrl($url);
+
+		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
+		//echo br , "url = " , $_SERVER['REQUEST_URI'];
+		//echo br , "parts = " , var_dump( $parts );
 
 		if( $on404 )
 			{
 			#
 			#	Find the section and id of the faulting article (if possible)...
 			#
-			$url = trim($_SERVER['REQUEST_URI'] , '/');
-			$parts = chopUrl($url);
-			$section = '/'.$parts['u0'];
-			$id = $parts['u1'];
+			if( empty($id) )
+				$id = gps('id');	# Try out a messy match first
+
+			if( empty($id) )		# Try matching based on the standard permlink schemes...
+				{
+				extract( $parts );
+				//echo br , 'permlink_mode = ' , $prefs['permlink_mode'];
+				switch($prefs['permlink_mode'])
+					{
+					case 'section_id_title':
+						$id = $u1;
+						break;
+
+					case 'year_month_day_title':
+						$when = "$u0-$u1-$u2";
+						$rs = safe_row("ID,Section","l10n_master_textpattern",	"posted like '".doSlash($when)."%' and url_title like '".doSlash($u3)."' and Status >= 4 limit 1");
+						$id = (!empty($rs['ID'])) ? $rs['ID'] : '';
+						break;
+
+					case 'section_title':
+						$rs = safe_row("ID,Section",'l10n_master_textpattern',"url_title like '".doSlash($u1)."' AND Section='".doSlash($u0)."' and Status >= 4 limit 1");
+						$id = @$rs['ID'];
+						break;
+
+					case 'title_only':
+						$rs = safe_row("ID",'l10n_master_textpattern',"url_title like '".doSlash($u0)."' and Status >= 4 limit 1");
+						$id = @$rs['ID'];
+						break;
+
+					case 'id_title':
+						$id = $u0;
+						break;
+					}
+				}
+
 			if( !empty($id) and is_numeric($id) )
 				{
 				$article_list = false;
@@ -599,19 +624,15 @@ if (@txpinterface == 'public')
 			#
 			$link_current = true;
 			}
-		else
-			{
-			#
-			#	Not on a 404 page, so use the one of the current article (if any).
-			#
-			$id = (isset($thisarticle['thisid'])) ? $thisarticle['thisid'] : '' ;
-			}
 
 		$show_title = !empty( $title );
 
 		if( !$article_list )
 			{
-			$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
+			if( !isset( $alangs ) or !is_array( $alangs ) )
+				$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
+
+			//echo br , 'alangs = ' , var_dump( $alangs );
 
 			if( $show_title )
 				$show_title = !empty( $alangs );
@@ -666,7 +687,12 @@ if (@txpinterface == 'public')
 				$class = ' class="'.$class.'"';
 
 				if( !$current or $link_current )
-					$line = '<a href="'.hu.$short.$_SERVER['REQUEST_URI'].'">'.$text.'</a>';
+					{
+					$uri = $_SERVER['REQUEST_URI'];
+					if( $processing404 )
+						$uri = '';
+					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
+					}
 				else
 					$line = $text;
 
@@ -683,8 +709,14 @@ if (@txpinterface == 'public')
 				#
 				if( array_key_exists( $lang , $alangs ) )
 					{
-					$current = ($l10n_language['long'] === $lang);
-					$text    = tag( $lname , 'span' , $dir);
+					$record = $alangs[$lang];
+					$lang_rendition_title	= $record['title'];
+					$lang_rendition_id		= $record['id'];
+					$current 	= ($l10n_language['long'] === $lang);
+					$text		= $lname;
+					if( $processing404 )
+						$text	= strong($text) . sp . ':' . sp . $lang_rendition_title;
+					$text   	= tag( $text , 'span' , $dir);
 
 					#
 					#	Prep the line class...
@@ -695,7 +727,13 @@ if (@txpinterface == 'public')
 					$class = ' class="'.$class.'"';
 
 					if( !$current or $link_current )
-						$line = '<a href="'.hu.$short.$section.'/'.$alangs[$lang].'">'.$text.'</a>';
+						{
+						//$line = '<a href="'.hu.$short.$section.'/'.$alangs[$lang].'">'.$text.'</a>';
+						#
+						#	Use messy urls to avoid permlink pattern processing...
+						#
+						$line = '<a href="'.hu.$short.'/?id='.$lang_rendition_id.'">'.$text.'</a>';
+						}
 					else
 						$line = $text;
 
@@ -750,7 +788,7 @@ if (@txpinterface == 'public')
 		return $out;
 	    }
 
-	function l10n_get_language( $atts )
+	function l10n_get_lang( $atts )
 		{
 		/*
 		Outputs the current language. Use in page/forms to output the language needed by the doctype/html decl.
@@ -758,7 +796,7 @@ if (@txpinterface == 'public')
 		global $l10n_language;
 
 		extract( lAtts( array(
-								'type'=>'short' , # valid values = 'long','short','full'
+								'type'=>'short' , # valid values = 'long','short','native'
 								) , $atts ) );
 
 		if( !$l10n_language )
@@ -767,7 +805,7 @@ if (@txpinterface == 'public')
 		$type = strtolower( $type );
 		switch( $type )
 			{
-			case 'full' :
+			case 'native' :
 				$result = LanguageHandler::get_native_name_of_lang( $l10n_language['long'] );
 				break;
 			case 'long' :
