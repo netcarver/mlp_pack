@@ -175,7 +175,7 @@ function _l10n_chooser( $permitted_langs )
 	{
 	$count = 0;
 	$langs = LanguageHandler::get_site_langs();
-	$o[] = '<div style="text-align: center;" ><fieldset style="margin: 0px auto;"><legend>' . 'Show languages&#8230;' . '</legend>' . n;
+	$o[] = '<div class="l10n_extensions"><fieldset><legend>' . 'Show languages&#8230;' . '</legend>' . n;
 	$use_cookies = (ps( 'l10n_filter_method' ) !== 'post');
 
 	#
@@ -660,8 +660,11 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 					$info = safe_row( 'Lang' , 'textpattern' , "`ID`='$id'" );
 					if( $info !== false )
 						{
-						$lang = $info['Lang'];
-						$languages[$lang] = $lang;
+						if( array_key_exists( 'Lang' , $info ) )
+							{
+							$lang = $info['Lang'];
+							$languages[$lang] = $lang;
+							}
 						}
 					}
 				}
