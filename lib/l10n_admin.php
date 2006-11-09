@@ -613,7 +613,38 @@ function l10n_pre_multi_edit_cb( $event , $step )
 	}
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
-	$code  = LanguageHandler::compact_code( $lang );
+	//echo "_l10n_generate_lang_table( $lang , $filter )";
+
+	if( !is_string( $lang ) )
+		{
+		echo br , "Non-string language passed to _l10n_generate_lang_table() ... " , var_dump($lang);
+		return;
+		}
+
+
+	if( empty( $lang ) )
+		{
+		echo br , "Blank language passed to _l10n_generate_lang_table()";
+		return;
+		}
+
+	if( strlen( $lang ) > 2 )
+		$code = LanguageHandler::compact_code( $lang );
+	else
+		$code = $lang;
+
+
+	if( empty( $code ) )
+		{
+		echo br , "Blank language code calculated in _l10n_generate_lang_table()";
+		return;
+		}
+
+	if( !LanguageHandler::is_valid_code($code) )
+		{
+		echo br , "Invalid language code '$code' calculated in _l10n_generate_lang_table()";
+		return;
+		}
 	$table_name = ArticleManager::make_textpattern_name( $code );
 
 	$where = '';
