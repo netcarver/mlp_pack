@@ -304,7 +304,7 @@ if (@txpinterface == 'public')
 		$thisarticle['body']    = (!empty($content)) ? tag( $content , 'div' , $dir ) : '';
 		}
 
-	function _l10n_set_browse_language( $short_code , $debug=0 )
+	function _l10n_set_browse_language( $short_code , $debug=false )
 		{
 		#
 		#	Call this function with the SHORT language code.
@@ -326,6 +326,10 @@ if (@txpinterface == 'public')
 			if( $debug )
 				echo " ... in IF() ... " ;
 			$l10n_language = LanguageHandler::compact_code($tmp);
+
+			if( empty( $l10n_language['long'] ) )
+				$l10n_language['long'] = $tmp;
+
 			$result = true;
 			getlocale( $l10n_language['long'] );
 			if( $debug )
@@ -513,6 +517,7 @@ if (@txpinterface == 'public')
 		#
 		if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
 			{
+			trace_add( "L10N MLP: Switching to {$l10n_language['long']} from " . LANG );
 			$textarray = load_lang( $l10n_language['long'] );
 			$prefs['language'] = $l10n_language['long'];
 			}
