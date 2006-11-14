@@ -224,10 +224,17 @@ function _l10n_chooser( $permitted_langs )
 
 	foreach( $showlangs as $lang=>$record )
 		{
+		$dir = LanguageHandler::get_lang_direction( $lang );
+		$rtl = ( $dir == 'rtl' );
+
 		extract( $record );
 		$checked = ($override_check) ? 'checked' : $checked;
+		if( $rtl )
+			$o[] = t . '<span dir="rtl">';
 		$o[] = t . '<input type="checkbox" class="checkbox" '.$rw.' '.$checked.' value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' . n;
 		$o[] = t . '<label for="'.$lang.'">'.$lang_name.'</label>' . n;
+		if( $rtl )
+			$o[] = t . '</span>';
 		}
 	$o[] = hInput( 'l10n_filter_method' , 'post' );
 	$o[] = t.'<input type="submit" value="'.gTxt('go').'" class="smallerbox" />' . n;
@@ -629,7 +636,13 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 		}
 
 	if( strlen( $lang ) > 2 )
+		{
 		$code = LanguageHandler::compact_code( $lang );
+		if( isset( $code['long'] ) )
+			$code = $code['long'];
+		else
+			$code = $code['short'];
+		}
 	else
 		$code = $lang;
 
