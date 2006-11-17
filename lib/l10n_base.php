@@ -510,6 +510,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
 		'l10n-localised'			=> 'Localised',
+		'l10n-ltr'					=> 'LTR >',
 		'l10n-missing'				=> ' missing.',
 		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
 		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
@@ -522,6 +523,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-renditions'			=> 'Renditions',
 		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
 		'l10n-renditions_for'		=> 'Renditions for ',
+		'l10n-rtl'					=> '< RTL',
 		//'l10n-section_vars'			=> 'Section variables ',
 		//'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
@@ -540,6 +542,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-strings'				=> ' strings.',
 		'l10n-summary'				=> 'Statistics.',
 		'l10n-textbox_title'		=> 'Type in the text here.',
+		'l10n-toggle'				=> 'Toggle',
 		'l10n-total'				=> 'Total',
 		'l10n-unlocalised'			=> 'Unlocalised',
 		'l10n-view_site'			=> 'View localised site',
@@ -1480,11 +1483,47 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
+	function _inject_js()
+		{
+		$ltr = doSlash( gTxt( 'l10n-ltr' ) );
+		$rtl = doSlash( gTxt( 'l10n-rtl' ) );
+
+		$fn = <<<end_js
+		<script type="text/javascript" language="javascript" charset="utf-8">
+		// <![CDATA[
+		function toggleDirection(id)
+			{
+			if (!document.getElementById)
+				{
+				return false;
+				}
+
+			var textarea = document.getElementById(id + '-data');
+			var toggler  = document.getElementById(id + '-toggle');
+
+			if (textarea.style.direction == 'ltr')
+				{
+				textarea.style.direction = 'rtl';
+				toggler.innerHTML = '$rtl';
+				}
+			else
+				{
+				textarea.style.direction = 'ltr';
+				toggler.innerHTML = '$ltr';
+				}
+			}
+		// ]]>
+		</script>
+end_js;
+		return $fn;
+		}
+
 	function render_string_edit( $type , $container , $id, $owner = '' , $event='public' )	# Right pane string edit routine
 		{
 		/*
 		Render the edit controls for all localisations of the chosen string.
 		*/
+		$out[] = LocalisationStringView::_inject_js();
 		$out[] = '<div class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
@@ -1509,6 +1548,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( empty( $e ) )
 				$e = $event;
 			$lang = LanguageHandler::get_native_name_of_lang($code);
+			$dir  = LanguageHandler::get_lang_direction_markup( $code );
 
 			$warning = '';
 			if( empty( $data['id'] ) )
@@ -1518,8 +1558,9 @@ class LocalisationStringView extends GBPAdminTabView
 
 			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.'</dt>';
 			$out[] = '<dd><p>'.
-						'<textarea name="' . $code . '-data" cols="60" rows="2" title="' .
-						gTxt('l10n-textbox_title') . '">' . $data['data'] . '</textarea>' .
+						'<textarea id="' . $code . '-data" name="' . $code . '-data" cols="60" rows="2" title="' .
+						gTxt('l10n-textbox_title') . '"'. $dir .'>' . $data['data'] . '</textarea>' .
+						sp.'<a href="#" onClick="toggleDirection(\''.$code.'\')"><span id="'.$code.'-toggle">'.gTxt('l10n-toggle').'</span></a>' .
 						hInput( $code.'-id' , $data['id'] ) .
 						hInput( $code.'-event' , $e ) .
 						'</p></dd>';
@@ -3783,7 +3824,7 @@ class SnippetHandler
 		static $snippet_tag_pattern = "/\<txp:text item=\"([\w|\.|\-]+)\"\s*\/\>/";
 
 		# The following are the localise tag pattern(s)...
-		static $tag_pattern = '/\<\/*txp:l10n_localise\s*\>/';
+		static $tag_pattern = '/\<\/*txp:l10n_localise(\w|\=|\"|\-|\_|\'|\s)*\>/';
 
 		switch( $name )
 			{
@@ -3850,8 +3891,12 @@ class SnippetHandler
 			break;
 
 			case 'insert' :
-			return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
-			break;
+				$subtab = gps('subtab');
+				if( $subtab === 'page' )
+					return '<txp:l10n_localise page="true">'.$thing.'</txp:l10n_localise>';
+				else
+					return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
+				break;
 
 			default:
 			case 'check':
