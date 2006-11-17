@@ -232,6 +232,9 @@ h3(#localise). "l10n_localise(Jump to the tag list)":#tags
 
 Use this tag to wrap entire pages and forms in which you wish to use snippets.
 
+|_. Attribute |_. Default |_. Description |
+| page | none | (Optional) Set this to any non-blank value when wrapping TxP pages to cause injection of language codes into the page's permlinks and other internal hrefs.<br/>This can help stop browsers from apparantly "loosing" track of your browse language by caching pages with the same url that you previously visited when browsing in a different language. |
+
 This tag has no attributes.
 
 h2(#credits). "Credits.(Jump to the top)":#top
@@ -364,7 +367,7 @@ if (@txpinterface == 'public')
 		$site_langs = LanguageHandler::get_site_langs();
 
 		if (!defined('rhu'))
-			define("rhu", preg_replace("/http:\/\/.+(\/.*)\/?$/U", "$1", hu));
+			define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
 		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
 		if( !empty( $path ) )
@@ -693,7 +696,7 @@ if (@txpinterface == 'public')
 
 				if( !$current or $link_current )
 					{
-					$uri = $_SERVER['REQUEST_URI'];
+					$uri = rtrim( $_SERVER['REQUEST_URI'] , '/' );
 					if( $processing404 )
 						$uri = '';
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
@@ -887,9 +890,57 @@ if (@txpinterface == 'public')
 		return $dir;
 		}
 
+
+	function _l10n_log( $message , $line )
+		{
+		global $logging;
+		global $logfile;
+
+		if( $logging )
+			error_log( n.$message.'['.$line.'].' , 3 , $logfile );
+		}
+
+	function _l10n_link_lang_cb( $matches )
+		{
+		global $l10n_language;
+
+		$external = ( rtrim( $matches[1] , '/') !== rtrim( hu , '/') );
+
+		$result = $matches[0];
+		if( !$external )
+			{
+			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
+			if( !$has_lang_code )
+				{
+				//_l10n_log( "Matched[0] (" .$matches[0].')' , __LINE__ );
+				//_l10n_log( "Matched[1] (" .$matches[1].')' , __LINE__ );
+				//_l10n_log( "hu (" .hu.')' , __LINE__ );
+				//_l10n_log( "Matched[2] (" .$matches[2].')' , __LINE__ );
+				//_l10n_log( "Matched[3] (" .$matches[3].')' , __LINE__ );
+				//_l10n_log( '('.$matches[2].') is NOT a valid short code.' , __LINE__ );
+				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , "/" );
+				$result = ' href="'. $result . '"';
+				}
+			//else
+				//{
+				//_l10n_log( n . "URL already has valid lang code: " . $matches[0] , __LINE__ );
+				//}
+			}
+		//else
+			//{
+			//_l10n_log( n . "Skipping external reference: " . $matches[0] , __LINE__ );
+			//}
+
+		//if( !$external and !$has_lang_code )
+			//_l10n_log( n . $matches[0] . n . $result , __LINE__ );
+
+		return $result;
+		}
+
 	function l10n_localise($atts, $thing = '')
 		{
 		global $l10n_language, $thisarticle, $thislink;
+		global $logfile , $logging;
 
 		if ($l10n_language)
 			{
@@ -918,10 +969,24 @@ if (@txpinterface == 'public')
 				}
 			else if ($thing)
 				{
-				# SED: Process the direct snippet substitutions needed in the contained content.
+				# Process the direct snippet substitutions needed in the contained content.
 				$thing = SnippetHandler::substitute_snippets( $thing );
 				$html = parse($thing);
-				$html = preg_replace('#((href|src)=")(?!\/?(https?|ftp|download|images|))\/?#', $l10n_language['short'].'/'.'$1', $html);
+
+				if( array_key_exists( 'page' , $atts) )
+					{
+					//$logfile = 'textpattern'.DS.'tmp'.DS.'l10n.log.txt';
+					//$logging = array_key_exists( 'logging', $atts );
+					//if( $logging )
+						//unlink( $logfile );
+					//_sed_log( "\n\nParsing page..." , 0 );
+
+					# Insert the language code into all permlinks...
+					$pattern = '/ href="(https?:\/\/[\w|\.]*)(\/[\w|\-]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
+					//$pattern = '/ href="(https?:\/\/[\w|\.]*)([\/]?[\w|\-]*)([\w|\/|\_|\?|\=|\-|\#]*)"/';
+					$html = preg_replace_callback( $pattern , '_l10n_link_lang_cb' , $html );
+					}
+
 				return $html;
 				}
 			}
