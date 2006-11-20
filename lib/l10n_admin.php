@@ -317,6 +317,52 @@ function l10n_setup_article_buffer_processor( $event , $step )
 		$_POST['Group'] = $_POST['CloneGroup'];	# from the clone selector elements.
 		}
 	}
+
+function _l10n_inject_js()
+	{
+	$ltr = doSlash( gTxt( 'l10n-ltr' ) );
+	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
+
+	$fn = <<<end_js
+	<script type="text/javascript" language="javascript" charset="utf-8">
+	// <![CDATA[
+	function toggleDirection(id)
+		{
+		if (!document.getElementById)
+			{
+			return false;
+			}
+
+		var element = document.getElementById(id);
+
+		if (element.style.direction == 'ltr')
+			{
+			element.style.direction = 'rtl';
+			}
+		else
+			{
+			element.style.direction = 'ltr';
+			}
+		}
+
+	function toggleTextElements()
+		{
+		toggleDirection('title');
+		toggleDirection('body');
+		toggleDirection('excerpt');
+		}
+
+	function togglePreview()
+		{
+		toggleDirection('article-main');
+		}
+
+	// ]]>
+	</script>
+end_js;
+	return $fn;
+	}
+
 function l10n_article_buffer_processor( $buffer )
 	{
 	global $l10n_vars;
@@ -330,6 +376,9 @@ function l10n_article_buffer_processor( $buffer )
 	$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
 	$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
+	$view		= gps( 'view' );
+	$preview	= ($view === 'preview');
+	$html		= ($view === 'html');
 
 	#
 	#	Disallow cloning in the write tab now...
@@ -396,8 +445,56 @@ function l10n_article_buffer_processor( $buffer )
 			$r .= 	hInput( 'Group' , $group_id ) . gTxt('article')    . ': ' . strong( $group_id );
 			}
 		}
+
+	if( !$preview and !$html )
+		{
+		#
+		#	Inject direction hyper-link...
+		#
+		$r .= ' / <a href="#" onClick="toggleTextElements()">'.gTxt('l10n-toggle').'</a>';
+		}
+
 	$r = graf( $r );
 	$buffer = str_replace( $f , $r.n.$f , $buffer );
+
+	$r = _l10n_inject_js();
+	if( !$preview and !$html )
+		{
+		#
+		#	Insert toggle JS...
+		#
+		$buffer = str_replace( $f , $r.n.$f , $buffer );
+
+		#
+		#	Inject direction markup...
+		#
+		$r = LanguageHandler::get_lang_direction_markup( $lang );
+		$buffer = str_replace( $f , $f.$r , $buffer );
+		$f = 'id="body"';
+		$buffer = str_replace( $f , $f.$r , $buffer );
+		$f = 'id="excerpt"';
+		$buffer = str_replace( $f , $f.$r , $buffer );
+		}
+	if( $preview )
+		{
+		#
+		#	Insert toggle JS...
+		#
+		$f = '<td id="article-main"';
+		$buffer = str_replace( $f , $r.n.$f , $buffer );
+
+		#
+		#	Inject direction markup...
+		#
+		$r = LanguageHandler::get_lang_direction_markup( $lang );
+		$buffer = str_replace( $f , $f.$r , $buffer );
+
+		#
+		#	Inject direction hyper-link...
+		#
+		$r = '<td><a href="#" onClick="togglePreview()">'.gTxt('l10n-toggle').'</a></td>';
+		$buffer = str_replace( $f , $r.n.$f , $buffer );
+		}
 
 	return $buffer;
 	}
