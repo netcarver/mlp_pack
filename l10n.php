@@ -55,6 +55,7 @@ h2. Table Of Contents.
 ** "l10n_feed_link":#feed_link
 ** "l10n_get_lang_dir":#get_lang_dir
 ** "l10n_localise":#localise
+* "Preferences Help":#prefs
 * "Credits":#credits
 
 <br/>
@@ -120,6 +121,7 @@ h2(#features). "What the MLP(Multi-Lingual Publishing) Plugin provides.(Jump to 
 On the admin side...
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
 * Support for 'snippets' to simplify page/form editing and writing.
+* Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
 * Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
 * Support for Articles (groups of renditions).
 * Support for cloning of renditions and their translation into other languages using the existing write tab.
@@ -236,6 +238,59 @@ Use this tag to wrap entire pages and forms in which you wish to use snippets.
 | page | none | (Optional) Set this to any non-blank value when wrapping TxP pages to cause injection of language codes into the page's permlinks and other internal hrefs.<br/>This can help stop browsers from apparantly "loosing" track of your browse language by caching pages with the same url that you previously visited when browsing in a different language. |
 
 This tag has no attributes.
+
+h2(#prefs). "Preferences Help. (Jump to the top)":#top
+
+* "Languages":#l10n-languages
+* "Show Article Table Legend":#l10n-show_legends
+* "Email a user when assigning them a rendition?":#l10n-send_notifications
+* "… even when assigning to yourself?":#l10n-send_notice_to_self
+* "… even when author changed in content > renditions list?":#l10n-send_notice_on_changeauthor
+* "Power users can change a rendition's language or article?":#l10n-allow_writetab_changes
+* "Inline editing of pages and forms":#l10n-inline_editing
+
+h3(#l10n-languages). "Languages":#prefs
+
+When the setup wizard is run, this list will be populated with all the currently installed languages on the site (to install languages you need to go to Admin>Preferences>Languages).
+
+The first language in this comma separated list of language codes is considered to be the site's 'default' language and will be used if the MLP pack cannot serve the language the visitor is requesting. We recommend that you use the full, 5 character, language codes where possible (eg. el-gr for Greek, en-gb for British English etc) because TxP itself uses these 5 character codes to identify the currently selected language.
+
+You can use the basic 2 character code if you want but things don't work out as well with TxP's language strings when you do this.
+
+
+h3(#l10n-show_legends). "Show Article Table Legend":#prefs
+
+This option controls the visibility of the explanation that appears as the footer of the article table on the Content>MLP>Articles tab.
+
+Setting this to 'no' can free up some screen space for you if you know what the colour scheme represents.
+
+
+h3(#l10n-send_notifications). "Email a user when assigning them a rendition?":#prefs
+
+Using the table of articles on the Content>MLP>Articles page it is possible to clone renditions for translation into other languages. When you do so, you must assign the translation work to a translator. If you set this option to 'yes' then the MLP pack will send a notification email to the translator telling them of their work assignment and providing a clickable link that takes them straight to that rendition to start work.
+
+
+h3(#l10n-send_notice_to_self). "… even when assigning to yourself?":#prefs
+
+Some users might even assign themselves as translator of a work, and in this case you can prevent the notification email from being sent to yourself by setting this option to 'no'. Set it to 'yes' if you still want to recieve an email notification.
+
+
+h3(#l10n-send_notice_on_changeauthor). "… even when author changed in content > renditions list?":#prefs
+
+The MLP pack can even send email notifications when a rendition's author is changed from the Contents>Renditions tab (that is the old 'article' tab.)
+
+
+h3(#l10n-allow_writetab_changes). "Power users can change a rendition's language or article?":#prefs
+
+Set this option to 'yes' allows some users (Publishers and Managing Editors) to change the language or article that a rendition is assigned to.
+
+
+h3(#l10n-inline_editing). "Inline editing of pages and forms":#prefs
+
+Setting this option to 'yes' allows pages and forms to be edited using a special link on the Content>MLP>Snippets>(Pages/Forms) tab. This allows you to work with snippets in pages and forms than if you had to keep swithing to the Presentation>(Pages/Forms) tabs.
+
+It also allows you access to a feature that allows pages and forms to automatically be wrapped with the l10n_localise tag.
+
 
 h2(#credits). "Credits.(Jump to the top)":#top
 
@@ -736,7 +791,6 @@ if (@txpinterface == 'public')
 
 					if( !$current or $link_current )
 						{
-						//$line = '<a href="'.hu.$short.$section.'/'.$alangs[$lang].'">'.$text.'</a>';
 						#
 						#	Use messy urls to avoid permlink pattern processing...
 						#
@@ -973,17 +1027,22 @@ if (@txpinterface == 'public')
 				$thing = SnippetHandler::substitute_snippets( $thing );
 				$html = parse($thing);
 
+				#
+				#	Process all the urls on 'pages' and insert the correct language
+				# marker (if needed)...
+				#
 				if( array_key_exists( 'page' , $atts) )
 					{
 					//$logfile = 'textpattern'.DS.'tmp'.DS.'l10n.log.txt';
 					//$logging = array_key_exists( 'logging', $atts );
 					//if( $logging )
+						//{
 						//unlink( $logfile );
-					//_sed_log( "\n\nParsing page..." , 0 );
+						//_sed_log( "\n\nParsing page..." , 0 );
+						//}
 
 					# Insert the language code into all permlinks...
-					$pattern = '/ href="(https?:\/\/[\w|\.]*)(\/[\w|\-]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
-					//$pattern = '/ href="(https?:\/\/[\w|\.]*)([\/]?[\w|\-]*)([\w|\/|\_|\?|\=|\-|\#]*)"/';
+					$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
 					$html = preg_replace_callback( $pattern , '_l10n_link_lang_cb' , $html );
 					}
 
