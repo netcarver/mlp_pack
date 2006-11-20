@@ -39,6 +39,18 @@ class ArticleManager
 		$sql = 'drop table `'.PFX.L10N_ARTICLES_TABLE.'`';
 		return @safe_query( $sql );
 		}
+	function clean_table_name( $name )
+		{
+		if( !is_string( $name ) )
+			{
+			$error = "clean_table_name() given a non string input.";
+			trigger_error( $error , E_USER_ERROR );
+			}
+
+		#Make sure the table name has no sql opeartors...
+		$result = strtr( $name , array( '-' => '_' ) );
+		return $result;
+		}
 	function make_textpattern_name( $full_code )
 		{
 		if( is_string( $full_code ) )
@@ -63,7 +75,9 @@ class ArticleManager
 			trigger_error( "$code is too short!" , E_USER_ERROR );
 			}
 
-		return L10N_RENDITION_TABLE_PREFIX . $code;
+		$result = ArticleManager::clean_table_name( L10N_RENDITION_TABLE_PREFIX . $code );
+
+		return $result;
 		}
 	function _get_article_info( $id )
 		{
@@ -432,7 +446,7 @@ class LocalisationView extends GBPPlugin
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
-		'articles' => array('value' => 1, 'type' => 'yesnoradio'),
+		//'articles' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
@@ -451,9 +465,9 @@ class LocalisationView extends GBPPlugin
 		//'l10n-section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
 		//'l10n-section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
-		'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
+		//'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
 
-		'l10n-snippets_tab' => array( 'value' => 1, 'type' => 'yesnoradio'),
+		//'l10n-snippets_tab' => array( 'value' => 1, 'type' => 'yesnoradio'),
 		//'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		//'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
@@ -619,9 +633,9 @@ class LocalisationView extends GBPPlugin
 		}
 	function preload()
 		{
-		if ($this->pref('plugins') and has_privs('plugin') )
+		if( has_privs('plugin') )
 			new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
-		if ($this->pref('l10n-snippets_tab') and (has_privs('page') or has_privs('form') ) )
+		if( has_privs('page') or has_privs('form') )
 			{
 			$snippet_tab = new SnippetTabView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
 			new LocalisationStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
@@ -631,11 +645,11 @@ class LocalisationView extends GBPPlugin
 				new LocalisationStringView( gTxt('forms') , 'form' , $snippet_tab );
 			new SnippetInOutView( gTxt( 'l10n-inout' ) , 'inout' , $snippet_tab );
 			}
-		if ($this->pref('articles') and has_privs('article.edit') )
+		if( has_privs('article.edit') )
 			new LocalisationArticleTabView( gTxt('articles'), 'article', $this, true );
-		if ($this->pref('categories') and has_privs('category') )
+		if( $this->pref('categories') and has_privs('category') )
 			new LocalisationTabView( gTxt('categories'), 'category', $this );
-		if ($this->pref('sections') and has_privs('section') )
+		if( $this->pref('sections') and has_privs('section') )
 			new LocalisationTabView( gTxt('sections'), 'section', $this );
 
 		new GBPPreferenceTabView($this);
@@ -658,7 +672,8 @@ class LocalisationView extends GBPPlugin
 		if( count( $langs ) )
 			foreach( $langs as $name )
 				{
-				$names[] = PFX.L10N_RENDITION_TABLE_PREFIX.$name;
+				$name = PFX.L10N_RENDITION_TABLE_PREFIX.$name;
+				$names[] = ArticleManager::clean_table_name($name);
 				}
 
 		#
@@ -677,6 +692,7 @@ class LocalisationView extends GBPPlugin
 			foreach( $diff_names_tables as $full_name )
 				{
 				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
+				$lang = strtr( $lang , array( '_'=>'-' ) );
 				if( !LanguageHandler::is_valid_code( $lang ) )
 					continue;
 
@@ -1610,10 +1626,12 @@ end_js;
 			$f1[] = hInput( 'commit', 'true' );
 			$f1[] = $this->parent->form_inputs();
 
+			$direction_markup = LanguageHandler::get_lang_direction_markup( $d['lang'] );
+
 			foreach( $d['strings'] as $k=>$v )
 				{
 				$v = htmlspecialchars( $v );
-				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\"/>") ) .n ;
+				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\" $direction_markup/>") ) .n ;
 				}
 
 			$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
@@ -1935,6 +1953,8 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 			foreach( $d as $lang=>$set )
 				{
+				$dir_markup	= LanguageHandler::get_lang_direction_markup( $lang );
+
 				$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
 				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 					{
@@ -1950,7 +1970,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 						if( empty( $name ) or empty($event) or empty($data) )
 							continue;
 
-						$l[] = tr( n.t.'<td style="text-align: right;">'.$name.' <em>('.$event.')</em> : </td>' . n.td("<input type=\"text\" readonly size=\"100\" value=\"$data\"/>") ) .n;
+						$l[] = tr( n.t.'<td style="text-align: right;">'.$name.' <em>('.$event.')</em> : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$data\" $dir_markup/>") ) .n;
 						$count++;
 						}
 					}
