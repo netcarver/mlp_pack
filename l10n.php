@@ -37,16 +37,18 @@ if (0) {
 
 h1(#top). l10n MLP Pack Help.
 
-<br/>
-%=Copyright 2006 Graeme Porteous and Stephen Dickinson.%
-<br/>
+<br />
+
+|_. Copyright 2006 Graeme Porteous and Stephen Dickinson. |
+
+<br />
 
 h2. Table Of Contents.
 
-* "Introduction":#intro
+* "Introduction &amp; Setup/Cleanup":#intro
 * "Terminology":#terms
 * "Translation Paradigm":#paradigm
-* "Features":#features
+* "What the MLP(Multi-Lingual Publishing) Plugin provides.":#features
 * "Snippets":#snippets
 * "Tag Directory":#tags
 ** "l10n_lang_list":#lang_list
@@ -60,16 +62,16 @@ h2. Table Of Contents.
 
 <br/>
 
-h2(#intro). "Introduction(Jump to the top)":#top
+h2(#intro). "Introduction &amp; Setup/Cleanup(Jump to the top)":#top
 
 The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
 
-It is not implemented as a pure plugin as it&#8230;
+It is *not* implemented as a 'pure' plugin as it&#8230;
 
 * exceeds the plugin size limit
 * uses an altered version of the txplib_db.php file
 
-If you are looking for a pure TxP plugin then this is not the option for you.
+_If you are looking for a pure TxP plugin then this is not the option for you._
 
 <br/>
 
@@ -81,7 +83,7 @@ Other things you might like to think about before installing the pack&#8230;
 
 All these are listed in the setup wizard (under the content > MLP tab).
 
-
+ <form action="index.php?event=l10n&tab=wizard" method="post"><p><input value="Setup/Cleanup&#8230;" type="submit"></p></form>
 
 h2(#terms). "Terminology(Jump to the top)":#top
 
@@ -98,11 +100,13 @@ To avoid confusion, the noun 'translation' *always* refers to the act of transla
 
 A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
 
-Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work and has no need to distinguish between multiple renditions of a work -- or any need to manage the set of renditions of that work (the _article_) as a whole.
+Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work. It has no need to distinguish between multiple renditions of a work -- to plain Textpattern, a rendition _is_ an article. Not so with an MLP setup; each article can have multiple renditions.
 
-In effect this means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work).
+This means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work) as a table.
 
-The content > write tab still allows the editing of renditions.
+Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
+
+The content > write tab still allows the editing of individual renditions.
 
 h2(#paradigm). "Translation Paradigm.(Jump to the top)":#top
 
@@ -122,8 +126,9 @@ On the admin side...
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
 * Support for 'snippets' to simplify page/form editing and writing.
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
+* Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
 * Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
-* Support for Articles (groups of renditions).
+* Support for articles as groups of renditions).
 * Support for cloning of renditions and their translation into other languages using the existing write tab.
 * Email notifications sent to translators when articles are cloned or have their author changed.
 * Extra filtering of the list of renditions by language.
@@ -154,12 +159,12 @@ To add snippets to pages or forms...
 
 # Make sure the page/form is wrapped with the @<txp:l10n_localise>@ ... @</txp:l10n_localise>@ statements.
 # Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
-# On the *content > MLP > Snippets* tab, look for your page or form on the pages or form subtab.
-# Click on the page/form name to bring up a list of all snippets in that container.
-# You should see your snippet "my_first_snippet" listed with no translations.
+# On the *content > MLP > Snippets* tab, look for your page or form on the correct subtab.
+# Click on the page/form name to bring up a list of all snippets it contains.
+# You should see your snippet "my_first_snippet" listed with no renditions.
 # Click on the name of your snippet to bring up the edit boxes.
-# Supply appropriate translations and hit the save button.
-# Now looking at your site should give you the correct translation according to the url you type.
+# Supply appropriate renditions and hit the save button.
+# Now looking at your site should give you the correct rendition according to the url you type.
 
 h2(#tags). "Tag Directory(Jump to the top)":#top
 
@@ -297,6 +302,11 @@ h2(#credits). "Credits.(Jump to the top)":#top
 Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
 
 Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
+
+<br />
+
+-- _Stephen Dickinson_
+November 2006.
 
 </div>
 # --- END PLUGIN HELP ---
