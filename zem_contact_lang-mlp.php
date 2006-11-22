@@ -68,6 +68,7 @@ $zem_crl_strings = array(
 	'mail_sorry'		=> 'Sorry, unable to send email.',
 	'message'			=> 'Message',
 	'min_warning'		=> '&#8220;<strong>$var1</strong>&#8221; must contain at least $var2 characters.',
+	'name'				=> 'Name',
 	'option'			=> 'Option',
 	'radio'				=> 'Radio',
 	'receiver'			=> 'Receiver',
@@ -107,28 +108,41 @@ if( @txpinterface=='public' )
 #
 #	Need to make this fallback to the local array in case this is not being used with the MLP pack.
 #
-function zem_contact_gTxt($what, $var1 = '', $var2 = '')
+function zem_contact_gTxt( $what , $var1='' , $var2='' )
 	{
+	global $textarray;
 	global $zem_crl_strings;
 
-	#	Build an array of substitutions (if any)...
+	#	Build an array of substitutions...
 	$args = array();
 	if( !empty( $var1 ) )
 		$args['$var1'] = $var1;
 	if( !empty( $var2 ) )
 		$args['$var2'] = $var2;
 
-	#	Build the correct key (note the dash--it's required) and grab from the $textarray strings...
+	#	Prepare the prefixed key for use...
 	$key = ZCRL_PREFIX . '-' . $what;
-	$val = gTxt( $key );
+	$key = strtolower($key);
 
-	#	If the gTxt fetch failed to pull the string, go direct to the default lang as a backup...
-	if( $val === $key )
-		$val = $zem_crl_strings[ $what ];
+	#	Grab from the global textarray (possibly edited by MLP) if we can...
+	if(isset($textarray[$key]))
+		{
+		$str = $textarray[$key];
+		}
+	else
+		{
+		#	Use the non-preficed key...
+		$key = strtolower($what);
 
-	#	Substitute values as needed...
-	$val = strtr( $val , $args );
-	return $val;
+		#	Grab from the internal array if possible...
+		if( isset( $zem_crl_strings[$key] ) )
+			$str = $zem_crl_strings[$key];
+		else
+			#	Fallback to returning the key if not present...
+			$str = $what;
+		}
+	$str = strtr( $str , $args );
+	return $str;
 	}
 
 # --- END PLUGIN CODE ---
