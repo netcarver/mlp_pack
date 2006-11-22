@@ -61,22 +61,26 @@ $zem_crl_strings = array(
 	'email_thanks'		=> 'Thank you, your message has been sent.',
 	'field_missing'		=> 'Required field, &#8220;<strong>$var1</strong>&#8221;, is missing.',
 	'form_expired'		=> 'The form has expired, please try again.',
+	'form_used' 		=> 'The form was already submitted, please fill out a new form.',
 	'general_inquiry'	=> 'General inquiry',
 	'invalid_email'		=> '&#8220;<strong>$var1</strong>&#8221; is not a valid email address.',
 	'invalid_host'		=> '&#8220;<strong>$var1</strong>&#8221; is not a valid email host.',
+	'invalid_utf8' 		=> '“<strong>$var1</strong>” contains invalid UTF-8 characters.',
 	'invalid_value'		=> 'Invalid value for &#8220;<strong>$var1</strong>&#8221;, &#8220;<strong>$var2</strong>&#8221; is not one of the available options.',
 	'mail_sorry'		=> 'Sorry, unable to send email.',
+	'max_warning' 		=> '“<strong>$var1</strong>” must not contain more than $var2 characters.',
 	'message'			=> 'Message',
 	'min_warning'		=> '&#8220;<strong>$var1</strong>&#8221; must contain at least $var2 characters.',
 	'name'				=> 'Name',
 	'option'			=> 'Option',
 	'radio'				=> 'Radio',
 	'receiver'			=> 'Receiver',
+	'secret' 			=> 'Secret',
 	'send'				=> 'Send',
 	'spam'				=> 'We do not accept spam thankyou!',
 	'text'				=> 'Text',
 	'to'				=> 'No &#8220;<strong>to</strong>&#8221; email address specified.',
-	'to_missing'		=> '&#8220;<strong>To</strong>&#8221; address is missing.'
+	'to_missing'		=> '&#8220;<strong>To</strong>&#8221; address is missing.',
 	);
 
 
