@@ -41,6 +41,7 @@ td.legend dd	{ margin: 2px 0;            padding: 3px 0 0; float:left; }
 .l10n_import_list	{ float: right; width: 40%; }
 .l10n_bordered		{ border: 1px solid #ccc; padding:1em; margin:1em; }
 .l10n_plugin_list	{ float: left; width: 25%; }
+.l10n_string_edit	{ width: 90%; }
 
 .l10n_extensions	{ text-align: center; }
 .l10n_extensions fieldset 		{ margin: 0px auto; }
