@@ -524,7 +524,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-legend_warning'		=> 'Warning/Error',
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
 		'l10n-localised'			=> 'Localised',
-		'l10n-ltr'					=> 'LTR >',
+		'l10n-ltr'					=> 'LTR&nbsp;>',
 		'l10n-missing'				=> ' missing.',
 		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
 		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
@@ -537,7 +537,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-renditions'			=> 'Renditions',
 		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
 		'l10n-renditions_for'		=> 'Renditions for ',
-		'l10n-rtl'					=> '< RTL',
+		'l10n-rtl'					=> '<&nbsp;RTL',
 		//'l10n-section_vars'			=> 'Section variables ',
 		//'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
@@ -1543,8 +1543,6 @@ end_js;
 		$out[] = '<div class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
-		//if( $type == L10N_PLUGIN_CONST )
-		//	$string_event = $owner;
 		$x = StringHandler::get_string_set( $id );
 		$final_codes = array();
 
@@ -1572,11 +1570,10 @@ end_js;
 			elseif( empty( $data['data'] ))
 				$warning .= ' * '.gTxt('l10n-empty').sp;
 
-			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.'</dt>';
+			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.sp.'<a href="#" onClick="toggleDirection(\''.$code.'\')"><span id="'.$code.'-toggle">'.gTxt('l10n-toggle').'</span></a>' .'</dt>';
 			$out[] = '<dd><p>'.
-						'<textarea id="' . $code . '-data" name="' . $code . '-data" cols="60" rows="2" title="' .
+						'<textarea class="l10n_string_edit" id="' . $code . '-data" name="' . $code . '-data" cols="60" rows="2" title="' .
 						gTxt('l10n-textbox_title') . '"'. $dir .'>' . $data['data'] . '</textarea>' .
-						sp.'<a href="#" onClick="toggleDirection(\''.$code.'\')"><span id="'.$code.'-toggle">'.gTxt('l10n-toggle').'</span></a>' .
 						hInput( $code.'-id' , $data['id'] ) .
 						hInput( $code.'-event' , $e ) .
 						'</p></dd>';
