@@ -129,7 +129,7 @@ function l10n_list_filter( $event, $step )
 		case 'list':
 			$langs = LanguageHandler::get_site_langs();
 			$selected = array();
-			$use_cookies = (ps( 'l10n_filter_method' ) !== 'post');
+			$use_cookies = (gps( 'l10n_filter_method' ) !== 'post');
 			foreach( $langs as $lang )
 				{
 				if( $use_cookies )
@@ -139,7 +139,7 @@ function l10n_list_filter( $event, $step )
 					}
 				else
 					{
-					if( ps($lang) )
+					if( gps($lang) )
 						{
 						$selected[] = "'$lang'";
 						$time = time() + (3600 * 24 * 365);
@@ -176,7 +176,7 @@ function _l10n_chooser( $permitted_langs )
 	$count = 0;
 	$langs = LanguageHandler::get_site_langs();
 	$o[] = '<div class="l10n_extensions"><fieldset><legend>' . 'Show languages&#8230;' . '</legend>' . n;
-	$use_cookies = (ps( 'l10n_filter_method' ) !== 'post');
+	$use_cookies = (gps( 'l10n_filter_method' ) !== 'post');
 
 	#
 	#	See if there are any languages selected. If not, select them all -- to give the user something to look at!
@@ -194,7 +194,7 @@ function _l10n_chooser( $permitted_langs )
 		if( $use_cookies )
 			$checked = cs( $lang ) ? 'checked' : '' ;
 		else
-			$checked = ps( $lang ) ? 'checked' : '' ;
+			$checked = gps( $lang ) ? 'checked' : '' ;
 
 		$lang_name = LanguageHandler::get_native_name_of_lang( $lang );
 
@@ -512,7 +512,7 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 	$publish = gps('publish');
 	if ($publish) $step = 'publish';
 
-	$incoming = psa($new_vars);
+	$incoming = gpsa($new_vars);
 	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : LanguageHandler::get_site_default_lang();
 
 	switch(strtolower($step))
@@ -581,8 +581,8 @@ function l10n_changeauthor_notify_routine()
 		return false;
 
 	global $statuses, $sitename, $siteurl, $txp_user;
-	$new_user = ps('AuthorID');
-	$selected = ps('selected');
+	$new_user = gps('AuthorID');
+	$selected = gps('selected');
 	$links    = array();
 	$same	  = ($new_user == $txp_user);
 
@@ -635,7 +635,7 @@ function l10n_post_multi_edit_cb( $event , $step )
 	global $l10n_vars;
 	global $l10n_view;
 
-	$method   		= ps('edit_method');
+	$method   		= gps('edit_method');
 	$redirect 		= true;	#	Always redirect to the 'list' event. This forces a re-draw of the screen
 							#	with the correct language filters applied.
 	$update   		= true;
@@ -682,8 +682,8 @@ function l10n_post_multi_edit_cb( $event , $step )
 function l10n_pre_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
-	$method = ps('edit_method');
-	$things = ps('selected');
+	$method = gps('edit_method');
+	$things = gps('selected');
 
 	$languages = array();
 
@@ -773,8 +773,8 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 	global $l10n_vars;
 	$languages = array();
 
-	$things = ps('selected');
-	$method = ps('edit_method');
+	$things = gps('selected');
+	$method = gps('edit_method');
 
 	if( $things )
 		{
@@ -822,7 +822,7 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 function l10n_post_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
-	$method   = ps('edit_method');
+	$method   = gps('edit_method');
 
 	if( isset( $l10n_vars['update_tables'] ) )
 		{
