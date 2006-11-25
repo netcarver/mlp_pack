@@ -493,6 +493,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
+		'l10n-delete_whole_lang'	=> 'Delete all ($var2) strings in $var1?',
 		'l10n-done'					=> 'Done',
 		'l10n-edit_resource'		=> 'Edit $type: $owner ',
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
@@ -519,6 +520,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-import_cat2_lang'		=> 'use category2 for language',
 		//'l10n-import_section_lang'	=> 'use section names for language',
 		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
+		'l10n-lang_remove_warning2'=> 'Delete ALL strings in $var1. You will need to re-install all strings for $var1 if you want to use it again, even in the admin interface. ',
 		'l10n-language_not_supported' => 'Skipping: Language not supported.',
 		'l10n-languages' 			=> 'Languages ',
 		'l10n-legend_warning'		=> 'Warning/Error',
@@ -1050,6 +1052,10 @@ class LocalisationStringView extends GBPAdminTabView
 				case 'l10n_import_languageset':
 				$this->import_languageset();
 				break;
+
+				case 'l10n_remove_language':
+				$this->remove_language();
+				break;
 				}
 			}
 		}
@@ -1282,28 +1288,32 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">&nbsp;&nbsp;&#035;&nbsp;</td>' . td('') . td('') ).n.'</thead><tbody>';
 		$extras_found = false;
+		$plugin = gps( 'plugin' );
 		foreach( $stats as $iso_code=>$count )
 			{
 			$lang_extras_found = false;
 			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
 			$remove = '';
 			$export = '';
-			$plugin = gps( 'plugin' );
-			if( !empty($plugin) and !in_array( $iso_code , $site_langs ) )
+			$supported = in_array( $iso_code , $site_langs );
+			if( !$supported )
 				{
 				$extras_found = true;
 				$lang_extras_found = true;
-				$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
-				$remove[] = sInput( 'l10n_remove_languageset');
-				$remove[] = $this->parent->form_inputs();
-				$remove[] = hInput( 'plugin' , $plugin );
-				$remove[] = hInput( 'prefix' , gps( 'prefix' ) );
-				$remove[] = hInput( 'lang_code' , $iso_code );
-				$remove[] = hInput( 'subtab' , $this->sub_tab );
-				$remove = form( join( '' , $remove ) ,
-								'' ,
-								"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
-								 doSlash(gTxt('are_you_sure')) . "')");
+				if( !empty($plugin) )
+					{
+					$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
+					$remove[] = sInput( 'l10n_remove_languageset');
+					$remove[] = $this->parent->form_inputs();
+					$remove[] = hInput( 'plugin' , $plugin );
+					$remove[] = hInput( 'prefix' , gps( 'prefix' ) );
+					$remove[] = hInput( 'lang_code' , $iso_code );
+					$remove[] = hInput( 'subtab' , $this->sub_tab );
+					$remove = form( join( '' , $remove ) ,
+									'' ,
+									"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
+									 doSlash(gTxt('are_you_sure')) . "')");
+					}
 				}
 
 			$details =  StringHandler::if_plugin_registered( $string_name , $iso_code );
@@ -1319,14 +1329,41 @@ class LocalisationStringView extends GBPAdminTabView
 				$export = form( join( '' , $export ) );
 				}
 
-			if( !empty($plugin) or in_array( $iso_code , $site_langs ) )
-				$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
+			//if( !empty($plugin) or in_array( $iso_code , $site_langs ) )
+			$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
 			}
 		$out[] = tr( td( gTxt('l10n-total') ).td(array_sum($stats).'&nbsp;').td('').td('') , ' style="text-align:right;" ' );
 		$out[] = '</tbody></table>';
 
 		if( $extras_found )
+			{
 			$out[] = gTxt('l10n-explain_extra_lang');
+
+			if( empty( $string_name ) )
+				{
+				foreach( $stats as $iso_code=>$count )
+					{
+					$supported = in_array( $iso_code , $site_langs );
+					if( !$supported )
+						{
+						$remove = array();
+						$name = LanguageHandler::get_native_name_of_lang( $iso_code );
+						$count = safe_count( 'txp_lang' , "`lang`='$iso_code'" );
+
+						$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
+						$remove[] = sInput( 'l10n_remove_language');
+						$remove[] = $this->parent->form_inputs();
+						$remove[] = hInput( 'container' , gps('container') );
+						$remove[] = hInput( 'lang_code' , $iso_code );
+						$remove[] = hInput( 'subtab' , $this->sub_tab );
+						$out[]    = form( gTxt('l10n-delete_whole_lang' , array('$var1'=>$name,'$var2'=>$count) ) . sp . join( '' , $remove ) ,
+										'' ,
+										"verify('" . doSlash(gTxt('l10n-lang_remove_warning2' , array('$var1'=>$name)) ) .
+										 doSlash(gTxt('are_you_sure')) . "')") . br . n;
+						}
+					}
+				}
+			}
 
 		if( !empty( $string_name ) )
 			{
@@ -1645,6 +1682,13 @@ end_js;
 		$remove_langs 	= gps('lang_code');
 		$plugin 		= gps( L10N_PLUGIN_CONST );
 		StringHandler::remove_strings( $plugin , $remove_langs );
+		unset( $_POST['step'] );
+		}
+	function remove_language()
+		{
+		$remove_lang 	= gps('lang_code');
+		if( !empty($remove_lang) )
+			StringHandler::remove_lang( $remove_lang );
 		unset( $_POST['step'] );
 		}
 
@@ -4292,6 +4336,13 @@ class StringHandler
 		$textarray = array_merge( $textarray , $extras );
 		return count( $extras );
 		}
+	function remove_lang( $lang , $debug = '' )
+		{
+		$lang = doSlash( $lang );
+		$where = " `lang`='$lang'";
+		@safe_delete( 'txp_lang' , $where , $debug );
+		@safe_optimize( 'txp_lang' , $debug );
+		}
 
 	function load_strings( $lang , $filter='' )
 		{
@@ -4411,7 +4462,6 @@ class StringHandler
 		*/
 		$plugin = doSlash( $plugin );
 		$prefix = doSlash( $prefix );
-		//$where = ' `name` LIKE "'.$prefix.L10N_SEP.'%"';
 		$where = " `owner`='$plugin'";
 		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 		return StringHandler::get_strings( $rs , $stats );
