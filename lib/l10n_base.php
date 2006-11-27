@@ -351,7 +351,7 @@ class ArticleManager
 	function check_groups()
 		{
 		#
-		#	index => array( add|delete|skip , trans-id , group-id , description );
+		#	index => array( add|delete|skip , rendition-id , article-id , description );
 		#
 		$result = array();
 
@@ -381,52 +381,49 @@ class ArticleManager
 				$t_count = count( $renditions );
 
 				#
-				#	Check the counts are the same...
+				#	Take the diffs...
 				#
-				if( $t_count !== $m_count )
+				$diff_members_renditions = array_diff( $members , $renditions );
+				$diff_renditions_members = array_diff( $renditions , $members );
+				$count_m_r = count($diff_members_renditions);
+				$count_r_m = count($diff_renditions_members);
+
+				if( $count_m_r > 0 )
 					{
 					#
-					#	Take the diffs...
+					#	Need to delete extra renditions from the articles table...
 					#
-					$diff_members_renditions = array_diff( $members , $renditions );
-					$diff_renditions_members = array_diff( $renditions , $members );
-					$count_m_r = count($diff_members_renditions);
-					$count_r_m = count($diff_renditions_members);
-
-					if( $count_m_r > 0 )
+					foreach( $diff_members_renditions as $lang=>$rendition )
 						{
-						#
-						#	Need to delete extra renditions from the articles table...
-						#
-						foreach( $diff_members_renditions as $lang=>$rendition )
-							{
-							unset( $members[$lang] );
-							$result[] = array( 'delete' , $rendition , $ID , "Deleted rendition $rendition from article $ID" );
-							}
-						ArticleManager::_update_article( $ID , $names , $members );
+						unset( $members[$lang] );
+						$result[] = array( 'delete' , $rendition , $ID , gTxt('l10n-del_phantom', array( '$rendition'=>$rendition, '$ID'=>$ID) ) );
 						}
-					if( $count_r_m > 0 )
+					ArticleManager::_update_article( $ID , $names , $members );
+					}
+				if( $count_r_m > 0 )
+					{
+					#
+					#	Need to add missing renditions to the articles table...
+					#
+					foreach( $diff_renditions_members as $rendition )
 						{
-						#
-						#	Need to add missing renditions to the articles table...
-						#
-						foreach( $diff_translations_members as $rendition )
-							{
-							$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+						$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+						if( !empty( $details ) )
 							$lang = $details['Lang'];
+						else
+							continue;
 
-							#
-							#	Check it's a valid site language...
-							#
-							if( !in_array( $lang , $langs ) )
-								{
-								$result[] = array( 'skip' , $rendition , $ID , "Skipped rendition $rendition while processing article $ID as it uses unsupported language $lang" );
-								continue;
-								}
-							$members[$lang] = $rendition;
-							ArticleManager::_update_article( $ID , $names , $members );
-							$result[] = array( 'add' , $rendition , $ID , "Added rendition $rendition to article $ID" );
+						#
+						#	Check it's a valid site language...
+						#
+						if( !in_array( $lang , $langs ) )
+							{
+							$result[] = array( 'skip' , $rendition , $ID , gTxt('l10n-skip_rendition' , array('$rendition'=>$rendition,'$ID'=>$ID,'$lang'=>$lang)) );
+							continue;
 							}
+						$members[$lang] = $rendition;
+						ArticleManager::_update_article( $ID , $names , $members );
+						$result[] = array( 'add' , $rendition , $ID , gTxt('l10n-add_missing_rend',array('$rendition'=>$rendition, '$ID'=>$ID)) );
 						}
 					}
 				}
@@ -477,10 +474,13 @@ class LocalisationView extends GBPPlugin
 	var $insert_in_debug_mode = false;
 	var $perm_strings = array( # These strings are always needed.
 		'l10n-localisation'			=> 'MLP',
+		'l10n-toggle'				=> 'Toggle',
 		);
 	var $strings = array(
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
+		'l10n-add_missing_rend'		=> 'Added missing rendition($rendition) to article $ID',
 		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
+		'l10n-article_table_ok'		=> 'Article table ok.',
 		//'l10n-article_vars'			=> 'Article variables ',
 		//'l10n-article_hidden_vars'	=> 'Hidden article variables ',
 		'l10n-by'					=> 'by',
@@ -492,6 +492,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
 		//'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
+		'l10n-del_phantom' 			=> 'Deleted phantom rendition($rendition) from article $ID',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 		'l10n-delete_whole_lang'	=> 'Delete all ($var2) strings in $var1?',
 		'l10n-done'					=> 'Done',
@@ -550,6 +551,7 @@ class LocalisationView extends GBPPlugin
 		//'l10n-setup_wiz_title'		=> 'Setup Wizard',
 		'l10n-show_legends' 		=> 'Show article table legend?',
 		//'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
+		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',
 		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
 		'l10n-snippets_tab'			=> 'Snippets',
@@ -557,8 +559,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-statistics'			=> 'Show Statistics ',
 		'l10n-strings'				=> ' strings.',
 		'l10n-summary'				=> 'Statistics.',
+		'l10n-table_rebuilt'		=> 'Article table corrected, try again.',
 		'l10n-textbox_title'		=> 'Type in the text here.',
-		'l10n-toggle'				=> 'Toggle',
 		'l10n-total'				=> 'Total',
 		'l10n-unlocalised'			=> 'Unlocalised',
 		'l10n-view_site'			=> 'View localised site',
@@ -574,7 +576,7 @@ class LocalisationView extends GBPPlugin
 		{
 		global $textarray , $production_status;
 
-		if( @txpinterface == 'admin' )
+		if( @txpinterface === 'admin' )
 			{
 			#	Register callbacks to get admin-side plugins' strings registered.
 			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 0 );
@@ -2322,6 +2324,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 	function preload()
 		{
+		$rebuild = false;
 		$step = gps('step');
 		if( $step )
 			{
@@ -2340,16 +2343,27 @@ class LocalisationArticleTabView extends GBPAdminTabView
 				break;
 
 				case 'delete_rendition':
-					$this->delete_rendition();
+					$rebuild = $this->delete_rendition();
 				break;
 				}
 			}
 
-		//$results = ArticleManager::check_groups();
-		//if( !empty( $results ) )
-		//	$this->parent->message = 'Groups rebuilt.';
-		//else
-		//	$this->parent->message = 'Groups ok.';
+		if( $rebuild )
+			{
+			$results = ArticleManager::check_groups();
+			if( !empty( $results ) )
+				{
+				$desc = '';
+				foreach( $results as $record )
+					{
+					$desc .= $record[3] . br . n;
+					}
+				$desc .= gTxt('l10n-table_rebuilt') . n;
+				$this->parent->message = $desc;
+				}
+			else
+				$this->parent->message = gTxt('l10n-article_table_ok');
+			}
 		}
 
 	function clone_for_translation()
@@ -2553,8 +2567,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
 			{
-			//$this->parent->message( 'You cannot delete translations.' );
-			return;
+			return false;
 			}
 
 		$vars = array( 'rendition' );
@@ -2564,25 +2577,31 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
 		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+		if( empty( $details ) )
+			{
+			return true;
+			}
+
 		$lang = $details['Lang'];
 		$article = $details['Group'];
 
 		#
 		#	Delete from the master table...
 		#
-		$master_deleted = safe_delete( 'textpattern' , "`ID`='$rendition'" );
+		$master_deleted = @safe_delete( 'textpattern' , "`ID`='$rendition'" );
 
 		#
 		#	Delete from the correct language rendition table...
 		#
 		$rendition_table = ArticleManager::make_textpattern_name( array( 'long'=>$lang ) );
-		$rendition_deleted = safe_delete( $rendition_table , "`ID`='$rendition'" );
+		$rendition_deleted = @safe_delete( $rendition_table , "`ID`='$rendition'" );
 
 		#
 		#	Delete from the article table...
 		#
 		$article_updated = ArticleManager::remove_rendition( $article , $rendition , $lang );
 
+		$result = false;
 		if( $master_deleted and $rendition_deleted and $article_updated )
 			$this->parent->message = gTxt( 'l10n-rendition_delete_ok' , array('{rendition}' => $rendition) );
 		else
@@ -2591,13 +2610,14 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			if( !empty( $results ) )
 				{
 				$this->parent->message = $results[0][3];
-				//'Groups rebuilt.';
+				//$result = false;
 				}
 			else
 				{
 				$this->parent->message = 'Groups ok.';
 				}
 			}
+		return $result;
 		}
 
 	function main()
@@ -2842,6 +2862,18 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						$members[$lang] = $translations[$i]['ID'];
 						ArticleManager::_update_article( $ID , $names , $members );
 						$n_valid_translations++;
+						}
+					else
+						{
+						$master_id = $translations[$i]['ID'];
+						$rend_id   = $members[$lang];
+						if( $master_id !== $members[$lang] )
+							{
+							//echo br , "Found incorrect rendition ID $rend_id in article table. Replacing with ID $master_id.";
+							$members[$lang] = $master_id;
+							ArticleManager::_update_article( $ID , $names , $members );
+							$n_valid_translations++;
+							}
 						}
 					}
 
