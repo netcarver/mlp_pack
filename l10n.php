@@ -577,7 +577,6 @@ if (@txpinterface == 'public')
 		$new_first_path = '';
 
 		@session_start();
-		//$l10n_language = @$_SESSION['lang'];
 		$site_langs = LanguageHandler::get_site_langs();
 
 		if (!defined('rhu'))
