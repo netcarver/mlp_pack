@@ -124,6 +124,7 @@ It's much easier on the translators as they get to keep the interface they are u
 h2(#features). "What the MLP(Multi-Lingual Publishing) Plugin provides.(Jump to the top)":#top
 
 On the admin side...
+* Each TxP user can choose their own admin language -- and switch between admin languages at will.
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
 * Support for 'snippets' to simplify page/form editing and writing.
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
@@ -470,57 +471,6 @@ if( !defined( 'L10N_SUBS_TABLE' ) )
 global $txpcfg;
 
 
-
-# -- Include the admin file only if needed...
-if( @txpinterface == 'admin' )
-	{
-	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
-	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
-	}
-
-
-
-# -- Public code section follows...
-if (@txpinterface == 'public')
-	{
-	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
-
-	global $l10n_view;
-
-	$installed = $l10n_view->installed();
-	if( !$installed )
-		{
-		return '';
-		}
-
-	# register a routine to handle URLs until the permanent_links plugin is integrated.
-	register_callback( '_l10n_pretext' 					, 'pretext' );
-	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
-	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
-	register_callback( '_l10n_tag_feeds'					, 'atom_entry' );
-
-	function _l10n_tag_feeds()
-		{
-		global $l10n_language , $thisarticle;
-
-		$syndicate_body_or_excerpt = $GLOBALS['prefs']['syndicate_body_or_excerpt'];
-
-		$dir = LanguageHandler::get_lang_direction_markup( $l10n_language['short'] );
-		$content = $thisarticle['body'];
-		$summary = $thisarticle['excerpt'];
-
-		if ($syndicate_body_or_excerpt)
-			{
-			# short feed: use body as summary if there's no excerpt
-			if( !trim($summary) )
-				$summary = $content;
-			$content = '';
-			}
-
-		$thisarticle['excerpt'] = tag( $summary , 'div' , $dir );
-		$thisarticle['body']    = (!empty($content)) ? tag( $content , 'div' , $dir ) : '';
-		}
-
 	function _l10n_set_browse_language( $short_code , $debug=false )
 		{
 		#
@@ -570,7 +520,7 @@ if (@txpinterface == 'public')
 		}
 
 
-	function _l10n_process_url()
+	function _l10n_process_url( $use_get_params=false )
 		{
 		global $l10n_language;
 
@@ -583,7 +533,21 @@ if (@txpinterface == 'public')
 			define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
 		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
-		if( !empty( $path ) )
+		if( $use_get_params )
+			{
+			$tmp = gps( 'adminlang' );
+			$temp = LanguageHandler::expand_code( $tmp );
+			if( !empty($temp) and in_array( $temp , $site_langs ) )
+				{
+				#
+				#	Hit! We can serve this language...
+				#
+				$_SESSION['lang'] = $tmp;
+				$_SESSION['llang'] = $temp;
+				}
+			}
+		
+		if( !$use_get_params and !empty( $path ) )
 			{
 			#
 			#	Examine the first path entry for the language request.
@@ -684,6 +648,85 @@ if (@txpinterface == 'public')
 		}
 
 
+# -- Include the admin file only if needed...
+if( @txpinterface === 'admin' )
+	{
+	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+
+	global $l10n_language , $textarray , $prefs;
+	global $l10n_view;
+
+	_l10n_process_url( true );
+//echo br , "l10n.php [admin] -- LANG is " , LANG;
+	if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
+		{
+//echo br , "l10n.php [admin] -- switching to {$l10n_language['long']}.";
+		$textarray = load_lang( $l10n_language['long'] );
+		$prefs['language'] = $l10n_language['long'];
+		}
+//	else
+//echo br , "l10n.php [admin] -- skipping reload of textarray.";
+		
+	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
+	$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
+
+		#
+		# 	Merge the loaded textarray over the defaults so that the defaults 
+		# populate any strings in this language that might be missing...
+		#
+//echo br , "l10n.php [admin] -- Loading missing strings (in English) into \$textarray.";
+//		$textarray = array_merge( $l10n_view->strings , $textarray );
+		//$textarray = array_merge( $textarray , $l10n_view->strings );
+
+	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
+	}
+
+
+# -- Public code section follows...
+if (@txpinterface === 'public')
+	{
+	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+
+	global $l10n_view, $prefs;
+	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
+	$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
+
+	//global $l10n_view;
+
+	$installed = $l10n_view->installed();
+	if( !$installed )
+		{
+		return '';
+		}
+
+	# register a routine to handle URLs until the permanent_links plugin is integrated.
+	register_callback( '_l10n_pretext' 					, 'pretext' );
+	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
+	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
+	register_callback( '_l10n_tag_feeds'					, 'atom_entry' );
+
+	function _l10n_tag_feeds()
+		{
+		global $l10n_language , $thisarticle;
+
+		$syndicate_body_or_excerpt = $GLOBALS['prefs']['syndicate_body_or_excerpt'];
+
+		$dir = LanguageHandler::get_lang_direction_markup( $l10n_language['short'] );
+		$content = $thisarticle['body'];
+		$summary = $thisarticle['excerpt'];
+
+		if ($syndicate_body_or_excerpt)
+			{
+			# short feed: use body as summary if there's no excerpt
+			if( !trim($summary) )
+				$summary = $content;
+			$content = '';
+			}
+
+		$thisarticle['excerpt'] = tag( $summary , 'div' , $dir );
+		$thisarticle['body']    = (!empty($content)) ? tag( $content , 'div' , $dir ) : '';
+		}
+
 	function _l10n_textpattern_comment_submit()
 		{
 		global $pretext, $l10n_language;
@@ -706,6 +749,7 @@ if (@txpinterface == 'public')
 				}
 			}
 		}
+
 	function _l10n_pretext()
 		{
 		function load_localised_pref( $name )
@@ -1053,6 +1097,7 @@ if (@txpinterface == 'public')
 		$path = ' href="'.hu.$path.'"';
 		return $path;
 		}
+
 	function l10n_feed_link( $atts )
 		{
 		global $l10n_language, $l10n_feed_link_lang;
@@ -1101,7 +1146,6 @@ if (@txpinterface == 'public')
 		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
 		}
-
 
 	function _l10n_log( $message , $line )
 		{
