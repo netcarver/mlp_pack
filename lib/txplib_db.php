@@ -474,7 +474,10 @@ $DB = new DB;
 				}
 
 
-			if( !defined( 'LANG' ) and (@txpinterface==='public') )
+			if( defined('LANG') )
+				return $out;
+			
+			if( (@txpinterface==='admin') or (@txpinterface==='public') ) 
 				{
 				if( l10n_installed( true ) )
 					{

@@ -578,6 +578,8 @@ class LocalisationView extends GBPPlugin
 
 		if( @txpinterface === 'admin' )
 			{
+//echo br , "l10n view: Constructing l10n view.";			
+			
 			#	Register callbacks to get admin-side plugins' strings registered.
 			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 0 );
 
@@ -597,25 +599,28 @@ class LocalisationView extends GBPPlugin
 				}
 
 			#	Merge the string that is always needed for the localisation tab title...
+//echo br , "l10n view: merging perm strings into \$textarray.";
 			$textarray = array_merge( $textarray , $this->perm_strings );
 
 			#	Only merge and load the rest of the strings if this view's event is active.
-			$txp_event = gps('event');
-			if( $txp_event === $event )
+			//$txp_event = gps('event');
+			if( true /*$txp_event === $event*/ )
 				{
 				$installed = $this->installed();
 				$installed = !empty( $installed );
 
-				if( !$installed or ($this->strings_lang != LANG) )
-					{
+				//if( !$installed or ($this->strings_lang != LANG) )
+					//{
 					# Merge the default language strings into the textarray so that non-English
 					# users at least see an English message in the plugin.
+//echo br, "l10n view: loading any missing default strings (needed now for plugin labels.)";
 					$textarray = array_merge( $this->strings , $textarray );
-					}
+					//}
 
 				#	To ease development, allow new strings to be inserted...
 				if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 					{
+//echo br , "l10n view: re-installing strings in debug mode.";
 					$this->strings = array_merge( $this->strings , $this->perm_strings );
 					$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' , 'l10n' );
 					$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'l10n' , true );
@@ -3502,9 +3507,9 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	}
 
-global $l10n_view, $prefs;
-$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
-$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
+//global $l10n_view, $prefs;
+//$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
+//$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
 
 class LanguageHandler
 	{
