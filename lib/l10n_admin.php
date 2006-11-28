@@ -318,7 +318,7 @@ function l10n_setup_article_buffer_processor( $event , $step )
 		}
 	}
 
-function _l10n_inject_js()
+function _l10n_inject_toggle_js()
 	{
 	$ltr = doSlash( gTxt( 'l10n-ltr' ) );
 	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
@@ -373,8 +373,8 @@ function l10n_article_buffer_processor( $buffer )
 	#
 	#	The buffer processing routine injects page elements when editing an article.
 	#
-	$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
-	$can_clone	= (count($remaining) > 0);
+	//$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
+	//$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
 	$view		= gps( 'view' );
 	$preview	= ($view === 'preview');
@@ -385,6 +385,7 @@ function l10n_article_buffer_processor( $buffer )
 	#
 	//$cloning_permitted	= has_privs( 'l10n.clone' );
 	$cloning_permitted	= false;
+	$can_clone = false;
 
 	$lang 		= $l10n_vars['article_lang'];
 	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() , true );
@@ -393,26 +394,26 @@ function l10n_article_buffer_processor( $buffer )
 	$has_reassign_privs = has_privs( 'l10n.reassign' );
 
 	$id_no		= '-';
-	if( $l10n_vars['article_id'] )
+	if( isset($l10n_vars['article_id']) )
 		$id_no = $l10n_vars['article_id'];
 
 	$group_id 	= '-';
-	if( $l10n_vars['article_group'] )
+	if( isset($l10n_vars['article_group']) )
 		$group_id = $l10n_vars['article_group'];
 
-	if( $cloning_permitted and $can_clone and $id_no !== '-' )
-		{
+	//if( $cloning_permitted and $can_clone and $id_no !== '-' )
+		//{
 		#	Insert the clone panel...
-		$checkit = "'".doSlash(gTxt('are_you_sure'))."'";
-		$f = '<input type="submit" name="save" value="'.gTxt('save').'" class="publish" tabindex="4" />';
-		$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
-				hInput('original_ID' , $id_no) .
-				hInput('CloneGroup' , $group_id) .
-				'<p>'. gTxt('l10n-xlate_to') . selectInput( 'CloneLang', $remaining ) . '</p>' .
-				'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return confirm('.$checkit.');" />' .
-				'</fieldset>';
-		$buffer = str_replace( $f , $f.n.$r , $buffer );
-		}
+		//$checkit = "'".doSlash(gTxt('are_you_sure'))."'";
+		//$f = '<input type="submit" name="save" value="'.gTxt('save').'" class="publish" tabindex="4" />';
+		//$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
+				//hInput('original_ID' , $id_no) .
+				//hInput('CloneGroup' , $group_id) .
+				//'<p>'. gTxt('l10n-xlate_to') . selectInput( 'CloneLang', $remaining ) . '</p>' .
+				//'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return confirm('.$checkit.');" />' .
+				//'</fieldset>';
+		//$buffer = str_replace( $f , $f.n.$r , $buffer );
+		//}
 
 	#
 	#	Insert the ID/Language/Group display elements...
@@ -457,7 +458,7 @@ function l10n_article_buffer_processor( $buffer )
 	$r = graf( $r );
 	$buffer = str_replace( $f , $r.n.$f , $buffer );
 
-	$r = _l10n_inject_js();
+	$r = _l10n_inject_toggle_js();
 	if( !$preview and !$html )
 		{
 		#
