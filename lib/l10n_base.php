@@ -602,9 +602,6 @@ class LocalisationView extends GBPPlugin
 				StringHandler::load_strings_into_textarray( LANG );
 				}
 			}
-		else
-			#	Register callbacks to get public-side plugins' strings registered.
-			register_callback(array(&$this, '_initiate_callbacks'), 'pretext' , '' , 0 );
 
 		# Be sure to call the parent constructor *after* the strings it needs are added and loaded!
 		GBPPlugin::GBPPlugin( gTxt($title_alias) , $event , $parent_tab );
@@ -751,9 +748,20 @@ class LocalisationView extends GBPPlugin
 
 	function _initiate_callbacks( $event , $step='' , $pre=0 )
 		{
-		#	May need to move this to base class when the string handler moves to Admin Lib.
-		#	Our callback routine, in turn, initiates our string enumeration event...
-		return $this->_do_callback( "l10n.enumerate_strings", '', 0, array(&$this , '_process_string_callbacks') );
+		$results = array();
+
+		$tab = gps( 'tab' );
+		$plugin = gps( 'plugin' );
+		if( $tab === 'plugin' and empty($plugin) )
+			{
+			#	Force the loading of public side plugins on a visit to the MLP>Plugins, in case they do register strings...
+			load_plugins( 0 );
+
+			#	Initiates our string enumeration event...
+			$results = $this->_do_callback( "l10n.enumerate_strings", '', 0, array(&$this , '_process_string_callbacks') );
+			}
+
+		return $results;
 		}
 
 	function _do_callback( $event, $step='', $pre=0, $func=NULL )
