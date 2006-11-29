@@ -3170,7 +3170,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		'3a'=> array(
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you never want to re-install the MLP Pack.', 'optional' => true),
 		'4' => array(
-			'setup' => 'Add the l10n_substitutions table',
+			//'setup' => 'Add the l10n_substitutions table',
 			'cleanup' => 'Drop the l10n_substitutions table'),
 		'5' => array(
 			'setup' => 'Add the l10n_articles table',
@@ -3183,7 +3183,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		'8' => array (
 			'cleanup' => 'Delete cookies' ),
 		'9' => array (
-			'setup' => 'Rename the \'Articles\' tab label.',
+			//'setup' => 'Rename the \'Articles\' tab label.',
 			'cleanup' => 'Restore the \'Articles\' tab label.' ),
 		'10' =>array (
 			'setup' => 'Clear the default comment invitation.',
@@ -3299,22 +3299,22 @@ class LocalisationWizardView extends GBPWizardTabView
 			$this->add_report_item( 'Skip adding `Lang` and `Group` fields, they already exist.' , true , true );
 		}
 
-	function setup_4()
-		{
-		$sql = array();
-			$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_SUBS_TABLE.'` (';
-			$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
-			$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			$sql[] = '`entry_id` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			$sql[] = '`entry_column` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			$sql[] = '`entry_value` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			$sql[] = 'PRIMARY KEY (`id`)';
-			$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
-		$ok = safe_query(join('', $sql));
-		$this->add_report_item( 'Add the "'.L10N_SUBS_TABLE.'" table' , $ok );
-		}
+	//function setup_4()
+		//{
+		//$sql = array();
+			//$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_SUBS_TABLE.'` (';
+			//$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
+			//$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
+			//$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
+			//$sql[] = '`entry_id` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
+			//$sql[] = '`entry_column` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
+			//$sql[] = '`entry_value` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
+			//$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
+			//$sql[] = 'PRIMARY KEY (`id`)';
+			//$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
+		//$ok = safe_query(join('', $sql));
+		//$this->add_report_item( 'Add the "'.L10N_SUBS_TABLE.'" table' , $ok );
+		//}
 
 	function setup_5()
 		{
@@ -3347,11 +3347,11 @@ class LocalisationWizardView extends GBPWizardTabView
 			}
 		}
 
-	function setup_9()
-		{
-		$ok = @safe_update( 'txp_lang' , "`data` = 'Renditions'", "`name` = 'tab_list'" );
-		$this->add_report_item( 'Rename the \'Articles\' tab label.' , $ok );
-		}
+	//function setup_9()
+		//{
+		//$ok = @safe_update( 'txp_lang' , "`data` = 'Renditions'", "`name` = 'tab_list'" );
+		//$this->add_report_item( 'Rename the \'Articles\' tab label.' , $ok );
+		//}
 	function cleanup_9()
 		{
 		$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
@@ -3863,7 +3863,7 @@ class LanguageHandler
 	function get_site_langs( $set_if_empty = true )
 		{
 		/*
-		Returns an array of the ISO-693-1 languages the site supports.
+		Returns an array of the languages the public site supports.
 		*/
 		global $prefs;
 
