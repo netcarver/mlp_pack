@@ -324,14 +324,14 @@ function _l10n_inject_switcher_form()
 	{
 	global $event, $l10n_language;
 	$langs = LanguageHandler::get_installation_langs();
-	$langs = LanguageHandler::do_fleshout_names( $langs , true , false , false );
+	$langs = LanguageHandler::do_fleshout_names( $langs , true , false , true );
 
 	$tab = gps('tab');
 	$tab = ( !empty($tab) ) ? hInput( 'tab' , $tab ) : '';
 	$subtab=gps('subtab');
 	$subtab = ( !empty($subtab) ) ? hInput( 'subtab' , $subtab ) : '';
 
-	$sel = selectInput( 'adminlang' , $langs , $l10n_language['short'] , '' , 1 );
+	$sel = selectInput( 'adminlang' , $langs , $l10n_language['long'] , '' , 1 );
 	$ret =  '<form method="get" action="index.php" style="display: inline;">' . n .
 			$sel . n .
 			$tab . $subtab . eInput( $event ) .
