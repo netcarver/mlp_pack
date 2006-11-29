@@ -533,20 +533,37 @@ global $txpcfg;
 			define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
 		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
+		$ssname = 'lang';
+		$lsname = 'llang';
+		if( $use_get_params )
+			{
+			#
+			#	Admin session variables differ from public to stop crosstalk...
+			#
+			$ssname = 'adminlang';
+			$lsname = 'adminllang';
+			}
+
 		if( $use_get_params )
 			{
 			$tmp = gps( 'adminlang' );
 			$temp = LanguageHandler::expand_code( $tmp );
+
+			#
+			#	Admin side we use the installation languages, not just the more
+			# restricive 'site' languages used on the public side...
+			#
+			$site_langs = LanguageHandler::get_installation_langs();
 			if( !empty($temp) and in_array( $temp , $site_langs ) )
 				{
 				#
 				#	Hit! We can serve this language...
 				#
-				$_SESSION['lang'] = $tmp;
-				$_SESSION['llang'] = $temp;
+				$_SESSION[$ssname] = $tmp;
+				$_SESSION[$lsname] = $temp;
 				}
 			}
-		
+
 		if( !$use_get_params and !empty( $path ) )
 			{
 			#
@@ -562,8 +579,8 @@ global $txpcfg;
 				#
 				#	Hit! We can serve this language...
 				#
-				$_SESSION['lang'] = $tmp;
-				$_SESSION['llang'] = $temp;
+				$_SESSION[$ssname] = $tmp;
+				$_SESSION[$lsname] = $temp;
 				}
 			else
 				{
@@ -588,7 +605,7 @@ global $txpcfg;
 				}
 			}
 
-		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
+		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
 			{
 			#
 			#	If we are still missing a language for the session, try to get the prefered selection
@@ -623,8 +640,8 @@ global $txpcfg;
 
 							if( in_array( $lang['long'] , $site_langs ) )
 								{
-								$_SESSION['lang']  = $lang['short'];
-								$_SESSION['llang'] = $lang['long'];
+								$_SESSION[$ssname]  = $lang['short'];
+								$_SESSION[$lsname] = $lang['long'];
 								break;
 								}
 							}
@@ -636,13 +653,13 @@ global $txpcfg;
 		#
 		#	If we are still missing a language for the session, use the site default...
 		#
-		if( !isset($_SESSION['lang']) or empty($_SESSION['lang']) )
+		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
 			{
 			$def = $site_langs[0];
-			$_SESSION['lang'] = $def;
+			$_SESSION[$ssname] = $def;
 			}
 
-		_l10n_set_browse_language( $_SESSION['lang'] );
+		_l10n_set_browse_language( $_SESSION[$ssname] );
 
 		return $new_first_path;
 		}
@@ -657,26 +674,14 @@ if( @txpinterface === 'admin' )
 	global $l10n_view;
 
 	_l10n_process_url( true );
-//echo br , "l10n.php [admin] -- LANG is " , LANG;
 	if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
 		{
-//echo br , "l10n.php [admin] -- switching to {$l10n_language['long']}.";
 		$textarray = load_lang( $l10n_language['long'] );
 		$prefs['language'] = $l10n_language['long'];
 		}
-//	else
-//echo br , "l10n.php [admin] -- skipping reload of textarray.";
-		
+
 	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
 	$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
-
-		#
-		# 	Merge the loaded textarray over the defaults so that the defaults 
-		# populate any strings in this language that might be missing...
-		#
-//echo br , "l10n.php [admin] -- Loading missing strings (in English) into \$textarray.";
-//		$textarray = array_merge( $l10n_view->strings , $textarray );
-		//$textarray = array_merge( $textarray , $l10n_view->strings );
 
 	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
 	}
