@@ -493,7 +493,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-email_body_self'		=> "You transferred the following rendition{s} to yourself...\r\n\r\n",
 		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the rendition{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
 		'l10n-empty'				=> 'empty',
-		'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the site preferences.</p><p>If they are not needed for your site you can delete them.</p>',
+		'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the public site preferences but may be in use for the admin interface.</p><p>If they are not needed for your site you can delete them.</p>',
 		'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 		'l10n-export'				=> 'Export',
@@ -1565,6 +1565,18 @@ end_js;
 
 		#	Complete the set with any missing language codes and empty data...
 		$lang_codes = LanguageHandler::get_site_langs();
+		if( $type === 'plugin' )
+			{
+			$admin_plugin = safe_field( 'type' , 'txp_plugin' , "`name`='$owner'" );
+
+			#
+			#	if this string is in an admin or library plugin then use the
+			# installation (admin) languages...
+			#
+			if( $admin_plugin > 0 )
+				$lang_codes = LanguageHandler::get_installation_langs();
+			}
+
 		foreach($lang_codes as $code)
 			{
 			if( array_key_exists( $code , $x ) )
