@@ -3516,7 +3516,7 @@ class LanguageHandler
 	/*
 	class LanguageHandler implements ISO-693-1 language support.
 	*/
-	function do_fleshout_names( $langs , $append_code = false , $append_default=false )
+	function do_fleshout_names( $langs , $append_code = false , $append_default=false , $use_long=true )
 		{
 		$result = array();
 		if( is_array($langs) and !empty($langs) )
@@ -3527,6 +3527,8 @@ class LanguageHandler
 				$tmp = LanguageHandler::get_native_name_of_lang( $code );
 				if( $append_code )
 					$tmp .= ' [' . $code . ']';
+				if( !$use_long )
+					$code = substr( $code , 0 , 2 );
 				if( $append_default and ($code === LanguageHandler::get_site_default_lang() ) )
 					$tmp .= ' - ' . gTxt('default');
 				$result[$code] = $tmp;
@@ -3894,6 +3896,23 @@ class LanguageHandler
 		*/
 		$lang_codes = LanguageHandler::get_site_langs();
 		return $lang_codes[0];
+		}
+	function get_installation_langs( $limit = 400 )
+		{
+		/*
+		Returns an array of all the languages in this TXP installation with more
+		than the limit number of strings in that lang...
+		*/
+		$installation_langs = array();
+		$langs = safe_column('lang','txp_lang',"1=1 GROUP BY 'lang'");
+		foreach( $langs as $lang )
+			{
+			$count = safe_count( 'txp_lang' , "`lang`='$lang'" );
+			if( $count >= $limit )
+				$installation_langs[] = $lang;
+			}
+
+		return $installation_langs;
 		}
 
 	}

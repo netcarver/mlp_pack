@@ -33,6 +33,8 @@ if( $l10n_view->installed() )
 	#
 	register_callback( 'l10_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
 	register_callback( 'l10_language_handler_callback_post' , 'prefs' , 'get_language' );
+
+	ob_start('_l10n_process_admin_page');
 	}
 
 #
@@ -316,6 +318,39 @@ function l10n_setup_article_buffer_processor( $event , $step )
 		$_POST['Lang'] = $_POST['CloneLang'];		#	The article language and group comes
 		$_POST['Group'] = $_POST['CloneGroup'];	# from the clone selector elements.
 		}
+	}
+
+function _l10n_inject_switcher_form()
+	{
+	global $event, $l10n_language;
+	$langs = LanguageHandler::get_installation_langs();
+	$langs = LanguageHandler::do_fleshout_names( $langs , true , false , false );
+
+	$tab = gps('tab');
+	$tab = ( !empty($tab) ) ? hInput( 'tab' , $tab ) : '';
+	$subtab=gps('subtab');
+	$subtab = ( !empty($subtab) ) ? hInput( 'subtab' , $subtab ) : '';
+
+	$sel = selectInput( 'adminlang' , $langs , $l10n_language['short'] , '' , 1 );
+	$ret =  '<form method="get" action="index.php" style="display: inline;">' . n .
+			$sel . n .
+			$tab . $subtab . eInput( $event ) .
+			'</form>' . n;
+	return $ret;
+	}
+function _l10n_process_admin_page($page)
+	{
+	$f = '<form method="get" action="index.php" style="display: inline;">';
+	$page = str_replace( $f , _l10n_inject_switcher_form().sp.$f , $page);
+
+	#
+	#	Now dynamically replace the 'tab_list' label...
+	#
+	$f = gTxt('tab_list');
+	$r = htmlspecialchars(gTxt('l10n-renditions'));
+	$page = str_replace( $f , $r , $page);
+
+	return $page;
 	}
 
 function _l10n_inject_toggle_js()
