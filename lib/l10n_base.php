@@ -21,6 +21,8 @@ if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
 if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
 	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_textpattern_' );
+if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
+	define( 'L10N_SNIPPET_IO_HEADER' , 'MDoibDEwbi1jbG9uZSI7czoxMjoi' );
 
 class ArticleManager
 	{
@@ -439,11 +441,10 @@ class ArticleManager
 
 class LocalisationView extends GBPPlugin
 	{
-	var $gp = array(L10N_LANGUAGE_CONST);
+	var $gp = array();
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 
-		//'articles' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
@@ -462,11 +463,6 @@ class LocalisationView extends GBPPlugin
 		//'l10n-section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
 		//'l10n-section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
 
-		//'plugins'	=> array('value' => 1, 'type' => 'yesnoradio'),
-
-		//'l10n-snippets_tab' => array( 'value' => 1, 'type' => 'yesnoradio'),
-		//'forms'	=> array('value' => 1, 'type' => 'yesnoradio'),
-		//'pages'	=> array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		);
 	var $strings_lang = 'en-gb';
@@ -481,16 +477,11 @@ class LocalisationView extends GBPPlugin
 		'l10n-add_missing_rend'		=> 'Added missing rendition($rendition) to article $ID',
 		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
 		'l10n-article_table_ok'		=> 'Article table ok.',
-		//'l10n-article_vars'			=> 'Article variables ',
-		//'l10n-article_hidden_vars'	=> 'Hidden article variables ',
 		'l10n-by'					=> 'by',
 		//'l10n-category_vars'		=> 'Category variables ',
 		//'l10n-category_hidden_vars'	=> 'Hidden category variables ',
 		'l10n-clone'				=> 'Clone',
 		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
-		//'l10n-cleanup_verify'		=> "This will totally remove all l10n tables, strings and translations and the operation cannot be undone. Plugins that require or load l10n will stop working.",
-		//'l10n-cleanup_wiz_text'		=> 'This allows you to remove the custom tables and almost all of the strings that were inserted.',
-		//'l10n-cleanup_wiz_title'	=> 'Cleanup Wizard',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
 		'l10n-del_phantom' 			=> 'Deleted phantom rendition($rendition) from article $ID',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
@@ -546,15 +537,13 @@ class LocalisationView extends GBPPlugin
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
-		//'l10n-setup_verify'			=> 'This will add some tables to your Database. It will also insert a lot of new strings into your txp_lang table and change the `data` field of that table from type TINYTEXT to type TEXT. It will then insert some new fields into the textpattern table.',
-		//'l10n-setup_wiz_text'		=> 'This allows you to install the custom tables and all of the strings needed (in British English). You will be able to edit and translate the strings once this plugin is setup.',
-		//'l10n-setup_wiz_title'		=> 'Setup Wizard',
 		'l10n-show_legends' 		=> 'Show article table legend?',
 		//'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
 		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',
 		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
 		'l10n-snippets_tab'			=> 'Snippets',
+		'l10n-special'				=> 'Special',
 		'l10n-specials'				=> 'Specials',
 		'l10n-statistics'			=> 'Show Statistics ',
 		'l10n-strings'				=> ' strings.',
@@ -578,8 +567,6 @@ class LocalisationView extends GBPPlugin
 
 		if( @txpinterface === 'admin' )
 			{
-//echo br , "l10n view: Constructing l10n view.";			
-			
 			#	Register callbacks to get admin-side plugins' strings registered.
 			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 0 );
 
@@ -755,7 +742,6 @@ class LocalisationView extends GBPPlugin
 
 	function _process_string_callbacks( $event , $step , $pre , $func )
 		{
-		#	May need to move this to base class when the string handler moves to Admin Lib.
 		$key = '';
 		if( !is_callable($func , false , $key) )
 			return "Cannot call function '$key'.";
@@ -1489,7 +1475,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
 
 		$out[] = '<div class="l10n_string_list">';
-		$out[] = '<h3>'.$owner.' '.gTxt('l10n-snippets').'</h3>'.n;
+		$out[] = '<h3>'.gTxt('l10n-special').' '.gTxt('l10n-snippets').'</h3>'.n;
 		$out[] = '<span style="float:right;"><a href="' .
 				 $this->url( array( 'owner' => $owner ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
@@ -1975,6 +1961,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#
 		#	Serve the export data as a file...
 		#
+		$export_data = array( 'header'=>L10N_SNIPPET_IO_HEADER , 'data'=>$export_data );
 		$export_data = chunk_split( base64_encode( serialize($export_data) ) , 64 );
 		$this->parent->parent->serve_file( $export_data , 'snippets.inc' );
 		}
@@ -1992,48 +1979,53 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 		if( is_array( $d ) and !empty( $d ) )
 			{
-			$f[] = hInput( 'data' , gps('data') ).n;
-			$f[] = hInput( 'language' , gps('language') ).n;
-			$f[] = sInput( 'l10n_import_languageset').n;
-			$f[] = hInput( 'subtab' , $this->sub_tab );
-			$f[] = hInput( 'commit', 'true' ).n;
-			$f[] = $this->parent->form_inputs().n;
-
-			foreach( $d as $lang=>$set )
+			if( !isset( $d['header'] ) or $d['header'] !== L10N_SNIPPET_IO_HEADER )
 				{
-				$dir_markup	= LanguageHandler::get_lang_direction_markup( $lang );
+				$o[] = gTxt('l10n-invalid_import_file');
+				}
+			else
+				{
+				$f[] = hInput( 'data' , gps('data') ).n;
+				$f[] = hInput( 'language' , gps('language') ).n;
+				$f[] = sInput( 'l10n_import_languageset').n;
+				$f[] = hInput( 'subtab' , $this->sub_tab );
+				$f[] = hInput( 'commit', 'true' ).n;
+				$f[] = $this->parent->form_inputs().n;
+				foreach( $d['data'] as $lang=>$set )
+					{
+					$dir_markup	= LanguageHandler::get_lang_direction_markup( $lang );
 
-				$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
-				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
-					{
-					$l[] = tr( n.td( sp ).n.td( gTxt('l10n-language_not_supported') ) ).n;
-					}
-				else
-					{
-					foreach( $set as $name=>$couplet )
+					if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 						{
-						$data	= htmlspecialchars($couplet[0]);
-						$event	= htmlspecialchars($couplet[1]);
-
-						if( empty( $name ) or empty($event) or empty($data) )
-							continue;
-
-						$l[] = tr( n.t.'<td style="text-align: right;">'.$name.' <em>('.$event.')</em> : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$data\" $dir_markup/>") ) .n;
-						$count++;
+						$l[] = tr( n.td( sp ).n.td( gTxt('l10n-language_not_supported') ) ).n;
 						}
+					else
+						{
+						$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
+						foreach( $set as $name=>$couplet )
+							{
+							$data	= htmlspecialchars($couplet[0]);
+							$event	= htmlspecialchars($couplet[1]);
+
+							if( empty( $name ) or empty($event) or empty($data) )
+								continue;
+
+							$l[] = tr( n.t.'<td style="text-align: right;">'.$name.' <em>('.$event.')</em> : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$data\" $dir_markup/>") ) .n;
+							$count++;
+							}
+						}
+					$l[] = tr( n.t.tdcs( sp , 2 ) ).n;
 					}
-				$l[] = tr( n.t.tdcs( sp , 2 ) ).n;
+				$l[] = tr( n.tdcs( sp , 2 ) ).n;
+				$l[] = tr( n.tdcs( gTxt( 'l10n-total' ) . sp . ': ' . $count . sp . gTxt('strings') , 2 ) ).n;
+				$l[] = tr( n.tdcs( sp , 2 ) ).n;
+
+				$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
+				$content = join( '' , $f ) . tag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
+				$o[] = form( $content , '' ,
+							"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
 				}
 			}
-
-		$l[] = tr( n.tdcs( sp , 2 ) ).n;
-		$l[] = tr( n.tdcs( gTxt( 'l10n-total' ) . sp . ': ' . $count . sp . gTxt('strings') , 2 ) ).n;
-		$l[] = tr( n.tdcs( sp , 2 ) ).n;
-
-		$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</span>';
-		$content = join( '' , $f ) . tag( join( '' , $l ) , 'table' ) . join( '' , $f2 );
-		$o[] = form( $content , '' ,
-					"verify('" . doSlash( gTxt('l10n-import_warning') ) . ' ' . doSlash(gTxt('are_you_sure')) . "')");
 
 		$o[] = '</div>';
 		echo join( '' , $o );
@@ -2055,7 +2047,12 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 		if( is_array( $d ) and !empty( $d ) )
 			{
-			foreach( $d as $lang=>$set )
+			if( !isset( $d['header'] ) or $d['header'] !== L10N_SNIPPET_IO_HEADER )
+				{
+				return;
+				}
+
+			foreach( $d['data'] as $lang=>$set )
 				{
 				if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 					continue;
@@ -2092,7 +2089,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			}
 
 			$this->parent->parent->message = gTxt('l10n-import_count',array('{count}'=>$count,'{type}'=>gTxt('l10n-snippet')));
-		unset( $_POST['step'] );
+			unset( $_POST['step'] );
 		}
 
 	}
@@ -3506,10 +3503,6 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 
 	}
-
-//global $l10n_view, $prefs;
-//$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
-//$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
 
 class LanguageHandler
 	{
