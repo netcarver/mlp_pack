@@ -498,7 +498,7 @@ if( !defined( 'L10N_SUBS_TABLE' ) )
 global $txpcfg;
 
 
-	function _l10n_set_browse_language( $short_code , $debug=false )
+	function _l10n_set_browse_language( $code , $long ,  $debug=false )
 		{
 		#
 		#	Call this function with the SHORT language code.
@@ -509,11 +509,19 @@ global $txpcfg;
 		global $l10n_language;
 		$result = false;
 
-		$site_langs = LanguageHandler::get_site_langs();
-		$tmp = LanguageHandler::expand_code( $short_code );
+		if( $long )
+			{
+			$site_langs = LanguageHandler::get_installation_langs();
+			$tmp = $code;
+			}
+		else
+			{
+			$site_langs = LanguageHandler::get_site_langs();
+			$tmp = LanguageHandler::expand_code( $code );
+			}
 
 		if( $debug )
-			echo br, "_l10n_set_browse_language( $short_code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
+			echo br, "_l10n_set_browse_language( $code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
 
 		if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
 			{
@@ -541,7 +549,7 @@ global $txpcfg;
 				}
 			}
 		if( $debug )
-			echo br , "Input='$short_code', Site Language set to " , var_dump( $l10n_language ) , " Returning ", var_dump($result),  br;
+			echo br , "Input='$code', Site Language set to " , var_dump( $l10n_language ) , " Returning ", var_dump($result),  br;
 
 		return $result;
 		}
@@ -552,6 +560,7 @@ global $txpcfg;
 		global $l10n_language;
 
 		$new_first_path = '';
+		$debug = false;
 
 		@session_start();
 		$site_langs = LanguageHandler::get_site_langs();
@@ -573,8 +582,8 @@ global $txpcfg;
 
 		if( $use_get_params )
 			{
-			$tmp = gps( 'adminlang' );
-			$temp = LanguageHandler::expand_code( $tmp );
+			$temp = gps( 'adminlang' );
+			$tmp = substr( $temp , 0 , 2 );
 
 			#
 			#	Admin side we use the installation languages, not just the more
@@ -686,7 +695,10 @@ global $txpcfg;
 			$_SESSION[$ssname] = $def;
 			}
 
-		_l10n_set_browse_language( $_SESSION[$ssname] );
+		if( $use_get_params )
+			_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
+		else
+			_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
 
 		return $new_first_path;
 		}
