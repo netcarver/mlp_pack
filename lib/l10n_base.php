@@ -568,7 +568,7 @@ class LocalisationView extends GBPPlugin
 		if( @txpinterface === 'admin' )
 			{
 			#	Register callbacks to get admin-side plugins' strings registered.
-			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 0 );
+			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 1 );
 
 			# First run, setup the languages array to the currently installed admin side languages...
 			$langs = LanguageHandler::get_site_langs( false );
@@ -597,7 +597,7 @@ class LocalisationView extends GBPPlugin
 			if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 				{
 				$this->strings = array_merge( $this->strings , $this->perm_strings );
-				$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' , 'l10n' );
+				$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' , 'l10n' , $this->strings_lang );
 				$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'l10n' , true );
 				StringHandler::load_strings_into_textarray( LANG );
 				}
@@ -694,27 +694,6 @@ class LocalisationView extends GBPPlugin
 			}
 		}
 
-	function _redirect_textpattern($table)
-		{
-		# Only redirect calls to the textpattern table...
-		$installed = $this->installed();
-		if( 'textpattern' === $table && $installed )
-			{
-			global $l10n_language;
-
-			$language_set 	= isset( $l10n_language );
-			$language_ok	= true;
-			if( $language_set and $language_ok )
-				{
-				$table = ArticleManager::make_textpattern_name( $l10n_language );
-				}
-			}
-		elseif ( 'l10n_master_textpattern' === $table && $installed )
-			{
-			$table = 'textpattern';
-			}
-		return $table;
-		}
 
 	function installed( $recheck=false )
 		{
@@ -739,6 +718,7 @@ class LocalisationView extends GBPPlugin
 		$result = "Skipped insertion of strings for '$key'.";
 		if( $owner and $prefix and $strings and $lang and $event and (count($strings)) )
 			{
+			//echo br , "In _process_string_callbacks( $event , $step , $pre , $func ), inserting strings...";
 			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $owner ) )
 				$result = true;
 			}
@@ -755,6 +735,7 @@ class LocalisationView extends GBPPlugin
 		if( $tab === 'plugin' and empty($plugin) )
 			{
 			#	Force the loading of public side plugins on a visit to the MLP>Plugins, in case they do register strings...
+			//echo "Initiating callbacks and loading active public plugins ... ";
 			load_plugins( 0 );
 
 			#	Initiates our string enumeration event...
@@ -872,6 +853,32 @@ class LocalisationView extends GBPPlugin
 		}
 
 	}
+
+function l10n_redirect_textpattern($table)
+	{
+	$installed = l10n_installed();
+
+	if( 'textpattern' === $table && $installed )
+		{
+		//echo "_redirect_textpattern($table)";
+		global $l10n_language;
+
+		$language_set 	= isset( $l10n_language );
+		$language_ok	= true;
+		if( $language_set and $language_ok )
+			{
+			$table = ArticleManager::make_textpattern_name( $l10n_language );
+			}
+		//echo " ... returning($table).",br;
+		}
+	elseif ( 'l10n_master_textpattern' === $table && $installed )
+		{
+		$table = 'textpattern';
+		//echo " ... returning($table).",br;
+		}
+	return $table;
+	}
+
 
 class SnippetTabView extends GBPAdminTabView
 	{
@@ -1181,7 +1188,8 @@ class LocalisationStringView extends GBPAdminTabView
 				$marker = ( !$plugin_found )
 					? ' <strong>*</strong>' : '';
 				$out[] = '<li><a href="' . $this->parent->url( array(L10N_PLUGIN_CONST=>$plugin,'prefix'=>$pfx) , true ) . '">' .
-						$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
+						//$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
+						$plugin . ' [' .$event . '] ' . $marker.
 						'</a></li>';
 				}
 			}
@@ -1272,6 +1280,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function _render_string_stats( $string_name , &$stats )					# Right pane stats render subroutine
 		{
 		$site_langs 	= LanguageHandler::get_site_langs();
+		$admin_langs = LanguageHandler::get_installation_langs();
 
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">&nbsp;&nbsp;&#035;&nbsp;</td>' . td('') . td('') ).n.'</thead><tbody>';
@@ -1283,7 +1292,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
 			$remove = '';
 			$export = '';
-			$supported = in_array( $iso_code , $site_langs );
+			$supported = in_array( $iso_code , $site_langs ) || in_array( $iso_code , $admin_langs );
 			if( !$supported )
 				{
 				$extras_found = true;
@@ -1307,7 +1316,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$details =  StringHandler::if_plugin_registered( $string_name , $iso_code );
 			if( false !== $details )
 				{
-				$details = unserialize( $details );
+				//$details = unserialize( $details );
 				$export[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
 				$export[] = sInput( 'l10n_export_languageset');
 				$export[] = $this->parent->form_inputs();
@@ -1331,7 +1340,7 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				foreach( $stats as $iso_code=>$count )
 					{
-					$supported = in_array( $iso_code , $site_langs );
+					$supported = in_array( $iso_code , $site_langs ) || in_array( $iso_code , $admin_langs );
 					if( !$supported )
 						{
 						$remove = array();
@@ -1379,7 +1388,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$stats 			= array();
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
-		$details		= unserialize( StringHandler::if_plugin_registered( $plugin , '' ) );
+		$details		= StringHandler::if_plugin_registered( $plugin , '' );
+		//$details		= unserialize( $details );
 		$event			= $details['event'];
 
 		$out[] = '<div class="l10n_plugin_list">';
@@ -1762,7 +1772,7 @@ end_js;
 		$details =  StringHandler::if_plugin_registered( $plugin , $lang );
 		if( false !== $details )
 			{
-			$details = unserialize( $details );
+			//$details = unserialize( $details );
 			$data = StringHandler::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
 			$this->parent->serve_file( $data , $plugin . '.' . $lang . '.inc' );
 			}
@@ -3164,7 +3174,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			'cleanup' => 'Drop the \'owner\' field from the txp_lang table.'	),
 		'2' => array(
 			'setup' => 'Insert the strings for this plugin',
-			'cleanup' => 'Remove l10n plugin strings and unregister plugins'),
+			'cleanup' => 'Remove all MLP strings and unregister plugins'),
 		'3' => array(
 			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
 		'3a'=> array(
@@ -3374,7 +3384,7 @@ class LocalisationWizardView extends GBPWizardTabView
 	function cleanup_2()
 		{
 		# Remove the l10n strings...
-		$this->add_report_item( 'Cleaning up l10n strings and plugin registrations' );
+		$this->add_report_item( 'Cleaning up all l10n strings and plugin registrations' );
 		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
 		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' , 'l10n' );
 		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true , true );
@@ -4175,19 +4185,83 @@ class StringHandler
 			return substr( $plugin , $pfx_len );
 		}
 
-	function if_plugin_registered( $plugin , $lang , $count = 0 )
+	function if_plugin_registered( $plugin , $lang , $count = 0 , $strings = null )
 		{
+		//echo br , "Checking [$plugin] ";
 		global $prefs;
+		static $cache = array();
+
+		if( empty($plugin) )
+			{
+			//echo " ... not a plugin name, returning.";
+			return false;
+			}
+
 		$name = StringHandler::do_prefs_name( $plugin );
-		if( $name and ( $details = @$prefs[$name] ) )
+		if( empty($name) )
+			{
+			//echo " ... Invalid name, returning.";
+			return false;
+			}
+
+		if( !isset( $cache[$name] ) )
+			{
+			$details = @$prefs[$name];
+			if( !isset( $details ) )
+				{
+				//echo " ... not registered.";
+				return false;	#	Not registered.
+				}
+
+			//echo " ... caching details";
+			$cache[$name] = unserialize( $details );	#	Cache registered values.
+			}
+
+		//echo " ... reading cache";
+		$details = $cache[$name];
+
+		if( empty( $details ) )
+			{
+			//echo " ... not registered.";
+			return false;
+			}
+
+		if( null === $strings )
+			{
+			//echo " ... registered!";
 			return $details;
-		return false;
+			}
+
+		#
+		#	Registered, but changed?
+		#
+		$md5 = $details['md5'];
+
+		#
+		#	Do an md5 check vs the strings keys...
+		#
+		$keys = serialize( array_keys( $strings ) );
+		//echo br , var_dump( $keys );
+		$keys = md5(  $keys );
+		//echo " ... comparing hashes original($md5), new($keys)";
+		if( $keys !== $md5 )
+			{
+			//echo " ... !!!CHANGED!!!";
+			return false;
+			}
+		//echo " ... not changed ... registered.";
+		return $details;
 		}
 
-	function register_plugin( $plugin , $pfx , $string_count , $lang , $event )
+	function register_plugin( $plugin , $pfx , $string_count , $lang , $event , &$strings )
 		{
+		//echo br , "register_plugin( $plugin , $pfx , $string_count , $lang , $event , $strings )";
+		$keys = serialize( array_keys($strings) );
+		//echo br , "\$keys = $keys";
+		$keys = md5( $keys );
+
 		$name = StringHandler::do_prefs_name( $plugin );
-		$vals = serialize( array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) ) );
+		$vals = serialize( array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) , 'md5'=>$keys ) );
 		$result = set_pref( doSlash($name) , $vals , L10N_NAME , 2 );
 		if( $result !== false )
 			{
@@ -4214,8 +4288,10 @@ class StringHandler
 		return $ok;
 		}
 
-	function insert_strings( $pfx , $strings , $lang , $event='' , $owner='' , $override = false )
+	function insert_strings( $pfx , &$strings , $lang , $event='' , $owner='' , $override = false )
 		{
+		//echo br , "insert_strings( $pfx , $strings , $lang , $event , $owner ," , var_dump($override), " )";
+		//echo br , "where keys = " , var_dump( serialize( array_keys( $strings ) ) );
 		global	$txp_current_plugin;
 		if( empty($strings) or !is_array($strings) or empty($lang) )
 			return null;
@@ -4230,8 +4306,8 @@ class StringHandler
 
 			# If needed, register the plugin...
 			$num = count($strings);
-			if( false === StringHandler::if_plugin_registered( $owner , $lang , $num ) )
-				StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event );
+			if( false === StringHandler::if_plugin_registered( $owner , $lang , $num , $strings ) )
+				StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event , $strings );
 			elseif( !$override )
 				return false;
 
@@ -4258,9 +4334,11 @@ class StringHandler
 			else
 				$name = doSlash( $name );
 
+			//echo br , "Processing string [$name]";
+
 			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data', `owner`='$owner'";
 			$where 	= ", `name`='$name'";
-			@safe_insert( 'txp_lang' , $set . $where );
+			$added = @safe_insert( 'txp_lang' , $set . $where );
 			if( $override )
 				@safe_update( 'txp_lang' , $set , $where );
 			}
@@ -4315,7 +4393,7 @@ class StringHandler
 		{
 		/*
 		PLUGIN SUPPORT ROUTINE
-		Either: Removes all the occurances of plugin strings in the given langs...
+		Either: Removes all the occurances of all plugins' strings in the given langs...
 		OR:		Removes all of the named plugin's strings.
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
@@ -4333,10 +4411,13 @@ class StringHandler
 			}
 		}
 
-	function remove_strings_by_name( $strings , $event = '' , $plugin='' )
+	function remove_strings_by_name( $strings , $event = '' , $plugin='' , $lang='' )
 		{
 		/*
-		Removes all of the named strings in ALL languages. (It uses the keys of the strings array).
+		Uses the keys of the strings array to remove all of the named strings in EITHER ...
+			1) ALL languages.
+						OR
+			2) Just the supplied language.
 		*/
 		global	$txp_current_plugin , $prefs;
 		if( !$strings or !is_array( $strings ) or empty( $strings ) )
@@ -4358,8 +4439,14 @@ class StringHandler
 				{
 				$name 	= doSlash($name);
 				$where 	= " `name`='$name'";
+
+				if( !empty($lang) )
+					$where .= " AND `lang`='$lang'";
+
 				if( !empty($event) )
 					$where .= " AND `event`='$event'";
+
+				$where = doSlash( $where );
 				$ok = @safe_delete( 'txp_lang' , $where );
 				if( $ok === true )
 					$deletes++;
