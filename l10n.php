@@ -720,7 +720,6 @@ if( @txpinterface === 'admin' )
 		}
 
 	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
-	$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
 
 	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
 	}
@@ -731,17 +730,15 @@ if (@txpinterface === 'public')
 	{
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
-	global $l10n_view, $prefs;
-	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
-	$prefs['db_redirect_func'] = array(&$l10n_view, '_redirect_textpattern');
+	global $prefs;
 
-	//global $l10n_view;
-
-	$installed = $l10n_view->installed();
+	$installed = l10n_installed();
 	if( !$installed )
 		{
 		return '';
 		}
+
+	$prefs['db_redirect_func'] = 'l10n_redirect_textpattern';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
@@ -1212,27 +1209,10 @@ if (@txpinterface === 'public')
 			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
 			if( !$has_lang_code )
 				{
-				//_l10n_log( "Matched[0] (" .$matches[0].')' , __LINE__ );
-				//_l10n_log( "Matched[1] (" .$matches[1].')' , __LINE__ );
-				//_l10n_log( "hu (" .hu.')' , __LINE__ );
-				//_l10n_log( "Matched[2] (" .$matches[2].')' , __LINE__ );
-				//_l10n_log( "Matched[3] (" .$matches[3].')' , __LINE__ );
-				//_l10n_log( '('.$matches[2].') is NOT a valid short code.' , __LINE__ );
 				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , "/" );
 				$result = ' href="'. $result . '"';
 				}
-			//else
-				//{
-				//_l10n_log( n . "URL already has valid lang code: " . $matches[0] , __LINE__ );
-				//}
 			}
-		//else
-			//{
-			//_l10n_log( n . "Skipping external reference: " . $matches[0] , __LINE__ );
-			//}
-
-		//if( !$external and !$has_lang_code )
-			//_l10n_log( n . $matches[0] . n . $result , __LINE__ );
 
 		return $result;
 		}
@@ -1279,14 +1259,6 @@ if (@txpinterface === 'public')
 				#
 				if( array_key_exists( 'page' , $atts) )
 					{
-					//$logfile = 'textpattern'.DS.'tmp'.DS.'l10n.log.txt';
-					//$logging = array_key_exists( 'logging', $atts );
-					//if( $logging )
-						//{
-						//unlink( $logfile );
-						//_sed_log( "\n\nParsing page..." , 0 );
-						//}
-
 					# Insert the language code into all permlinks...
 					$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
 					$html = preg_replace_callback( $pattern , '_l10n_link_lang_cb' , $html );
@@ -1326,4 +1298,3 @@ if (@txpinterface === 'public')
 
 # --- END PLUGIN CODE ---
 ?>
-
