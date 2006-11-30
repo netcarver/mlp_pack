@@ -346,9 +346,9 @@ function _l10n_process_admin_page($page)
 	#
 	#	Now dynamically replace the 'tab_list' label...
 	#
-	$f = gTxt('tab_list');
+	$f = 'class="plain">'.gTxt('tab_list').'</a>';
 	$r = htmlspecialchars(gTxt('l10n-renditions'));
-	$page = str_replace( $f , $r , $page);
+	$page = str_replace( $f , 'class="plain">'.$r.'</a>' , $page);
 
 	return $page;
 	}
@@ -880,4 +880,3 @@ function l10n_post_discuss_multi_edit( $event , $step )
 	}
 
 ?>
-
