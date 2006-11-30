@@ -4235,7 +4235,7 @@ class StringHandler
 		#
 		#	Registered, but changed?
 		#
-		$md5 = $details['md5'];
+		$md5 = @$details['md5'];
 
 		#
 		#	Do an md5 check vs the strings keys...
