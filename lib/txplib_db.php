@@ -451,8 +451,12 @@ $DB = new DB;
 //-------------------------------------------------------------
 	function l10n_installed( $check_plugin_active = false )
 		{
+		static $installed;
+
+		if( !isset( $installed ) )
+			$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
+
 		$active 	= true;
-		$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
 
 		if( $installed and $check_plugin_active )
 			{
