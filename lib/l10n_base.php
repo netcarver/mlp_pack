@@ -537,6 +537,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
+		'l10n-show_langs'			=> 'Show languages&#8230;',
 		'l10n-show_legends' 		=> 'Show article table legend?',
 		//'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
 		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',

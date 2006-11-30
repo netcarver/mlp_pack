@@ -1,6 +1,5 @@
 <?php
 
-
 global $l10n_vars;
 $l10n_vars = array();
 
@@ -177,7 +176,7 @@ function _l10n_chooser( $permitted_langs )
 	{
 	$count = 0;
 	$langs = LanguageHandler::get_site_langs();
-	$o[] = '<div class="l10n_extensions"><fieldset><legend>' . 'Show languages&#8230;' . '</legend>' . n;
+	$o[] = '<div class="l10n_extensions"><fieldset><legend>' . gTxt('l10n-show_langs') . '</legend>' . n;
 	$use_cookies = (gps( 'l10n_filter_method' ) !== 'post');
 
 	#
