@@ -493,7 +493,10 @@ $DB = new DB;
 					#
 					@session_start();
 					$language = '';
-					$language = @$_SESSION['llang'];
+					if( @txpinterface==='admin' )
+						$language = @$_SESSION['adminllang'];
+					else
+						$language = @$_SESSION['llang'];
 					if( !empty( $language ) )
 						{
 						$out['language'] = $language;
