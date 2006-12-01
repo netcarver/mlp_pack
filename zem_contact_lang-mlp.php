@@ -145,7 +145,7 @@ if( @txpinterface=='public' )
 		else
 			{
 			#
-			#	Use the non-preficed key...
+			#	Use the non-prefixed key...
 			#
 			$key = strtolower($what);
 
