@@ -619,6 +619,7 @@ class LocalisationView extends GBPPlugin
 		if( has_privs('page') or has_privs('form') )
 			{
 			$snippet_tab = new SnippetTabView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
+			new LocalisationStringView( gTxt('search') , 'search' , $snippet_tab );
 			new LocalisationStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
 			if (has_privs('page'))
 				new LocalisationStringView( gTxt('pages') , 'page' , $snippet_tab , true );
@@ -1069,6 +1070,12 @@ class LocalisationStringView extends GBPAdminTabView
 
 		switch ($this->event)
 			{
+			case 'search':
+				$this->render_search_pane();
+				if( $id )
+					$this->render_string_edit( 'search' , 'search' , $id );
+				break;
+
 			case 'special':
 				$this->render_owner_list('special');
 				$this->render_specials_list( $id );
@@ -1117,6 +1124,74 @@ class LocalisationStringView extends GBPAdminTabView
 					}
 				break;
 			}
+		}
+
+	function render_search_pane()
+		{
+		#
+		#	Render the search column...
+		#
+		$out[] = LocalisationStringView::_inject_js_search();
+		$out[] = 	'<div class="l10n_owner_list">' . n;
+
+		$out[] = 	'<h3>' . gTxt('search') . '</h3>' . n .
+					'<div id="l10n_search">' . n;
+
+		#
+		#	Render the search-by-name box...
+		#
+		$value = cs( 'search_string_name_live' );
+		$f = fInput( 	'edit',
+						'l10n_search_by_name',
+						$value,
+						'', 									/*class*/
+						'Type your search term in here.',		/*title*/
+						'',						/*onClick*/
+						'20', 									/*size*/
+						'1', 									/*tab*/
+						'l10n_search_by_name' 					/*id*/
+						);
+
+		$out[] = form( $f ) . n;
+		$out[] = graf( 'Type your search phrase above' , ' id="L10N_RESULT"' ) . n;
+		$out[] = '</div>' . n;
+		$out[] = '</div>' . n;
+
+		#
+		#	===============================================================
+		#
+		#	Render the results column. Pre-fill with strings and the JS will
+		# show/hide them as needed according to the search term.
+		#
+		$out[] = '<div class="l10n_string_list">';
+		$out[] = '<h3>'.gTxt('search_results').'</h3>'.n;
+		$out[] = graf( 'As you type, matching strings will be listed here&#8230;' ) . n;
+
+		$where = "1=1";
+		//$where = "`event` in ('admin','common','public')";
+		//$rs = safe_rows_start( 'DISTINCT name , event', 'txp_lang', $where . " ORDER BY name ASC" );
+		$rs = safe_rows_start( 'DISTINCT name', 'txp_lang', $where . " ORDER BY name ASC" );
+		$count = @mysql_num_rows($rs);
+
+		$out[] = graf( "<span id=\"l10n_result_count\">???</span>/$count strings match&#8230;" ) . n;
+		$out[] = '<ul class="l10n_search_results_list" id="l10n_search_results_list">';
+		if( $rs && $count > 0 )
+			{
+			while ( $a = nextRow($rs) )
+				{
+				$string = $a['name'];
+				//$type  = $a['event'];
+				$out[] = '<li id="' . $string . '" class="l10n_hidden"><a href="' .
+					$this->url( array( gbp_id=>$string /* , 'string_type'=>$type */ ) , true ) .
+					'">' . $string /* . ' [' . $type . ']' */ .
+					'</a></li>';
+				}
+			}
+
+		$out[] = '</ul>' . n;
+		$out[] = '</div>' . n;
+
+		echo join('', $out);
 		}
 
 	function _generate_list( $table , $fname , $fdata )						# left pane subroutine
@@ -1535,7 +1610,109 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function _inject_js()
+	function _inject_js_search()
+		{
+		$fn = <<<end_js
+		<script type="text/javascript" language="javascript" charset="utf-8">
+		// <![CDATA[
+
+		//var isIE = false;
+		var search_box  = null;
+		var search_term = null;
+		var result_list = null;
+		var result_num  = null;
+
+		function addLoadEvent(func)
+			{
+			var oldonload = window.onload;
+			if (typeof window.onload != 'function')
+				{
+				window.onload = func;
+				}
+			else
+				{
+				window.onload = function()
+					{
+					oldonload();
+					func();
+					}
+				}
+			}
+
+		addLoadEvent( function(){search_init();} );
+
+		function search_init()
+			{
+			if (!document.getElementById)
+				{
+				return false;
+				}
+
+			search_box  = document.getElementById('l10n_search_by_name');
+			search_term = document.getElementById('L10N_RESULT');
+			result_list = document.getElementById('l10n_search_results_list');
+			result_num  = document.getElementById('l10n_result_count');
+			if( (search_box == null) || (search_term == null) || result_list == null || result_num == null )
+				return;
+
+			if (navigator.userAgent.indexOf("Safari") > 0)
+				{
+				search_box.addEventListener("keydown",l10nRefineResultsEventHandler,false);
+				}
+			else if (navigator.product == "Gecko")
+				{
+				search_box.addEventListener("keypress",l10nRefineResultsEventHandler,false);
+				}
+			else
+				{
+				search_box.attachEvent('onkeydown',l10nRefineResultsEventHandler);
+				}
+			l10nRefineResults();
+			}
+
+		function l10nRefineResultsEventHandler(event)
+			{
+			l10nRefineResults();
+			}
+
+		function l10nRefineResults()
+			{
+			var target = search_box.value;
+
+			//
+			// Iterate over all strings showing those that match, hiding those that don't...
+			//
+			var item = result_list.firstChild;
+			var visible = 0;
+			while( item != null )
+				{
+				var match_text = item.id;
+				var t_len = target.length;
+				var tmp = match_text.substring(0,t_len)
+				var match = (tmp == target);
+
+				if( match )
+					{
+					item.className = 'l10n_visible';
+					++visible;
+					}
+				else
+					{
+					item.className = 'l10n_hidden';
+					}
+
+				item = item.nextSibling;
+				}
+			result_num.innerHTML = visible;
+
+			setCookie( 'search_string_name_live' , target , 365 );
+			}
+		// ]]>
+		</script>
+end_js;
+		return $fn;
+		}
+	function _inject_js_toggle()
 		{
 		$ltr = doSlash( gTxt( 'l10n-ltr' ) );
 		$rtl = doSlash( gTxt( 'l10n-rtl' ) );
@@ -1575,7 +1752,7 @@ end_js;
 		/*
 		Render the edit controls for all localisations of the chosen string.
 		*/
-		$out[] = LocalisationStringView::_inject_js();
+		$out[] = LocalisationStringView::_inject_js_toggle();
 		$out[] = '<div class="l10n_values_list">';
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
@@ -1594,6 +1771,10 @@ end_js;
 			#
 			if( $admin_plugin > 0 )
 				$lang_codes = LanguageHandler::get_installation_langs();
+			}
+		elseif( $type === 'search' )
+			{
+			$lang_codes = LanguageHandler::get_installation_langs();
 			}
 
 		foreach($lang_codes as $code)
@@ -3606,7 +3787,7 @@ class LanguageHandler
 			'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
 			'af'=>array( 'af'=>'Afrikaans' ),
 			'am'=>array( 'am'=>'አማርኛ' ),
-			'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),
+			'ar'=>array( 'ar'=>'العربية' , 'ar-dz'=>'جزائري عربي' , 'dir'=>'rtl' ),
 			'as'=>array( 'as'=>'অসমীয়া' ),
 			'ay'=>array( 'ay'=>'Aymar aru' ),
 			'az'=>array( 'az'=>'Azərbaycan dili' ),
@@ -4624,7 +4805,7 @@ class StringHandler
 		return $langs;
 		}
 
-	function get_string_set( $string_name )
+	function get_string_set( $string_name , $string_event='' )
 		{
 		/*
 		ADMIN INTERFACE SUPPORT ROUTINE
@@ -4634,6 +4815,8 @@ class StringHandler
 		$result = array();
 
 		$where = ' `name` = "'.doSlash($string_name).'"';
+		if( $string_event )
+			$where .= ' AND `event`="' . doSlash($string_event) . '"';
 		$rs = safe_rows_start( 'lang, id, event, data, owner', 'txp_lang', $where );
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
