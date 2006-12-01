@@ -45,3 +45,6 @@ td.legend dd	{ margin: 2px 0;            padding: 3px 0 0; float:left; }
 
 .l10n_extensions	{ text-align: center; }
 .l10n_extensions fieldset 		{ margin: 0px auto; }
+
+.l10n_hidden		{ display: none; }
+.l10n_visible		{ display: visible; }
