@@ -1,7 +1,7 @@
 <?php
 
 $plugin['name'] = 'l10n';
-$plugin['version'] = '0.6.a5';
+$plugin['version'] = '0.6.a7';
 $plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
@@ -48,7 +48,7 @@ h2. Table Of Contents.
 * "Introduction &amp; Setup/Cleanup":#intro
 * "Terminology":#terms
 * "Translation Paradigm":#paradigm
-* "What the MLP(Multi-Lingual Publishing) Plugin provides.":#features
+* "What the MLP(Multi-Lingual Publishing) Pack provides.":#features
 * "Known Issues":#issues
 * "Snippets":#snippets
 * "Tag Directory":#tags
@@ -64,7 +64,7 @@ h2. Table Of Contents.
 
 <br/>
 
-h2(#intro). "Introduction &amp; Setup/Cleanup(Jump to the top)":#top
+h2(#intro). Introduction &amp; Setup/Cleanup
 
 The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
 
@@ -87,7 +87,9 @@ All these are listed in the setup wizard (under the content > MLP tab).
 
  <form action="index.php?event=l10n&tab=wizard" method="post"><p><input value="Setup/Cleanup&#8230;" type="submit"></p></form>
 
-h2(#terms). "Terminology(Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#terms). Terminology
 
 |_. Term |_. Definition |
 | Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
@@ -106,11 +108,13 @@ Plain Textpattern makes no differentiation between articles and renditions becau
 
 This means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work) as a table.
 
-Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
+Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon !/textpattern/txp_img/l10n_delete.png! in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon !/textpattern/txp_img/l10n_clone.png! in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
 
 The content > write tab still allows the editing of individual renditions.
 
-h2(#paradigm). "Translation Paradigm.(Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#paradigm). Translation Paradigm.
 
 Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. This meant _big_ changes to the existing write tab, or replacing the write tab with a complicated substitute.
 
@@ -120,18 +124,19 @@ The translator simply edits the clone, replacing the source text as they go, unt
 
 It's much easier on the translators as they get to keep the interface they are used to.
 
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
-
-h2(#features). "What the MLP(Multi-Lingual Publishing) Plugin provides.(Jump to the top)":#top
+h2(#features). What the MLP(Multi-Lingual Publishing) Pack provides.
 
 On the admin side...
 * Each TxP user can choose their own admin language -- and switch between admin languages at will.
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
 * Support for 'snippets' to simplify page/form editing and writing.
+* Ability to search for, and edit, any TxP language string.
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
 * Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
 * Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
-* Support for articles as groups of renditions).
+* Support for articles as groups of renditions.
 * Support for cloning of renditions and their translation into other languages using the existing write tab.
 * Email notifications sent to translators when articles are cloned or have their author changed.
 * Extra filtering of the list of renditions by language.
@@ -140,16 +145,18 @@ On the admin side...
 
 On the public side...
 * Detection of the language the user wants to view a site in via the url or browser headers.
-* Persistance of the langauge selection so that the urls don't need re-writing.
+* URLs re-written so that browser caches know the difference between the renditions of articles in different languages.
 * Automatic selection of the correct renditions of snippets in pages and forms.
 * Fully functional search/commenting/feeds for each language the site supports.
+* Localised (and direction adjusted) feeds.
 * 404 support for finding renditions that are not available in the requested language.
 * A tag listing available renditions of a given article and allowing switching between them.
 * Tags for accessing language codes and direction information.
 * Conditional tag for testing the visitor's language or the directionality of the language.
-* Localised (and direction adjusted) feeds.
 
-h2(#issues). "Known Issues(Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#issues). Known Issues
 
 Here is a list of known issues...
 
@@ -159,20 +166,22 @@ These fields can still be localised using the normal Textpattern pages. However,
 
 For example, to provide localised descriptions in English and Greek you enter this into the description field...
 
-<code class="code_tag">&lt;txp:l10n_if_lang lang="en-gb"&gt;
-English.
+<pre class="code_tag">
+&lt;txp:l10n_if_lang lang="en-gb"&gt;
+English (GB).
 &lt;/txp:l10n_if_lang&gt;
 &lt;txp:l10n_if_lang lang="el-gr"&gt;
 Ελληνικά.
 &lt;/txp:l10n_if_lang&gt;
-</code>
+</pre>
 
 <h3>Localisation of image alt and image caption attributes.</h3>
 
 This is more problematic and the above method does not work.
 
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
-h2(#snippets). "Snippets(Jump to the top)":#top
+h2(#snippets). Snippets
 
 Snippets are named strings that you can reference within pages or forms.
 
@@ -191,7 +200,9 @@ To add snippets to pages or forms...
 # Supply appropriate renditions and hit the save button.
 # Now looking at your site should give you the correct rendition according to the url you type.
 
-h2(#tags). "Tag Directory(Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#tags). Tag Directory
 
 |_. Tag |_. Description |
 | "*l10n_lang_list*":#lang_list    | Outputs an un-ordered list of languages. <br/> On an article list page, this outputs all of the site's available languages.<br/>On individual articles it lists only those languages the article has renditions for. |
@@ -269,7 +280,9 @@ Use this tag to wrap entire pages and forms in which you wish to use snippets.
 
 This tag has no attributes.
 
-h2(#prefs). "Preferences Help. (Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#prefs). Preferences Help.
 
 * "Languages":#l10n-languages
 * "Show Article Table Legend":#l10n-show_legends
@@ -321,7 +334,9 @@ Setting this option to 'yes' allows pages and forms to be edited using a special
 
 It also allows you access to a feature that allows pages and forms to automatically be wrapped with the l10n_localise tag.
 
-h2(#langs). "Supported Languages.(Jump to the top)":#top
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#langs). Supported Languages.
 
 Here is the full list of ISO-693 languages known to the MLP Pack. Note that there are a few extra 5 character codes.
 
@@ -335,7 +350,7 @@ static $iso_693_1_langs = array(
 	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
 	'af'=>array( 'af'=>'Afrikaans' ),
 	'am'=>array( 'am'=>'አማርኛ' ),
-	'ar'=>array( 'ar'=>'العربية' , 'dir'=>'rtl' ),
+	'ar'=>array( 'ar'=>'العربية' , 'ar-dz'=>'جزائري عربي' , 'dir'=>'rtl' ),
 	'as'=>array( 'as'=>'অসমীয়া' ),
 	'ay'=>array( 'ay'=>'Aymar aru' ),
 	'az'=>array( 'az'=>'Azərbaycan dili' ),
@@ -473,12 +488,16 @@ static $iso_693_1_langs = array(
 	);
 </pre>
 
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
-h2(#credits). "Credits.(Jump to the top)":#top
+
+h2(#credits). Credits.
 
 Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
 
 Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
 <br />
 
@@ -691,8 +710,10 @@ global $txpcfg;
 		#
 		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
 			{
-			$def = $site_langs[0];
-			$_SESSION[$ssname] = $def;
+			$long = $site_langs[0];
+			$short = substr( $long , 0 , 2 );
+			$_SESSION[$ssname] = $short;
+			$_SESSION[$lsname] = $long;
 			}
 
 		if( $use_get_params )
@@ -1209,7 +1230,7 @@ if (@txpinterface === 'public')
 			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
 			if( !$has_lang_code )
 				{
-				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , "/" );
+				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
 				$result = ' href="'. $result . '"';
 				}
 			}
