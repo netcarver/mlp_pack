@@ -339,6 +339,19 @@ function _l10n_inject_switcher_form()
 	}
 function _l10n_process_admin_page($page)
 	{
+	global $event;
+
+	$events = array( 'l10n' , 'article' );
+	if( in_array( $event , $events )  )
+		{
+		#
+		#	Inject the MLP JavaScript into the head area...
+		#
+		$f = '<script type="text/javascript" src="textpattern.js"></script>';
+		$r = t.'<script type="text/javascript" src="'. hu . 'textpattern'.DS.'index.php?event=l10n&amp;l10nfile=mlp.js" language="javascript" charset="utf-8"></script>';
+		$page = str_replace( $f , $f.n.$r , $page );
+		}
+
 	$f = '<form method="get" action="index.php" style="display: inline;">';
 	$page = str_replace( $f , _l10n_inject_switcher_form().sp.$f , $page);
 
@@ -350,51 +363,6 @@ function _l10n_process_admin_page($page)
 	$page = str_replace( $f , 'class="plain">'.$r.'</a>' , $page);
 
 	return $page;
-	}
-
-function _l10n_inject_toggle_js()
-	{
-	$ltr = doSlash( gTxt( 'l10n-ltr' ) );
-	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
-
-	$fn = <<<end_js
-	<script type="text/javascript" language="javascript" charset="utf-8">
-	// <![CDATA[
-	function toggleDirection(id)
-		{
-		if (!document.getElementById)
-			{
-			return false;
-			}
-
-		var element = document.getElementById(id);
-
-		if (element.style.direction == 'ltr')
-			{
-			element.style.direction = 'rtl';
-			}
-		else
-			{
-			element.style.direction = 'ltr';
-			}
-		}
-
-	function toggleTextElements()
-		{
-		toggleDirection('title');
-		toggleDirection('body');
-		toggleDirection('excerpt');
-		}
-
-	function togglePreview()
-		{
-		toggleDirection('article-main');
-		}
-
-	// ]]>
-	</script>
-end_js;
-	return $fn;
 	}
 
 function l10n_article_buffer_processor( $buffer )
@@ -486,20 +454,14 @@ function l10n_article_buffer_processor( $buffer )
 		#
 		#	Inject direction hyper-link...
 		#
-		$r .= ' / <a href="#" onClick="toggleTextElements()">'.gTxt('l10n-toggle').'</a>';
+		$r .= ' / <a href="#" onClick="toggleTextElements()" id="title-toggle">'.gTxt('l10n-toggle').'</a>';
 		}
 
 	$r = graf( $r );
 	$buffer = str_replace( $f , $r.n.$f , $buffer );
 
-	$r = _l10n_inject_toggle_js();
 	if( !$preview and !$html )
 		{
-		#
-		#	Insert toggle JS...
-		#
-		$buffer = str_replace( $f , $r.n.$f , $buffer );
-
 		#
 		#	Inject direction markup...
 		#
@@ -513,21 +475,16 @@ function l10n_article_buffer_processor( $buffer )
 	if( $preview )
 		{
 		#
-		#	Insert toggle JS...
-		#
-		$f = '<td id="article-main"';
-		$buffer = str_replace( $f , $r.n.$f , $buffer );
-
-		#
 		#	Inject direction markup...
 		#
+		$f = '<td id="article-main"';
 		$r = LanguageHandler::get_lang_direction_markup( $lang );
 		$buffer = str_replace( $f , $f.$r , $buffer );
 
 		#
 		#	Inject direction hyper-link...
 		#
-		$r = '<td><a href="#" onClick="togglePreview()">'.gTxt('l10n-toggle').'</a></td>';
+		$r = '<td><a href="#" onClick="togglePreview()" id="article-main-toggle">'.gTxt('l10n-toggle').'</a></td>';
 		$buffer = str_replace( $f , $r.n.$f , $buffer );
 		}
 

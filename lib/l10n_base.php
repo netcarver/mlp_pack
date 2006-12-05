@@ -24,6 +24,271 @@ if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
 if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
 	define( 'L10N_SNIPPET_IO_HEADER' , 'MDoibDEwbi1jbG9uZSI7czoxMjoi' );
 
+global $event;
+
+if( @txpinterface==='admin' && gps( 'l10nfile' ) === 'mlp.js' )
+	{
+	ob_start();
+	print _l10n_inject_js();
+	exit;
+	}
+
+function _l10n_inject_js()
+	{
+	$ltr = doSlash( gTxt( 'l10n-ltr' ) );
+	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
+
+	$fn = <<<end_js
+var search_box   = null;
+var search_term  = null;
+var result_div   = null;
+var result_list  = null;
+var cresult_div  = null;
+var result_num   = null;
+var csearch_box  = null;
+var csearch_lang = null;
+var str_edit_div = null;
+var last_req     = "";
+
+var	xml_manager = false;
+if( window.XMLHttpRequest )
+	{
+	xml_manager = new XMLHttpRequest();
+	}
+
+function addLoadEvent(func)
+	{
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function')
+		{
+		window.onload = func;
+		}
+	else
+		{
+		window.onload = function()
+			{
+			oldonload();
+			func();
+			}
+		}
+	}
+
+addLoadEvent( function(){l10n_js_init();} );
+function l10n_js_init()
+	{
+	if (!document.getElementById)
+		{
+		return false;
+		}
+
+	search_box   = document.getElementById('l10n_search_by_name');
+	result_div   = document.getElementById('l10n_div_sbn_result_list');
+	result_list  = document.getElementById('l10n_sbn_result_list');
+	result_num   = document.getElementById('l10n_result_count');
+	csearch_box  = document.getElementById('l10n_search_by_content');
+	cresult_div  = document.getElementById('l10n_sbc_result_list');
+	csearch_lang = document.getElementById('sbc_lang_selection');
+	str_edit_div = document.getElementById('l10n_div_string_edit');
+
+	if( (search_box == null) || result_list == null || result_num == null )
+		return;
+
+	addEvent( search_box , 'keyup' , l10nRefineResultsEventHandler , false );
+
+	var search_type = getCookie( 'l10n_string_search_by' );
+	if( search_type == '' || search_type == 'name' )
+		l10nRefineResults();
+	else
+		{
+		result_div.className="l10n_hidden";
+		cresult_div.className="l10n_visible";
+		do_content_search();
+		}
+	}
+
+function l10nRefineResultsEventHandler(event)
+	{
+	l10nRefineResults();
+	}
+
+function l10nRefineResults()
+	{
+	var target = trim( search_box.value );
+	target = target.toLowerCase()
+	var t_len = target.length;
+
+	//
+	// Iterate over all strings showing those that match, hiding those that don't...
+	//
+	var item = result_list.firstChild;
+	var visible = 0;
+	while( item != null )
+		{
+		var match_text = item.id;
+		var tmp = match_text.substring(0,t_len)
+		var match = (tmp == target);
+
+		if( match )
+			{
+			item.className = 'l10n_visible';
+			++visible;
+			}
+		else
+			{
+			item.className = 'l10n_hidden';
+			}
+
+		item = item.nextSibling;
+		}
+	result_num.innerHTML = visible;
+	setCookie( 'search_string_name_live' , target , 365 );
+	}
+
+function trim(term)
+	{
+	var len = term.length;
+	var lenm1 = len - 1;
+
+	while (term.substring(0,1) == ' ')
+		{
+		term = term.substring(1, term.length);
+		}
+	while (term.substring(term.length-1, term.length) == ' ')
+		{
+		term = term.substring(0,term.length-1);
+		}
+	return term;
+	}
+
+function make_xml_req(req,req_receiver)
+	{
+	if( !xml_manager || (req_receiver == null) )
+		return false;
+
+	if( (last_req != req) && (req != '') )
+		{
+		if( xml_manager && xml_manager.readyState < 4 )
+			{
+			xml_manager.abort();
+			}
+		if( window.ActiveXObject )
+			{
+			xml_manager = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+
+		xml_manager.onreadystatechange = req_receiver;
+		xml_manager.open("GET", req);
+		xml_manager.send(null);
+		last_req = req;
+		}
+	}
+function do_content_search()
+	{
+	var search_term = csearch_box.value;
+	var search_lang = csearch_lang.value;
+	var query       = search_term + search_lang;
+
+	if( search_term != '' )
+		{
+		var req = "?event=l10n&tab=snippets&step=l10_search_for_content&l10n-sfc=" + search_term + "&l10n-lang=" + search_lang;
+		make_xml_req( req , cs_result_handler );
+		setCookie( 'search_string_content' , search_term , 365 );
+		setCookie( 'search_string_lang' , search_lang , 365 );
+		}
+	}
+
+function cs_result_handler()
+	{
+	if (xml_manager.readyState == 4)
+		{
+		var results = xml_manager.responseText;
+		cresult_div.innerHTML = results;
+		}
+	}
+
+function do_string_edit(id)
+	{
+	var req = "?event=l10n&tab=snippets&XMLHTTP=true&id=" + id;
+	make_xml_req( req , string_edit_handler );
+	}
+
+function string_edit_handler()
+	{
+	if (xml_manager.readyState == 4)
+		{
+		var results = xml_manager.responseText;
+		str_edit_div.innerHTML = results;
+        window.scrollTo(0,0);
+		}
+	}
+
+function update_search( id )
+	{
+	var by_name = document.getElementById('l10n_div_s_by_n');
+	var by_cont = document.getElementById('l10n_div_s_by_c');
+	if( id == 'sbn_radio_button' )
+		{
+		by_name.className="l10n_visible";
+		by_cont.className="l10n_hidden";
+		result_div.className="l10n_visible";
+		cresult_div.className="l10n_hidden";
+		setCookie( 'l10n_string_search_by' , 'name' , 365 );
+		l10nRefineResults();
+		}
+	else if ( id == 'sbc_radio_button' )
+		{
+		by_name.className="l10n_hidden";
+		by_cont.className="l10n_visible";
+		result_div.className="l10n_hidden";
+		cresult_div.className="l10n_visible";
+		setCookie( 'l10n_string_search_by' , 'cont' , 365 );
+		do_content_search();
+		}
+	}
+
+function toggleTextElements()
+	{
+	toggleDirection('title');
+	toggleDirection('body');
+	toggleDirection('excerpt');
+	}
+
+function togglePreview()
+	{
+	toggleDirection('article-main');
+	}
+
+function toggleDirection(id)
+	{
+	if (!document.getElementById)
+		{
+		return false;
+		}
+
+	var textarea = document.getElementById(id + '-data');
+	if( textarea == null )
+		textarea = document.getElementById(id);
+	var toggler  = document.getElementById(id + '-toggle');
+
+	if (textarea.style.direction == 'ltr')
+		{
+		textarea.style.direction = 'rtl';
+		if( toggler != null )
+			toggler.innerHTML = '$rtl';
+		}
+	else
+		{
+		textarea.style.direction = 'ltr';
+		if( toggler != null )
+			toggler.innerHTML = '$ltr';
+		}
+	}
+
+end_js;
+	return $fn;
+	}
+
+
 class ArticleManager
 	{
 	function create_table()
@@ -478,6 +743,8 @@ class LocalisationView extends GBPPlugin
 		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
 		'l10n-article_table_ok'		=> 'Article table ok.',
 		'l10n-by'					=> 'by',
+		'l10n-by_content'			=> 'by content',
+		'l10n-by_name'				=> 'by name',
 		//'l10n-category_vars'		=> 'Category variables ',
 		//'l10n-category_hidden_vars'	=> 'Hidden category variables ',
 		'l10n-clone'				=> 'Clone',
@@ -519,6 +786,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-legend_fully_visible'	=> 'Visible in all languages',
 		'l10n-localised'			=> 'Localised',
 		'l10n-ltr'					=> 'LTR&nbsp;>',
+		'l10n-matches'				=> ' strings match.',
 		'l10n-missing'				=> ' missing.',
 		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
 		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
@@ -532,6 +800,9 @@ class LocalisationView extends GBPPlugin
 		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
 		'l10n-renditions_for'		=> 'Renditions for ',
 		'l10n-rtl'					=> '<&nbsp;RTL',
+		'l10n-sbn_rubrik'			=> 'Type your search phrase above.',
+		//		'l10n-sbc_title'			=> 'Type your search term in here.',
+		'l10n-sbn_title'			=> 'Type your search term in here.',
 		//'l10n-section_vars'			=> 'Section variables ',
 		//'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
@@ -548,6 +819,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-specials'				=> 'Specials',
 		'l10n-statistics'			=> 'Show Statistics ',
 		'l10n-strings'				=> ' strings.',
+		'l10n_strings_match'		=> ' strings match&#8230;',
 		'l10n-summary'				=> 'Statistics.',
 		'l10n-table_rebuilt'		=> 'Article table corrected, try again.',
 		'l10n-textbox_title'		=> 'Type in the text here.',
@@ -1011,48 +1283,60 @@ class LocalisationStringView extends GBPAdminTabView
 			GBPAdminTabView::GBPAdminTabView( $title, $event, $parent, $is_default );
 		}
 
+
+	function xml()
+		{
+		$xml	= gps('XMLHTTP');
+		$xml	= !empty($xml);
+		return $xml;
+		}
+
 	function preload()
 		{
-		$step = gps('step');
+		$step 	= gps('step');
+
 		if( $step )
 			{
 			switch( $step )
 				{
 				# Called to save the stringset the user has been editing.
 				case 'l10n_save_strings' :
-				$this->save_strings();
-				break;
+					$this->save_strings();
+					break;
 
 				# Called if the user chooses to delete the string set for a removed plugin.
 				case 'l10n_remove_stringset' :
-				$this->remove_strings();
-				break;
+					$this->remove_strings();
+					break;
 
 				# Called if the user chooses to remove a specific languages' strings.
 				# eg if they entered some french translations but later drop french from the site.
 				case 'l10n_remove_languageset' :
-				$this->remove_strings();
-				break;
+					$this->remove_strings();
+					break;
 
 				case 'l10n_save_pageform':
-				$this->save_pageform();
-				break;
+					$this->save_pageform();
+					break;
 
 				case 'l10n_localise_pageform':
-				$this->localise_pageform();
-				break;
+					$this->localise_pageform();
+					break;
 
 				case 'l10n_export_languageset':
-				$this->export_languageset();
-				break;
+					$this->export_languageset();
+					break;
 
 				case 'l10n_import_languageset':
-				$this->import_languageset();
-				break;
+					$this->import_languageset();
+					break;
 
 				case 'l10n_remove_language':
-				$this->remove_language();
-				break;
+					$this->remove_language();
+					break;
+
+				case 'l10_search_for_content':
+					$this->search_for_content();
 				}
 			}
 		}
@@ -1071,8 +1355,9 @@ class LocalisationStringView extends GBPAdminTabView
 		switch ($this->event)
 			{
 			case 'search':
-				$this->render_search_pane();
-				if( $id )
+				if( !$this->xml() )
+					$this->render_search_pane( $id );
+				elseif( $id )
 					$this->render_string_edit( 'search' , 'search' , $id );
 				break;
 
@@ -1126,16 +1411,110 @@ class LocalisationStringView extends GBPAdminTabView
 			}
 		}
 
-	function render_search_pane()
+	function search_for_content()
 		{
+		#
+		#	Start our XML output...
+		#
+		ob_start();
+		header( "Content-Type: text/xml" );
+		print '<?xml version=\'1.0\' encoding=\'utf-8\'?>'.n;
+
+		#
+		#	Grab the search term...
+		#
+		$search_term = gps( 'l10n-sfc' );
+
+		if( empty( $search_term ) )
+			{
+			$rs = array();
+			$count = 0;
+			}
+		else
+			{
+			#
+			#	If it's not empty, build and execute SQL query...
+			#
+			$search_term = doSlash( $search_term );
+			$where = "`data` RLIKE '$search_term'";
+
+			$lang = gps( 'l10n-lang' );
+			$lang = doSlash( $lang );
+			if( $lang )
+				$where .= " AND `lang`='$lang'";
+
+			$rs = safe_rows_start( 'DISTINCT name,data,lang', 'txp_lang', $where . " ORDER BY name ASC LIMIT 200" );
+			$count = @mysql_num_rows($rs);
+			}
+
+		if( $rs and $count > 0 )
+			{
+			$o[] = '<div>'.n.'<h3>' . $count.' '.gTxt('l10n-matches').'</h3>'.n.'<ul>'.n;
+			while ( $a = nextRow($rs) )
+				{
+				$name = $a['name'];
+				$name = '<a href="'.hu.'" onClick="do_string_edit(\''.$name.'\'); return false;">' . $name . '</a>';
+
+				#
+				#	Now encode the data and highlight the search term...
+				#
+				$data = $a['data'];
+				$data = htmlspecialchars($data);
+				$data = str_ireplace( $search_term, '<span class="l10n_highlite">'.$search_term.'</span>', $data );
+
+				if( empty($lang) )
+					$language = ' ['.LanguageHandler::get_native_name_of_lang( $a['lang'] ).']';
+				else
+					$language = '';
+
+				$o[] = "<li>$name$language<br/>$data</li>".n;
+				}
+			$o[] = '</ul>'.n.'</div>'.n;
+			$o = join( '' , $o );
+
+			print $o;
+			}
+		else
+			{
+			print '<div>'.n.'<h3>' . gTxt('none') . '</h3>'.n.'</div>';
+			}
+
+		#
+		#	Done; send it out...
+		#
+		exit;
+		}
+
+	function render_search_pane( $id )
+		{
+		global $l10n_language;
+
+		#
+		#	Grab the names of every string in the system...
+		#
+		$names = safe_rows_start( 'DISTINCT name', 'txp_lang', '1=1 ORDER BY name ASC' );
+		$num_names = @mysql_num_rows($names);
+
 		#
 		#	Render the search column...
 		#
-		$out[] = LocalisationStringView::_inject_js_search();
 		$out[] = 	'<div class="l10n_owner_list">' . n;
+		$out[] = 	'<h3>' . gTxt('search') . ' ' . gTxt('l10n-strings') . '</h3>' . n;
 
-		$out[] = 	'<h3>' . gTxt('search') . '</h3>' . n .
-					'<div id="l10n_search">' . n;
+
+		#
+		#	Render the search type picker form...
+		#
+		$method = cs( 'l10n_string_search_by' );
+		if( empty( $method ))
+			$method = 'name';
+		$ch1 = ($method == 'name') ? ' checked="checked"' : '';
+		$ch2 = ($method == 'cont') ? ' checked="checked"' : '';
+		$picker[] = t.'<label for="sbn_radio_button">'.gTxt('l10n-by_name').'</label>' . n;
+		$picker[] = t.'<input type="radio" name="search_by" value="name" id="sbn_radio_button"'.$ch1.' tabindex="0" class="radio" onClick="update_search(\'sbn_radio_button\')" />'.n;
+		$picker[] = t.'<label for="sbc_radio_button">'.gTxt('l10n-by_content').'</label>' . n;
+		$picker[] = t.'<input type="radio" name="search_by" value="cont" id="sbc_radio_button"'.$ch2.' tabindex="1" class="radio" onClick="update_search(\'sbc_radio_button\')" />'.n;
+		$out[] = form( join( '', $picker ) ) . br . n;
 
 		#
 		#	Render the search-by-name box...
@@ -1144,52 +1523,87 @@ class LocalisationStringView extends GBPAdminTabView
 		$f = fInput( 	'edit',
 						'l10n_search_by_name',
 						$value,
-						'', 									/*class*/
-						'Type your search term in here.',		/*title*/
-						'',						/*onClick*/
+						'',							 			/*class*/
+						gTxt('l10n-sbn_title'),					/*title*/
+						'',										/*onClick*/
 						'20', 									/*size*/
 						'1', 									/*tab*/
 						'l10n_search_by_name' 					/*id*/
 						);
 
+		$out[] = '<div id="l10n_div_s_by_n" class="'.(($method=='name')?'l10n_visible':'l10n_hidden').'">' . n;
 		$out[] = form( $f ) . n;
-		$out[] = graf( 'Type your search phrase above' , ' id="L10N_RESULT"' ) . n;
+		$out[] = graf( gTxt('l10n-sbn_rubrik') ) . n;
 		$out[] = '</div>' . n;
+		#
+		#	===============================================================
+		#
+		#	Render the search-by-content form...
+		#
+		$out[] = 	'<div id="l10n_div_s_by_c" class="'.(($method=='cont')?'l10n_visible':'l10n_hidden').'">' . n;
+
+		$langs = LanguageHandler::get_installation_langs();
+		$langs = LanguageHandler::do_fleshout_names( $langs , true , false , true );
+
+		$value = cs( 'search_string_content' );
+		$language = cs( 'search_string_lang' );
+		if( empty($language) )
+			$language = $l10n_language['long'];
+		$f = array();
+		$f[] = graf( selectInput( 'l10n-lang' , $langs , $language , 1 , '' , 'sbc_lang_selection' ) ) . n;
+		$f[] = fInput( 	'edit',
+						'l10n-sfc',
+						$value,
+						'',
+						gTxt('l10n-sbn_title'),
+						'',
+						'20',
+						'1',
+						'l10n_search_by_content'
+						) . n;
+		$f[] = fInput( 	'submit',
+						'',
+						gTxt('go'),
+						'',
+						'',
+						"do_content_search(); return false;"
+						) . n;
+
+		$out[] = form( join('', $f) , '' , 'false' ) . n;
 		$out[] = '</div>' . n;
 
-		#
+
+		$out[] = '</div>' . n;
+ 		#
 		#	===============================================================
 		#
 		#	Render the results column. Pre-fill with strings and the JS will
 		# show/hide them as needed according to the search term.
 		#
-		$out[] = '<div class="l10n_string_list">';
+		$out[] = '<div class="l10n_string_list" id="l10n_sbn_result_div">';
 		$out[] = '<h3>'.gTxt('search_results').'</h3>'.n;
-		$out[] = graf( 'As you type, matching strings will be listed here&#8230;' ) . n;
+		$out[] = '<div id="l10n_div_sbn_result_list">'.n;
+		$out[] = graf( '<span id="l10n_result_count">???</span>/' . $num_names . ' ' . gTxt('l10n_strings_match') ) . n;
 
-		$where = "1=1";
-		//$where = "`event` in ('admin','common','public')";
-		//$rs = safe_rows_start( 'DISTINCT name , event', 'txp_lang', $where . " ORDER BY name ASC" );
-		$rs = safe_rows_start( 'DISTINCT name', 'txp_lang', $where . " ORDER BY name ASC" );
-		$count = @mysql_num_rows($rs);
-
-		$out[] = graf( "<span id=\"l10n_result_count\">???</span>/$count strings match&#8230;" ) . n;
-		$out[] = '<ul class="l10n_search_results_list" id="l10n_search_results_list">';
-		if( $rs && $count > 0 )
+		$out[] = '<ul class="l10n_visible" id="l10n_sbn_result_list">';
+		if( $names && $num_names > 0 )
 			{
-			while ( $a = nextRow($rs) )
+			while ( $a = nextRow($names) )
 				{
 				$string = $a['name'];
-				//$type  = $a['event'];
-				$out[] = '<li id="' . $string . '" class="l10n_hidden"><a href="' .
-					$this->url( array( gbp_id=>$string /* , 'string_type'=>$type */ ) , true ) .
-					'">' . $string /* . ' [' . $type . ']' */ .
-					'</a></li>';
+				$out[] = '<li id="' . $string . '" class="l10n_hidden"><a href="'.hu.'" onClick="do_string_edit(\''.$string.'\'); return false;">' . $string . '</a></li>';
 				}
 			}
 
 		$out[] = '</ul>' . n;
 		$out[] = '</div>' . n;
+		$out[] = '<div class="l10n_hidden" id="l10n_sbc_result_list">'.'</div>'.n;
+		$out[] = '</div>' . n;
+
+		$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
+		if( $id )
+			$this->render_string_edit( 'search' , 'search' , $id );
+		$out[] = '</div>'.n;
 
 		echo join('', $out);
 		}
@@ -1525,7 +1939,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
 					 $this->parent->url( array( 'container'=>$owner , 'step'=>'l10n_edit_pageform' , 'subtab'=>$this->sub_tab ) , true ) . '">' .
-					 gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ) .
+					 gTxt('l10n-edit_resource' , array('$type'=>gTxt($this->event),'$owner'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
@@ -1610,150 +2024,21 @@ class LocalisationStringView extends GBPAdminTabView
 		echo join('', $out);
 		}
 
-	function _inject_js_search()
-		{
-		$fn = <<<end_js
-		<script type="text/javascript" language="javascript" charset="utf-8">
-		// <![CDATA[
-
-		//var isIE = false;
-		var search_box  = null;
-		var search_term = null;
-		var result_list = null;
-		var result_num  = null;
-
-		function addLoadEvent(func)
-			{
-			var oldonload = window.onload;
-			if (typeof window.onload != 'function')
-				{
-				window.onload = func;
-				}
-			else
-				{
-				window.onload = function()
-					{
-					oldonload();
-					func();
-					}
-				}
-			}
-
-		addLoadEvent( function(){search_init();} );
-
-		function search_init()
-			{
-			if (!document.getElementById)
-				{
-				return false;
-				}
-
-			search_box  = document.getElementById('l10n_search_by_name');
-			search_term = document.getElementById('L10N_RESULT');
-			result_list = document.getElementById('l10n_search_results_list');
-			result_num  = document.getElementById('l10n_result_count');
-			if( (search_box == null) || (search_term == null) || result_list == null || result_num == null )
-				return;
-
-			if (navigator.userAgent.indexOf("Safari") > 0)
-				{
-				search_box.addEventListener("keydown",l10nRefineResultsEventHandler,false);
-				}
-			else if (navigator.product == "Gecko")
-				{
-				search_box.addEventListener("keypress",l10nRefineResultsEventHandler,false);
-				}
-			else
-				{
-				search_box.attachEvent('onkeydown',l10nRefineResultsEventHandler);
-				}
-			l10nRefineResults();
-			}
-
-		function l10nRefineResultsEventHandler(event)
-			{
-			l10nRefineResults();
-			}
-
-		function l10nRefineResults()
-			{
-			var target = search_box.value;
-
-			//
-			// Iterate over all strings showing those that match, hiding those that don't...
-			//
-			var item = result_list.firstChild;
-			var visible = 0;
-			while( item != null )
-				{
-				var match_text = item.id;
-				var t_len = target.length;
-				var tmp = match_text.substring(0,t_len)
-				var match = (tmp == target);
-
-				if( match )
-					{
-					item.className = 'l10n_visible';
-					++visible;
-					}
-				else
-					{
-					item.className = 'l10n_hidden';
-					}
-
-				item = item.nextSibling;
-				}
-			result_num.innerHTML = visible;
-
-			setCookie( 'search_string_name_live' , target , 365 );
-			}
-		// ]]>
-		</script>
-end_js;
-		return $fn;
-		}
-	function _inject_js_toggle()
-		{
-		$ltr = doSlash( gTxt( 'l10n-ltr' ) );
-		$rtl = doSlash( gTxt( 'l10n-rtl' ) );
-
-		$fn = <<<end_js
-		<script type="text/javascript" language="javascript" charset="utf-8">
-		// <![CDATA[
-		function toggleDirection(id)
-			{
-			if (!document.getElementById)
-				{
-				return false;
-				}
-
-			var textarea = document.getElementById(id + '-data');
-			var toggler  = document.getElementById(id + '-toggle');
-
-			if (textarea.style.direction == 'ltr')
-				{
-				textarea.style.direction = 'rtl';
-				toggler.innerHTML = '$rtl';
-				}
-			else
-				{
-				textarea.style.direction = 'ltr';
-				toggler.innerHTML = '$ltr';
-				}
-			}
-		// ]]>
-		</script>
-end_js;
-		return $fn;
-		}
-
 	function render_string_edit( $type , $container , $id, $owner = '' , $event='public' )	# Right pane string edit routine
 		{
 		/*
 		Render the edit controls for all localisations of the chosen string.
 		*/
-		$out[] = LocalisationStringView::_inject_js_toggle();
-		$out[] = '<div class="l10n_values_list">';
+		$xml = $this->xml();
+		if( $xml )
+			{
+			while (@ob_end_clean());
+			ob_start();
+			header( "Content-Type: text/html" );
+			}
+		else
+			$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
+
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$x = StringHandler::get_string_set( $id );
@@ -1826,7 +2111,13 @@ end_js;
 		$out[] = hInput('owner', $owner);
 		$out[] = hInput('string_event', $event);
 		$out[] = hInput(gbp_id, $id);
-		$out[] = '</form></div>';
+		$out[] = '</form>'.n;
+		if( $xml )
+			{
+			echo join('', $out);
+			exit;
+			}
+		$out[] = '</div>'.n;
 		echo join('', $out);
 		}
 
@@ -3374,9 +3665,9 @@ class LocalisationWizardView extends GBPWizardTabView
 			'cleanup' => 'Drop the extra l10n_textpattern tables'),
 		'8' => array (
 			'cleanup' => 'Delete cookies' ),
-		'9' => array (
+		//'9' => array (
 			//'setup' => 'Rename the \'Articles\' tab label.',
-			'cleanup' => 'Restore the \'Articles\' tab label.' ),
+			//'cleanup' => 'Restore the \'Articles\' tab label.' ),
 		'10' =>array (
 			'setup' => 'Clear the default comment invitation.',
 			'cleanup' => 'Restore the default comment invitation.'
@@ -3544,11 +3835,11 @@ class LocalisationWizardView extends GBPWizardTabView
 		//$ok = @safe_update( 'txp_lang' , "`data` = 'Renditions'", "`name` = 'tab_list'" );
 		//$this->add_report_item( 'Rename the \'Articles\' tab label.' , $ok );
 		//}
-	function cleanup_9()
-		{
-		$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
-		$this->add_report_item( 'Restore the \'Articles\' tab label.' , $ok );
-		}
+	//function cleanup_9()
+		//{
+		//$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
+		//$this->add_report_item( 'Restore the \'Articles\' tab label.' , $ok );
+		//}
 
 	function setup_10()
 		{
@@ -3708,7 +3999,7 @@ class LanguageHandler
 	/*
 	class LanguageHandler implements ISO-693-1 language support.
 	*/
-	function do_fleshout_names( $langs , $append_code = false , $append_default=false , $use_long=true )
+	function do_fleshout_names( &$langs , $append_code = false , $append_default=false , $use_long=true )
 		{
 		$result = array();
 		if( is_array($langs) and !empty($langs) )
@@ -4103,6 +4394,7 @@ class LanguageHandler
 			if( $count >= $limit )
 				$installation_langs[] = $lang;
 			}
+		unset( $langs );
 
 		return $installation_langs;
 		}
@@ -4593,7 +4885,7 @@ class StringHandler
 			}
 		}
 
-	function remove_strings_by_name( $strings , $event = '' , $plugin='' , $lang='' )
+	function remove_strings_by_name( &$strings , $event = '' , $plugin='' , $lang='' )
 		{
 		/*
 		Uses the keys of the strings array to remove all of the named strings in EITHER ...

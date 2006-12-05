@@ -48,3 +48,5 @@ td.legend dd	{ margin: 2px 0;            padding: 3px 0 0; float:left; }
 
 .l10n_hidden		{ display: none; }
 .l10n_visible		{ display: block; }
+.l10n_highlite		{ color:blue; background-color:yellow; }
+
