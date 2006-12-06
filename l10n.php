@@ -1,15 +1,24 @@
 <?php
 
+$plugin['url'] = '$HeadURL$';
+$plugin['date'] = '$LastChangedDate$';
+$plugin['revision'] = '$LastChangedRevision$';
+
+$revision = @$plugin['revision'];
+if( !empty( $revision ) )
+	{
+	$parts = explode( ' ' , trim( $revision , '$' ) );
+	$revision = $parts[1];
+	if( !empty( $revision ) )
+		$revision = '.' . $revision;
+	}
+
 $plugin['name'] = 'l10n';
-$plugin['version'] = '0.6.a6';
+$plugin['version'] = '0.6' . $revision;
 $plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
-
-$plugin['url'] = '$HeadURL$';
-$plugin['date'] = '$LastChangedDate$';
-$plugin['revision'] = '$LastChangedRevision$';
 
 @include_once('../zem_tpl.php');
 
@@ -131,8 +140,8 @@ h2(#features). What the MLP(Multi-Lingual Publishing) Pack provides.
 On the admin side...
 * Each TxP user can choose their own admin language -- and switch between admin languages at will.
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
+* Ability to search for, and edit, any TxP language string by name or by content -- in any of the languages supported by the site.
 * Support for 'snippets' to simplify page/form editing and writing.
-* Ability to search for, and edit, any TxP language string.
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
 * Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
 * Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
@@ -150,7 +159,7 @@ On the public side...
 * Fully functional search/commenting/feeds for each language the site supports.
 * Localised (and direction adjusted) feeds.
 * 404 support for finding renditions that are not available in the requested language.
-* A tag listing available renditions of a given article and allowing switching between them.
+* A tag to list all available renditions of a given article and allow switching between them.
 * Tags for accessing language codes and direction information.
 * Conditional tag for testing the visitor's language or the directionality of the language.
 
@@ -166,14 +175,12 @@ These fields can still be localised using the normal Textpattern pages. However,
 
 For example, to provide localised descriptions in English and Greek you enter this into the description field...
 
-<pre class="code_tag">
-&lt;txp:l10n_if_lang lang="en-gb"&gt;
-English (GB).
-&lt;/txp:l10n_if_lang&gt;
-&lt;txp:l10n_if_lang lang="el-gr"&gt;
-Ελληνικά.
-&lt;/txp:l10n_if_lang&gt;
-</pre>
+ <div class="code_tag"><pre> &lt;txp:l10n_if_lang lang="en-gb"&gt;
+ English (GB).
+ &lt;/txp:l10n_if_lang&gt;
+ &lt;txp:l10n_if_lang lang="el-gr"&gt;
+ Ελληνικά.
+ &lt;/txp:l10n_if_lang&gt;</pre></div>
 
 <h3>Localisation of image alt and image caption attributes.</h3>
 
@@ -338,9 +345,17 @@ It also allows you access to a feature that allows pages and forms to automatica
 
 h2(#langs). Supported Languages.
 
-Here is the full list of ISO-693 languages known to the MLP Pack. Note that there are a few extra 5 character codes.
+Here is the full list of ISO-693 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
 
 The array is located in the file @textpattern\lib\l10n_base.php@.
+
+You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-693-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-693-2 code set) then you _could_ generate your own code for it.
+
+_Generated codes *must* be in 2 character (xx) or 5 character (xx-yy) format: the MLP Pack understands no others._
+
+For example, were I to add Malaysian English (commonly known as Manglish) to the array then I might extend the 'en' sub-array thus @'en-ms'=>'Manglish'@
+
+None of these codes may be used for section names in the MLP installation if the permlink mode starts with a section (for example, section/id/title.)
 
 *You can improve the efficiency of your MLP installation by editing the array and commenting out (or removing) all the entries you don't use on the public and admin sides of the site.*
 
