@@ -2034,7 +2034,8 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			while (@ob_end_clean());
 			ob_start();
-			header( "Content-Type: text/html" );
+			header( "Content-Type: text/xml" );
+			echo '<?xml version=\'1.0\' encoding=\'utf-8\'?>'.n.'<div>';
 			}
 		else
 			$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
@@ -2112,13 +2113,12 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = hInput('string_event', $event);
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form>'.n;
+		$out[] = '</div>';
+		echo join('', $out);
 		if( $xml )
 			{
-			echo join('', $out);
 			exit;
 			}
-		$out[] = '</div>'.n;
-		echo join('', $out);
 		}
 
 	function render_import_list()
