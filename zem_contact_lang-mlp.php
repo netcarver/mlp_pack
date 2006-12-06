@@ -2,7 +2,7 @@
 
 $plugin['name'] 		= 'zem_contact_lang_mlp';
 $plugin['version'] 		= '4.0.3-MLP';
-$plugin['author'] 		= 'Stephen Dickinson, based on work by the TXP Community';
+$plugin['author'] 		= 'Stephen Dickinson & the TXP Community';
 $plugin['author_uri'] 	= 'http://forum.textpattern.com/viewtopic.php?id=12956';
 $plugin['description'] 	= 'MLP strings plug-in for Zem Contact Reborn';
 $plugin['type'] 		= 0; 	# No longer has to be an admin plugin to register the strings!

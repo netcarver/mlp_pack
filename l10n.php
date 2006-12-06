@@ -15,7 +15,7 @@ if( !empty( $revision ) )
 
 $plugin['name'] = 'l10n';
 $plugin['version'] = '0.6' . $revision;
-$plugin['author'] = 'Graeme Porteous and Stephen Dickinson';
+$plugin['author'] = 'Graeme Porteous & Stephen Dickinson';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
