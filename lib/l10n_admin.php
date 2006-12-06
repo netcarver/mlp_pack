@@ -348,7 +348,7 @@ function _l10n_process_admin_page($page)
 		#	Inject the MLP JavaScript into the head area...
 		#
 		$f = '<script type="text/javascript" src="textpattern.js"></script>';
-		$r = t.'<script type="text/javascript" src="'. hu . 'textpattern'.DS.'index.php?event=l10n&amp;l10nfile=mlp.js" language="javascript" charset="utf-8"></script>';
+		$r = t.'<script type="text/javascript" src="'. hu . 'textpattern/index.php?event=l10n&amp;l10nfile=mlp.js" language="javascript" charset="utf-8"></script>';
 		$page = str_replace( $f , $f.n.$r , $page );
 		}
 
