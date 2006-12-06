@@ -451,11 +451,12 @@ $DB = new DB;
 //-------------------------------------------------------------
 	function l10n_installed( $check_plugin_active = false )
 		{
-		static $installed;
+		static $result;
 
-		if( !isset( $installed ) )
-			$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
+		if( isset( $result ) )
+			return $result;
 
+		$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
 		$active 	= true;
 
 		if( $installed and $check_plugin_active )
@@ -464,7 +465,8 @@ $DB = new DB;
 			$active	= ($res == 1);
 			}
 
-		return ($installed && $active);
+		$result = ($installed && $active);
+		return $result;
 		}
 
 	function get_prefs()
@@ -480,8 +482,8 @@ $DB = new DB;
 
 			if( defined('LANG') )
 				return $out;
-			
-			if( (@txpinterface==='admin') or (@txpinterface==='public') ) 
+
+			if( (@txpinterface==='admin') or (@txpinterface==='public') )
 				{
 				if( l10n_installed( true ) )
 					{
