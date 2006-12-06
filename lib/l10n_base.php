@@ -184,7 +184,7 @@ function make_xml_req(req,req_receiver)
 	}
 function do_content_search()
 	{
-	var search_term = csearch_box.value;
+	var search_term = encodeURI(csearch_box.value);
 	var search_lang = csearch_lang.value;
 	var query       = search_term + search_lang;
 
@@ -218,7 +218,7 @@ function string_edit_handler()
 		{
 		var results = xml_manager.responseText;
 		str_edit_div.innerHTML = results;
-        window.scrollTo(0,0);
+        window.scrollTo(0,50);
 		}
 	}
 
@@ -1436,14 +1436,14 @@ class LocalisationStringView extends GBPAdminTabView
 			#	If it's not empty, build and execute SQL query...
 			#
 			$search_term = doSlash( $search_term );
-			$where = "`data` RLIKE '$search_term'";
+			$where = "`data` LIKE '%$search_term%'";
 
 			$lang = gps( 'l10n-lang' );
 			$lang = doSlash( $lang );
 			if( $lang )
 				$where .= " AND `lang`='$lang'";
 
-			$rs = safe_rows_start( 'DISTINCT name,data,lang', 'txp_lang', $where . " ORDER BY name ASC LIMIT 200" );
+			$rs = @safe_rows_start( 'DISTINCT name,data,lang', 'txp_lang', $where . " ORDER BY name ASC LIMIT 200" );
 			$count = @mysql_num_rows($rs);
 			}
 
@@ -3651,10 +3651,10 @@ class LocalisationWizardView extends GBPWizardTabView
 		'3' => array(
 			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
 		'3a'=> array(
-			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you never want to re-install the MLP Pack.', 'optional' => true),
-		'4' => array(
+			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you do not want to re-install the MLP Pack.', 'optional' => true , 'checked'=>0 ),
+		//'4' => array(
 			//'setup' => 'Add the l10n_substitutions table',
-			'cleanup' => 'Drop the l10n_substitutions table'),
+			//'cleanup' => 'Drop the l10n_substitutions table'),
 		'5' => array(
 			'setup' => 'Add the l10n_articles table',
 			'cleanup' => 'Drop the l10n_articles table'),
@@ -3883,12 +3883,12 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
 		}
 
-	function cleanup_4()
-		{
-		$sql = 'drop table `'.PFX.L10N_SUBS_TABLE.'`';
-		$ok = @safe_query( $sql );
-		$this->add_report_item( 'Delete the "'.L10N_SUBS_TABLE.'" table' , $ok );
-		}
+	//function cleanup_4()
+		//{
+		//$sql = 'drop table `'.PFX.L10N_SUBS_TABLE.'`';
+		//$ok = @safe_query( $sql );
+		//$this->add_report_item( 'Delete the "'.L10N_SUBS_TABLE.'" table' , $ok );
+		//}
 
 	function cleanup_5()
 		{
@@ -4529,6 +4529,7 @@ class SnippetHandler
 		$tags = $tags[0];
 		$tags = doArray( $tags , 'strtolower' );
 		$out = array_merge( $out , $tags );
+		unset($tags);
 
 		if( $merge and count($out) )
 			{
