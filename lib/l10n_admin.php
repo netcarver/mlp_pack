@@ -43,7 +43,6 @@ if( $l10n_view->installed() )
 function l10_language_handler_callback_pre( $event , $step )
 	{
 	global $l10n_file_import_details;
-	//echo br , "l10_language_handler_callback_pre( $event , $step )";
 
 	$force = gps( 'force' );
 	if( 'file' !== $force )
@@ -323,7 +322,7 @@ function _l10n_inject_switcher_form()
 	{
 	global $event, $l10n_language;
 	$langs = LanguageHandler::get_installation_langs();
-	$langs = LanguageHandler::do_fleshout_names( $langs , true , false , true );
+	$langs = LanguageHandler::do_fleshout_names( $langs );
 
 	$tab = gps('tab');
 	$tab = ( !empty($tab) ) ? hInput( 'tab' , $tab ) : '';
@@ -375,22 +374,13 @@ function l10n_article_buffer_processor( $buffer )
 	#
 	#	The buffer processing routine injects page elements when editing an article.
 	#
-	//$remaining	= ArticleManager::get_remaining_langs( $l10n_vars['article_group'] );
-	//$can_clone	= (count($remaining) > 0);
 	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
 	$view		= gps( 'view' );
 	$preview	= ($view === 'preview');
 	$html		= ($view === 'html');
 
-	#
-	#	Disallow cloning in the write tab now...
-	#
-	//$cloning_permitted	= has_privs( 'l10n.clone' );
-	$cloning_permitted	= false;
-	$can_clone = false;
-
 	$lang 		= $l10n_vars['article_lang'];
-	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() , true );
+	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
 
 	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
 	$has_reassign_privs = has_privs( 'l10n.reassign' );
@@ -402,20 +392,6 @@ function l10n_article_buffer_processor( $buffer )
 	$group_id 	= '-';
 	if( isset($l10n_vars['article_group']) )
 		$group_id = $l10n_vars['article_group'];
-
-	//if( $cloning_permitted and $can_clone and $id_no !== '-' )
-		//{
-		#	Insert the clone panel...
-		//$checkit = "'".doSlash(gTxt('are_you_sure'))."'";
-		//$f = '<input type="submit" name="save" value="'.gTxt('save').'" class="publish" tabindex="4" />';
-		//$r = '<fieldset><legend>'.gTxt('l10n-clone_and_translate').'</legend>'.
-				//hInput('original_ID' , $id_no) .
-				//hInput('CloneGroup' , $group_id) .
-				//'<p>'. gTxt('l10n-xlate_to') . selectInput( 'CloneLang', $remaining ) . '</p>' .
-				//'<input type="submit" name="publish" value="'.gTxt('l10n-clone').'" class="publish" onclick="return confirm('.$checkit.');" />' .
-				//'</fieldset>';
-		//$buffer = str_replace( $f , $f.n.$r , $buffer );
-		//}
 
 	#
 	#	Insert the ID/Language/Group display elements...

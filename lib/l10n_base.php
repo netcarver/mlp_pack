@@ -7,8 +7,8 @@ require_plugin('gbp_admin_library');
 $txp_current_plugin = $l10n_current_plugin;
 
 // Constants
-if( !defined( 'L10N_LANGUAGE_CONST' ))
-	define('L10N_LANGUAGE_CONST', 'language');
+//if( !defined( 'L10N_LANGUAGE_CONST' ))
+	//define('L10N_LANGUAGE_CONST', 'language');
 if( !defined( 'L10N_PLUGIN_CONST' ))
 	define('L10N_PLUGIN_CONST', 'plugin');
 if( !defined( 'L10N_SEP' ))
@@ -709,25 +709,11 @@ class LocalisationView extends GBPPlugin
 	var $gp = array();
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
-
 		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-allow_writetab_changes' => array( 'value' => 0, 'type' => 'yesnoradio' ),
-
-		//'categories' => array('value' => 1, 'type' => 'yesnoradio'),
-		//'l10n-category_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
-		//'l10n-category_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
-
-		// 'links' => array('value' => 0, 'type' => 'yesnoradio'),
-		// 'link_vars' => array('value' => array('linkname', 'description'), 'type' => 'gbp_array_text'),
-		// 'link_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
-
-		//'sections' => array('value' => 1, 'type' => 'yesnoradio'),
-		//'l10n-section_vars' => array('value' => array('title'), 'type' => 'gbp_array_text'),
-		//'l10n-section_hidden_vars' => array('value' => array(), 'type' => 'gbp_array_text'),
-
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		);
 	var $strings_lang = 'en-gb';
@@ -745,8 +731,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-by'					=> 'by',
 		'l10n-by_content'			=> 'by content',
 		'l10n-by_name'				=> 'by name',
-		//'l10n-category_vars'		=> 'Category variables ',
-		//'l10n-category_hidden_vars'	=> 'Hidden category variables ',
 		'l10n-clone'				=> 'Clone',
 		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
 		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
@@ -765,7 +749,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 		'l10n-export'				=> 'Export',
 		'l10n-export_title'			=> '<h2>Export {type} Strings</h2><br/><p>Select languages you wish to include and then click the button.</p>',
-		//'l10n-failed'				=> 'Failed',
 		'l10n-import'				=> 'Import',
 		'l10n-import_count'			=> 'Imported {count} {type} strings.',
 		'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',
@@ -774,10 +757,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-into'					=> 'into',
 		'l10n-inout'				=> 'Export/Import',
 		'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
-		//'l10n-import_fixed_lang' 	=> 'use the default language',
-		//'l10n-import_cat1_lang'		=> 'use category1 for language',
-		//'l10n-import_cat2_lang'		=> 'use category2 for language',
-		//'l10n-import_section_lang'	=> 'use section names for language',
 		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
 		'l10n-lang_remove_warning2'=> 'Delete ALL strings in $var1. You will need to re-install all strings for $var1 if you want to use it again, even in the admin interface. ',
 		'l10n-language_not_supported' => 'Skipping: Language not supported.',
@@ -791,9 +770,9 @@ class LocalisationView extends GBPPlugin
 		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
 		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
 		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
+		'l10n-only'					=> 'only',
 		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
 		'l10n-plugin'				=> 'Plugin',
-		//'l10n-plugin_not_installed'	=> '<strong>*</strong> These plugins have registered strings but are not installed.<br/><br/>If you have removed the plugin and will not be using it again, you can strip the strings out.',
 		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
 		'l10n-remove_plugin'		=> "This plugin is no longer installed or may be running from the cache directory.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
 		'l10n-renditions'			=> 'Renditions',
@@ -801,16 +780,12 @@ class LocalisationView extends GBPPlugin
 		'l10n-renditions_for'		=> 'Renditions for ',
 		'l10n-rtl'					=> '<&nbsp;RTL',
 		'l10n-sbn_rubrik'			=> 'Type your search phrase above.',
-		//		'l10n-sbc_title'			=> 'Type your search term in here.',
 		'l10n-sbn_title'			=> 'Type your search term in here.',
-		//'l10n-section_vars'			=> 'Section variables ',
-		//'l10n-section_hidden_vars'	=> 'Hidden section variables ',
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
 		'l10n-show_langs'			=> 'Show languages&#8230;',
 		'l10n-show_legends' 		=> 'Show article table legend?',
-		//'l10n-site_default_lang'	=> 'Detected $lang as the default language for this site.',
 		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',
 		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
@@ -901,10 +876,6 @@ class LocalisationView extends GBPPlugin
 			}
 		if( has_privs('article.edit') )
 			new LocalisationArticleTabView( gTxt('articles'), 'article', $this, true );
-		if( $this->pref('categories') and has_privs('category') )
-			new LocalisationTabView( gTxt('categories'), 'category', $this );
-		if( $this->pref('sections') and has_privs('section') )
-			new LocalisationTabView( gTxt('sections'), 'section', $this );
 
 		new GBPPreferenceTabView($this);
 		new LocalisationWizardView($this, NULL , gTxt('l10n-wizard') );
@@ -1051,9 +1022,6 @@ class LocalisationView extends GBPPlugin
 
 	function serve_file( $data , $title )
 		{
-		/*
-		Graeme - possible routine for the admin library, serves a data block as a file download.
-		*/
 		ob_clean();
 		$size = strlen( $data );
 		header('Content-Description: File Download');
@@ -1088,22 +1056,6 @@ class LocalisationView extends GBPPlugin
 				$safe_key = trim( $key );	# make sure we trim any spaces out -- they mess up the gTxt call.
 				$languages['value'][$safe_key] = gTxt($safe_key);
 				}
-
-			if (!gps(L10N_LANGUAGE_CONST))
-				{
-				$langs = $this->pref('l10n-languages');
-				$_GET[L10N_LANGUAGE_CONST] = $langs[0];
-				}
-
-			setcookie(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST), time() + 3600 * 24 * 365);
-
-			#	Render the top of page div.
-			//$out[] = form(
-			//	fLabelCell( gTxt('language').': ' ).
-			//	selectInput(L10N_LANGUAGE_CONST, $languages['value'], gps(L10N_LANGUAGE_CONST), 0, 1).
-			//	'<br /><a href="'.hu.gps(L10N_LANGUAGE_CONST).'/">'.gTxt('l10n-view_site').'</a>'.
-			//	$this->form_inputs()
-			//	);
 			}
 		$out[] = '</div>';
 
@@ -1440,7 +1392,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 			$lang = gps( 'l10n-lang' );
 			$lang = doSlash( $lang );
-			if( $lang )
+			if( $lang and $lang!=='-' )
 				$where .= " AND `lang`='$lang'";
 
 			$rs = @safe_rows_start( 'DISTINCT name,data,lang', 'txp_lang', $where . " ORDER BY name ASC LIMIT 200" );
@@ -1462,7 +1414,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$data = htmlspecialchars($data);
 				$data = str_ireplace( $search_term, '<span class="l10n_highlite">'.$search_term.'</span>', $data );
 
-				if( empty($lang) )
+				if( empty($lang) or $lang==='-' )
 					$language = ' ['.LanguageHandler::get_native_name_of_lang( $a['lang'] ).']';
 				else
 					$language = '';
@@ -1543,14 +1495,16 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = 	'<div id="l10n_div_s_by_c" class="'.(($method=='cont')?'l10n_visible':'l10n_hidden').'">' . n;
 
 		$langs = LanguageHandler::get_installation_langs();
-		$langs = LanguageHandler::do_fleshout_names( $langs , true , false , true );
+		$langs = LanguageHandler::do_fleshout_names( $langs , gTxt('l10n-only') , false );
+		$sel   = gTxt('all') . ' ' . gTxt('languages');
+		$langs = array_merge( array( '-' => $sel ) , $langs );
 
 		$value = cs( 'search_string_content' );
 		$language = cs( 'search_string_lang' );
 		if( empty($language) )
 			$language = $l10n_language['long'];
 		$f = array();
-		$f[] = graf( selectInput( 'l10n-lang' , $langs , $language , 1 , '' , 'sbc_lang_selection' ) ) . n;
+		$f[] = graf( selectInput( 'l10n-lang' , $langs , $language , 0 , '' , 'sbc_lang_selection' ) ) . n;
 		$f[] = fInput( 	'edit',
 						'l10n-sfc',
 						$value,
@@ -1737,8 +1691,6 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _render_string_list( $strings , $owner_label , $owner_name , $prefix , $event )	# Center pane string render subroutine
 		{
-		//echo br, "_render_string_list( $strings , $owner_label , $owner_name , $prefix , $event )";
-
 		$strings_exist 	= ( count( $strings ) > 0 );
 		if( !$strings_exist )
 			return '';
@@ -1769,7 +1721,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _render_string_stats( $string_name , &$stats )					# Right pane stats render subroutine
 		{
-		$site_langs 	= LanguageHandler::get_site_langs();
+		$site_langs  = LanguageHandler::get_site_langs();
 		$admin_langs = LanguageHandler::get_installation_langs();
 
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
@@ -1806,7 +1758,6 @@ class LocalisationStringView extends GBPAdminTabView
 			$details =  StringHandler::if_plugin_registered( $string_name , $iso_code );
 			if( false !== $details )
 				{
-				//$details = unserialize( $details );
 				$export[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
 				$export[] = sInput( 'l10n_export_languageset');
 				$export[] = $this->parent->form_inputs();
@@ -1816,7 +1767,6 @@ class LocalisationStringView extends GBPAdminTabView
 				$export = form( join( '' , $export ) );
 				}
 
-			//if( !empty($plugin) or in_array( $iso_code , $site_langs ) )
 			$out[]= tr( td( ($lang_extras_found ? ' * ' : '').$name ).td( $count.'&nbsp' ).td($export).td($remove) , ' style="text-align:right;" ' );
 			}
 		$out[] = tr( td( gTxt('l10n-total') ).td(array_sum($stats).'&nbsp;').td('').td('') , ' style="text-align:right;" ' );
@@ -1879,7 +1829,6 @@ class LocalisationStringView extends GBPAdminTabView
 		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
 		$details		= StringHandler::if_plugin_registered( $plugin , '' );
-		//$details		= unserialize( $details );
 		$event			= $details['event'];
 
 		$out[] = '<div class="l10n_plugin_list">';
@@ -2028,6 +1977,8 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		/*
 		Render the edit controls for all localisations of the chosen string.
+		This can either be called in the flow of normal HTTP request processing or
+		as an XMLHttp request from the l10n JavaScript.
 		*/
 		$xml = $this->xml();
 		if( $xml )
@@ -2099,7 +2050,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = sInput('l10n_save_strings');
 		$out[] = $this->parent->form_inputs();
 		$out[] = hInput('codes', trim( join( ',' , $final_codes ) , ', ' ) );
-		$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
+		//$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
 		$out[] = hInput('prefix', gps('prefix'));
 		if( $type === 'plugin' )
 			$out[] = hInput(L10N_PLUGIN_CONST, $container);
@@ -2340,8 +2291,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$import[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-import'), '').'</span>';
 		$import[] = sInput( 'l10n_import_languageset');
 		$import[] = $this->parent->form_inputs();
-		//$import[] = hInput( 'plugin' , gps('plugin') );
-		//$import[] = hInput( 'prefix' , gps('prefix') );
 		$import[] = hInput( 'language' , gps('language') );
 		$import[] = hInput( 'subtab' , $this->sub_tab );
 		$out[] = form( join( '' , $import ) ).n.'</div>'.n.n;
@@ -2362,7 +2311,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 				$snips = SnippetHandler::find_snippets_in_block( $a['data'] , $raw_count );
 				foreach( $snips as $k=>$v )
 					$snippets[$v] = $v;
-				//$snippets = array_merge( $snippets , $snips );
 				}
 			}
 		return $snippets;
@@ -2584,9 +2532,9 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 	}
 
+/*
 class LocalisationTabView extends GBPAdminTabView
 	{
-
 	function preload()
 		{
 		$step = gps('step');
@@ -2616,11 +2564,6 @@ class LocalisationTabView extends GBPAdminTabView
 					$this->render_edit($this->pref('l10n-category_vars'), $this->pref('l10n-category_hidden_vars'), 'txp_category', "id = '$id'", $id);
 				$this->render_list('id', 'title', 'txp_category', "name != 'root' order by title asc");
 			break;
-			// case 'link':
-			// 	if ($id = gps(gbp_id))
-			// 		$this->render_edit($this->pref('link_vars'), $this->pref('link_hidden_vars'), 'txp_link', "id = '$id'", $id);
-			// 	$this->render_list('id', 'linkname', 'txp_link', '1 order by linkname asc');
-			// break;
 			case 'section':
 				if ($id = gps(gbp_id))
 					$this->render_edit($this->pref('l10n-section_vars'), $this->pref('l10n-section_hidden_vars'), 'txp_section', "name = '$id'", $id);
@@ -2798,6 +2741,7 @@ class LocalisationTabView extends GBPAdminTabView
 		}
 
 	}
+*/
 
 class LocalisationArticleTabView extends GBPAdminTabView
 	{
@@ -2869,7 +2813,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
-		//$this->parent->message = 'cloning rendition:' . $rendition;
 
 		$langs = LanguageHandler::get_site_langs();
 
@@ -2979,7 +2922,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 					continue;
 
 				#
-				#	Construct a list of links to the renditions...
+				#	Construct a list of links to the renditions assigned to this user...
 				#
 				$links = array();
 				foreach( $list as $lang => $record )
@@ -3102,7 +3045,6 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			if( !empty( $results ) )
 				{
 				$this->parent->message = $results[0][3];
-				//$result = false;
 				}
 			else
 				{
@@ -3336,7 +3278,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						$index[$lang] = $i;
 
 						#
-						#	Record the sections/status for possible filtering...
+						#	Record the sections/status/authors for possible filtering...
 						#
 						$tr_sections[$lang] = $translations[$i]['Section'];
 						$tr_statuses[$lang] = $translations[$i]['Status'];
@@ -3652,9 +3594,6 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
 		'3a'=> array(
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you do not want to re-install the MLP Pack.', 'optional' => true , 'checked'=>0 ),
-		//'4' => array(
-			//'setup' => 'Add the l10n_substitutions table',
-			//'cleanup' => 'Drop the l10n_substitutions table'),
 		'5' => array(
 			'setup' => 'Add the l10n_articles table',
 			'cleanup' => 'Drop the l10n_articles table'),
@@ -3665,9 +3604,6 @@ class LocalisationWizardView extends GBPWizardTabView
 			'cleanup' => 'Drop the extra l10n_textpattern tables'),
 		'8' => array (
 			'cleanup' => 'Delete cookies' ),
-		//'9' => array (
-			//'setup' => 'Rename the \'Articles\' tab label.',
-			//'cleanup' => 'Restore the \'Articles\' tab label.' ),
 		'10' =>array (
 			'setup' => 'Clear the default comment invitation.',
 			'cleanup' => 'Restore the default comment invitation.'
@@ -3782,23 +3718,6 @@ class LocalisationWizardView extends GBPWizardTabView
 			$this->add_report_item( 'Skip adding `Lang` and `Group` fields, they already exist.' , true , true );
 		}
 
-	//function setup_4()
-		//{
-		//$sql = array();
-			//$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_SUBS_TABLE.'` (';
-			//$sql[] = '`id` int(11) NOT NULL AUTO_INCREMENT, ';
-			//$sql[] = '`table` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			//$sql[] = '`language` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-			//$sql[] = '`entry_id` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			//$sql[] = '`entry_column` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci default NULL, ';
-			//$sql[] = '`entry_value` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			//$sql[] = '`entry_value_html` text CHARACTER SET utf8 COLLATE utf8_general_ci, ';
-			//$sql[] = 'PRIMARY KEY (`id`)';
-			//$sql[] = ') TYPE=MyISAM PACK_KEYS=1 AUTO_INCREMENT=1';
-		//$ok = safe_query(join('', $sql));
-		//$this->add_report_item( 'Add the "'.L10N_SUBS_TABLE.'" table' , $ok );
-		//}
-
 	function setup_5()
 		{
 		$ok = ArticleManager::create_table();
@@ -3830,23 +3749,13 @@ class LocalisationWizardView extends GBPWizardTabView
 			}
 		}
 
-	//function setup_9()
-		//{
-		//$ok = @safe_update( 'txp_lang' , "`data` = 'Renditions'", "`name` = 'tab_list'" );
-		//$this->add_report_item( 'Rename the \'Articles\' tab label.' , $ok );
-		//}
-	//function cleanup_9()
-		//{
-		//$ok = @safe_update( 'txp_lang' , "`data` = 'Articles'", "`name` = 'tab_list'" );
-		//$this->add_report_item( 'Restore the \'Articles\' tab label.' , $ok );
-		//}
-
 	function setup_10()
 		{
 		$default = @$GLOBALS['prefs']['comments_default_invite'];
 		$ok = set_pref( 'comments_default_invite', '', 'comments', 0 );
 		$this->add_report_item( 'Clear the default comment invitation.' , $ok );
 		}
+
 	function cleanup_10()
 		{
 		$default = gTxt('comment');
@@ -3883,13 +3792,6 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
 		}
 
-	//function cleanup_4()
-		//{
-		//$sql = 'drop table `'.PFX.L10N_SUBS_TABLE.'`';
-		//$ok = @safe_query( $sql );
-		//$this->add_report_item( 'Delete the "'.L10N_SUBS_TABLE.'" table' , $ok );
-		//}
-
 	function cleanup_5()
 		{
 		$ok = ArticleManager::destroy_table();
@@ -3923,31 +3825,6 @@ class LocalisationWizardView extends GBPWizardTabView
 			$ok = setcookie( $lang , $lang , $time );
 			$this->add_report_item( 'Delete the '. LanguageHandler::get_native_name_of_lang( $lang ) . ' cookie' , $ok , true );
 			}
-		}
-	# TODO : get user choice as to which language to revert the site to...
-	# revert_content( form_table , field_list , validated_language_choice );
-		# revert_content will ...
-		# 	remove l10n_localise tags,
-		#	revert any found snippets with their language replacement (if any)
-		#	leave only blocks marked with matching if_lang statements
-		#	change all get_lang tags to the chosen lang
-	# revert_content( page_table , field_list , validated_language_choice );
-	# revert_content( article_table , field_list , validated_language_choice );
-
-	function _import_cat1_lang()
-		{
-		#
-		#	Scan cat1 to find the language for an article.
-		# Probably need a mapping from cat1 lang -> iso language unless we are lucky.
-		#
-		}
-
-	function _import_cat2_lang()
-		{
-		}
-
-	function _import_section_lang()
-		{
 		}
 
 	function _import_fixed_lang()
@@ -3999,7 +3876,7 @@ class LanguageHandler
 	/*
 	class LanguageHandler implements ISO-693-1 language support.
 	*/
-	function do_fleshout_names( &$langs , $append_code = false , $append_default=false , $use_long=true )
+	function do_fleshout_names( &$langs , $suffix='' , $append_code = true , $append_default=false , $use_long=true )
 		{
 		$result = array();
 		if( is_array($langs) and !empty($langs) )
@@ -4012,6 +3889,8 @@ class LanguageHandler
 					$tmp .= ' [' . $code . ']';
 				if( !$use_long )
 					$code = substr( $code , 0 , 2 );
+				if( !empty( $suffix ) )
+					$tmp .= ' ' . $suffix;
 				if( $append_default and ($code === LanguageHandler::get_site_default_lang() ) )
 					$tmp .= ' - ' . gTxt('default');
 				$result[$code] = $tmp;
@@ -4418,10 +4297,8 @@ class SnippetHandler
 		# Use the first snippet detection pattern for a simple snippet format that is visible when the substitution fails.
 		# Use the second snippet detection pattern if you want unmatched snippets as xhtml comments.
 		static $snippet_pattern = "/##([\w|\.|\-]+)##/";
-		//	var $snippet_pattern = "/\<\!--##([\w|\.|\-]+)##--\>/";
 
 		# The following pattern is used to match any l10n_snippet tags in pages and forms.
-		//static $snippet_tag_pattern = "/\<txp:l10n_snippet name=\"([\w|\.|\-]+)\"\s*\/\>/";
 		static $snippet_tag_pattern = "/\<txp:text item=\"([\w|\.|\-]+)\"\s*\/\>/";
 
 		# The following are the localise tag pattern(s)...
@@ -4582,7 +4459,6 @@ class SnippetHandler
 		if ( empty( $name_set ) )
 			$name_set = "''";
 
-		//	$where = " `event`='snippet' AND `name` IN ($name_set)";
 		$where = " `name` IN ($name_set)";
 		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 
@@ -4969,7 +4845,6 @@ class StringHandler
 		Loads all strings of the given language into an array and returns them.
 		*/
 		$extras = array();
-		//$where  = ' AND ( event=\'snippet\' OR event=\'public\' OR event=\'common\' ';
 		$where  = ' AND ( event=\'public\' OR event=\'common\' ';
 		$close = ')';
 		if( @txpinterface == 'admin' )
