@@ -813,7 +813,7 @@ class LocalisationView extends GBPPlugin
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' )
 		{
-		global $textarray , $production_status;
+		global $textarray , $production_status , $prefs;
 
 		if( @txpinterface === 'admin' )
 			{
@@ -840,8 +840,11 @@ class LocalisationView extends GBPPlugin
 
 			# Merge the default language strings into the textarray so that non-English
 			# users at least see an English message in the plugin.
-			$textarray = array_merge( $this->perm_strings , $textarray );
-			$textarray = array_merge( $this->strings , $textarray );
+			if( $prefs['language'] !== $this->strings_lang )
+				{
+				$textarray = array_merge( $this->perm_strings , $textarray );
+				$textarray = array_merge( $this->strings , $textarray );
+				}
 
 			#	To ease development, allow new strings to be inserted...
 			if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
