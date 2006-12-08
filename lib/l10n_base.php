@@ -726,6 +726,7 @@ class LocalisationView extends GBPPlugin
 	var $strings = array(
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 		'l10n-add_missing_rend'		=> 'Added missing rendition($rendition) to article $ID',
+		'l10n-all_languages'		=> 'All languages',
 		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
 		'l10n-article_table_ok'		=> 'Article table ok.',
 		'l10n-by'					=> 'by',
@@ -781,6 +782,7 @@ class LocalisationView extends GBPPlugin
 		'l10n-rtl'					=> '<&nbsp;RTL',
 		'l10n-sbn_rubrik'			=> 'Type your search phrase above.',
 		'l10n-sbn_title'			=> 'Type your search term in here.',
+		'l10n-search_for_strings'	=> 'Search For Strings',
 		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
 		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
 		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
@@ -1451,7 +1453,7 @@ class LocalisationStringView extends GBPAdminTabView
 		#	Render the search column...
 		#
 		$out[] = 	'<div class="l10n_owner_list">' . n;
-		$out[] = 	'<h3>' . gTxt('search') . ' ' . gTxt('l10n-strings') . '</h3>' . n;
+		$out[] = 	'<h3>' . gTxt('l10n-search_for_strings') . '</h3>' . n;
 
 
 		#
@@ -1496,8 +1498,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$langs = LanguageHandler::get_installation_langs();
 		$langs = LanguageHandler::do_fleshout_names( $langs , gTxt('l10n-only') , false );
-		$sel   = gTxt('all') . ' ' . gTxt('l10n-languages');
-		$sel   = StringHandler::convert_case( $sel );
+		$sel   = gTxt('l10n-all_languages');
 		$langs = array_merge( array( '-' => $sel ) , $langs );
 
 		$value = cs( 'search_string_content' );
