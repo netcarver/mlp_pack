@@ -1496,7 +1496,8 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$langs = LanguageHandler::get_installation_langs();
 		$langs = LanguageHandler::do_fleshout_names( $langs , gTxt('l10n-only') , false );
-		$sel   = gTxt('all') . ' ' . gTxt('languages');
+		$sel   = gTxt('all') . ' ' . gTxt('l10n-languages');
+		$sel   = StringHandler::convert_case( $sel );
 		$langs = array_merge( array( '-' => $sel ) , $langs );
 
 		$value = cs( 'search_string_content' );
