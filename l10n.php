@@ -743,6 +743,8 @@ global $txpcfg;
 # -- Include the admin file only if needed...
 if( @txpinterface === 'admin' )
 	{
+	$prefs['db_remap_fields_func'] = 'l10n_remap_fields';
+
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $l10n_language , $textarray , $prefs;
