@@ -946,9 +946,23 @@ function l10n_category_paint( $page )
 				}
 			}
 		}
-
 	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="Save" class="smallerbox" /></td>';
 	$page = str_replace( $f , $r.n.$f , $page );
+
+	#
+	#	Insert the default title field's language's direction...
+	#
+	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$f = '<input type="text" name="title"';
+	$page = str_replace( $f , $f.$dir , $page );
+
+	#
+	#	Insert the default title field's language name...
+	#
+	$f = ';">'.gTxt('article_category_title');
+	$r = ' - '.LanguageHandler::get_native_name_of_lang( $default );
+	$page = str_replace( $f , $f.sp.$r , $page );
+
 	return $page;
 	}
 
