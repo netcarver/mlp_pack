@@ -408,14 +408,14 @@ function l10n_article_buffer_processor( $buffer )
 
 	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
 		{
-		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
+		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
 		$r .= 	gTxt('article')    . ': ' . strong( $group_id );
 		}
 	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
 		{
 		if( $reassigning_permitted and $has_reassign_privs )
 			{
-			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang ) . ' / ';
+			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
 			$r .=	gTxt('article')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
 			}
 		else
