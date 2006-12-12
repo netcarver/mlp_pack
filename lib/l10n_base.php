@@ -1674,10 +1674,10 @@ class LocalisationStringView extends GBPAdminTabView
 			$method = 'name';
 		$ch1 = ($method == 'name') ? ' checked="checked"' : '';
 		$ch2 = ($method == 'cont') ? ' checked="checked"' : '';
-		$picker[] = t.'<label for="sbn_radio_button">'.gTxt('l10n-by_name').'</label>' . n;
 		$picker[] = t.'<input type="radio" name="search_by" value="name" id="sbn_radio_button"'.$ch1.' tabindex="0" class="radio" onClick="update_search(\'sbn_radio_button\')" />'.n;
-		$picker[] = t.'<label for="sbc_radio_button">'.gTxt('l10n-by_content').'</label>' . n;
+		$picker[] = t.'<label for="sbn_radio_button">'.gTxt('l10n-by_name').'</label><br/>' . n;
 		$picker[] = t.'<input type="radio" name="search_by" value="cont" id="sbc_radio_button"'.$ch2.' tabindex="1" class="radio" onClick="update_search(\'sbc_radio_button\')" />'.n;
+		$picker[] = t.'<label for="sbc_radio_button">'.gTxt('l10n-by_content').'</label><br/>' . n;
 		$out[] = form( join( '', $picker ) ) . br . n;
 
 
