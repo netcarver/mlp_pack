@@ -1,7 +1,10 @@
 <?php
 
 global $l10n_vars;
+global $l10n_painters;
 $l10n_vars = array();
+$l10n_mappings = null;
+$l10n_painters = array();
 
 if( $l10n_view->installed() )
 	{
@@ -33,7 +36,57 @@ if( $l10n_view->installed() )
 	register_callback( 'l10_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
 	register_callback( 'l10_language_handler_callback_post' , 'prefs' , 'get_language' );
 
+	#
+	#	Insert the handlers for extending DB fields...
+	#
+	global $l10n_mappings;
+	$l10n_mappings = l10n_remap_fields( '' , '' , true );
+	foreach( $l10n_mappings as $table=>$field_map )
+		{
+		//echo br , "Processing $table";
+		foreach( $field_map as $field=>$attributes )
+			{
+			$sql 	= '';
+			$e 	= '';
+			$s 	= '';
+			$paint 	= '';
+			$save 	= '';
+			extract( $attributes );
+
+			if( $e !== '' )
+				{
+				if( $paint != '' )
+					{
+					if( is_array( $paint_steps ) )
+						foreach( $paint_steps as $st )
+							_l10n_register_painter( $paint , $e , $st );
+					else
+						_l10n_register_painter( $paint , $e , $paint_steps );
+					}
+				if( $save != '' )
+					{
+					//echo br , "Setting saver for event($event), step($step), -> $save";
+					if( is_array( $save_steps ) )
+						foreach( $save_steps as $st )
+							register_callback( $save , $e , $st );
+					else
+						register_callback( $save , $e , $save_steps );
+					}
+				}
+			}
+		}
+
 	ob_start('_l10n_process_admin_page');
+	}
+
+function _l10n_register_painter( $fn , $e, $s )
+	{
+	global $l10n_painters;
+
+	if( !is_callable($fn) )
+		return;
+
+	$l10n_painters[$e][$s][] = $fn;
 	}
 
 #
@@ -338,7 +391,7 @@ function _l10n_inject_switcher_form()
 	}
 function _l10n_process_admin_page($page)
 	{
-	global $event;
+	global $event , $step , $l10n_painters;
 
 	$events = array( 'l10n' , 'article' );
 	if( in_array( $event , $events )  )
@@ -351,6 +404,9 @@ function _l10n_process_admin_page($page)
 		$page = str_replace( $f , $f.n.$r , $page );
 		}
 
+	#
+	#	Add the language switcher...
+	#
 	$f = '<form method="get" action="index.php" style="display: inline;">';
 	$page = str_replace( $f , _l10n_inject_switcher_form().sp.$f , $page);
 
@@ -360,6 +416,27 @@ function _l10n_process_admin_page($page)
 	$f = 'class="plain">'.gTxt('tab_list').'</a>';
 	$r = htmlspecialchars(gTxt('l10n-renditions'));
 	$page = str_replace( $f , 'class="plain">'.$r.'</a>' , $page);
+
+	#
+	#	And pass the page through any matching event processors...
+	#
+	if( empty( $l10n_painters ) )
+		return $page;
+
+	foreach( $l10n_painters as $e=>$spec )
+		{
+		if( $e !== $event )
+			continue;
+
+		foreach( $spec as $s=>$painters )
+			{
+			if( empty( $s ) || $s === $step )
+				{
+				foreach( $painters as $painter )
+					$page = $painter( $page );
+				}
+			}
+		}
 
 	return $page;
 	}
@@ -809,6 +886,346 @@ function l10n_post_discuss_multi_edit( $event , $step )
 				}
 			}
 		}
+	}
+
+function l10n_build_sql_set( $table )
+	{
+	global $l10n_mappings;
+	$langs = LanguageHandler::get_site_langs();
+	$default = LanguageHandler::get_site_default_lang();
+	$set = '';
+
+	if( !isset($l10n_mappings[$table]) )
+		return $set;
+
+	$fields = $l10n_mappings[$table];
+	foreach( $fields as $field => $attributes )
+		{
+		foreach( $langs as $lang )
+			{
+			$f_name 	= $lang.'-'.$field;
+
+			if( $lang === $default )
+				$f_value = gps( $field );
+			else
+				$f_value = gps( $f_name );
+
+			$f_name = doSlash( $f_name );
+			$f_value = doSlash( $f_value );
+
+			$set[] = "`$f_name`='$f_value'";
+			}
+		}
+	return join( ', ', $set );
+	}
+
+
+function l10n_category_paint( $page )
+	{
+	global $l10n_mappings;
+	$id = gps( 'id' );
+	$langs = LanguageHandler::get_site_langs();
+	$default = LanguageHandler::get_site_default_lang();
+ 	$fields = $l10n_mappings['txp_category'];
+	$row = safe_row( '*' , 'txp_category' , "`id`='$id'" );
+	$r = '';
+	$count = 2;
+	foreach( $fields as $field => $attributes )
+		{
+		foreach( $langs as $lang )
+			{
+			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+ 			if( $lang !== $default )
+				{
+				$field_name = $lang.'-'.$field;
+				$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">'.$full_name.'</td><td class="noline">';
+				$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="30" class="edit" tabindex="'.$count.'" type="text" '.$dir.'>';
+				$r .= '</td></tr>'.n;
+				++$count;
+				}
+			}
+		}
+
+	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="Save" class="smallerbox" /></td>';
+	$page = str_replace( $f , $r.n.$f , $page );
+	return $page;
+	}
+
+function l10n_category_save( $event , $step )
+	{
+	$id_name = 'id';
+	$table   = 'txp_category';
+	$id = gps( $id_name );
+	$where = "`$id_name`='$id'";
+	$set = l10n_build_sql_set( $table );
+	@safe_update( $table , $set , $where );
+	}
+
+function l10n_section_paint( $page )
+	{
+	$default = LanguageHandler::get_site_default_lang();
+
+	#
+	#	Insert the remaining language title fields...
+	#
+	global $l10n_mappings;
+	$langs = LanguageHandler::get_site_langs();
+ 	$fields = $l10n_mappings['txp_section'];
+	$rows = safe_rows_start( '*' , 'txp_section' , "1=1" );
+	$c = @mysql_num_rows($rows);
+	if( $rows && $c > 0 )
+		{
+		while( $row = nextRow($rows) )
+			{
+			$name  = $row['name'];
+			$title = $row['title'];
+			$f = '<input type="text" name="title" value="'.$title.'" size="20" class="edit" tabindex="1" /></td></tr>';
+			foreach( $fields as $field => $attributes )
+				{
+				foreach( $langs as $lang )
+					{
+					$r = '';
+					$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+					$dir = LanguageHandler::get_lang_direction_markup( $lang );
+					if( $lang !== $default )
+						{
+						$field_name = $lang.'-'.$field;
+						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">['.$full_name.']: </td><td class="noline">';
+						$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="20" class="edit" type="text" '.$dir.'>';
+						$r .= '</td></tr>'.n;
+						$page = str_replace( $f , $f.$r , $page );
+						}
+					}
+				}
+			}
+		}
+
+	#
+	#	Insert the default title field's language's direction...
+	#
+	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$f = '<td class="noline"><input type="text" name="title"';
+	$page = str_replace( $f , $f.$dir , $page );
+
+	#
+	#	Insert the default title field's language name...
+	#
+	$f = '">'.gTxt('section_longtitle');
+	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$page = str_replace( $f , $f.sp.$r , $page );
+
+	return $page;
+	}
+function l10n_section_save( $event , $step )
+	{
+	$id_name = 'name';
+	$table   = 'txp_section';
+	$id = gps( $id_name );
+	$where = "`$id_name`='$id'";
+	$set = l10n_build_sql_set( $table );
+	@safe_update( $table , $set , $where );
+	}
+
+function l10n_file_paint( $page )
+	{
+	$default = LanguageHandler::get_site_default_lang();
+
+	#
+	#	Insert the remaining language fields...
+	#
+	global $l10n_mappings;
+	$langs = LanguageHandler::get_site_langs();
+ 	$fields = $l10n_mappings['txp_file'];
+	$id = gps( 'id' );
+	$row = safe_row( '*' , 'txp_file' , "`id`='$id'" );
+	$r = '';
+	$count = 2;
+	foreach( $fields as $field => $attributes )
+		{
+		foreach( $langs as $lang )
+			{
+			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+ 			if( $lang !== $default )
+				{
+				$field_name = $lang.'-'.$field;
+				$r .= '<p>'.$full_name.'<br/>';
+				$r .= '<textarea name="'.$field_name .'" cols="40" rows="5" style="width: 400px; height: 100px;"'.$dir.'>';
+				$r .= $row[$field_name].'</textarea></p>'.n;
+				++$count;
+				}
+			}
+		}
+	$f = '</textarea></p>';
+	$page = str_replace( $f , $f.n.$r , $page );
+
+	#
+	#	Insert the default title field's language's direction...
+	#
+	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$f = '<textarea name="description"';
+	$page = str_replace( $f , $f.$dir , $page );
+
+	#
+	#	Insert the default title field's language name...
+	#
+	$f = '<p>'.gTxt('description');
+	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$page = str_replace( $f , $f.sp.$r , $page );
+
+	return $page;
+	}
+
+function l10n_file_save( $event , $step )
+	{
+	$id_name = 'id';
+	$table   = 'txp_file';
+	$id = gps( $id_name );
+	$where = "`$id_name`='$id'";
+	$set = l10n_build_sql_set( $table );
+	@safe_update( $table , $set , $where );
+	}
+function l10n_link_paint( $page )
+	{
+	$default = LanguageHandler::get_site_default_lang();
+
+	#
+	#	Insert the remaining language fields...
+	#
+	global $l10n_mappings , $step;
+	$langs = LanguageHandler::get_site_langs();
+ 	$fields = $l10n_mappings['txp_link'];
+	$id = gps( 'id' );
+	$row = safe_row( '*' , 'txp_link' , "`id`='$id'" );
+	$r = '';
+	$rows = 'rows="3"';
+	foreach( $fields as $field => $attributes )
+		{
+		$save_steps = $attributes['save_steps'];
+		if(!is_array( $save_steps ) )
+			$save_steps = array( $save_steps );
+		foreach( $langs as $lang )
+			{
+			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+ 			if( $lang !== $default )
+				{
+				$field_name = $lang.'-'.$field;
+				$r .= '</tr><tr><td style="text-align: right; vertical-align: top;">';
+				$r .= '<label for="link-description-'.$lang.'">'.$full_name.'</label></td><td>';
+				$r .= '<textarea id="link-description-'.$lang.'" name="'.$field_name .'" cols="40" '.$rows.$dir.'>';
+				$r .= (in_array( $step , $save_steps )) ? '' : $row[$field_name];
+				$r .= '</textarea></td>'.n;
+				}
+			}
+		}
+	$f = '</textarea></td>';
+	$page = str_replace( $f , $f.n.$r , $page );
+
+	#
+	#	Insert the default title field's language's direction...
+	#
+	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$f = '<textarea id="link-description" name="description"';
+	$page = str_replace( $f , $f.$dir , $page );
+
+	#
+	#	Insert the default title field's language name...
+	#
+	$f = 'for="link-description">'.gTxt('description');
+	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$page = str_replace( $f , $f.br.$r , $page );
+
+	$f = 'rows="7"';
+	$page = str_replace( $f , $rows , $page );
+
+	return $page;
+	}
+function l10n_link_save( $event , $step )
+	{
+	$id_name = 'id';
+	$table   = 'txp_link';
+	$id = gps( $id_name );
+	if( empty( $id ) )
+		{
+		$id_name = 'url';
+		$id = gps( $id_name );
+		}
+	$where = "`$id_name`='$id'";
+	$set = l10n_build_sql_set( $table );
+	@safe_update( $table , $set , $where );
+	}
+
+function l10n_image_paint( $page )
+	{
+	$default = LanguageHandler::get_site_default_lang();
+
+	#
+	#	Insert the remaining language fields...
+	#
+	global $l10n_mappings;
+	$langs = LanguageHandler::get_site_langs();
+ 	$fields = $l10n_mappings['txp_image'];
+	$id = gps( 'id' );
+	$row = safe_row( '*' , 'txp_image' , "`id`='$id'" );
+	$r = '';
+	$count = 2;
+	foreach( $langs as $lang )
+		{
+		if( $lang !== $default )
+			{
+			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			foreach( $fields as $field => $attributes )
+				{
+				$field_name = $lang.'-'.$field;
+
+				if( $field === 'alt' )
+					{
+					$r .= '<p>'.gTxt('alt_text').' ['.$full_name.']<br/>';
+					$r .= '<input type="text" name="'.$field_name.'" '.$dir.' value="'.$row[$field_name].'" size="50" class="edit" id="'.$field_name.'" /></p>'.n;
+					}
+				else
+					{
+					$r .= '<p>'.gTxt('caption').' ['.$full_name.']<br/>';
+					$r .= '<textarea name="'.$field_name .'" cols="40" rows="5" style="width: 400px; height: 100px;"'.$dir.'>';
+					$r .= $row[$field_name].'</textarea></p>'.n;
+					}
+				}
+			}
+		}
+	$f = '<p><input type="submit" name="" value="';
+	$page = str_replace( $f , $r.n.$f , $page );
+
+	#
+	#	Insert the default title field's language's direction...
+	#
+	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$f = '<input type="text" name="alt"';
+	$page = str_replace( $f , $f.$dir , $page );
+	$f = '<textarea id="caption"';
+	$page = str_replace( $f , $f.$dir , $page );
+
+	#
+	#	Insert the default title field's language name...
+	#
+	$f = 'for="alt-text">'.gTxt('alt_text');
+	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$page = str_replace( $f , $f.sp.$r , $page );
+	$f = 'for="caption">'.gTxt('caption');
+	$page = str_replace( $f , $f.sp.$r , $page );
+
+	return $page;
+	}
+function l10n_image_save( $event , $step )
+	{
+	$id_name = 'id';
+	$table   = 'txp_image';
+	$id = gps( $id_name );
+	$where = "`$id_name`='$id'";
+	$set = l10n_build_sql_set( $table );
+	@safe_update( $table , $set , $where );
 	}
 
 ?>
