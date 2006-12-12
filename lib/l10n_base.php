@@ -7,8 +7,6 @@ require_plugin('gbp_admin_library');
 $txp_current_plugin = $l10n_current_plugin;
 
 // Constants
-//if( !defined( 'L10N_LANGUAGE_CONST' ))
-	//define('L10N_LANGUAGE_CONST', 'language');
 if( !defined( 'L10N_PLUGIN_CONST' ))
 	define('L10N_PLUGIN_CONST', 'plugin');
 if( !defined( 'L10N_SEP' ))
@@ -1221,6 +1219,7 @@ function l10n_redirect_textpattern($table)
 	}
 function l10n_remap_fields( $thing , $table , $get_mappings=false )
 	{
+	static $interfaces = array( 'public' , 'admin' );
 	static $mappings = array	(
 		'txp_category'	=> array( 'title' 		=> array(
 														'sql' 			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" ,
@@ -1280,17 +1279,26 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 	if( $get_mappings )
 		return $mappings;
 
-	if( @txpinterface !== 'public' || !isset( $mappings[$table] ) )
+	if( !in_array( @txpinterface , $interfaces ) )
 		return $thing;
+
+	if( !isset( $mappings[$table] ) )
+		return $thing;
+
+	if( @txpinterface === 'admin' )
+		$lang = LanguageHandler::get_site_default_lang();
+	else
+		{
+		global $l10n_language;
+		if( isset( $l10n_language['long'] ) )
+			$lang = $l10n_language['long'];
+		else
+			$lang = LANG;
+		}
 
 	foreach( $mappings[$table] as $field => $sql )
 		{
-		global $l10n_language;
-
-		if( isset( $l10n_language['long'] ) )
-			$r = '`'.$l10n_language['long']."-$field` as `$field`";
-		else
-			$r = '`'.LANG."-$field` as `$field`";
+		$r = '`'.$lang."-$field` as `$field`";
 
 		#
 		#	Replace specific matches...
@@ -1298,9 +1306,11 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 		$thing = str_replace( $field , $r , $thing );
 
 		#
-		#	Don't forget to override any wildcard search with specific mappings...
+		#	Don't forget to override any wildcard search with specific mappings,
+		# but not in count ops...
 		#
-		$thing = str_replace( '*' , '*,'.$r , $thing );
+		if( false === stripos( $thing, '(*)' ) )
+			$thing = str_replace( '*' , '*,'.$r , $thing );
 		}
 
 
