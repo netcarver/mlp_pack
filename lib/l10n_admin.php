@@ -994,23 +994,23 @@ function l10n_section_paint( $page )
 			{
 			$name  = $row['name'];
 			$title = $row['title'];
-			$f = '<input type="text" name="title" value="'.$title.'" size="20" class="edit" tabindex="1" /></td></tr>';
+			$f = '<input type="text" name="name" value="' . $name . '" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" name="title" value="' . $title . '" size="20" class="edit" tabindex="1" /></td></tr>';
 			foreach( $fields as $field => $attributes )
 				{
+				$r = '';
 				foreach( $langs as $lang )
 					{
-					$r = '';
 					$full_name = LanguageHandler::get_native_name_of_lang( $lang );
 					$dir = LanguageHandler::get_lang_direction_markup( $lang );
 					if( $lang !== $default )
 						{
 						$field_name = $lang.'-'.$field;
-						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">['.$full_name.']: </td><td class="noline">';
+						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">'.$name.' '.$title.' '.$field_name.'['.$full_name.']: </td><td class="noline">';
 						$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="20" class="edit" type="text" '.$dir.'>';
 						$r .= '</td></tr>'.n;
-						$page = str_replace( $f , $f.$r , $page );
 						}
 					}
+				$page = str_replace( $f , $f.$r , $page );
 				}
 			}
 		}
