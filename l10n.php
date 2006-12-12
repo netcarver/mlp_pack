@@ -774,7 +774,8 @@ if (@txpinterface === 'public')
 		return '';
 		}
 
-	$prefs['db_redirect_func'] = 'l10n_redirect_textpattern';
+	$prefs['db_remap_tables_func'] = 'l10n_redirect_textpattern';
+	$prefs['db_remap_fields_func'] = 'l10n_remap_fields';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
@@ -1260,30 +1261,7 @@ if (@txpinterface === 'public')
 
 		if ($l10n_language)
 			{
-			if (array_key_exists('category', $atts))
-				{
-				$id = $atts['category'];
-				$table = PFX.'txp_category';
-				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
-
-				if ($rs && !empty($rs))
-					return $rs;
-				else
-					return ucwords($atts['category']);
-
-				}
-			else if (array_key_exists('section', $atts))
-				{
-				$id = $atts['section'];
-				$table = PFX.'txp_section';
-				$rs = safe_field('entry_value', L10N_SUBS_TABLE, "`entry_id` = '$id' AND `entry_column` = 'title' AND `table` = '$table' AND `language` = '{$l10n_language['long']}'");
-
-				if ($rs && !empty($rs))
-					return $rs;
-				else
-					return ucwords($atts['section']);
-				}
-			else if ($thing)
+			if ($thing)
 				{
 				# Process the direct snippet substitutions needed in the contained content.
 				$thing = SnippetHandler::substitute_snippets( $thing );
@@ -1304,24 +1282,7 @@ if (@txpinterface === 'public')
 				}
 			}
 
-		if (array_key_exists('category', $atts))
-			{
-			$rs = safe_field('title', 'txp_category', '`name` = "'.$atts['category'].'"');
-			if ($rs && !empty($rs))
-				return $rs;
-			else
-				return ucwords($atts['category']);
-
-			}
-		else if (array_key_exists('section', $atts))
-			{
-			$rs = safe_field('title', 'txp_section', '`name` = "'.$atts['section'].'"');
-			if ($rs && !empty($rs))
-				return $rs;
-			else
-				return ucwords($atts['section']);
-			}
-		else if ($thing)
+		if ($thing)
 			{
 			# SED: Process and string substitutions needed in the contained content.
 			$thing = SnippetHandler::substitute_snippets( $thing );
