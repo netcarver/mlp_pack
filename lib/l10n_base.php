@@ -1219,6 +1219,94 @@ function l10n_redirect_textpattern($table)
 		}
 	return $table;
 	}
+function l10n_remap_fields( $thing , $table , $get_mappings=false )
+	{
+	static $mappings = array	(
+		'txp_category'	=> array( 'title' 		=> array(
+														'sql' 			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" ,
+														'e' 			=> 'category',
+														'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
+														'paint' 		=> 'l10n_category_paint',
+														'save_steps'	=> array( 'cat_article_create', 'cat_article_save', 'cat_link_create', 'cat_link_save', 'cat_image_create', 'cat_image_save', 'cat_file_create', 'cat_file_save', ),
+														'save'			=> 'l10n_category_save',
+														),
+								),
+		'txp_file' 		=> array( 'description'	=> array(
+														'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL" ,
+														'e' 			=> 'file',
+														'paint_steps'	=> array( 'file_edit' ),
+														'paint' 		=> 'l10n_file_paint',
+														'save_steps'	=> array( 'file_save' ),
+														'save'			=> 'l10n_file_save',
+														),
+								),
+		'txp_image'		=> array( 'alt'			=> array(
+														'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
+														'e' 			=> 'image',
+														'paint_steps'	=> array( 'image_edit' ),
+														'paint' 		=> 'l10n_image_paint',
+														'save_steps'	=> array( 'image_save' ),
+														'save'			=> 'l10n_image_save',
+														),
+								  'caption' 	=> array(
+								  						'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
+														'e' 			=> '',
+														'paint_steps'	=> '',
+														'paint' 		=> '',
+														'save_steps'	=> '',
+														'save'			=> '',
+														),
+								),
+		'txp_link' 		=> array( 'description'	=> array(
+														'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
+														'e' 			=> 'link',
+														'save_steps'	=> array( 'link_post', 'link_save' ),
+														'save'			=> 'l10n_link_save',
+														'paint_steps'	=> '',
+														'paint' 		=> 'l10n_link_paint',
+														),
+								),
+		'txp_section'	=> array( 'title' 		=> array(
+														'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
+														'e' 			=> 'section',
+														'paint_steps'	=> array( '' ),
+														'paint' 		=> 'l10n_section_paint',
+														'save_steps'	=> array( 'section_save', 'section_create' ),
+														'save'			=> 'l10n_section_save',
+														),
+								),
+		);
+
+	if( $get_mappings )
+		return $mappings;
+
+	if( @txpinterface !== 'public' || !isset( $mappings[$table] ) )
+		return $thing;
+
+	foreach( $mappings[$table] as $field => $sql )
+		{
+		global $l10n_language;
+
+		if( isset( $l10n_language['long'] ) )
+			$r = '`'.$l10n_language['long']."-$field` as `$field`";
+		else
+			$r = '`'.LANG."-$field` as `$field`";
+
+		#
+		#	Replace specific matches...
+		#
+		$thing = str_replace( $field , $r , $thing );
+
+		#
+		#	Don't forget to override any wildcard search with specific mappings...
+		#
+		$thing = str_replace( '*' , '*,'.$r , $thing );
+		}
+
+
+	return $thing;
+	}
+
 
 
 class SnippetTabView extends GBPAdminTabView
@@ -2778,217 +2866,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 	}
 
-/*
-class LocalisationTabView extends GBPAdminTabView
-	{
-	function preload()
-		{
-		$step = gps('step');
-		if( $step )
-			{
-			switch( $step )
-				{
-				case 'l10n_subs_save':
-				case 'l10n_subs_post':
-					$this->save_post();
-				break;
-				}
-			}
-		}
-
-	function main()
-		{
-		switch ($this->event)
-			{
-			case 'article':
-				if ($id = gps(gbp_id))
-					$this->render_edit($this->pref('l10n-article_vars'), $this->pref('l10n-article_hidden_vars'), 'textpattern', "id = '$id'", $id);
-				$this->render_list('ID', 'Title', 'textpattern', '1 order by Title asc');
-			break;
-			case 'category':
-				if ($id = gps(gbp_id))
-					$this->render_edit($this->pref('l10n-category_vars'), $this->pref('l10n-category_hidden_vars'), 'txp_category', "id = '$id'", $id);
-				$this->render_list('id', 'title', 'txp_category', "name != 'root' order by title asc");
-			break;
-			case 'section':
-				if ($id = gps(gbp_id))
-					$this->render_edit($this->pref('l10n-section_vars'), $this->pref('l10n-section_hidden_vars'), 'txp_section', "name = '$id'", $id);
-				$this->render_list('name', 'title', 'txp_section', "name != 'default' order by name asc");
-			break;
-			}
-		}
-
-	function render_list($key, $value, $table, $where)
-		{
-		$out[] = '<div class="l10n_list">';
-
-		// SQL used in both queries
-		$sql = "FROM ".PFX."$table AS source, ".PFX.L10N_SUBS_TABLE." AS l10n WHERE source.$key = l10n.entry_id AND l10n.entry_value != '' AND l10n.table = '".PFX."$table' AND l10n.language = '".gps(L10N_LANGUAGE_CONST)."' AND $where";
-
-		// Localised
-		$rows = startRows("SELECT DISTINCT source.$key as k, source.$value as v ".$sql);
-		if ($rows)
-			{
-			$out[] = '<ul><h3>'.gTxt('l10n-localised').'</h3>';
-			while ($row = nextRow($rows))
-				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_id.'='.$row['k'].'">'.$row['v'].'</a></li>';
-
-			$out[] = '</ul>';
-			}
-
-		// Unlocalised
-		$rows = startRows("SELECT DISTINCT $key as k, $value as v FROM ".PFX."$table WHERE $key NOT IN (SELECT DISTINCT source.$key $sql) AND $where");
-		if ($rows)
-			{
-			$out[] = '<ul><h3>'.gTxt('l10n-unlocalised').'</h3>';
-			while ($row = nextRow($rows))
-				$out[] = '<li><a href="'.$this->parent->url().'&#38;'.gbp_id.'='.$row['k'].'">'.$row['v'].'</a></li>'.n;
-
-			$out[] = '</ul>';
-			}
-
-		$out[] = '</div>';
-		echo join('', $out);
-		}
-
-	function render_edit($vars, $hidden_vars, $table, $where, $entry_id)
-		{
-		global $_GBP;
-
-		$fields = trim(join(',', array_merge($vars, $hidden_vars)), ' ,');
-
-		if ($rs1 = safe_row($fields, $table, $where))
-			{
-			$out[] = '<div class="l10n_edit">';
-
-			foreach($rs1 as $field => $value)
-				{
-				$entry_value = '';
-				$rs2 = safe_row(
-					'id, entry_value',
-					L10N_SUBS_TABLE,
-					"`language` = '".gps(L10N_LANGUAGE_CONST)."' AND `entry_id` = '$entry_id' AND `entry_column` = '$field' AND `table` = '".PFX."$table'"
-					);
-
-				$field_type = mysql_field_type(mysql_query("SELECT $field FROM ".PFX.$table), 0);
-
-				if ($rs2)
-					extract($rs2);
-
-				if (!isset($entry_value))
-					$entry_value = '';
-
-				if (in_array($field_type, array('blob')))
-					{
-					$out[] = '<p class="l10n_field">'.gTxt($field).'</p>';
-					$out[] = '<div class="l10n_value_disable">'.text_area('" readonly class="', 200, 420, $value).'</div>';
-					$out[] = '<div class="l10n_value">'.text_area($field, 200, 420, $entry_value).'</div><br/>';
-					}
-				else if (in_array($field_type, array('string')))
-					{
-					$out[] = '<p class="l10n_field">'.gTxt($field).'</p>';
-					$out[] = '<div class="l10n_value_disable">'.fInput('text', '', $value, 'edit" readonly title="', '', '', 60).'</div>';
-					$out[] = '<div class="l10n_value">'.fInput('text', $field, $entry_value, 'edit', '', '', 60).'</div><br/>';
-					}
-				else
-					$out[] = hInput($field, $value);
-				}
-
-			$out[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
-			$out[] = '</div>';
-
-			$out[] = $this->parent->form_inputs();
-			$out[] = sInput(((isset($id)) || (gps('step') == 'l10n_subs_save')) ? 'l10n_subs_save' : 'l10n_subs_post');
-
-			$out[] = hInput('l10n_table', $table);
-			$out[] = hInput(L10N_LANGUAGE_CONST, gps(L10N_LANGUAGE_CONST));
-			$out[] = hInput(gbp_id, $entry_id);
-
-			echo form(join('', $out));
-			}
-		}
-
-	function save_post()
-		{
-		global $txpcfg;
-		extract(get_prefs());
-
-		$hidden_vars = @gpsa($this->parent->preferences['l10n-'.$this->event.'_hidden_vars']['value']);
-		$vars = @gpsa($this->parent->preferences['l10n-'.$this->event.'_vars']['value']);
-		if( !empty( $hidden_vars ) )
-			extract( $hidden_vars );
-
-		$table = PFX.$_POST['l10n_table'];
-		$language = $_POST[L10N_LANGUAGE_CONST];
-		$entry_id = $_POST[gbp_id];
-
-		include_once $txpcfg['txpath'].'/lib/classTextile.php';
-		$textile = new Textile();
-
-		foreach($vars as $field => $value)
-			{
-
-			if ($field == 'Body')
-				{
-
-				if (!isset($textile_body))
-				$textile_body = $use_textile;
-
-				if ($use_textile == LEAVE_TEXT_UNTOUCHED or !$textile_body)
-					$value_html = trim($value);
-
-				else if ($use_textile == CONVERT_LINEBREAKS)
-					$value_html = nl2br(trim($value));
-
-				else if ($use_textile == USE_TEXTILE && $textile_body)
-					$value_html = $textile -> TextileThis($value);
-
-				}
-
-			if ($field == 'Title')
-				$value = $textile->TextileThis($value, '', 1);
-
-			if ($field == 'Excerpt')
-				{
-				if (!isset($textile_excerpt))
-					$textile_excerpt = 1;
-
-				if ($textile_excerpt)
-					{
-					$value_html = $textile -> TextileThis($value);
-					}
-				else
-					{
-					$value_html = $textile -> TextileThis($value, 1);
-					}
-				}
-
-			if (!isset($id))
-				$id = '';
-
-			if (!isset($value_html))
-				$value_html = '';
-
-			$value = doSlash( $value );
-			$value_html = doSlash( $value_html );
-
-			switch(gps('step'))
-				{
-				case 'l10n_subs_post':
-					$rs = safe_insert(L10N_SUBS_TABLE, "`id` = '$id', `table` = '$table', `language` = '$language', `entry_id` = '$entry_id', `entry_column` = '$field', `entry_value` = '$value', `entry_value_html` = '$value_html'");
-				break;
-				case 'l10n_subs_save':
-					$rs = safe_update(L10N_SUBS_TABLE, "`entry_value` = '$value', `entry_value_html` = '$value_html'",
-						"`table` = '$table' AND `language` = '$language' AND `entry_id` = '$entry_id' AND `entry_column` = '$field'"
-					);
-				break;
-				}
-			}
-		}
-
-	}
-*/
-
 class LocalisationArticleTabView extends GBPAdminTabView
 	{
 	var	$statuses = array();
@@ -3840,6 +3717,12 @@ class LocalisationWizardView extends GBPWizardTabView
 			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
 		'3a'=> array(
 			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you do not want to re-install the MLP Pack.', 'optional' => true , 'checked'=>0 ),
+		'4' => array(
+			'setup' => 'Localise fields in content tables',
+			),
+		'4a' => array(
+			'cleanup' => 'Drop localised content fields.<br/>Remove localised titles/descriptions etc&#8230;', 'optional'=>true, 'checked'=>0
+			),
 		'5' => array(
 			'setup' => 'Add the l10n_articles table',
 			'cleanup' => 'Drop the l10n_articles table'),
@@ -3883,6 +3766,67 @@ class LocalisationWizardView extends GBPWizardTabView
 		return $tests;
 		}
 
+	function cleanup_4a()
+		{
+		global $l10n_mappings;
+		if( !is_array( $l10n_mappings ) )
+			$l10n_mappings = l10n_remap_fields( '' , '' , true );
+
+		$langs = LanguageHandler::get_site_langs();
+
+		$this->add_report_item( 'Remove Localised content from tables...' );
+		foreach( $l10n_mappings as $table=>$fields )
+			{
+			$table = safe_pfx( $table );
+			foreach( $fields as $field=>$attributes )
+				{
+				foreach( $langs as $lang )
+					{
+					$sql = "DROP `$lang-$field`";
+					$ok = @safe_alter( $table , $sql );
+					$this->add_report_item( "Drop the $table.$lang-$field field" , $ok , true );
+					}
+				}
+			}
+		}
+	function setup_4()
+		{
+		global $l10n_mappings;
+		if( !is_array( $l10n_mappings ) )
+			$l10n_mappings = l10n_remap_fields( '' , '' , true );
+
+		$langs = LanguageHandler::get_site_langs();
+		$default = LanguageHandler::get_site_default_lang();
+		$this->add_report_item( 'Localise the content tables...' );
+		foreach( $l10n_mappings as $table=>$fields )
+			{
+			$table = safe_pfx( $table );
+			foreach( $fields as $field=>$attributes )
+				{
+				foreach( $langs as $lang )
+					{
+					$f = "$lang-$field";
+					$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
+					if( $exists )
+						{
+						$this->add_report_item( "Skipped the $table.$lang-$field field, it already exists" , true , true );
+						continue;
+						}
+
+					$sql = "ADD `$f` ".$attributes['sql'];
+					$ok = @safe_alter( $table , $sql );
+					$this->add_report_item( "Added the $table.$f field" , $ok , true );
+
+					if( $ok && $lang===$default )
+						{
+						$sql = "UPDATE $table SET `$f`=`$field`";
+						$ok = @safe_query( $sql );
+						$this->add_report_item( "Copy defaults to $f field" , $ok , true );
+						}
+					}
+				}
+			}
+		}
 	function setup_1()
 		{
 		$this->add_report_item( 'Change the txp_lang table...' );
