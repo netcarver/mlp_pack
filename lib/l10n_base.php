@@ -73,7 +73,6 @@ var str_edit_div = null;
 var sbn_lang_sel = null;
 var last_req     = "";
 
-
 var	xml_manager = false;
 if( window.XMLHttpRequest )
 	{
@@ -379,12 +378,15 @@ function on_lang_selection_change()
 	resetToggleDir( 'title', dir );
 	resetToggleDir( 'body', dir );
 	resetToggleDir( 'excerpt', dir );
+	resetToggleDir( 'article-main', dir );
 
 	var toggler = document.getElementById('title-toggle');
-	if( toggler == null )
-		return;
+	if( toggler != null )
+		toggler.innerHTML = '$toggle_title';
 
-	toggler.innerHTML = '$toggle_title';
+	var toggler  = document.getElementById('article-main-toggle');
+	if( toggler != null )
+		toggler.innerHTML = '$toggle_title';
 	}
 
 end_js;
@@ -825,6 +827,10 @@ class LocalisationView extends GBPPlugin
 	var $perm_strings = array( # These strings are always needed.
 		'l10n-localisation'			=> 'MLP',
 		'l10n-toggle'				=> 'Toggle',
+		'l10n-done'					=> 'Done',
+		'l10n-failed'				=> 'Failed',
+		'l10n-wizard'				=> 'Wizards',
+		'l10n-snippets_tab'			=> 'Snippets',
 		);
 	var $strings = array(
 		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
@@ -841,7 +847,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-del_phantom' 			=> 'Deleted phantom rendition($rendition) from article $ID',
 		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
 		'l10n-delete_whole_lang'	=> 'Delete all ($var2) strings in $var1?',
-		'l10n-done'					=> 'Done',
 		'l10n-edit_resource'		=> 'Edit $type: $owner ',
 		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
 		'l10n-email_body_other'		=> "{txp_username} has transferred the following rendition{s} to you...\r\n\r\n",
@@ -894,7 +899,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',
 		'l10n-snippet'				=> 'Snippet',
 		'l10n-snippets'				=> ' snippets.',
-		'l10n-snippets_tab'			=> 'Snippets',
 		'l10n-special'				=> 'Special',
 		'l10n-specials'				=> 'Specials',
 		'l10n-statistics'			=> 'Show Statistics ',
@@ -908,7 +912,6 @@ class LocalisationView extends GBPPlugin
 		'l10n-view_site'			=> 'View localised site',
 		'l10n-warn_section_mismatch' => 'Section mismatch',
 		'l10n-warn_lang_mismatch'	=> 'Language mismatch',
-		'l10n-wizard'				=> 'Wizards',
 		'l10n-xlate_to'				=> 'Translating into: ',
 		);
 	var $permissions = '1,2,3,6';
@@ -945,9 +948,11 @@ class LocalisationView extends GBPPlugin
 			# users at least see an English message in the plugin.
 			if( $prefs['language'] !== $this->strings_lang )
 				{
-				$textarray = array_merge( $this->perm_strings , $textarray );
 				$textarray = array_merge( $this->strings , $textarray );
 				}
+
+			#	These strings are always needed (for example, by setup/cleanup wizards)...
+			$textarray = array_merge( $this->perm_strings , $textarray );
 
 			#	To ease development, allow new strings to be inserted...
 			if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
@@ -1190,8 +1195,10 @@ class LocalisationView extends GBPPlugin
 
 function l10n_redirect_textpattern($table)
 	{
-	$installed = l10n_installed();
+	if( @txpinterface !== 'public' )
+		return $table;
 
+	$installed = l10n_installed();
 	if( 'textpattern' === $table && $installed )
 		{
 		//echo "_redirect_textpattern($table)";
