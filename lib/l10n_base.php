@@ -5037,8 +5037,6 @@ class StringHandler
 		if( empty( $plugin ) )
 			$plugin = $txp_current_plugin;
 
-		//if( !empty($txp_current_plugin) and ($event=='public' or $event=='admin' or $event=='common') )
-		//	$event = $event.'.'.$txp_current_plugin;
 		$event 	= doSlash( $event );
 
 		$result = false;
@@ -5052,12 +5050,11 @@ class StringHandler
 				$where 	= " `name`='$name'";
 
 				if( !empty($lang) )
-					$where .= " AND `lang`='$lang'";
+					$where .= " AND `lang`='".doSlash($lang)."'";
 
 				if( !empty($event) )
-					$where .= " AND `event`='$event'";
+					$where .= " AND `event`='".doSlash($event)."'";
 
-				$where = doSlash( $where );
 				$ok = @safe_delete( 'txp_lang' , $where );
 				if( $ok === true )
 					$deletes++;
