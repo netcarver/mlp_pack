@@ -1005,7 +1005,7 @@ function l10n_section_paint( $page )
 					if( $lang !== $default )
 						{
 						$field_name = $lang.'-'.$field;
-						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">'.$name.' '.$title.' '.$field_name.'['.$full_name.']: </td><td class="noline">';
+						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">['.$full_name.']: </td><td class="noline">';
 						$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="20" class="edit" type="text" '.$dir.'>';
 						$r .= '</td></tr>'.n;
 						}
