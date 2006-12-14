@@ -457,6 +457,8 @@ function l10n_article_buffer_processor( $buffer )
 	$html		= ($view === 'html');
 
 	$lang 		= $l10n_vars['article_lang'];
+	//$from_view	= gps( 'from_view' );
+	$user_sel_lang = cs( 'rendition_lang_selection' );
 	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
 
 	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
@@ -485,6 +487,9 @@ function l10n_article_buffer_processor( $buffer )
 
 	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
 		{
+		if( !empty( $user_sel_lang ) )
+			$lang = $user_sel_lang;
+
 		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
 		$r .= 	gTxt('article')    . ': ' . strong( $group_id );
 		}
@@ -492,6 +497,9 @@ function l10n_article_buffer_processor( $buffer )
 		{
 		if( $reassigning_permitted and $has_reassign_privs )
 			{
+			if( !empty( $user_sel_lang ) )
+				$lang = $user_sel_lang;
+
 			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
 			$r .=	gTxt('article')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
 			}

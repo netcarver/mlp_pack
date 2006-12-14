@@ -373,6 +373,8 @@ function on_lang_selection_change()
 	var selection = document.getElementById('l10n_lang_selector').value;
 	var dir = langs[selection];
 
+	setCookie( 'rendition_lang_selection' , selection , 365 );
+
 	resetToggleDir( 'title', dir );
 	resetToggleDir( 'body', dir );
 	resetToggleDir( 'excerpt', dir );
