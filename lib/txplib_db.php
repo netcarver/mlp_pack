@@ -64,16 +64,6 @@ $DB = new DB;
 	}
 
 //-------------------------------------------------------------
-	function safe_process_prefs() {
-		#
-		#	Called at the end of the get_prefs() routine to trim/remap whatever prefs you need...
-		#
-		global $prefs;
-		if (isset($prefs['db_process_prefs_func']) and is_callable($prefs['db_process_prefs_func']))
-			call_user_func($prefs['db_process_prefs_func']);
-	}
-
-//-------------------------------------------------------------
 	function safe_pfx($table) {
 		$table = safe_remap_tables($table);
 		$name = PFX.$table;
@@ -489,9 +479,10 @@ $DB = new DB;
 			return $result;
 
 		$installed 	= getThing( 'show tables like \''.PFX.'l10n_articles\'' );
+		$installed 	= !empty( $installed );
 		$active 	= true;
 
-		if( $installed and $check_plugin_active )
+		if( $installed && $check_plugin_active )
 			{
 			$res 	= safe_field( 'status', 'txp_plugin', "name='l10n'");
 			$active	= ($res == 1);
@@ -501,6 +492,7 @@ $DB = new DB;
 		return $result;
 		}
 
+//-------------------------------------------------------------
 	function get_prefs()
 		{
 		$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1');
@@ -510,7 +502,6 @@ $DB = new DB;
 				{
 				$out[$a['name']] = $a['val'];
 				}
-
 
 			if( defined('LANG') )
 				return $out;
