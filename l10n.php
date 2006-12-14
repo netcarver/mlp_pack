@@ -536,213 +536,214 @@ November 2006.
 
 global $txpcfg;
 
+function _l10n_set_browse_language( $code , $long ,  $debug=false )
+	{
+	#
+	#	Call this function with the SHORT language code.
+	#
+	#	Takes care of storing the global language variable and also tries to do extra stuff like
+	#	setting up the correct locale for the requested language.
+	#
+	global $l10n_language;
+	$result = false;
 
-	function _l10n_set_browse_language( $code , $long ,  $debug=false )
+	if( $long )
 		{
-		#
-		#	Call this function with the SHORT language code.
-		#
-		#	Takes care of storing the global language variable and also tries to do extra stuff like
-		#	setting up the correct locale for the requested language.
-		#
-		global $l10n_language;
-		$result = false;
-
-		if( $long )
-			{
-			$site_langs = LanguageHandler::get_installation_langs();
-			$tmp = $code;
-			}
-		else
-			{
-			$site_langs = LanguageHandler::get_site_langs();
-			$tmp = LanguageHandler::expand_code( $code );
-			}
-
-		if( $debug )
-			echo br, "_l10n_set_browse_language( $code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
-
-		if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
-			{
-			if( $debug )
-				echo " ... in IF() ... " ;
-			$l10n_language = LanguageHandler::compact_code($tmp);
-
-			if( empty( $l10n_language['long'] ) )
-				$l10n_language['long'] = $tmp;
-
-			$result = true;
-			getlocale( $l10n_language['long'] );
-			if( $debug )
-				echo "\$tmp [$tmp] used to set \$l10n_language to " , var_dump($l10n_language['long']) , " returning TRUE", br ;
-			}
-		else
-			{
-			if( $debug )
-				echo " ... in ELSE ... " ;
-			if( !isset($l10n_language) or !in_array( $l10n_language['long'] , $site_langs ))
-				{
-				$l10n_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
-				getlocale( $l10n_language['long'] );
-				$result = (!empty($tmp));
-				}
-			}
-		if( $debug )
-			echo br , "Input='$code', Site Language set to " , var_dump( $l10n_language ) , " Returning ", var_dump($result),  br;
-
-		return $result;
+		$site_langs = LanguageHandler::get_installation_langs();
+		$tmp = $code;
+		}
+	else
+		{
+		$site_langs = LanguageHandler::get_site_langs();
+		$tmp = LanguageHandler::expand_code( $code );
 		}
 
+	if( $debug )
+		echo br, "_l10n_set_browse_language( $code ) ... \$site_langs=", var_dump($site_langs),", \$tmp='$tmp'";
 
-	function _l10n_process_url( $use_get_params=false )
+	if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
 		{
-		global $l10n_language;
+		if( $debug )
+			echo " ... in IF() ... " ;
+		$l10n_language = LanguageHandler::compact_code($tmp);
 
-		$new_first_path = '';
-		$debug = false;
+		if( empty( $l10n_language['long'] ) )
+			$l10n_language['long'] = $tmp;
 
-		@session_start();
-		$site_langs = LanguageHandler::get_site_langs();
-
-		if (!defined('rhu'))
-			define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
-		$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
-
-		$ssname = 'lang';
-		$lsname = 'llang';
-		if( $use_get_params )
+		$result = true;
+		getlocale( $l10n_language['long'] );
+		if( $debug )
+			echo "\$tmp [$tmp] used to set \$l10n_language to " , var_dump($l10n_language['long']) , " returning TRUE", br ;
+		}
+	else
+		{
+		if( $debug )
+			echo " ... in ELSE ... " ;
+		if( !isset($l10n_language) or !in_array( $l10n_language['long'] , $site_langs ))
 			{
-			#
-			#	Admin session variables differ from public to stop crosstalk...
-			#
-			$ssname = 'adminlang';
-			$lsname = 'adminllang';
+			$l10n_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+			getlocale( $l10n_language['long'] );
+			$result = (!empty($tmp));
 			}
+		}
+	if( $debug )
+		echo br , "Input='$code', Site Language set to " , var_dump( $l10n_language ) , " Returning ", var_dump($result),  br;
 
-		if( $use_get_params )
+	return $result;
+	}
+
+function _l10n_process_url( $use_get_params=false )
+	{
+	global $l10n_language;
+
+	$new_first_path = '';
+	$debug = false;
+
+	@session_start();
+	$site_langs = LanguageHandler::get_site_langs();
+
+	if (!defined('rhu'))
+		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
+	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
+
+	$ssname = 'l10n_short_lang';
+	$lsname = 'l10n_long_lang';
+	if( $use_get_params )
+		{
+		#
+		#	Admin session variables differ from public to stop crosstalk...
+		#
+		$ssname = 'l10n_admin_short_lang';
+		$lsname = 'l10n_admin_long_lang';
+
+		$temp = gps( 'adminlang' );
+		$tmp = substr( $temp , 0 , 2 );
+
+		#
+		#	Admin side we use the installation languages, not just the more
+		# restricive 'site' languages used on the public side...
+		#
+		$site_langs = LanguageHandler::get_installation_langs();
+		if( !empty($temp) and in_array( $temp , $site_langs ) )
 			{
-			$temp = gps( 'adminlang' );
-			$tmp = substr( $temp , 0 , 2 );
+			#
+			#	Hit! We can serve this language...
+			#
+			$_SESSION[$ssname] = $tmp;
+			$_SESSION[$lsname] = $temp;
+			if( $debug )
+				echo br , "L10N MLP: Set session vars ($ssname < $tmp) ($lsname < $temp).";
+			}
+		}
 
+	if( !$use_get_params and !empty( $path ) )
+		{
+		if( $debug )
+			echo br , "L10N MLP: Public - Checking URL ($path), LANG = " , LANG;
+		#
+		#	Examine the first path entry for the language request.
+		#
+		$tmp = array_shift( $path );
+		$temp = LanguageHandler::expand_code( $tmp );
+		$reduce_uri = true;
+		$new_first_path = (isset($path[0])) ? $path[0] : '' ;
+
+		if( !empty($temp) and in_array( $temp , $site_langs ) )
+			{
 			#
-			#	Admin side we use the installation languages, not just the more
-			# restricive 'site' languages used on the public side...
+			#	Hit! We can serve this language...
 			#
-			$site_langs = LanguageHandler::get_installation_langs();
-			if( !empty($temp) and in_array( $temp , $site_langs ) )
+			if( $debug )
+				echo br , "L10N MLP: Set session vars ($ssname < $tmp) ($lsname < $temp).";
+			$_SESSION[$ssname] = $tmp;
+			$_SESSION[$lsname] = $temp;
+			}
+		else
+			{
+			#
+			#	Not a language this site can serve...
+			#
+			if( !LanguageHandler::is_valid_short_code( $tmp ) )
 				{
 				#
-				#	Hit! We can serve this language...
+				#	And not a known language so don't reduce the uri and use
+				# the original part of the path...
 				#
-				$_SESSION[$ssname] = $tmp;
-				$_SESSION[$lsname] = $temp;
+				$reduce_uri = false;
+				$new_first_path = $tmp;
 				}
 			}
 
-		if( !$use_get_params and !empty( $path ) )
+		if( $reduce_uri )
 			{
-			#
-			#	Examine the first path entry for the language request.
-			#
-			$tmp = array_shift( $path );
-			$temp = LanguageHandler::expand_code( $tmp );
-			$reduce_uri = true;
-			$new_first_path = (isset($path[0])) ? $path[0] : '' ;
+			$new_uri = '/' . join( '/' , $path );
+			$_SERVER['REQUEST_URI'] = $new_uri;
+			}
+		}
 
-			if( !empty($temp) and in_array( $temp , $site_langs ) )
+	if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
+		{
+		#
+		#	If we are still missing a language for the session, try to get the prefered selection
+		# from the user agent's HTTP header.
+		#
+		$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
+		if( isset( $req_lang ) and !empty( $req_lang ) )
+			{
+			$chunks = split( ',' , $req_lang );
+			if( count( $chunks ) )
 				{
-				#
-				#	Hit! We can serve this language...
-				#
-				$_SESSION[$ssname] = $tmp;
-				$_SESSION[$lsname] = $temp;
-				}
-			else
-				{
-				#
-				#	Not a language this site can serve...
-				#
-				if( !LanguageHandler::is_valid_short_code( $tmp ) )
+				foreach( $chunks as $chunk )
 					{
-					#
-					#	And not a known language so don't reduce the uri and use
-					# the original part of the path...
-					#
-					$reduce_uri = false;
-					$new_first_path = $tmp;
-					}
-				}
-
-			if( $reduce_uri )
-				{
-				$new_uri = '/' . join( '/' , $path );
-				$_SERVER['REQUEST_URI'] = $new_uri;
-				}
-			}
-
-		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
-			{
-			#
-			#	If we are still missing a language for the session, try to get the prefered selection
-			# from the user agent's HTTP header.
-			#
-			$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
-			if( isset( $req_lang ) and !empty( $req_lang ) )
-				{
-				$chunks = split( ',' , $req_lang );
-				if( count( $chunks ) )
-					{
-					foreach( $chunks as $chunk )
+					$info = split( ';' , $chunk );
+					if( false === $info )
 						{
-						$info = split( ';' , $chunk );
-						if( false === $info )
+						$info[] = $chunk;
+						}
+					$code = $info[0];
+					if( $code )
+						{
+						$len = strlen( $code );
+						if( $len === 2 )
 							{
-							$info[] = $chunk;
+							$lang = LanguageHandler::expand_code( $info[0] );
+							$lang = LanguageHandler::compact_code( $lang );
 							}
-						$code = $info[0];
-						if( $code )
-							{
-							$len = strlen( $code );
-							if( $len === 2 )
-								{
-								$lang = LanguageHandler::expand_code( $info[0] );
-								$lang = LanguageHandler::compact_code( $lang );
-								}
-							elseif( $len === 5 )
-								$lang = LanguageHandler::compact_code( $info[0] );
-							else
-								continue;
+						elseif( $len === 5 )
+							$lang = LanguageHandler::compact_code( $info[0] );
+						else
+							continue;
 
-							if( in_array( $lang['long'] , $site_langs ) )
-								{
-								$_SESSION[$ssname]  = $lang['short'];
-								$_SESSION[$lsname] = $lang['long'];
-								break;
-								}
+						if( in_array( $lang['long'] , $site_langs ) )
+							{
+							$_SESSION[$ssname]  = $lang['short'];
+							$_SESSION[$lsname] = $lang['long'];
+							break;
 							}
 						}
 					}
 				}
 			}
-
-		#
-		#	If we are still missing a language for the session, use the site default...
-		#
-		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
-			{
-			$long = $site_langs[0];
-			$short = substr( $long , 0 , 2 );
-			$_SESSION[$ssname] = $short;
-			$_SESSION[$lsname] = $long;
-			}
-
-		if( $use_get_params )
-			_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
-		else
-			_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
-
-		return $new_first_path;
 		}
+
+	#
+	#	If we are still missing a language for the session, use the site default...
+	#
+	if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
+		{
+		$long = $site_langs[0];
+		$short = substr( $long , 0 , 2 );
+		$_SESSION[$ssname] = $short;
+		$_SESSION[$lsname] = $long;
+		}
+
+	if( $use_get_params )
+		_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
+	else
+		_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
+
+	return $new_first_path;
+	}
 
 
 # -- Include the admin file only if needed...
