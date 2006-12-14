@@ -523,12 +523,15 @@ $DB = new DB;
 					@session_start();
 					$language = '';
 					if( @txpinterface==='admin' )
-						$language = @$_SESSION['adminllang'];
+						$language = @$_SESSION['l10n_admin_long_lang'];
 					else
-						$language = @$_SESSION['llang'];
+						$language = @$_SESSION['l10n_long_lang'];
 					if( !empty( $language ) )
 						{
 						$out['language'] = $language;
+						if( !defined( 'LANG' ) )
+							define( 'LANG' , $language );
+						//echo br , "get_prefs() setting \$out['language'] < {$out['language']}.";
 						}
 					}
 				}
