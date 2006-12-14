@@ -141,6 +141,7 @@ On the admin side...
 * Each TxP user can choose their own admin language -- and switch between admin languages at will.
 * Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
 * Ability to search for, and edit, any TxP language string by name or by content -- in any of the languages supported by the site.
+** Also allows quick location of strings with missing renditions in any language.
 * Support for 'snippets' to simplify page/form editing and writing.
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
 * Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
@@ -150,6 +151,12 @@ On the admin side...
 * Email notifications sent to translators when articles are cloned or have their author changed.
 * Extra filtering of the list of renditions by language.
 * No hijacking of existing fields (sections/categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
+* Full localisation of the following fields...
+** Categories
+** Sections
+** Image alt text and captions
+** Link descriptions
+** File descriptions
 * Setup and Cleanup wizards.
 
 On the public side...
@@ -158,6 +165,7 @@ On the public side...
 * Automatic selection of the correct renditions of snippets in pages and forms.
 * Fully functional search/commenting/feeds for each language the site supports.
 * Localised (and direction adjusted) feeds.
+* Localised categories, sections, file & link descriptions, image alt text & captions.
 * 404 support for finding renditions that are not available in the requested language.
 * A tag to list all available renditions of a given article and allow switching between them.
 * Tags for accessing language codes and direction information.
