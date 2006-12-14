@@ -534,9 +534,6 @@ November 2006.
 }
 # --- BEGIN PLUGIN CODE ---
 
-if( !defined( 'L10N_SUBS_TABLE' ) )
-	define( 'L10N_SUBS_TABLE' , 'l10n_substitutions' );
-
 global $txpcfg;
 
 
@@ -751,8 +748,6 @@ global $txpcfg;
 # -- Include the admin file only if needed...
 if( @txpinterface === 'admin' )
 	{
-	$prefs['db_remap_fields_func'] = 'l10n_remap_fields';
-
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $l10n_language , $textarray , $prefs;
@@ -774,16 +769,13 @@ if( @txpinterface === 'admin' )
 # -- Public code section follows...
 if (@txpinterface === 'public')
 	{
+	$installed = l10n_installed();
+	if( !$installed )
+		return '';
+
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $prefs;
-
-	$installed = l10n_installed();
-	if( !$installed )
-		{
-		return '';
-		}
-
 	$prefs['db_remap_tables_func'] = 'l10n_redirect_textpattern';
 	$prefs['db_remap_fields_func'] = 'l10n_remap_fields';
 
@@ -1235,14 +1227,6 @@ if (@txpinterface === 'public')
 		return $dir;
 		}
 
-	function _l10n_log( $message , $line )
-		{
-		global $logging;
-		global $logfile;
-
-		if( $logging )
-			error_log( n.$message.'['.$line.'].' , 3 , $logfile );
-		}
 
 	function _l10n_link_lang_cb( $matches )
 		{
