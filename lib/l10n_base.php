@@ -1402,6 +1402,14 @@ class SnippetTabView extends GBPAdminTabView
 	var $active_tab = 0;
 	var $use_tabs = false;
 
+	function get_canvas_style()
+		{
+		if( $this->is_active )
+			{
+			return ' style="padding: 0;"';
+			}
+		return false;
+		}
 	function &add_tab($tab, $is_default = NULL)
 		{
 		// Check to see if the tab is active
