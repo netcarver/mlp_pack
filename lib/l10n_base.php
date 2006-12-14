@@ -1249,10 +1249,8 @@ function l10n_redirect_textpattern($table)
 	if( @txpinterface !== 'public' )
 		return $table;
 
-	$installed = l10n_installed();
-	if( 'textpattern' === $table && $installed )
+	if( 'textpattern' === $table )
 		{
-		//echo "_redirect_textpattern($table)";
 		global $l10n_language;
 
 		$language_set 	= isset( $l10n_language );
@@ -1261,12 +1259,10 @@ function l10n_redirect_textpattern($table)
 			{
 			$table = ArticleManager::make_textpattern_name( $l10n_language );
 			}
-		//echo " ... returning($table).",br;
 		}
-	elseif ( 'l10n_master_textpattern' === $table && $installed )
+	elseif ( 'l10n_master_textpattern' === $table )
 		{
 		$table = 'textpattern';
-		//echo " ... returning($table).",br;
 		}
 	return $table;
 	}
