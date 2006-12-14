@@ -1022,34 +1022,93 @@ class LocalisationView extends GBPPlugin
 
 		if( $add_count )
 			{
-			#
-			#	Add language tables as needed and populate them as far as possible...
-			#
 			foreach( $diff_names_tables as $full_name )
 				{
+				#
+				#	Get the language code...
+				#
 				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
 				$lang = strtr( $lang , array( '_'=>'-' ) );
 				if( !LanguageHandler::is_valid_code( $lang ) )
 					continue;
 
+				#
+				#	Add language tables as needed and populate them as far as possible...
+				#
 				$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where Lang='$lang'";
 				$ok = @safe_query( $sql );
+
+				#
+				#	Add fields for this language...
+				#
+				l10n_mappings_walker( array( &$this , 'add_field' ) , $lang );
 				}
 			}
+
 		if( $del_count )
 			{
-			#
-			#	Drop language tables that are no longer needed...
-			#
 			foreach( $diff_tables_names as $full_name )
 				{
+				#
+				#	Drop language tables that are no longer needed...
+				#
 				$sql = 'drop table `'.$full_name.'`';
 				$ok = @safe_query( $sql );
+
+				#
+				#	Get the language code...
+				#
+				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
+				$lang = strtr( $lang , array( '_'=>'-' ) );
+				if( !LanguageHandler::is_valid_code( $lang ) )
+					continue;
+
+				#
+				#	Remove fields for this language...
+				#
+				l10n_mappings_walker( array( &$this , 'drop_field' ) , $lang );
 				}
 			}
-		}
 
+		#
+		#	Process the new default language ... copy fields as needed...
+		#
+		l10n_mappings_walker( array( &$this , 'copy_defaults' ) , $langs[0] );
+		}
+	function add_field( $table , $field , $attributes , $language )
+		{
+		$f = "$language-$field";
+		$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
+		if( !$exists )
+			{
+			$sql = "ADD `$f` ".$attributes['sql'];
+			$ok = @safe_alter( $table , $sql );
+			}
+		}
+	function drop_field( $table , $field , $attributes , $language )
+		{
+		$f = "$language-$field";
+		$sql = "DROP `$f`";
+		$ok = @safe_alter( $table , $sql );
+		}
+	function copy_defaults( $table , $field , $attributes , $language )
+		{
+		$f = "$language-$field";
+
+		#
+		#	If we make an existing lang the default, overwrite the master field
+		# with any data from the (now default) field...
+		#
+		$sql = "UPDATE $table SET `$field`=`$f` WHERE `$f` <> ''";
+		$ok = @safe_query( $sql );
+
+		#
+		#	Copy the master fields over to the new defualt field
+		#
+		$sql = "UPDATE $table SET `$f`=`$field` WHERE `$field` <> ''";
+		$ok = @safe_query( $sql );
+		}
 
 	function installed( $recheck=false )
 		{
@@ -1316,8 +1375,26 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 
 	return $thing;
 	}
+function l10n_mappings_walker( $fn , $atts='' )
+	{
+	if( !is_callable( $fn ) )
+		return false;
 
+	global $l10n_mappings;
+	if( !is_array( $l10n_mappings ) )
+		$l10n_mappings = l10n_remap_fields( '' , '' , true );
 
+	foreach( $l10n_mappings as $table=>$fields )
+		{
+		$table = safe_pfx( $table );
+		foreach( $fields as $field=>$attributes )
+			{
+			call_user_func( $fn , $table , $field , $attributes , $atts );
+			}
+		}
+
+	return true;
+	}
 
 class SnippetTabView extends GBPAdminTabView
 	{
@@ -3778,64 +3855,50 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function cleanup_4a()
 		{
-		global $l10n_mappings;
-		if( !is_array( $l10n_mappings ) )
-			$l10n_mappings = l10n_remap_fields( '' , '' , true );
-
-		$langs = LanguageHandler::get_site_langs();
-
 		$this->add_report_item( 'Remove Localised content from tables...' );
-		foreach( $l10n_mappings as $table=>$fields )
+		l10n_mappings_walker( array( &$this , 'cleanup_4a_cb' ) );
+		}
+	function cleanup_4a_cb( $table , $field , $attributes )
+		{
+		$langs = LanguageHandler::get_site_langs();
+		foreach( $langs as $lang )
 			{
-			$table = safe_pfx( $table );
-			foreach( $fields as $field=>$attributes )
+			$f = "$lang-$field";
+			$sql = "DROP `$f`";
+			$ok = @safe_alter( $table , $sql );
+			$this->add_report_item( "Drop the $table.$lang-$field field" , $ok , true );
+			}
+		}
+	function setup_4_cb( $table , $field , $attributes )
+		{
+		$langs = LanguageHandler::get_site_langs();
+		$default = LanguageHandler::get_site_default_lang();
+		foreach( $langs as $lang )
+			{
+			$f = "$lang-$field";
+			$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
+			if( $exists )
 				{
-				foreach( $langs as $lang )
-					{
-					$sql = "DROP `$lang-$field`";
-					$ok = @safe_alter( $table , $sql );
-					$this->add_report_item( "Drop the $table.$lang-$field field" , $ok , true );
-					}
+				$this->add_report_item( "Skipped the $table.$lang-$field field, it already exists" , true , true );
+				continue;
+				}
+
+			$sql = "ADD `$f` ".$attributes['sql'];
+			$ok = @safe_alter( $table , $sql );
+			$this->add_report_item( "Added the $table.$f field" , $ok , true );
+
+			if( $ok && $lang===$default )
+				{
+				$sql = "UPDATE $table SET `$f`=`$field`";
+				$ok = @safe_query( $sql );
+				$this->add_report_item( "Copy defaults to $f field" , $ok , true );
 				}
 			}
 		}
 	function setup_4()
 		{
-		global $l10n_mappings;
-		if( !is_array( $l10n_mappings ) )
-			$l10n_mappings = l10n_remap_fields( '' , '' , true );
-
-		$langs = LanguageHandler::get_site_langs();
-		$default = LanguageHandler::get_site_default_lang();
 		$this->add_report_item( 'Localise the content tables...' );
-		foreach( $l10n_mappings as $table=>$fields )
-			{
-			$table = safe_pfx( $table );
-			foreach( $fields as $field=>$attributes )
-				{
-				foreach( $langs as $lang )
-					{
-					$f = "$lang-$field";
-					$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
-					if( $exists )
-						{
-						$this->add_report_item( "Skipped the $table.$lang-$field field, it already exists" , true , true );
-						continue;
-						}
-
-					$sql = "ADD `$f` ".$attributes['sql'];
-					$ok = @safe_alter( $table , $sql );
-					$this->add_report_item( "Added the $table.$f field" , $ok , true );
-
-					if( $ok && $lang===$default )
-						{
-						$sql = "UPDATE $table SET `$f`=`$field`";
-						$ok = @safe_query( $sql );
-						$this->add_report_item( "Copy defaults to $f field" , $ok , true );
-						}
-					}
-				}
-			}
+		l10n_mappings_walker( array( &$this , 'setup_4_cb' ) );
 		}
 	function setup_1()
 		{
