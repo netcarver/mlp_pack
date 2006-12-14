@@ -529,8 +529,8 @@ $DB = new DB;
 					if( !empty( $language ) )
 						{
 						$out['language'] = $language;
-						if( !defined( 'LANG' ) )
-							define( 'LANG' , $language );
+						//if( !defined( 'LANG' ) )
+							//define( 'LANG' , $language );
 						//echo br , "get_prefs() setting \$out['language'] < {$out['language']}.";
 						}
 					}
