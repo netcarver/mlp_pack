@@ -1190,26 +1190,18 @@ class LocalisationView extends GBPPlugin
 		return $results;
 		}
 
-	function serve_file( $data , $title )
+	function serve_file( $data , $title , $desc='File Download' , $type='application/octet-stream' )
 		{
 		ob_clean();
 		$size = strlen( $data );
-		header('Content-Description: File Download');
-		header('Content-Type: application/octet-stream');
+		header('Content-Description: '.$desc);
+		header('Content-Type: ' . $type);
 		header('Content-Length: ' . $size);
 		header('Content-Disposition: attachment; filename="' . $title . '"');
-		@ini_set("zlib.output_compression", "Off");
-		@set_time_limit(0);
-		@ignore_user_abort(true);
-		$d = chunk_split( $data , 8*1024 , n );
-		$data = explode( n , $d );
-		foreach( $data as $chunk )
-			{
-			echo $chunk;
-			ob_flush();
-			flush();
-			}
-		exit(0);
+		echo $data;
+		ob_flush();
+		flush();
+		exit;
 		}
 
 	function main()
@@ -1247,7 +1239,6 @@ class LocalisationView extends GBPPlugin
 				}
 			}
 		}
-
 	}
 
 function l10n_redirect_textpattern($table)
@@ -1451,7 +1442,7 @@ class SnippetTabView extends GBPAdminTabView
 		// This table, which contains the tags, will have to be changed if any improvements
 		// happen to the admin interface
 		$out[] = '<table cellpadding="0" cellspacing="0" width="100%" style="margin-top:-2em;margin-bottom:2em;">';
-		$out[] = '<tr><td align="center" class="tabs">';
+		$out[] = '<tr><td align="center" class="tabs" id="l10n_tabs_row">';
 		$out[] = '<table cellpadding="0" cellspacing="0" align="center"><tr>';
 
 		// Force the wizard to be the only tab if the plugin isn't installed
@@ -2698,7 +2689,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$out[] = gTxt('l10n-export_title' , array( '{type}'=>$snip_string )). br;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">'.sp.sp.gTxt('select').sp.'</td>' ).n.'</thead><tbody>';
 
-
 		foreach( $site_langs as $lang )
 			{
 			$name = t . '<label for="'.$lang.'">' . LanguageHandler::get_native_name_of_lang( $lang ) . '</label>';
@@ -3829,8 +3819,8 @@ class LocalisationWizardView extends GBPWizardTabView
 		'8' => array (
 			'cleanup' => 'Delete cookies' ),
 		'10' =>array (
-			'setup' => 'Clear the default comment invitation.',
-			'cleanup' => 'Restore the default comment invitation.'
+			'setup' => 'Clear the default comment invitation',
+			'cleanup' => 'Restore the default comment invitation'
 			),
 		);
 
@@ -4024,14 +4014,14 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		$default = @$GLOBALS['prefs']['comments_default_invite'];
 		$ok = set_pref( 'comments_default_invite', '', 'comments', 0 );
-		$this->add_report_item( 'Clear the default comment invitation.' , $ok );
+		$this->add_report_item( 'Clear the default comment invitation' , $ok );
 		}
 
 	function cleanup_10()
 		{
 		$default = gTxt('comment');
 		$ok = set_pref( 'comments_default_invite', $default, 'comments', 0 );
-		$this->add_report_item( 'Restore the default comment invitation.' , $ok );
+		$this->add_report_item( 'Restore the default comment invitation' , $ok );
 		}
 
 	function cleanup_2()
