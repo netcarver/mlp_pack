@@ -59,23 +59,23 @@ function _l10n_inject_js()
 
 	$fn = <<<end_js
 var {$langs}
-var search_box   = null;
-var search_term  = null;
-var result_div   = null;
-var result_list  = null;
-var cresult_div  = null;
-var result_num   = null;
-var csearch_box  = null;
-var csearch_lang = null;
-var str_edit_div = null;
-var sbn_lang_sel = null;
-var last_req     = "";
+	var search_box   = null;
+	var search_term  = null;
+	var result_div   = null;
+	var result_list  = null;
+	var cresult_div  = null;
+	var result_num   = null;
+	var csearch_box  = null;
+	var csearch_lang = null;
+	var str_edit_div = null;
+	var sbn_lang_sel = null;
+	var last_req     = "";
 
-var	xml_manager = false;
-if( window.XMLHttpRequest )
-	{
-	xml_manager = new XMLHttpRequest();
-	}
+	var	xml_manager = false;
+	if( window.XMLHttpRequest )
+		{
+		xml_manager = new XMLHttpRequest();
+		}
 
 function addLoadEvent(func)
 	{
@@ -271,7 +271,7 @@ function string_edit_handler()
 		{
 		var results = xml_manager.responseText;
 		str_edit_div.innerHTML = results;
-        window.scrollTo(0,50);
+        window.scrollTo(0,128);
 		}
 	}
 
