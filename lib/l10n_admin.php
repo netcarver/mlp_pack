@@ -558,7 +558,8 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 	if ($publish) $step = 'publish';
 
 	$incoming = gpsa($new_vars);
-	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : LanguageHandler::get_site_default_lang();
+	$default = LanguageHandler::get_site_default_lang();
+	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : $default;
 
 	switch(strtolower($step))
 		{
@@ -1197,12 +1198,12 @@ function l10n_image_paint( $page )
 
 				if( $field === 'alt' )
 					{
-					$r .= '<p>'.gTxt('alt_text').' ['.$full_name.']<br/>';
+					$r .= '<p>'.gTxt('alt_text').' '.$full_name.'<br/>';
 					$r .= '<input type="text" name="'.$field_name.'" '.$dir.' value="'.$row[$field_name].'" size="50" class="edit" id="'.$field_name.'" /></p>'.n;
 					}
 				else
 					{
-					$r .= '<p>'.gTxt('caption').' ['.$full_name.']<br/>';
+					$r .= '<p>'.gTxt('caption').' '.$full_name.'<br/>';
 					$r .= '<textarea name="'.$field_name .'" cols="40" rows="5" style="width: 400px; height: 100px;"'.$dir.'>';
 					$r .= $row[$field_name].'</textarea></p>'.n;
 					}
@@ -1225,7 +1226,7 @@ function l10n_image_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = 'for="alt-text">'.gTxt('alt_text');
-	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$r = ' '.LanguageHandler::get_native_name_of_lang( $default );
 	$page = str_replace( $f , $f.sp.$r , $page );
 	$f = 'for="caption">'.gTxt('caption');
 	$page = str_replace( $f , $f.sp.$r , $page );
