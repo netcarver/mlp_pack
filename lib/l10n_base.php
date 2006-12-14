@@ -3873,8 +3873,9 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function installed()
 		{
-		$result = getThing( 'show tables like \''.PFX.L10N_ARTICLES_TABLE.'\'' );
-		return ($result);
+		//$result = getThing( 'show tables like \''.PFX.L10N_ARTICLES_TABLE.'\'' );
+		//return ($result);
+		return l10n_installed();
 		}
 
 	function get_required_versions()
