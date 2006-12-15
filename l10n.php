@@ -350,6 +350,10 @@ Setting this option to 'yes' allows pages and forms to be edited using a special
 
 It also allows you access to a feature that allows pages and forms to automatically be wrapped with the l10n_localise tag.
 
+h3(#l10n-allow_search_delete). "Allow strings to be totally deleted on the snippet > search tab?":#prefs
+
+Choose 'yes' to allow all renditions of a string to be deleted when edited via the Content>MLP>Snippets>Search tab. Just select a string to edit, manually delete all renditions of the string and then hit 'save'. This will remove the string from your installation. You will be left on the edit page for that string so that you can re-enter rendition data if your deletion was a mistake.
+
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
 h2(#langs). Supported Languages.
