@@ -503,7 +503,13 @@ $DB = new DB;
 				$out[$a['name']] = $a['val'];
 				}
 
-			if( defined('LANG') )
+			global $event;
+			$exception = false;
+			$exception_events = array( 'prefs' );	# These txp pages do their own language loading from the $prefs['language'] setting.
+			if( isset( $event ) )
+				$exception = in_array( $event , $exception_events );
+
+			if( defined('LANG') && !$exception )
 				return $out;
 
 			if( (@txpinterface==='admin') or (@txpinterface==='public') )
@@ -529,9 +535,6 @@ $DB = new DB;
 					if( !empty( $language ) )
 						{
 						$out['language'] = $language;
-						//if( !defined( 'LANG' ) )
-							//define( 'LANG' , $language );
-						//echo br , "get_prefs() setting \$out['language'] < {$out['language']}.";
 						}
 					}
 				}
