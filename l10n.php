@@ -146,6 +146,7 @@ On the admin side...
 * Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
 * Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
 * Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
+* Export of TxP strings using the TxP language file format for distribution to other/devs.
 * Support for articles as groups of renditions.
 * Support for cloning of renditions and their translation into other languages using the existing write tab.
 * Email notifications sent to translators when articles are cloned or have their author changed.
@@ -355,7 +356,7 @@ h2(#langs). Supported Languages.
 
 Here is the full list of ISO-693 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
 
-The array is located in the file @textpattern\lib\l10n_base.php@.
+The array is located in the file @textpattern\lib\mlp_langs.php@.
 
 You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-693-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-693-2 code set) then you _could_ generate your own code for it.
 
@@ -534,6 +535,30 @@ November 2006.
 }
 # --- BEGIN PLUGIN CODE ---
 
+// require_plugin() will reset the $txp_current_plugin global
+global $txp_current_plugin;
+$l10n_current_plugin = $txp_current_plugin;
+require_plugin('gbp_admin_library');
+$txp_current_plugin = $l10n_current_plugin;
+
+// Constants
+if( !defined( 'L10N_PLUGIN_CONST' ))
+	define('L10N_PLUGIN_CONST', 'plugin');
+if( !defined( 'L10N_SEP' ))
+	define( 'L10N_SEP' , '-' );
+if( !defined( 'L10N_NAME' ))
+	define( 'L10N_NAME' , 'l10n' );
+if( !defined( 'L10N_PREFS_LANGUAGES' ))
+	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
+if( !defined( 'L10N_ARTICLES_TABLE' ) )
+	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
+if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
+	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_textpattern_' );
+if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
+	define( 'L10N_SNIPPET_IO_HEADER' , 'MDoibDEwbi1jbG9uZSI7czoxMjoi' );
+
+if( !defined( 'L10N_SNIPPET_PATTERN' ) )
+	define( 'L10N_SNIPPET_PATTERN' , "/##([\w|\.|\-]+)##/" );
 global $txpcfg;
 
 function _l10n_set_browse_language( $code , $long ,  $debug=false )
@@ -746,6 +771,7 @@ function _l10n_process_url( $use_get_params=false )
 	}
 
 
+
 # -- Include the admin file only if needed...
 if( @txpinterface === 'admin' )
 	{
@@ -754,6 +780,7 @@ if( @txpinterface === 'admin' )
 	global $l10n_language , $textarray , $prefs;
 	global $l10n_view;
 
+	#	Switch admin lang if needed...
 	_l10n_process_url( true );
 	if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
 		{
@@ -761,9 +788,18 @@ if( @txpinterface === 'admin' )
 		$prefs['language'] = $l10n_language['long'];
 		}
 
+	#
+	include_once $txpcfg['txpath'].'/lib/l10n_admin_classes.php';
 	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
 
+	#
 	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
+	if( gps( 'l10nfile' ) === 'mlp.js' )
+		{
+		ob_start();
+		print _l10n_inject_js();
+		exit;
+		}
 	}
 
 
@@ -877,6 +913,66 @@ if (@txpinterface === 'public')
 		if( in_array( $first_chunk , $ob_cleaning) )
 			while( @ob_end_clean() );
 		}
+	function _l10n_get_article_members( $article_id , $exclude_lang , $status='4' )
+		{
+		#
+		#	Returns an array of the lang->rendition mappings for all members of the
+		# given article...
+		#
+		$result = array();
+		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
+		$rows = safe_rows_start( 'ID,Title,Lang' , 'l10n_master_textpattern' , $where );
+		if( count( $rows ) )
+			{
+			while( $row = nextRow($rows) )
+				{
+				$lang = $row['Lang'];
+				$result[$lang] = array( 'id' => $row['ID'] , 'title' => escape_title($row['Title']) );
+				}
+			}
+		return $result;
+		}
+	function _l10n_get_alternate_mappings( $rendition_id , $exclude_lang , $use_master=false )
+		{
+		if( $use_master )
+			$info = safe_row( '`Group`' , 'l10n_master_textpattern' , "`ID`='$rendition_id'" );
+		else
+			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$rendition_id'" );
+		if( empty($info) )
+			{
+			return $info;
+			}
+
+		$article_id = $info['Group'];
+		$alternatives = _l10n_get_article_members( $article_id , $exclude_lang );
+		return $alternatives;
+		}
+
+	function _l10n_substitute_snippets( &$thing )
+		{
+		/*
+		Replaces all snippets within the contained block with their text from the global textarray.
+		Allows TxP devs to include snippets* in their forms and page templates.
+		*/
+		$out = preg_replace_callback( 	L10N_SNIPPET_PATTERN ,
+										create_function(
+							           '$match',
+								       'global $l10n_language;
+										global $textarray;
+										if( $l10n_language )
+											$lang = $l10n_language[\'long\'];
+										else
+											$lang = "??";
+										$snippet = strtolower($match[1]);
+										if( array_key_exists( $snippet , $textarray ) )
+											$out = $textarray[$snippet];
+										else
+											$out = "($lang)$snippet";
+										return $out;'
+									), $thing );
+		return $out;
+		}
+
 
 	/*
 	TAG HANDLERS FOLLOW
@@ -976,7 +1072,7 @@ if (@txpinterface === 'public')
 		if( !$article_list )
 			{
 			if( !isset( $alangs ) or !is_array( $alangs ) )
-				$alangs = ArticleManager::get_alternate_mappings( $id , 'nothing' , true );
+				$alangs = _l10n_get_alternate_mappings( $id , 'nothing' , true );
 
 			//echo br , 'alangs = ' , var_dump( $alangs );
 
@@ -1251,15 +1347,14 @@ if (@txpinterface === 'public')
 
 	function l10n_localise($atts, $thing = '')
 		{
-		global $l10n_language, $thisarticle, $thislink;
-		global $logfile , $logging;
+		global $l10n_language;
 
 		if ($l10n_language)
 			{
 			if ($thing)
 				{
 				# Process the direct snippet substitutions needed in the contained content.
-				$thing = SnippetHandler::substitute_snippets( $thing );
+				$thing = _l10n_substitute_snippets( $thing );
 				$html = parse($thing);
 
 				#
@@ -1275,13 +1370,6 @@ if (@txpinterface === 'public')
 
 				return $html;
 				}
-			}
-
-		if ($thing)
-			{
-			# SED: Process and string substitutions needed in the contained content.
-			$thing = SnippetHandler::substitute_snippets( $thing );
-			return parse($thing);
 			}
 
 		return null;
