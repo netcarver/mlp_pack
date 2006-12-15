@@ -58,7 +58,6 @@ h2. Table Of Contents.
 * "Terminology":#terms
 * "Translation Paradigm":#paradigm
 * "What the MLP(Multi-Lingual Publishing) Pack provides.":#features
-* "Known Issues":#issues
 * "Snippets":#snippets
 * "Tag Directory":#tags
 ** "l10n_lang_list":#lang_list
@@ -171,29 +170,6 @@ On the public side...
 * A tag to list all available renditions of a given article and allow switching between them.
 * Tags for accessing language codes and direction information.
 * Conditional tag for testing the visitor's language or the directionality of the language.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#issues). Known Issues
-
-Here is a list of known issues...
-
-<h3>No MLP interface for localising link and file descriptions.</h3>
-
-These fields can still be localised using the normal Textpattern pages. However, you need to use the l10n_if_lang tag to wrap each translation within the description field.
-
-For example, to provide localised descriptions in English and Greek you enter this into the description field...
-
- <div class="code_tag"><pre> &lt;txp:l10n_if_lang lang="en-gb"&gt;
- English (GB).
- &lt;/txp:l10n_if_lang&gt;
- &lt;txp:l10n_if_lang lang="el-gr"&gt;
- Ελληνικά.
- &lt;/txp:l10n_if_lang&gt;</pre></div>
-
-<h3>Localisation of image alt and image caption attributes.</h3>
-
-This is more problematic and the above method does not work.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
