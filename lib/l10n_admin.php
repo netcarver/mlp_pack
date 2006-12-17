@@ -239,7 +239,7 @@ function _l10n_chooser( $permitted_langs )
 	$count = 0;
 	foreach( $langs as $lang )
 		{
-		$table = ArticleManager::make_textpattern_name(array('long'=>$lang));
+		$table = make_textpattern_name(array('long'=>$lang));
 		$lang_rendition_count = safe_count( $table , "`Lang`='$lang'" );
 		$lang_has_renditions = ($lang_rendition_count > 0);
 
@@ -393,8 +393,8 @@ function _l10n_process_admin_page($page)
 	{
 	global $event , $step , $l10n_painters;
 
-	$events = array( 'l10n' , 'article' );
-	if( in_array( $event , $events )  )
+	$mlp_js_events = array( 'l10n' , 'article' );
+	if( in_array( $event , $mlp_js_events )  )
 		{
 		#
 		#	Inject the MLP JavaScript into the head area...
@@ -411,14 +411,14 @@ function _l10n_process_admin_page($page)
 	$page = str_replace( $f , _l10n_inject_switcher_form().sp.$f , $page);
 
 	#
-	#	Now dynamically replace the 'tab_list' label...
+	#	Dynamically replace the 'tab_list' label...
 	#
-	$f = 'class="plain">'.gTxt('tab_list').'</a>';
+	$f = '<a href="?event=list" class="plain">'.gTxt('tab_list').'</a>';
 	$r = htmlspecialchars(gTxt('l10n-renditions'));
-	$page = str_replace( $f , 'class="plain">'.$r.'</a>' , $page);
+	$page = str_replace( $f , '<a href="?event=list" class="plain">'.$r.'</a>' , $page);
 
 	#
-	#	And pass the page through any matching event processors...
+	#	Pass the page through any matching event processors...
 	#
 	if( empty( $l10n_painters ) )
 		return $page;
@@ -809,7 +809,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 		echo br , "Invalid language code '$code' calculated in _l10n_generate_lang_table()";
 		return;
 		}
-	$table_name = ArticleManager::make_textpattern_name( $code );
+	$table_name = make_textpattern_name( $code );
 
 	$where = '';
 	if( $filter )
