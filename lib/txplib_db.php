@@ -523,8 +523,7 @@ $DB = new DB;
 					# for reloading the strings.
 					#
 					# If this guess later proves to be wrong -- for example, on the first call or when
-					# the user switches browse language -- then the textarray (strings) will get
-					# reloaded then.
+					# the user switches browse language -- then $textarray will be reloaded.
 					#
 					@session_start();
 					$language = '';
