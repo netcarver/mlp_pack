@@ -273,6 +273,13 @@ class LanguageHandler
 		{
 		$result = array();
 		$short_code = trim( $short_code );
+
+		if( empty( $short_code ) )
+			{
+			//echo br, "expand_code( $short_code ) rejecting empty \$short_code!";
+			return null;
+			}
+
 		$langs = LanguageHandler::get_site_langs();
 		foreach( $langs as $code )
 			{
