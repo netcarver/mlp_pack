@@ -955,7 +955,7 @@ function l10n_category_paint( $page )
 				}
 			}
 		}
-	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="Save" class="smallerbox" /></td>';
+	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="'.gTxt('save_button').'" class="smallerbox" /></td>';
 	$page = str_replace( $f , $r.n.$f , $page );
 
 	#
