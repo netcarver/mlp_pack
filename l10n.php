@@ -649,7 +649,11 @@ function _l10n_process_url( $use_get_params=false )
 		#	Examine the first path entry for the language request.
 		#
 		$tmp = array_shift( $path );
+		if( $debug )
+			echo br , "L10N MLP: Checking start of path for language ... " , var_dump($tmp);
 		$temp = LanguageHandler::expand_code( $tmp );
+		if( $debug )
+			echo br , "L10N MLP: expand_code($tmp) returned " , var_dump($temp);
 		$reduce_uri = true;
 		$new_first_path = (isset($path[0])) ? $path[0] : '' ;
 
@@ -665,6 +669,8 @@ function _l10n_process_url( $use_get_params=false )
 			}
 		else
 			{
+			if( $debug )
+				echo br , "L10N MLP: no match branch";
 			#
 			#	Not a language this site can serve...
 			#
@@ -693,6 +699,8 @@ function _l10n_process_url( $use_get_params=false )
 		# from the user agent's HTTP header.
 		#
 		$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
+		if( $debug )
+			echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
 		if( isset( $req_lang ) and !empty( $req_lang ) )
 			{
 			$chunks = split( ',' , $req_lang );
@@ -706,13 +714,16 @@ function _l10n_process_url( $use_get_params=false )
 						$info[] = $chunk;
 						}
 					$code = $info[0];
-					if( $code )
+					if( isset($code) and !empty($code) )
 						{
 						$len = strlen( $code );
 						if( $len === 2 )
 							{
 							$lang = LanguageHandler::expand_code( $info[0] );
-							$lang = LanguageHandler::compact_code( $lang );
+							if( !empty($lang) )
+								$lang = LanguageHandler::compact_code( $lang );
+							else
+								continue;
 							}
 						elseif( $len === 5 )
 							$lang = LanguageHandler::compact_code( $info[0] );
@@ -740,6 +751,8 @@ function _l10n_process_url( $use_get_params=false )
 		$short = substr( $long , 0 , 2 );
 		$_SESSION[$ssname] = $short;
 		$_SESSION[$lsname] = $long;
+		if( $debug )
+			echo br , "L10N MLP: No language match found, setting to site default ... $long as $short";
 		}
 
 	if( $use_get_params )
