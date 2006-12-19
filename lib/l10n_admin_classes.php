@@ -1,9 +1,13 @@
 <?php
 
 #
-#	Classes for admin side operations.
+#	Bring in the strings...
 #
+include_once $txpcfg['txpath'].'/lib/l10n_default_strings.php';
 
+#
+#	Classes for admin side operations...
+#
 class ArticleManager
 	{
 	function create_table()
@@ -1190,107 +1194,15 @@ class LocalisationView extends GBPPlugin
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-allow_search_delete' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		);
-	var $strings_lang = 'en-gb';
 	var $strings_prefix = L10N_NAME;
 	var $insert_in_debug_mode = false;
-	var $perm_strings = array( # These strings are always needed.
-		'l10n-localisation'			=> 'MLP',
-		'l10n-toggle'				=> 'Toggle',
-		'l10n-done'					=> 'Done',
-		'l10n-failed'				=> 'Failed',
-		'l10n-wizard'				=> 'Wizards',
-		'l10n-snippets_tab'			=> 'Snippets',
-		);
-	var $strings = array(
-		'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
-		'l10n-add_missing_rend'		=> 'Added missing rendition($rendition) to article $ID',
-		'l10n-all_languages'		=> 'Any language',
-		'l10n-allow_search_delete' => 'Allow strings to be totally deleted on the snippet > search tab?',
-		'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
-		'l10n-article_table_ok'		=> 'Article table ok.',
-		'l10n-by'					=> 'by',
-		'l10n-by_content'			=> 'by content',
-		'l10n-by_name'				=> 'by name',
-		'l10n-cannot_export'		=> 'Cannot export $lang as it is not installed on the site.',
-		'l10n-clone'				=> 'Clone',
-		'l10n-clone_and_translate'	=> 'Clone "{article}" for translation',
-		'l10n-cannot_delete_all'	=> 'Must have 1+ rendition(s).',
-		'l10n-del_phantom' 			=> 'Deleted phantom rendition($rendition) from article $ID',
-		'l10n-delete_plugin'		=> 'This will remove ALL strings for this plugin.',
-		'l10n-delete_whole_lang'	=> 'Delete all ($var2) strings in $var1?',
-		'l10n-edit_resource'		=> 'Edit $type: $owner ',
-		'l10n-email_xfer_subject'	=> '[{sitename}] Notice: {count} rendition{s} transferred to you.',
-		'l10n-email_body_other'		=> "{txp_username} has transferred the following rendition{s} to you...\r\n\r\n",
-		'l10n-email_body_self'		=> "You transferred the following rendition{s} to yourself...\r\n\r\n",
-		'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the rendition{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
-		'l10n-empty'				=> 'empty',
-		'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the public site preferences but may be in use for the admin interface.</p><p>If they are not needed for your site you can delete them.</p>',
-		'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
-		'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
-		'l10n-export'				=> 'Export',
-		'l10n-export_title'			=> '<h2>Export {type} Strings</h2><br/><p>Select languages you wish to include and then click the button.</p>',
-		'l10n-import'				=> 'Import',
-		'l10n-import_count'			=> 'Imported {count} {type} strings.',
-		'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',
-		'l10n-import_warning'		=> 'This will insert or OVERWRITE all of the displayed strings.',
-		'l10n-inline_editing'		=> 'Inline editing of pages and forms ',
-		'l10n-into'					=> 'into',
-		'l10n-inout'				=> 'Export/Import',
-		'l10n-invalid_import_file'	=> '<p><strong>This is not a valid string file.</strong></p>',
-		'l10n-lang_remove_warning'	=> 'This will remove ALL plugin strings in $var1. ',
-		'l10n-lang_remove_warning2'=> 'Delete ALL strings in $var1. You will need to re-install all strings for $var1 if you want to use it again, even in the admin interface. ',
-		'l10n-language_not_supported' => 'Skipping: Language not supported.',
-		'l10n-languages' 			=> 'Languages ',
-		'l10n-legend_warning'		=> 'Warning/Error',
-		'l10n-legend_fully_visible'	=> 'Visible in all languages',
-		'l10n-localised'			=> 'Localised',
-		'l10n-ltr'					=> 'LTR&nbsp;>',
-		'l10n-matches'				=> ' strings match.',
-		'l10n-missing'				=> ' missing.',
-		'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
-		'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
-		'l10n-no_plugin_heading'	=> 'Notice&#8230;',
-		//'l10n-only'					=> 'only',
-		'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
-		'l10n-plugin'				=> 'Plugin',
-		'l10n-registered_plugins'	=> 'Registered Plugins.' ,
-		'l10n-remove_plugin'		=> "This plugin is no longer installed or may be running from the cache directory.<br/><br/>If this plugin's strings are no longer needed you can remove them.",
-		'l10n-renditions'			=> 'Renditions',
-		'l10n-rendition_delete_ok'	=> 'Rendition {rendition} deleted.',
-		'l10n-renditions_for'		=> 'Renditions for ',
-		'l10n-rtl'					=> '<&nbsp;RTL',
-		'l10n-sbn_rubrik'			=> 'Type your search phrase above.',
-		'l10n-sbn_title'			=> 'Type your search term in here.',
-		'l10n-search_for_strings'	=> 'Search For Strings',
-		'l10n-send_notifications'	=> 'Email user when you assign them a rendition?',
-		'l10n-send_notice_to_self'	=> '&#8230; even when assigning to yourself?',
-		'l10n-send_notice_on_changeauthor' => '&#8230; even when author changed in content > renditions list?',
-		'l10n-show_langs'			=> 'Show languages&#8230;',
-		'l10n-show_legends' 		=> 'Show article table legend?',
-		'l10n-skip_rendition'		=> 'Skipped rendition($rendition) while processing article($ID) as it uses unsupported language $lang',
-		'l10n-snippet'				=> 'Snippet',
-		'l10n-snippets'				=> ' snippets.',
-		'l10n-special'				=> 'Special',
-		'l10n-specials'				=> 'Specials',
-		'l10n-statistics'			=> 'Show Statistics ',
-		'l10n-strings'				=> ' strings',
-		'l10n-strings_match'		=> ' strings match&#8230;',
-		'l10n-summary'				=> 'Statistics.',
-		'l10n-table_rebuilt'		=> 'Article table corrected, try again.',
-		'l10n-textbox_title'		=> 'Type in the text here.',
-		'l10n-total'				=> 'Total',
-		'l10n-unlocalised'			=> 'Unlocalised',
-		'l10n-view_site'			=> 'View localised site',
-		'l10n-warn_section_mismatch' => 'Section mismatch',
-		'l10n-warn_lang_mismatch'	=> 'Language mismatch',
-		'l10n-xlate_to'				=> 'Translating into: ',
-		);
 	var $permissions = '1,2,3,6';
 
 	// Constructor
 	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' )
 		{
 		global $textarray , $production_status , $prefs;
+		global $l10n_default_strings , $l10n_default_strings_lang , $l10n_default_strings_perm;
 
 		if( @txpinterface === 'admin' )
 			{
@@ -1317,20 +1229,20 @@ class LocalisationView extends GBPPlugin
 
 			# Merge the default language strings into the textarray so that non-English
 			# users at least see an English message in the plugin.
-			if( $prefs['language'] !== $this->strings_lang )
+			if( $prefs['language'] !== $l10n_default_strings_lang )
 				{
-				$textarray = array_merge( $this->strings , $textarray );
+				$textarray = array_merge( $l10n_default_strings , $textarray );
 				}
 
 			#	These strings are always needed (for example, by setup/cleanup wizards)...
-			$textarray = array_merge( $this->perm_strings , $textarray );
+			$textarray = array_merge( $l10n_default_strings_perm , $textarray );
 
 			#	To ease development, allow new strings to be inserted...
 			if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 				{
-				$this->strings = array_merge( $this->strings , $this->perm_strings );
-				$ok = StringHandler::remove_strings_by_name( $this->strings , 'admin' , 'l10n' , $this->strings_lang );
-				$ok = StringHandler::insert_strings( $this->strings_prefix , $this->strings , $this->strings_lang , 'admin' , 'l10n' , true );
+				$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
+				$ok = StringHandler::remove_strings_by_name( $l10n_default_strings , 'admin' , 'l10n' , $l10n_default_strings_lang );
+				$ok = StringHandler::insert_strings( $this->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
 				StringHandler::load_strings_into_textarray( LANG );
 				}
 			}
@@ -4069,42 +3981,96 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 class LocalisationWizardView extends GBPWizardTabView
 	{
- 	var $installation_steps = array(
-		'1' => array(
-			'setup' => 'Extend the txp_lang.data field from TINYTEXT to TEXT and add the \'owner\' field.',
-			'cleanup' => 'Drop the \'owner\' field from the txp_lang table.'	),
-		'2' => array(
-			'setup' => 'Insert the strings for this plugin',
-			'cleanup' => 'Remove all MLP strings and unregister plugins'),
-		'3' => array(
-			'setup' => 'Add `Lang` and `Group` fields to the textpattern table'),
-		'3a'=> array(
-			'cleanup' => 'Drop the `Lang` and `Group` fields from the textpattern table.<br/>Check this if you do not want to re-install the MLP Pack.', 'optional' => true , 'checked'=>0 ),
-		'4' => array(
-			'setup' => 'Localise fields in content tables',
-			),
-		'4a' => array(
-			'cleanup' => 'Drop localised content fields.<br/>Remove localised titles/descriptions etc&#8230;', 'optional'=>true, 'checked'=>0
-			),
-		'5' => array(
-			'setup' => 'Add the l10n_articles table',
-			'cleanup' => 'Drop the l10n_articles table'),
-		'6' => array(
-			'setup' => 'Process existing articles' ),
-		'7' => array(
-			'setup' => 'Add new l10n_textpattern tables for each site language',
-			'cleanup' => 'Drop the extra l10n_textpattern tables'),
-		'8' => array (
-			'cleanup' => 'Delete cookies' ),
-		'10' =>array (
-			'setup' => 'Clear the default comment invitation',
-			'cleanup' => 'Restore the default comment invitation'
-			),
-		);
+ 	function get_steps()
+		{
+		#
+		#	Override this method in derived classes to return the appropriate setup/cleanup steps.
+		#
+		$steps = array(
+			'1' => array(
+				'setup'   => gTxt('l10n-setup_1_main'),
+				'cleanup' => gTxt('l10n-drop_field',array('{field}'=>'owner','{table}'=>'txp_lang'))
+				),
+			'2' => array(
+				'setup'   => gTxt('l10n-setup_2_main'),
+				'cleanup' => gTxt('l10n-clean_2_main')
+				),
+			'3' => array(
+				'setup'   => gTxt('l10n-setup_3_main'),
+				),
+			'3a'=> array(
+				'cleanup' => gTxt('l10n-clean_3a_main').br.gTxt('l10n-clean_3a_main_2'), 'optional' => true , 'checked'=>0
+				),
+			'4' => array(
+				'setup'   => gTxt('l10n-setup_4_main'),
+				),
+			'4a'=> array(
+				'cleanup' => gTxt('l10n-clean_4a_main'), 'optional'=>true, 'checked'=>0
+				),
+			'5' => array(
+				'setup'   => gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>L10N_ARTICLES_TABLE)),
+				'cleanup' => gTxt('l10n-op_table',array('{op}'=>'Drop','{table}'=>L10N_ARTICLES_TABLE)),
+				),
+			'6' => array(
+				'setup'   => gTxt('l10n-setup_6_main',array( '{count}'=>'all existing')),
+				),
+			'7' => array(
+				'setup'   => gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language l10n_textpattern')),
+				'cleanup' => gTxt('l10n-op_tables',array('{op}'=>'Drop','{tables}'=>'per-language l10n_textpattern')),
+				),
+			'8' => array(
+				'cleanup' => gTxt('l10n-clean_8_main')
+				),
+			'10'=> array(
+				'setup'   => gTxt('l10n-comment_op',array('{op}'=>'Clear')),
+				'cleanup' => gTxt('l10n-comment_op',array('{op}'=>'Restore')),
+				),
+			);
+		return $steps;
+		}
 
 	function installed()
 		{
 		return l10n_installed();
+		}
+
+	function get_strings( $language = '' )
+		{
+		global $l10n_default_strings_perm;
+		global $l10n_default_strings;
+		global $textarray;
+
+		#
+		#	Get base class defaults...
+		#
+		$defaults = GBPWizardTabView::get_strings( $language );
+
+		#
+		#	Merge our wizard strings...
+		#
+		foreach( $defaults as $k=>$v )
+			{
+			list( $prefix , $key ) = explode( L10N_SEP , $k );
+			$key = L10N_NAME.L10N_SEP.$key;
+			$key = strtolower($key);
+
+			if( isset($textarray[$key]) )
+				{
+				$v = $textarray[$key];
+				}
+			elseif( isset( $l10n_default_strings_perm[$key] ) )
+				{
+				$v = $l10n_default_strings_perm[$key];
+				}
+			elseif( isset( $l10n_default_strings[$key] ) )
+				{
+				$v = $l10n_default_strings[$key];
+				}
+
+			$merged[$k] = $v;
+			}
+
+		return $merged;
 		}
 
 	function get_required_versions()
@@ -4128,86 +4094,32 @@ class LocalisationWizardView extends GBPWizardTabView
 		return $tests;
 		}
 
-	function cleanup_4a()
+	function setup_1()		# Extend the `txp_lang.data` field from TINYTEXT to TEXT and add the `owner` field
 		{
-		$this->add_report_item( 'Remove Localised content from tables...' );
-		l10n_mappings_walker( array( &$this , 'cleanup_4a_cb' ) );
-		}
-	function cleanup_4a_cb( $table , $field , $attributes )
-		{
-		$langs = LanguageHandler::get_site_langs();
-		foreach( $langs as $lang )
-			{
-			$f = "$lang-$field";
-			$sql = "DROP `$f`";
-			$ok = @safe_alter( $table , $sql );
-			$this->add_report_item( "Drop the $table.$lang-$field field" , $ok , true );
-			}
-		}
-	function setup_4_cb( $table , $field , $attributes )
-		{
-		$langs = LanguageHandler::get_site_langs();
-		$default = LanguageHandler::get_site_default_lang();
-		foreach( $langs as $lang )
-			{
-			$f = "$lang-$field";
-			$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
-			if( $exists )
-				{
-				$this->add_report_item( "Skipped the $table.$lang-$field field, it already exists" , true , true );
-				continue;
-				}
+		$this->add_report_item( gTxt('l10n-setup_1_title') );
 
-			$sql = "ADD `$f` ".$attributes['sql'];
-			$ok = @safe_alter( $table , $sql );
-			$this->add_report_item( "Added the $table.$f field" , $ok , true );
-
-			if( $ok && $lang===$default )
-				{
-				$sql = "UPDATE $table SET `$f`=`$field`";
-				$ok = @safe_query( $sql );
-				$this->add_report_item( "Copy defaults to $f field" , $ok , true );
-				}
-			}
-		}
-	function setup_4()
-		{
-		$this->add_report_item( 'Localise the content tables...' );
-		l10n_mappings_walker( array( &$this , 'setup_4_cb' ) );
-		}
-	function setup_1()
-		{
-		$this->add_report_item( 'Change the txp_lang table...' );
-
-		# Extend the txp_lang table to allow text instead of tinytext in the data field.
 		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Extend the txp_lang.data field from TINYTEXT to TEXT' , $ok , true );
+		$this->add_report_item( gTxt('l10n-setup_1_extend') , $ok , true );
 
 		$sql = "ADD `owner` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' AFTER `data`";
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Add the \'owner\' field.' , $ok , true );
+		$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'owner','{table}'=>'txp_lang')) , $ok , true );
 		}
 
-	function cleanup_1()
+	function setup_2()		# Add strings...
 		{
-		$sql = "DROP `owner`";
-		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( 'Delete the \'owner\' field.' , $ok );
-		}
+		global $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings;
 
-	function setup_2()
-		{
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		# Make sure we only call insert_strings() once!
-		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
-		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $this->parent->strings , $this->parent->strings_lang , 'admin' , 'l10n' );
-		$this->add_report_item( 'Insert the strings for this plugin' , $ok );
+		$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
+		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' );
+		$this->add_report_item( gTxt('l10n-setup_2_main') , $ok );
 		}
 
-	function setup_3()
+	function setup_3()		# Extend the textpattern table...
 		{
-		# Extend the textpattern table...
 		$sql = array();
 
 		$desc = 'COLUMNS';
@@ -4238,44 +4150,76 @@ class LocalisationWizardView extends GBPWizardTabView
 		if( !$article_id_found )
 			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
 
-		$this->add_report_item( 'Add fields to the "textpattern" table' );
+		$this->add_report_item( gTxt('l10n-setup_3_title') );
 		if( !empty( $sql ) )
 			{
 			$ok = @safe_alter( 'textpattern' , join('', $sql) );
 
 			if( $lang_found )
-				$this->add_report_item( 'Skip adding the `Lang` field -- it already exists' , $ok , true );
+				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'lang','{table}'=>'textpattern')) , $ok , true );
 			else
-				$this->add_report_item( 'Add the `Lang` field' , $ok , true );
+				$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'lang','{table}'=>'textpattern')) , $ok , true );
 			if( $article_id_found )
-				$this->add_report_item( 'Skip adding the `Group` field -- it already exists' , $ok , true );
+				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'group','{table}'=>'textpattern')) , $ok , true );
 			else
-				$this->add_report_item( 'Add the `Group` field' , $ok , true );
+				$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'group','{table}'=>'textpattern')) , $ok , true );
 			}
 		else
-			$this->add_report_item( 'Skip adding `Lang` and `Group` fields, they already exist.' , true , true );
+			{
+			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'lang' ,'{table}'=>'textpattern')) , true , true );
+			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'group','{table}'=>'textpattern')) , true , true );
+			}
 		}
+	function setup_4() 		# Localise fields in content tables
+		{
+		$this->add_report_item( gTxt('l10n-setup_4_main').'&#8230;' );
+		l10n_mappings_walker( array( &$this , 'setup_4_cb' ) );
+		}
+	function setup_4_cb( $table , $field , $attributes )
+		{
+		$langs = LanguageHandler::get_site_langs();
+		$default = LanguageHandler::get_site_default_lang();
+		foreach( $langs as $lang )
+			{
+			$f = "$lang-$field";
+			$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
+			if( $exists )
+				{
+				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>$f,'{table}'=>$table)) , true , true );
+				continue;
+				}
 
-	function setup_5()
+			$sql = "ADD `$f` ".$attributes['sql'];
+			$ok = @safe_alter( $table , $sql );
+			$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
+
+			if( $ok && $lang===$default )
+				{
+				$sql = "UPDATE $table SET `$f`=`$field`";
+				$ok = @safe_query( $sql );
+				$this->add_report_item( gTxt('l10n-copy_defaults',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
+				}
+			}
+		}
+	function setup_5()		# Create the articles table
 		{
 		$ok = ArticleManager::create_table();
-		$this->add_report_item( 'Add the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
+		$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>L10N_ARTICLES_TABLE)) , $ok );
 		}
 
-	function setup_6()
+	function setup_6()		# Run the import routine selected by the user from the install wizard tab...
 		{
-		# Run the import routine selected by the user from the install wizard tab...
 		$ok = $this->_import_fixed_lang();
-		$this->add_report_item( ($ok===true)?'Process all articles':"Process $ok articles "  , true );
+		$this->add_report_item( ($ok===true) ? gTxt('l10n-setup_6_main',array( '{count}'=>'all existing')) : gTxt('l10n-setup_6_main',array( '{count}'=>$ok))  , true );
 		}
 
-	function setup_7()
+	function setup_7()		# Create per-language copies of textpattern table
 		{
 		# Create the first instances of the language tables as straight copies of the existing
 		# textpattern table so users on the public side still see everything until we start editing
 		# articles.
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( 'Add the language native textpattern tables' );
+		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
@@ -4283,31 +4227,33 @@ class LocalisationWizardView extends GBPWizardTabView
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Add the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
+			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
 		}
 
-	function setup_10()
+	function setup_10()		# Blank out the comments default invite
 		{
 		$default = @$GLOBALS['prefs']['comments_default_invite'];
 		$ok = set_pref( 'comments_default_invite', '', 'comments', 0 );
-		$this->add_report_item( 'Clear the default comment invitation' , $ok );
+		$this->add_report_item( gTxt('l10n-comment_op',array('{op}'=>'Clear')) , $ok );
 		}
 
-	function cleanup_10()
+	function cleanup_1()	# Drop the txp_lang.owner field
 		{
-		$default = gTxt('comment');
-		$ok = set_pref( 'comments_default_invite', $default, 'comments', 0 );
-		$this->add_report_item( 'Restore the default comment invitation' , $ok );
+		$sql = "DROP `owner`";
+		$ok = @safe_alter( 'txp_lang' , $sql );
+		$this->add_report_item( gTxt('l10n-drop_field',array('{field}'=>'owner','{table}'=>'txp_lang')) , $ok );
 		}
 
-	function cleanup_2()
+	function cleanup_2()	# Remove MLP strings/de-register plugins
 		{
+		global $l10n_default_strings_perm , $l10n_default_strings;
+
 		# Remove the l10n strings...
-		$this->add_report_item( 'Cleaning up all l10n strings and plugin registrations' );
-		$this->parent->strings = array_merge( $this->parent->strings , $this->parent->perm_strings );
-		$ok = StringHandler::remove_strings_by_name( $this->parent->strings , 'admin' , 'l10n' );
-		$this->add_report_item( ($ok===true)?'Remove plugin strings':"Removed $ok strings" , true , true );
+		$this->add_report_item( gTxt('l10n-clean_2_main') );
+		$temp = array_merge( $l10n_default_strings_perm , $l10n_default_strings );
+		$ok = StringHandler::remove_strings_by_name( $temp , 'admin' , 'l10n' );
+		$this->add_report_item( ($ok===true)?gTxt('l10n-clean_2_remove_all'): gTxt('l10n-clean_2_remove_count',array('{count}'=>$ok)) , true , true );
 
 		$rps = StringHandler::discover_registered_plugins();
 		if( count($rps) )
@@ -4318,51 +4264,73 @@ class LocalisationWizardView extends GBPWizardTabView
 					continue;
 
 				$ok = StringHandler::unregister_plugin( $name );
-				$this->add_report_item( "Unregistered plugin '$name'." , $ok , true );
+				$this->add_report_item( gTxt( 'l10n-clean_2_unreg' , array( '{name}'=>$name ) ) , $ok , true );
 				}
 			}
 		}
 
-	function cleanup_3a()
+	function cleanup_3a()	# Drop lang/group from textpattern
 		{
 		$sql = "drop `Lang`, drop `Group`";
 		$ok = @safe_alter( 'textpattern' , $sql );
-		$this->add_report_item( 'Drop the `Lang` and `Group` fields from the textpattern table' , $ok );
+		$this->add_report_item( gTxt('l10n-clean_3a_main') , $ok );
 		}
 
-	function cleanup_5()
+	function cleanup_4a()	# Remove Localised content from tables
+		{
+		$this->add_report_item( gTxt('l10n-clean_4a_main').'&#8230;' );
+		l10n_mappings_walker( array( &$this , 'cleanup_4a_cb' ) );
+		}
+	function cleanup_4a_cb( $table , $field , $attributes )
+		{
+		$langs = LanguageHandler::get_site_langs();
+		foreach( $langs as $lang )
+			{
+			$f = "$lang-$field";
+			$sql = "DROP `$f`";
+			$ok = @safe_alter( $table , $sql );
+			$this->add_report_item( gTxt('l10n-drop_field',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
+			}
+		}
+	function cleanup_5()	# Drop articles table
 		{
 		$ok = ArticleManager::destroy_table();
-		$this->add_report_item( 'Delete the "'.L10N_ARTICLES_TABLE.'" table' , $ok );
+		$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop','{table}'=>L10N_ARTICLES_TABLE)) , $ok );
 		}
 
-	function cleanup_7()
+	function cleanup_7()	# Drop the per-language textpattern_XX tables...
 		{
-		# Drop the per-language textpattern_XX tables...
 		global $prefs;
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( 'Drop the language native textpattern tables&#8230;' );
+		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Drop','{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
 			$table_name = make_textpattern_name( $code );
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
-			$this->add_report_item( 'Drop the '. LanguageHandler::get_native_name_of_lang( $lang ) .' ['.$table_name.'] table' , $ok , true );
+			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
 		}
 
-	function cleanup_8()
+	function cleanup_8()	# Delete cookies
 		{
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( 'Delete the cookies&#8230;' );
+		$this->add_report_item( gTxt('l10n-clean_8_main').'&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$lang = trim( $lang );
 			$time = time() - 3600;
 			$ok = setcookie( $lang , $lang , $time );
-			$this->add_report_item( 'Delete the '. LanguageHandler::get_native_name_of_lang( $lang ) . ' cookie' , $ok , true );
+			$this->add_report_item( gTxt('l10n-delete_cookie',array('{lang}'=>LanguageHandler::get_native_name_of_lang( $lang ))) , $ok , true );
 			}
+		}
+
+	function cleanup_10()	# Restore comments default invitation.
+		{
+		$default = gTxt('comment');
+		$ok = set_pref( 'comments_default_invite', $default, 'comments', 0 );
+		$this->add_report_item( gTxt('l10n-comment_op',array('{op}'=>'Restore')) , $ok );
 		}
 
 	function _import_fixed_lang()
