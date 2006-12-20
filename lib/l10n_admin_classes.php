@@ -2989,8 +2989,27 @@ class SnippetInOutView extends GBPAdminSubTabView
 		//$export[] = tr( td(sp.sp.'<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>') );
 
 		$out[] = form( join( '' , $export) );
-		$out[] = '</tbody></table>'.n.'</div>'.n.'</div>'.n;
+		$out[] = '</tbody></table>'.n.'</div>'.n;
 
+		#
+		#	Here's the "export l10n strings" box...
+		#
+		$out[] = '<div class="l10n_bordered">';
+		$out[] = gTxt('l10n-export_title' , array( '{type}'=>'MLP Pack' )). br;
+		$out[] = '<table>'.n.'<tbody>';
+		$export = array();
+		$export[] = tr(
+						td( gTxt('language').' :'.selectInput( 'lang' , $installation_langs , $l10n_language['long'] ) ) .
+						td(sp.sp.'<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>') );
+		$export[] = sInput( 'l10n_export_l10n_string_file');
+		$export[] = $this->parent->form_inputs();
+		$export[] = hInput( 'subtab' , $this->sub_tab );
+		//$export[] = tr( td(sp.sp.'<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>') );
+
+		$out[] = form( join( '' , $export) );
+		$out[] = '</tbody></table>'.n.'</div>'.n;
+
+		$out[] = '</div>'.n;	#	End of the export div.
 
 		$import[] = '<div class="l10n_bordered l10n_import_list">';
 		$import[] = gTxt('l10n-import_title' , array( '{type}'=>$snip_string) ) . br;
@@ -3025,6 +3044,27 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$title = $lang.'.txt';
 		$desc  = 'Textpattern '.$lang.' '.gTxt('l10n-strings');
 		$this->parent->parent->serve_file( $file , $title , $desc , 'text/plain;charset=utf-8' );
+		}
+
+	function export_l10n_stringfile()
+		{
+		global $l10n_language;
+
+		$lang = gps( 'lang' );
+		if( empty( $lang ) )
+			$lang = $l10n_language['long'];
+
+		$langs = LanguageHandler::get_installation_langs();
+		if( !in_array( $lang , $langs ) )
+			{
+			echo br , gTxt('l10n-cannot_export' , array( '$lang'=>$lang ) );
+			exit(0);
+			}
+
+		$file  = StringHandler::build_l10n_default_strings_file( $lang );
+		$title = 'l10n_default_strings.php';
+		$desc  = 'MLP Pack '.$lang.' '.gTxt('l10n-strings');
+		$this->parent->parent->serve_file( $file , $title , $desc );
 		}
 
 	function _get_snippet_names( $table , $fname , $fdata )
