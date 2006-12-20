@@ -1338,7 +1338,7 @@ function l10n_js_init()
 	addEvent( search_box , 'keyup' , l10nRefineResultsEventHandler , false );
 
 	var search_type = getCookie( 'l10n_string_search_by' );
-	if( search_type == '' || search_type == 'name' )
+	if( search_type == null || search_type == '' || search_type == 'name' )
 		{
 		var selection = getCookie( 'l10n_string_search_by_subtype' );
 		if( selection == null || selection == 'all' )
