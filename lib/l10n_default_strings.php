@@ -51,6 +51,7 @@ global $l10n_default_strings;
 $l10n_default_strings = array(
 	'l10n-add_tags'				=> 'Add localisation tags to this window?' ,
 	'l10n-add_missing_rend'		=> 'Added missing rendition($rendition) to article $ID',
+	'l10n-add_string_rend'		=> '* Incomplete.<br>Add renditions in the missing {side} side languages.',
 	'l10n-all_languages'		=> 'Any language',
 	'l10n-allow_search_delete' => 'Allow strings to be totally deleted on the snippet > search tab?',
 	'l10n-allow_writetab_changes' => "Power users can change a rendition's language or article?",
