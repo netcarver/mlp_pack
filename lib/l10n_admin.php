@@ -8,9 +8,6 @@ $l10n_painters = array();
 
 if( $l10n_view->installed() )
 	{
-	add_privs( 'l10n.clone' 	, '1,2' );
-	add_privs( 'l10n.reassign'	, '1,2' );
-
 	#
 	#	Article handlers...
 	#
