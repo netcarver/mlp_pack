@@ -896,11 +896,11 @@ if (@txpinterface === 'public')
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
 		#
-		#	Don't know why, but there seems to be some whitespace getting into the
-		# output buffer. XHTML can cope but it causes a parse error in the feed xml
+		#	There seems to be some whitespace getting into the output buffer.
+		# XHTML can cope but it causes a parse error in the feed xml
 		#
 		#	Simple solution is to make sure the output buffer is empty before
-		# continuing the processing of rss or atom requests...
+		# continuing the processing critical requests...
 		#
 		$ob_cleaning = array( 'rss' , 'atom' );
 		if( in_array( $first_chunk , $ob_cleaning) )
@@ -914,13 +914,14 @@ if (@txpinterface === 'public')
 		#
 		$result = array();
 		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
-		$rows = safe_rows_start( 'ID,Title,Lang' , 'l10n_master_textpattern' , $where );
+		$rows = safe_rows_start( '*,ID as thisid, unix_timestamp(Posted) as posted' , 'l10n_master_textpattern' , $where );
 		if( count( $rows ) )
 			{
 			while( $row = nextRow($rows) )
 				{
 				$lang = $row['Lang'];
-				$result[$lang] = array( 'id' => $row['ID'] , 'title' => escape_title($row['Title']) );
+				$row['Title'] = escape_title($row['Title']);
+				$result[$lang] = $row;
 				}
 			}
 		return $result;
@@ -965,6 +966,7 @@ if (@txpinterface === 'public')
 									), $thing );
 		return $out;
 		}
+
 
 
 	/*
@@ -1145,8 +1147,8 @@ if (@txpinterface === 'public')
 				if( array_key_exists( $lang , $alangs ) )
 					{
 					$record = $alangs[$lang];
-					$lang_rendition_title	= $record['title'];
-					$lang_rendition_id		= $record['id'];
+					$lang_rendition_title	= $record['Title'];
+					$lang_rendition_id		= $record['ID'];
 					$current 	= ($l10n_language['long'] === $lang);
 					$text		= $lname;
 					if( $processing404 )
@@ -1163,10 +1165,10 @@ if (@txpinterface === 'public')
 
 					if( !$current or $link_current )
 						{
-						#
-						#	Use messy urls to avoid permlink pattern processing...
-						#
-						$line = '<a href="'.hu.$short.'/?id='.$lang_rendition_id.'">'.$text.'</a>';
+						$url = permlinkurl($record);
+						$f = hu;
+						$url = str_replace( $f , $f.$short.'/' , $url );
+						$line = '<a href="'.$url.'">'.$text.'</a>';
 						}
 					else
 						$line = $text;
