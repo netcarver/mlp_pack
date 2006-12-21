@@ -1315,6 +1315,46 @@ function addLoadEvent(func)
 		}
 	}
 
+function l10nSetCookie(name, value, days)
+	{
+	if (days)
+		{
+		var date = new Date();
+		date.setTime(date.getTime() + (days*24*60*60*1000));
+		var expires = '; expires=' + date.toGMTString();
+		}
+	else
+		{
+		var expires = '';
+		}
+
+	document.cookie = name + '=' + value + expires + '; path=/';
+	}
+
+function l10nGetCookie(name)
+	{
+	var nameEQ = name + '=';
+
+	var ca = document.cookie.split(';');
+
+	for (var i = 0; i < ca.length; i++)
+		{
+		var c = ca[i];
+
+		while (c.charAt(0)==' ')
+			{
+			c = c.substring(1, c.length);
+			}
+
+		if (c.indexOf(nameEQ) == 0)
+			{
+			return c.substring(nameEQ.length, c.length);
+			}
+		}
+
+	return null;
+	}
+
 addLoadEvent( function(){l10n_js_init();} );
 function l10n_js_init()
 	{
@@ -1398,7 +1438,7 @@ function l10nRefineResults()
 		}
 	var result_num   = document.getElementById('l10n_result_count');
 	result_num.innerHTML = visible;
-	setCookie( 'search_string_name_live' , target , 365 );
+	l10nSetCookie( 'search_string_name_live' , target , 365 );
 	}
 
 function trim(term)
@@ -1465,8 +1505,8 @@ function do_content_search()
 		{
 		var req = "?event=l10n&tab=snippets&step=l10_search_for_content&l10n-sfc=" + search_term + "&l10n-lang=" + search_lang;
 		make_xml_req( req , cs_result_handler );
-		setCookie( 'search_string_content' , search_term , 365 );
-		setCookie( 'search_string_lang' , search_lang , 365 );
+		l10nSetCookie( 'search_string_content' , search_term , 365 );
+		l10nSetCookie( 'search_string_lang' , search_lang , 365 );
 		}
 	}
 
@@ -1506,8 +1546,8 @@ function update_search( id )
 		by_cont.className="l10n_hidden";
 		result_div.className="l10n_visible";
 		cresult_div.className="l10n_hidden";
-		setCookie( 'l10n_string_search_by' , 'name' , 365 );
-		var selection = getCookie( 'l10n_string_search_by_subtype' );
+		l10nSetCookie( 'l10n_string_search_by' , 'name' , 365 );
+		var selection = l10nGetCookie( 'l10n_string_search_by_subtype' );
 		if( selection == null || selection == 'all' )
 			selection = '';
 		else
@@ -1520,27 +1560,27 @@ function update_search( id )
 		by_cont.className="l10n_visible";
 		result_div.className="l10n_hidden";
 		cresult_div.className="l10n_visible";
-		setCookie( 'l10n_string_search_by' , 'cont' , 365 );
+		l10nSetCookie( 'l10n_string_search_by' , 'cont' , 365 );
 		do_content_search();
 		}
 	else if( id == 'sbn_missing_radio_button' )
 		{
 		sbn_lang_sel.disabled = false;
 		var selection = sbn_lang_sel.value;
-		setCookie( 'l10n_string_search_by_subtype' , 'missing' , 365 );
+		l10nSetCookie( 'l10n_string_search_by_subtype' , 'missing' , 365 );
 		do_name_search( selection );
 		}
 	else if( id == 'sbn_all_radio_button' )
 		{
 		sbn_lang_sel.disabled = true;
-		setCookie( 'l10n_string_search_by_subtype' , 'all' , 365 );
+		l10nSetCookie( 'l10n_string_search_by_subtype' , 'all' , 365 );
 		do_name_search( '' );
 		}
 	}
 function on_sbn_lang_change()
 	{
 	var selection = sbn_lang_sel.value;
-	setCookie( 'search_string_name_lang' , selection , 365 );
+	l10nSetCookie( 'search_string_name_lang' , selection , 365 );
 	do_name_search( selection );
 	}
 
@@ -1594,7 +1634,7 @@ function on_lang_selection_change()
 	var selection = document.getElementById('l10n_lang_selector').value;
 	var dir = langs[selection];
 
-	setCookie( 'rendition_lang_selection' , selection , 365 );
+	l10nSetCookie( 'rendition_lang_selection' , selection , 365 );
 
 	resetToggleDir( 'title', dir );
 	resetToggleDir( 'body', dir );
