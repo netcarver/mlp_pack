@@ -601,11 +601,33 @@ function _l10n_process_url( $use_get_params=false )
 	{
 	global $l10n_language;
 
+	$redirects = array( '' , '/' );
+	$redirect = false;
 	$new_first_path = '';
 	$debug = false;
 
 	@session_start();
 	$site_langs = LanguageHandler::get_site_langs();
+
+	$req_method = $_SERVER['REQUEST_METHOD'];
+	$req_uri    = $_SERVER['REQUEST_URI'];
+
+	#
+	#	Redirect empty GETs on the public side so that the URL used has the language code
+	# embedded in it.
+	#
+	#	This should stop search engines from caching 'fake' images of pages.
+	#
+	if( (@txpinterface==='public') && ('GET' === $req_method) && in_array( $req_uri , $redirects ) )
+		{
+		$redirect = true;
+		}
+
+	if( $debug )
+		{
+		echo br , "REQUEST_URI    : " , var_dump($req_uri);
+		echo br , "REQUEST_METHOD : " , $req_method;
+		}
 
 	if (!defined('rhu'))
 		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
@@ -670,7 +692,7 @@ function _l10n_process_url( $use_get_params=false )
 		else
 			{
 			if( $debug )
-				echo br , "L10N MLP: no match branch";
+				echo br , "L10N MLP: no-match branch";
 			#
 			#	Not a language this site can serve...
 			#
@@ -732,7 +754,7 @@ function _l10n_process_url( $use_get_params=false )
 
 						if( in_array( $lang['long'] , $site_langs ) )
 							{
-							$_SESSION[$ssname]  = $lang['short'];
+							$_SESSION[$ssname] = $lang['short'];
 							$_SESSION[$lsname] = $lang['long'];
 							break;
 							}
@@ -755,6 +777,21 @@ function _l10n_process_url( $use_get_params=false )
 			echo br , "L10N MLP: No language match found, setting to site default ... $long as $short";
 		}
 
+	if( $redirect )
+		{
+		if( $debug )
+			echo br , "L10N MLP: About to redirect.";
+		else
+			{
+			header('HTTP/1.1 303 See Other');
+			header('Status: 303');
+			header('Location: '.hu.$_SESSION[$ssname]);
+			header('Connection: close');
+			header('Content-Length: 0');
+			exit(0);
+			}
+		}
+
 	if( $use_get_params )
 		_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
 	else
@@ -768,6 +805,9 @@ function _l10n_process_url( $use_get_params=false )
 # -- Include the admin file only if needed...
 if( @txpinterface === 'admin' )
 	{
+	add_privs( 'l10n.clone' 	, '1,2' );
+	add_privs( 'l10n.reassign'	, '1,2' );
+
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $l10n_language , $textarray , $prefs;
@@ -1361,6 +1401,10 @@ if (@txpinterface === 'public')
 					# Insert the language code into all permlinks...
 					$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
 					$html = preg_replace_callback( $pattern , '_l10n_link_lang_cb' , $html );
+
+					# TODO: Insert language code into any URLs embedded as texts in hyperlinks...
+					//$f = '<form action="'.hu;
+					//$html = str_replace( $f , $f.$l10n_language['short'].'/' , $html );
 					}
 
 				return $html;
