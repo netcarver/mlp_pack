@@ -3859,7 +3859,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						{
 						$master_id = $translations[$i]['ID'];
 						$rend_id   = $members[$lang];
-						if( $master_id !== $members[$lang] )
+						if( $master_id != $members[$lang] )
 							{
 							//echo br , "Found incorrect rendition ID $rend_id in article table. Replacing with ID $master_id.";
 							$members[$lang] = $master_id;
@@ -3959,7 +3959,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						#
 						$status_ok = ( $status_no > 2 );
 						if( !$can_clone or !$status_ok or $all_translations_present )
+							{
 							$clone_link = '';
+							}
 						else
 							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','rendition'=>$id,'article'=>$ID), true ) .
 											'" class="clone-link" title="' . gTxt('l10n-clone') . '"><img src="txp_img/l10n_clone.png" /></a>';
