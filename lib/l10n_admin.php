@@ -937,7 +937,6 @@ function l10n_post_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
 	$method   = gps('edit_method');
-
 	/*
 	if( isset( $l10n_vars['update_tables'] ) )
 		{
@@ -1013,6 +1012,10 @@ function l10n_category_paint( $page )
 	$row = safe_row( '*' , 'txp_category' , "`id`='$id'" );
 	$r = '';
 	$count = 2;
+
+	#
+	#	Build the extra block of inputs...
+	#
 	foreach( $fields as $field => $attributes )
 		{
 		foreach( $langs as $lang )
@@ -1029,6 +1032,10 @@ function l10n_category_paint( $page )
 				}
 			}
 		}
+
+	#
+	#	Insert the extra block of inputs...
+	#
 	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="'.gTxt('save_button').'" class="smallerbox" /></td>';
 	$page = str_replace( $f , $r.n.$f , $page );
 
@@ -1193,10 +1200,13 @@ function l10n_link_paint( $page )
 	global $l10n_mappings , $step;
 	$langs = LanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_link'];
-	$id = gps( 'id' );
-	$row = safe_row( '*' , 'txp_link' , "`id`='$id'" );
 	$r = '';
-	$rows = 'rows="3"';
+	$rows = 'rows="2"';
+	$id = gps( 'id' );
+	if( !empty( $id ) )
+		$row = safe_row( '*' , 'txp_link' , "`id`='$id'" );
+	else
+		$row = array();
 	foreach( $fields as $field => $attributes )
 		{
 		$save_steps = $attributes['save_steps'];
@@ -1212,7 +1222,8 @@ function l10n_link_paint( $page )
 				$r .= '</tr><tr><td style="text-align: right; vertical-align: top;">';
 				$r .= '<label for="link-description-'.$lang.'">'.$full_name.'</label></td><td>';
 				$r .= '<textarea id="link-description-'.$lang.'" name="'.$field_name .'" cols="40" '.$rows.$dir.'>';
-				$r .= (in_array( $step , $save_steps )) ? '' : $row[$field_name];
+				if( !in_array( $step , $save_steps ) and isset( $row[$field_name]) )
+					$r .= $row[$field_name];
 				$r .= '</textarea></td>'.n;
 				}
 			}
