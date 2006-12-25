@@ -623,15 +623,18 @@ function _l10n_process_url( $use_get_params=false )
 		$redirect = true;
 		}
 
+	if (!defined('rhu'))
+		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
+	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
+
 	if( $debug )
 		{
 		echo br , "REQUEST_URI    : " , var_dump($req_uri);
 		echo br , "REQUEST_METHOD : " , $req_method;
+		echo br , "hu            : " , hu;
+		echo br , "rhu            : " , rhu;
+		echo br , "\$path          : " , var_dump( $path );
 		}
-
-	if (!defined('rhu'))
-		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
-	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
 
 	$ssname = 'l10n_short_lang';
 	$lsname = 'l10n_long_lang';
@@ -783,8 +786,8 @@ function _l10n_process_url( $use_get_params=false )
 			echo br , "L10N MLP: About to redirect.";
 		else
 			{
-			header('HTTP/1.1 303 See Other');
-			header('Status: 303');
+			//header('HTTP/1.1 303 See Other');
+			//header('Status: 303');
 			header('Location: '.hu.$_SESSION[$ssname]);
 			header('Connection: close');
 			header('Content-Length: 0');
