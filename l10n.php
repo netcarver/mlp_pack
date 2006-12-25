@@ -935,16 +935,29 @@ if (@txpinterface === 'public')
 		load_localised_pref( 'site_slogan' );
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
-		#
-		#	There seems to be some whitespace getting into the output buffer.
-		# XHTML can cope but it causes a parse error in the feed xml
-		#
-		#	Simple solution is to make sure the output buffer is empty before
-		# continuing the processing critical requests...
-		#
-		$ob_cleaning = array( 'rss' , 'atom' );
-		if( in_array( $first_chunk , $ob_cleaning) )
+		$feeds = array( 'rss' , 'atom' );
+		if( in_array( $first_chunk , $feeds) )
+			{
+			#
+			#	There seems to be some whitespace getting into the output buffer.
+			# XHTML can cope but it causes a parse error in the feed xml
+			#
+			#	Simple solution is to make sure the output buffer is empty before
+			# continuing the processing critical requests...
+			#
 			while( @ob_end_clean() );
+
+			#
+			#	Turn on compression before the feed routines do!
+			#
+			if (extension_loaded('zlib') && ini_get("zlib.output_compression") == 0 && ini_get('output_handler') != 'ob_gzhandler' && !headers_sent())
+				@ob_start("ob_gzhandler");
+
+			#
+			#	Inject our language markers into the feed stream...
+			#
+			@ob_start('_l10n_inject_feed_lang_markers');
+			}
 		}
 
 	function _l10n_inject_lang_markers_cb( $matches )
@@ -966,6 +979,19 @@ if (@txpinterface === 'public')
 
 		return $result;
 		}
+	function _l10n_inject_feed_lang_markers( $buffer )
+		{
+		global $l10n_replace_strings;
+
+		# Insert language code into any URLs embedded as texts in hyperlinks...
+		$pattern = '/<link>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/link>/';
+		$l10n_replace_strings['start'] = '<link>';
+		$l10n_replace_strings['stop']  = '</link>';
+		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+
+		return $buffer;
+		}
+
 	function _l10n_get_article_members( $article_id , $exclude_lang , $status='4' )
 		{
 		#
