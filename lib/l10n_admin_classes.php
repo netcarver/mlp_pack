@@ -1,9 +1,35 @@
 <?php
 
+global $txpcfg , $l10n_language , $l10n_default_string_lang;
+
 #
-#	Bring in the strings...
+#	Bring in the strings. Try getting the localised strings if possible, else
+# bring in the defaults...
 #
-include_once $txpcfg['txpath'].'/lib/l10n_default_strings.php';
+$l10n_langname = LANG;
+$installed = l10n_installed();
+if( $installed )
+	$l10n_langname = $l10n_language['long'];
+
+$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$l10n_langname.'_strings.php';
+if( is_readable($file_name) )
+	{
+	//echo br, "Reading $file_name";
+	include_once $file_name;
+	}
+else
+	{
+	//echo br, "FAILED TO READ SPECIFIC STRINGS ... $file_name";
+	include_once $txpcfg['txpath'].DS.'lib'.DS.'l10n_default_strings.php';
+	$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$l10n_default_strings_lang.'_strings.php';
+	if( is_readable($file_name) )
+		{
+		//echo br, "Reading $file_name";
+		include_once $file_name;
+		}
+	//else
+		//echo br, "FAILED TO READ STRINGS ... \$l10n_language = " , var_dump($l10n_language);
+	}
 
 #
 #	Classes for admin side operations...
@@ -3062,9 +3088,9 @@ class SnippetInOutView extends GBPAdminSubTabView
 			}
 
 		$file  = StringHandler::build_l10n_default_strings_file( $lang );
-		$title = 'l10n_default_strings.php';
+		$title = 'l10n_'.$lang.'_strings.php';
 		$desc  = 'MLP Pack '.$lang.' '.gTxt('l10n-strings');
-		$this->parent->parent->serve_file( $file , $title , $desc );
+		$this->parent->parent->serve_file( $file , $title , $desc, 'text/plain;charset=utf-8;' );
 		}
 
 	function _get_snippet_names( $table , $fname , $fdata )
