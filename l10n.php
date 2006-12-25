@@ -67,6 +67,7 @@ h2. Table Of Contents.
 ** "l10n_get_lang_dir":#get_lang_dir
 ** "l10n_localise":#localise
 * "Preferences Help":#prefs
+* "Snippets > Export Help":#export
 * "Supported Languages.":#langs
 * "Credits":#credits
 
@@ -93,7 +94,8 @@ Other things you might like to think about before installing the pack&#8230;
 
 All these are listed in the setup wizard (under the content > MLP tab).
 
- <form action="index.php?event=l10n&tab=wizard" method="post"><p><input value="Setup/Cleanup&#8230;" type="submit"></p></form>
+_If you cannot see the MLP tab at the end of the contents subtabs then please check you have enabled the l10n plugin and try again._
+
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
@@ -210,7 +212,7 @@ h3(#lang_list). "l10n_lang_list(Jump to the tag list)":#tags
 
 Outputs an un-ordered list of languages.
 
-On an article list page, this outputs all of the site's available languages. On individual articles it lists only those languages the article has renditions for. At present it uses messy urls to avoid extra overhead on looking up multiple renditions and calling the permlink function on each just to populate the list. This might change in future versions.
+On an article list page, this outputs all of the site's available languages. On individual articles it lists only those languages the article has renditions for.
 
 You can also use this tag on 404 pages to output a list of closely matching renditions.
 
@@ -270,11 +272,9 @@ Use this tag to wrap entire pages and forms in which you wish to use snippets.
 |_. Attribute |_. Default |_. Description |
 | page | none | (Optional) Set this to any non-blank value when wrapping TxP pages to cause injection of language codes into the page's permlinks and other internal hrefs.<br/>This can help stop browsers from apparantly "loosing" track of your browse language by caching pages with the same url that you previously visited when browsing in a different language. |
 
-This tag has no attributes.
-
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
-h2(#prefs). Preferences Help.
+h2(#prefs). Preferences Help
 
 * "Languages":#l10n-languages
 * "Show Article Table Legend":#l10n-show_legends
@@ -283,6 +283,7 @@ h2(#prefs). Preferences Help.
 * "… even when author changed in content > renditions list?":#l10n-send_notice_on_changeauthor
 * "Power users can change a rendition's language or article?":#l10n-allow_writetab_changes
 * "Inline editing of pages and forms":#l10n-inline_editing
+* "Allow strings to be totally deleted on the snippet > search tab?":#l10n-allow_search_delete
 
 h3(#l10n-languages). "Languages":#prefs
 
@@ -331,6 +332,31 @@ h3(#l10n-allow_search_delete). "Allow strings to be totally deleted on the snipp
 Choose 'yes' to allow all renditions of a string to be deleted when edited via the Content>MLP>Snippets>Search tab. Just select a string to edit, manually delete all renditions of the string and then hit 'save'. This will remove the string from your installation. You will be left on the edit page for that string so that you can re-enter rendition data if your deletion was a mistake.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#export). Snippets > Export Help
+
+* "Snippets Export":#l10n_export_languageset
+* "TxP Language File":#l10n_export_txp_file
+* "MLP Strings File":#l10n_export_l10n_string_file
+
+h3(#l10n_export_languageset). "Snippets Export":#export
+
+Allows you to export snippets from your specials, pages and forms in a format you can easily upload to live sites via the snippet import box on the recipient site.
+
+Select all the languages you wish to include in your export before you continue.
+
+h3(#l10n_export_txp_file). "TxP Language File":#export
+
+Export all non-plugin strings in a file format that TxP can load directly via the Admin > Prefs > Languages interface.
+Use this option if you are translating TxP's strings into a new language.
+
+This file should be in an acceptable format to be passed to the language leads/developers for inclusion on the Language file server.
+
+h3(#l10n_export_l10n_string_file). "MLP Strings File":#export
+
+This option allows you to export all of the standard MLP strings as an MLP Language file for redistribution as part of an out-of-the-box localised MLP Pack.
+
+For example, once you are happy with the localisation of all of your MLP Strings, export your translation and save it in the textpattern/lib directory of the MLP pack zip file along with the existing language files and anyone to whom you redistribute the pack will get the option of using that language straight out of the box -- even the install wizard can be localised this way.
 
 h2(#langs). Supported Languages.
 
