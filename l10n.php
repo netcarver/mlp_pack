@@ -946,6 +946,26 @@ if (@txpinterface === 'public')
 		if( in_array( $first_chunk , $ob_cleaning) )
 			while( @ob_end_clean() );
 		}
+
+	function _l10n_inject_lang_markers_cb( $matches )
+		{
+		global $l10n_language , $l10n_replace_strings;
+
+		$external = ( rtrim( $matches[1] , '/') !== rtrim( hu , '/') );
+
+		$result = $matches[0];
+		if( !$external )
+			{
+			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
+			if( !$has_lang_code )
+				{
+				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
+				$result = $l10n_replace_strings['start']. $result . $l10n_replace_strings['stop'];
+				}
+			}
+
+		return $result;
+		}
 	function _l10n_get_article_members( $article_id , $exclude_lang , $status='4' )
 		{
 		#
@@ -1359,25 +1379,23 @@ if (@txpinterface === 'public')
 		return $dir;
 		}
 
-
-	function _l10n_link_lang_cb( $matches )
+	function _l10n_inject_lang_markers( $buffer )
 		{
-		global $l10n_language;
+		global $l10n_replace_strings;
 
-		$external = ( rtrim( $matches[1] , '/') !== rtrim( hu , '/') );
+		# Insert the language code into all permlinks...
+		$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
+		$l10n_replace_strings['start'] = ' href="';
+		$l10n_replace_strings['stop']  = '"';
+		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
-		$result = $matches[0];
-		if( !$external )
-			{
-			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
-			if( !$has_lang_code )
-				{
-				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
-				$result = ' href="'. $result . '"';
-				}
-			}
+		# Insert language code into any URLs embedded as texts in hyperlinks...
+		$pattern = '/>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/a>/';
+		$l10n_replace_strings['start'] = '>';
+		$l10n_replace_strings['stop']  = '</a>';
+		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
-		return $result;
+		return $buffer;
 		}
 
 	function l10n_localise($atts, $thing = '')
@@ -1392,20 +1410,8 @@ if (@txpinterface === 'public')
 				$thing = _l10n_substitute_snippets( $thing );
 				$html = parse($thing);
 
-				#
-				#	Process all the urls on 'pages' and insert the correct language
-				# marker (if needed)...
-				#
 				if( array_key_exists( 'page' , $atts) )
-					{
-					# Insert the language code into all permlinks...
-					$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
-					$html = preg_replace_callback( $pattern , '_l10n_link_lang_cb' , $html );
-
-					# TODO: Insert language code into any URLs embedded as texts in hyperlinks...
-					//$f = '<form action="'.hu;
-					//$html = str_replace( $f , $f.$l10n_language['short'].'/' , $html );
-					}
+					$html = _l10n_inject_lang_markers( $html );
 
 				return $html;
 				}
