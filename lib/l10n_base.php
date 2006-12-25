@@ -6,7 +6,7 @@
 #
 
 global $txpcfg , $event;
-include_once $txpcfg['txpath'].'/lib/mlp_langs.php';
+include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
 function l10n_redirect_textpattern($table)
 	{
