@@ -1050,15 +1050,6 @@ class StringHandler
 		return StringHandler::get_strings( $rs , $stats );
 		}
 
-	/*
-	function get_full_langs_string( )
-		{
-		$langs = LanguageHandler::get_site_langs();
-		sort( $langs );
-		$langs = rtrim( join( ', ' , $langs ) , ' ,' );
-		return $langs;
-		}
-		*/
 	function is_complete( $langs , $use_admin = false )
 		{
 		static $public_langs , $admin_langs;
@@ -1363,7 +1354,7 @@ class LocalisationView extends GBPPlugin
 
 			# Merge the default language strings into the textarray so that non-English
 			# users at least see an English message in the plugin.
-			if( $prefs['language'] !== $l10n_default_strings_lang )
+			//if( $prefs['language'] !== $l10n_default_strings_lang )
 				{
 				$textarray = array_merge( $l10n_default_strings , $textarray );
 				}
@@ -2412,6 +2403,14 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$out[] = '</ol>';
 
+		if( $needs_legend )
+			{
+			if( $event !== 'public' )
+				$event = 'admin';
+			$event = StringHandler::convert_case( gTxt( $event ) , MB_CASE_LOWER );
+			$out[] = graf( gTxt('l10n-add_string_rend',array('{side}'=>$event)) );
+			}
+
 		return join('', $out);
 		}
 
@@ -2969,6 +2968,11 @@ class SnippetInOutView extends GBPAdminSubTabView
 			}
 		}
 
+	function pop_help($helpvar)
+		{
+		$script = hu.basename(txpath).'/index.php';
+		return '<a href="'.$script.'?event=plugin&step=plugin_help&name='.$this->parent->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
+		}
 	function render_main()
 		{
 		global $l10n_language;
@@ -2982,7 +2986,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#	Here's the "Export Snippet Strings" box...
 		#
 		$out[] = '<div class="l10n_export_list">'.n.'<div class="l10n_bordered">';
-		$out[] = gTxt('l10n-export_title' , array( '{type}'=>$snip_string )). br;
+		$out[] = gTxt('l10n-export_title' , array( '{type}'=>$snip_string , '{help}'=>$this->pop_help('l10n_export_languageset') )).br;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">'.sp.sp.gTxt('select').sp.'</td>' ).n.'</thead><tbody>';
 		foreach( $site_langs as $lang )
 			{
@@ -3003,7 +3007,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#	Here's the "export textpattern strings" box...
 		#
 		$out[] = '<div class="l10n_bordered">';
-		$out[] = gTxt('l10n-export_title' , array( '{type}'=>'Textpattern' )). br;
+		$out[] = gTxt('l10n-export_title' , array( '{type}'=>'Textpattern' , '{help}'=>$this->pop_help('l10n_export_txp_file') )). br;
 		$out[] = '<table>'.n.'<tbody>';
 		$export = array();
 		$export[] = tr(
@@ -3021,7 +3025,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#	Here's the "export l10n strings" box...
 		#
 		$out[] = '<div class="l10n_bordered">';
-		$out[] = gTxt('l10n-export_title' , array( '{type}'=>'MLP Pack' )). br;
+		$out[] = gTxt('l10n-export_title' , array( '{type}'=>'MLP Pack' , '{help}'=>$this->pop_help('l10n_export_l10n_string_file'))). br;
 		$out[] = '<table>'.n.'<tbody>';
 		$export = array();
 		$export[] = tr(
@@ -3030,7 +3034,6 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$export[] = sInput( 'l10n_export_l10n_string_file');
 		$export[] = $this->parent->form_inputs();
 		$export[] = hInput( 'subtab' , $this->sub_tab );
-		//$export[] = tr( td(sp.sp.'<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>') );
 
 		$out[] = form( join( '' , $export) );
 		$out[] = '</tbody></table>'.n.'</div>'.n;
