@@ -1378,7 +1378,7 @@ class LocalisationView extends GBPPlugin
 
 	function _insert_css()
 		{
-		return n . '<link href="lib/mlp.css" rel="Stylesheet" type="text/css" />' . n;
+		return n . '<link href="lib/l10n.css" rel="Stylesheet" type="text/css" />' . n;
 		}
 	function preload()
 		{
