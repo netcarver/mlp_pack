@@ -569,9 +569,10 @@ function _l10n_replace_rendition( $lang , $replace=false , $id='' )
 		return;
 		}
 	$table_name = safe_pfx( make_textpattern_name($lang) );
+	$safe_txp = safe_pfx( 'textpattern' );
 
-	$sql = $op." INTO $table_name SELECT * FROM textpattern WHERE textpattern.ID='$id' LIMIT 1";
-	safe_query( $sql , 1 );
+	$sql = $op." INTO $table_name SELECT * FROM $safe_txp WHERE $safe_txp.ID='$id' LIMIT 1";
+	safe_query( $sql );
 	}
 function _l10n_remove_rendition( $lang , $id )
 	{
@@ -581,8 +582,7 @@ function _l10n_remove_rendition( $lang , $id )
 		return;
 		}
 	$table_name = safe_pfx( make_textpattern_name($lang) );
-	safe_delete( $table_name , "`ID`='$id'", 1 );
-	//echo br,br,"_l10n_remove_rendition( $lang , $id ) ... $table_name WHERE `ID`='$id'";
+	safe_delete( $table_name , "`ID`='$id'" );
 	}
 function l10n_add_rendition_to_article_cb( $event , $step )
 	{
