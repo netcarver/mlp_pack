@@ -32,7 +32,7 @@ $l10n_default_strings_perm = array(
 	'l10n-comment_op'     => '{op} the default comment invitation',
 	'l10n-add_field'      => 'Add the `{table}.{field}` field',
 	'l10n-skip_field'     => 'Skip the `{table}.{field}` field - it already exists',
-	'l10n-copy_defaults'  => 'Copy defaults to `{table}.(field}` field',
+	'l10n-copy_defaults'  => 'Copy defaults to `{table}.{field}` field',
 	'l10n-version_errors' => 'MLP Pack Detected Version Problems',
 	'l10n-version_reason' => 'The MLP Pack cannot operate in this installation because&#8230;',
 	'l10n-version_item'   => 'It requires <strong class="failure">{name} {min}</strong> or above, current install is {current}.',
