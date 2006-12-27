@@ -985,6 +985,17 @@ if (@txpinterface === 'public')
 			#
 			#	Inject our language markers into the feed stream...
 			#
+			global $l10n_replace_strings;
+			if( $first_chunk === 'rss' )
+				{
+				$l10n_replace_strings['start'] = '<link>';
+				$l10n_replace_strings['stop']  = '</link>';
+				}
+			elseif( $first_chunk === 'atom' )
+				{
+				$l10n_replace_strings['start'] = ' href="';
+				$l10n_replace_strings['stop']  = '"';
+				}
 			@ob_start('_l10n_inject_feed_lang_markers');
 			}
 		}
@@ -1013,9 +1024,9 @@ if (@txpinterface === 'public')
 		global $l10n_replace_strings;
 
 		# Insert language code into any URLs embedded as texts in hyperlinks...
-		$pattern = '/<link>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/link>/';
-		$l10n_replace_strings['start'] = '<link>';
-		$l10n_replace_strings['stop']  = '</link>';
+		$start = $l10n_replace_strings['start'];
+		$stop  = strtr( $l10n_replace_strings['stop'] , array('/'=>'\/') );
+		$pattern = '/'.$start.'(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)'.$stop.'/';
 		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		return $buffer;
