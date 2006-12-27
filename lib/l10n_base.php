@@ -146,9 +146,10 @@ function l10n_mappings_walker( $fn , $atts='' )
 
 	foreach( $l10n_mappings as $table=>$fields )
 		{
-		$table = safe_pfx( $table );
+		//$table = safe_pfx( $table );
 		foreach( $fields as $field=>$attributes )
 			{
+			//	The user function must create a safe table name by calling safe_pfx() on the table name
 			call_user_func( $fn , $table , $field , $attributes , $atts );
 			}
 		}
