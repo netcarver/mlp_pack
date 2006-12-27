@@ -432,7 +432,7 @@ class LanguageHandler
 		return (LanguageHandler::iso_693_1_langs( $code )) ? LanguageHandler::iso_693_1_langs( $code ) : LanguageHandler::iso_693_1_langs( 'en' ) ;
 		}
 
-	function get_site_langs( $set_if_empty = true )
+	function get_site_langs( $set_if_empty = false )
 		{
 		/*
 		Returns an array of the languages the public site supports.
