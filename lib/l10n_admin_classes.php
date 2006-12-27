@@ -1346,7 +1346,10 @@ class LocalisationView extends GBPPlugin
 				$languages = array_merge( $languages, array_values($installed_langs) );
 
 				# Finally set the preference
+				$tmp = $this->event;
+				$this->event = L10N_NAME;
 				$this->set_preference('l10n-languages', $languages);
+				$this->event = $tmp;
 				}
 
 			$installed = $this->installed();
@@ -4300,13 +4303,48 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function setup_2()		# Add strings...
 		{
-		global $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings;
+		global $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings , $txpcfg;
 
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		# Make sure we only call insert_strings() once!
 		$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
 		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' );
 		$this->add_report_item( gTxt('l10n-setup_2_main') , $ok );
+
+		#
+		#	Also add any strings we can for other installation languages...
+		#
+		$langs = LanguageHandler::get_installation_langs();
+		if( empty( $langs ) )
+			return;
+
+		$tmp_lang     = $l10n_default_strings_lang;
+		$tmp_str_perm = $l10n_default_strings_perm;
+		$tmp_str_def  = $l10n_default_strings;
+
+		foreach( $langs as $lang )
+			{
+			if( $lang === $tmp_lang )
+				continue;
+
+			$merged = array();
+			$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$lang.'_strings.php';
+			if( is_readable($file_name) )
+				{
+				include_once $file_name;
+				$merged = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
+				StringHandler::insert_strings( $this->parent->strings_prefix , $merged , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
+				}
+			}
+		if( isset( $merged ) )
+			unset( $merged );
+
+		#
+		#	Restore values...
+		#
+		$l10n_default_strings_lang	= $tmp_lang;
+		$l10n_default_strings_perm	= $tmp_str_perm;
+		$l10n_default_strings		= $tmp_str_def;
 		}
 
 	function setup_3()		# Extend the textpattern table...
@@ -4370,10 +4408,11 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		$langs = LanguageHandler::get_site_langs();
 		$default = LanguageHandler::get_site_default_lang();
+		$safe_table = safe_pfx( $table );
 		foreach( $langs as $lang )
 			{
 			$f = "$lang-$field";
-			$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
+			$exists = getThing( "SHOW COLUMNS FROM $safe_table LIKE '$f'" );
 			if( $exists )
 				{
 				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>$f,'{table}'=>$table)) , true , true );
@@ -4386,7 +4425,7 @@ class LocalisationWizardView extends GBPWizardTabView
 
 			if( $ok && $lang===$default )
 				{
-				$sql = "UPDATE $table SET `$f`=`$field`";
+				$sql = "UPDATE $safe_table SET `$f`=`$field`";
 				$ok = @safe_query( $sql );
 				$this->add_report_item( gTxt('l10n-copy_defaults',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
 				}
