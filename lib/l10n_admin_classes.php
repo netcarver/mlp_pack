@@ -1338,18 +1338,8 @@ class LocalisationView extends GBPPlugin
 			$langs = LanguageHandler::get_site_langs( false );
 			if( NULL === $langs )
 				{
-				# Make sure the currently selected admin-side language is the site default...
-				$languages = array(LANG);
-
-				# Get the remaining admin-side langs...
-				$installed_langs = safe_column('lang','txp_lang',"lang != '".LANG."' GROUP BY 'lang'");
-				$languages = array_merge( $languages, array_values($installed_langs) );
-
-				# Finally set the preference
-				$tmp = $this->event;
-				$this->event = L10N_NAME;
-				$this->set_preference('l10n-languages', $languages);
-				$this->event = $tmp;
+				$langs = LanguageHandler::get_installation_langs();
+				$prefs[L10N_PREFS_LANGUAGES] = join( ',' , $langs );
 				}
 
 			$installed = $this->installed();
@@ -4305,8 +4295,26 @@ class LocalisationWizardView extends GBPWizardTabView
 		{
 		global $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings , $txpcfg;
 
+		#
+		#	First things first, set the installation langs...
+		#
+		$languages = LanguageHandler::get_installation_langs();
+		$this->set_preference('l10n-languages', $languages);
+
+		#
+		#	Reset the session variable (in case of a language switch and then a reinstall)...
+		#
+		@session_start();
+		$temp = LANG;
+		$tmp = substr( $temp , 0 , 2 );
+		if( !empty($temp) )
+			{
+			$_SESSION['l10n_admin_short_lang'] = $tmp;
+			$_SESSION['l10n_admin_long_lang']  = $temp;
+			}
+
+
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
-		# Make sure we only call insert_strings() once!
 		$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
 		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' );
 		$this->add_report_item( gTxt('l10n-setup_2_main') , $ok );
@@ -4497,6 +4505,12 @@ class LocalisationWizardView extends GBPWizardTabView
 				$this->add_report_item( gTxt( 'l10n-clean_2_unreg' , array( '{name}'=>$name ) ) , $ok , true );
 				}
 			}
+
+		#
+		#	Set TxP's language preference to the currently active admin language this user is viewing the site in...
+		#
+		//$this->add_report_item( "Reset language variable to ".LANG , true , true );
+		@safe_update('txp_prefs', "`val`='".doSlash(LANG)."'" , "`name`='language'");
 		}
 
 	function cleanup_3a()	# Drop lang/group from textpattern
