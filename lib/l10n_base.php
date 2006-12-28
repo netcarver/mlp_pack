@@ -475,12 +475,12 @@ class LanguageHandler
 		Returns an array of all the languages in this TXP installation with more
 		than the limit number of strings in that lang...
 		*/
-		$installation_langs = array();
+		$installation_langs = array( LANG );
 		$langs = safe_column('lang','txp_lang',"1=1 GROUP BY 'lang'");
 		foreach( $langs as $lang )
 			{
 			$count = safe_count( 'txp_lang' , "`lang`='$lang'" );
-			if( $count >= $limit )
+			if( ($count >= $limit) && ($lang !== LANG) )
 				$installation_langs[] = $lang;
 			}
 		unset( $langs );
