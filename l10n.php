@@ -843,11 +843,14 @@ if( @txpinterface === 'admin' )
 	global $l10n_view;
 
 	#	Switch admin lang if needed...
-	_l10n_process_url( true );
-	if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
+	if( l10n_installed( true ) )
 		{
-		$textarray = load_lang( $l10n_language['long'] );
-		$prefs['language'] = $l10n_language['long'];
+		_l10n_process_url( true );
+		if( LANG !== $l10n_language['long'] and LANG !== $l10n_language['short'] )
+			{
+			$textarray = load_lang( $l10n_language['long'] );
+			$prefs['language'] = $l10n_language['long'];
+			}
 		}
 
 	#
@@ -868,7 +871,7 @@ if( @txpinterface === 'admin' )
 # -- Public code section follows...
 if (@txpinterface === 'public')
 	{
-	$installed = l10n_installed();
+	$installed = l10n_installed( true );
 	if( !$installed )
 		return '';
 
