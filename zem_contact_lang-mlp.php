@@ -1,6 +1,6 @@
 <?php
 
-$plugin['name'] 		= 'zem_contact_lang_mlp';
+$plugin['name'] 		= 'zem_contact_lang-mlp';
 $plugin['version'] 		= '4.0.3-MLP';
 $plugin['author'] 		= 'Stephen Dickinson & the TXP Community';
 $plugin['author_uri'] 	= 'http://forum.textpattern.com/viewtopic.php?id=12956';
