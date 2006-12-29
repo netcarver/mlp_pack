@@ -1336,25 +1336,24 @@ function l10n_image_save( $event , $step )
 	@safe_update( $table , $set , $where );
 	}
 
+function _l10n_php2js_array($name, $array)
+	{
+	// From PHP.net (thanks Graeme!)
+	if (is_array($array))
+		{
+		$result = $name.' = new Array();'.n;
+		foreach ($array as $key => $value)
+			$result .= _l10n_php2js_array($name.'[\''.$key.'\']',$value,'').n;
+		}
+	else
+		{
+		$result = $name.' = \''.$array.'\';';
+		}
+	return $result;
+	}
 
 function _l10n_inject_js()
 	{
-	function _l10n_php2js_array($name, $array)
-		{
-		// From PHP.net
-		if (is_array($array))
-			{
-			$result = $name.' = new Array();'.n;
-			foreach ($array as $key => $value)
-				$result .= _l10n_php2js_array($name.'[\''.$key.'\']',$value,'').n;
-			}
-		else
-			{
-			$result = $name.' = \''.$array.'\';';
-			}
-		return $result;
-		}
-
 	$ltr = doSlash( gTxt( 'l10n-ltr' ) );
 	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
 	$toggle_title = doSlash( gTxt('l10n-toggle') );
