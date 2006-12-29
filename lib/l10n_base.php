@@ -24,7 +24,7 @@ function l10n_redirect_textpattern($table)
 			$table = make_textpattern_name( $l10n_language );
 			}
 		}
-	elseif ( 'l10n_master_textpattern' === $table )
+	elseif ( L10N_MASTER_TEXTPATTERN === $table )
 		{
 		$table = 'textpattern';
 		}
