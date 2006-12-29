@@ -414,29 +414,6 @@ class SnippetHandler
 			}
 		}
 
-	/* 	function substitute_snippets( &$thing )
-		{
-		# Replaces all snippets within the contained block with their text from the global textarray.
-		# Allows TxP devs to include snippets* in their forms and page templates.
-		$out = preg_replace_callback( 	SnippetHandler::get_pattern('snippet') ,
-										create_function(
-							           '$match',
-								       'global $l10n_language;
-										global $textarray;
-										if( $l10n_language )
-											$lang = $l10n_language[\'long\'];
-										else
-											$lang = "??";
-										$snippet = strtolower($match[1]);
-										if( array_key_exists( $snippet , $textarray ) )
-											$out = $textarray[$snippet];
-										else
-											$out = "($lang)$snippet";
-										return $out;'
-									), $thing );
-		return $out;
-		}
-		*/
 	function has_localisation_tags( &$thing )
 		{
 		$p = SnippetHandler::get_pattern( 'tag_localise' );
@@ -4210,6 +4187,16 @@ class LocalisationWizardView extends GBPWizardTabView
 				'cleanup' => gTxt('l10n-comment_op',array('{op}'=>'Restore')),
 				),
 			);
+
+		#
+		#	Add extra installation step if the site slogan is still the default...
+		#
+		global $prefs;
+		if( @$prefs['site_slogan'] === 'My pithy slogan' )
+			{
+			$steps['11'] = array( 'setup' => gTxt('l10n-setup_11_main') , 'optional'=>true, 'checked'=>1 );
+			}
+
 		return $steps;
 		}
 
@@ -4474,6 +4461,17 @@ class LocalisationWizardView extends GBPWizardTabView
 		$default = @$GLOBALS['prefs']['comments_default_invite'];
 		$ok = set_pref( 'comments_default_invite', '', 'comments', 0 );
 		$this->add_report_item( gTxt('l10n-comment_op',array('{op}'=>'Clear')) , $ok );
+		}
+
+	function setup_11()		# Configure site slogan to reflect the browse language...
+		{
+		$langs = LanguageHandler::get_installation_langs();
+		foreach( $langs as $code )
+			{
+			$langname = LanguageHandler::get_native_name_of_lang( $code );
+			StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $code , $langname );
+			}
+		$this->add_report_item( gTxt('l10n-setup_11_main') , true );
 		}
 
 	function cleanup_1()	# Drop the txp_lang.owner field
