@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $plugin['name'] 		= 'zem_contact_lang_mlp';
 $plugin['version'] 		= '4.0.3-MLP';
