@@ -562,7 +562,8 @@ if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
 	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_textpattern_' );
 if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
 	define( 'L10N_SNIPPET_IO_HEADER' , 'MDoibDEwbi1jbG9uZSI7czoxMjoi' );
-
+if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
+	define( 'L10N_MASTER_TEXTPATTERN' , 'l10n_master_txp' );
 if( !defined( 'L10N_SNIPPET_PATTERN' ) )
 	define( 'L10N_SNIPPET_PATTERN' , "/##([\w|\.|\-]+)##/" );
 global $txpcfg;
@@ -927,7 +928,7 @@ if (@txpinterface === 'public')
 				#
 				#	Update the l10n master table (which simply maps to the underlying 'textpattern' table)...
 				#
-				$updated = safe_update('l10n_master_textpattern',"comments_count='".doSlash($thecount)."'","ID='".doSlash($id)."'");
+				$updated = safe_update(L10N_MASTER_TEXTPATTERN,"comments_count='".doSlash($thecount)."'","ID='".doSlash($id)."'");
 				}
 			}
 		}
@@ -1001,6 +1002,10 @@ if (@txpinterface === 'public')
 				}
 			@ob_start('_l10n_inject_feed_lang_markers');
 			}
+		else
+			{
+			@ob_start('_l10n_inject_lang_markers');
+			}
 		}
 
 	function _l10n_inject_lang_markers_cb( $matches )
@@ -1043,7 +1048,7 @@ if (@txpinterface === 'public')
 		#
 		$result = array();
 		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
-		$rows = safe_rows_start( '*,ID as thisid, unix_timestamp(Posted) as posted' , 'l10n_master_textpattern' , $where );
+		$rows = safe_rows_start( '*,ID as thisid, unix_timestamp(Posted) as posted' , L10N_MASTER_TEXTPATTERN , $where );
 		if( count( $rows ) )
 			{
 			while( $row = nextRow($rows) )
@@ -1058,7 +1063,7 @@ if (@txpinterface === 'public')
 	function _l10n_get_alternate_mappings( $rendition_id , $exclude_lang , $use_master=false )
 		{
 		if( $use_master )
-			$info = safe_row( '`Group`' , 'l10n_master_textpattern' , "`ID`='$rendition_id'" );
+			$info = safe_row( '`Group`' , L10N_MASTER_TEXTPATTERN , "`ID`='$rendition_id'" );
 		else
 			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$rendition_id'" );
 		if( empty($info) )
@@ -1162,12 +1167,12 @@ if (@txpinterface === 'public')
 						break;
 
 					case 'section_title':
-						$rs = safe_row("ID,Section",'l10n_master_textpattern',"url_title like '".doSlash($u1)."' AND Section='".doSlash($u0)."' and Status >= 4 limit 1");
+						$rs = safe_row("ID,Section",L10N_MASTER_TEXTPATTERN,"url_title like '".doSlash($u1)."' AND Section='".doSlash($u0)."' and Status >= 4 limit 1");
 						$id = @$rs['ID'];
 						break;
 
 					case 'title_only':
-						$rs = safe_row("ID",'l10n_master_textpattern',"url_title like '".doSlash($u0)."' and Status >= 4 limit 1");
+						$rs = safe_row("ID",L10N_MASTER_TEXTPATTERN,"url_title like '".doSlash($u0)."' and Status >= 4 limit 1");
 						$id = @$rs['ID'];
 						break;
 
@@ -1478,10 +1483,6 @@ if (@txpinterface === 'public')
 				# Process the direct snippet substitutions needed in the contained content.
 				$thing = _l10n_substitute_snippets( $thing );
 				$html = parse($thing);
-
-				if( array_key_exists( 'page' , $atts) )
-					$html = _l10n_inject_lang_markers( $html );
-
 				return $html;
 				}
 			}
