@@ -29,6 +29,7 @@ $l10n_default_strings_perm = array(
 	'l10n-setup_3_title'		=> 'Add fields to the "textpattern" table',
 	'l10n-setup_4_main'			=> 'Localise fields in content tables',
 	'l10n-setup_6_main'			=> 'Process {count} articles',
+	'l10n-setup_11_main'		=> 'Set site slogan to reflect the browse language',
 	'l10n-op_table'				=> '{op} the {table} table',
 	'l10n-op_tables'			=> '{op} the {tables} tables',
 	'l10n-comment_op'			=> '{op} the default comment invitation',
