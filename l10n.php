@@ -813,8 +813,6 @@ function _l10n_process_url( $use_get_params=false )
 			echo br , "L10N MLP: About to redirect.";
 		else
 			{
-			//header('HTTP/1.1 303 See Other');
-			//header('Status: 303');
 			header('Location: '.hu.$_SESSION[$ssname]);
 			header('Connection: close');
 			header('Content-Length: 0');
@@ -933,21 +931,21 @@ if (@txpinterface === 'public')
 			}
 		}
 
+	function _l10n_load_localised_pref( $name )
+		{
+		global $prefs,$pretext;
+		$k = "snip-$name";
+		$r = gTxt( $k );
+		if( $r !== $k )
+			{
+			$GLOBALS[$name] = $r;
+			$GLOBALS['prefs'][$name] = $r;
+			$prefs[$name] = $r;
+			$pretext[$name] = $r;
+			}
+		}
 	function _l10n_pretext()
 		{
-		function load_localised_pref( $name )
-			{
-			global $prefs,$pretext;
-			$k = "snip-$name";
-			$r = gTxt( $k );
-			if( $r !== $k )
-				{
-				$GLOBALS[$name] = $r;
-				$GLOBALS['prefs'][$name] = $r;
-				$prefs[$name] = $r;
-				$pretext[$name] = $r;
-				}
-			}
 		global $l10n_language , $textarray , $prefs;
 
 		$first_chunk = _l10n_process_url();
@@ -965,7 +963,7 @@ if (@txpinterface === 'public')
 			$prefs['language'] = $l10n_language['long'];
 			}
 
-		load_localised_pref( 'site_slogan' );
+		_l10n_load_localised_pref( 'site_slogan' );
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
 		$feeds = array( 'rss' , 'atom' );
