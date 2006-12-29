@@ -1206,6 +1206,52 @@ class StringHandler
 		return $out;
 		}
 
+	function comment_block( $comment , $tabs=0 , $leading=1 )
+		{
+		$o = str_repeat( str_repeat( t , $tabs ).'#'.n , $leading );
+		$o.= str_repeat( t , $tabs ).'#'.t.$comment.n;
+		$o.= str_repeat( str_repeat( t , $tabs ).'#' , $leading );
+		return $o;
+		}
+	function dmp_array( $name , &$vals )
+		{
+		global $$name , $textarray;
+
+		$o[] = 'global $'.$name.';';
+		$o[] = "\$$name = array(";
+
+		#	Find max key string length...
+		$max = 0;
+		foreach( $$name as $k=>$v )
+			{
+			$len = strlen( $k );
+			if( $len > $max )
+				$max = $len;
+			}
+
+		foreach( $$name as $k=>$v )
+			{
+			$len = strlen( $k );
+			$qt = "'";
+			$replace = array("'"=>"\'", "\n"=>'\n',"\r"=>'\r');
+
+			#	localise value (if possible)...
+			if( isset( $vals[$k] ) )
+				$v = $vals[$k];
+
+			# If there are any /r/n's then use " as quotes and don't escape singlequotes...
+			if( false !== strpos( $v , "\n" ) or false !== strpos( $v , "\r" ) )
+				{
+				$qt = '"';
+				unset( $replace["'"] );
+				}
+
+			#	Build the array entry...
+			$o[] = t.'\''.$k.'\''.str_repeat(' ',($max-$len)).' => '.$qt.strtr($v , $replace).$qt.',';
+			}
+		$o[] = t.');';
+		return join( n,$o );
+		}
  	function build_l10n_default_strings_file( $lang )
 		{
 		$langs = LanguageHandler::get_installation_langs();
@@ -1216,65 +1262,17 @@ class StringHandler
 		$vals = load_lang( $lang );
 		$full_name = LanguageHandler::get_native_name_of_lang( $lang );
 
-		function comment_block( $comment , $tabs=0 , $leading=1 )
-			{
-			$o = str_repeat( str_repeat( t , $tabs ).'#'.n , $leading );
-			$o.= str_repeat( t , $tabs ).'#'.t.$comment.n;
-			$o.= str_repeat( str_repeat( t , $tabs ).'#' , $leading );
-			return $o;
-			}
-
-		function dmp_array( $name , &$vals )
-			{
-			global $$name , $textarray;
-
-			$o[] = 'global $'.$name.';';
-			$o[] = "\$$name = array(";
-
-			#	Find max key string length...
-			$max = 0;
-			foreach( $$name as $k=>$v )
-				{
-				$len = strlen( $k );
-				if( $len > $max )
-					$max = $len;
-				}
-
-			foreach( $$name as $k=>$v )
-				{
-				$len = strlen( $k );
-				$qt = "'";
-				$replace = array("'"=>"\'", "\n"=>'\n',"\r"=>'\r');
-
-				#	localise value (if possible)...
-				if( isset( $vals[$k] ) )
-					$v = $vals[$k];
-
-				# If there are any /r/n's then use " as quotes and don't escape singlequotes...
-				if( false !== strpos( $v , "\n" ) or false !== strpos( $v , "\r" ) )
-					{
-					$qt = '"';
-					unset( $replace["'"] );
-					}
-
-				#	Build the array entry...
-				$o[] = t.'\''.$k.'\''.str_repeat(' ',($max-$len)).' => '.$qt.strtr($v , $replace).$qt.',';
-				}
-			$o[] = t.');';
-			return join( n,$o );
-			}
-
 		$o[] = '<?php';
 		$o[] = '';
-		$o[] = comment_block( 'The language of the strings in this file...' );
+		$o[] = StringHandler::comment_block( 'The language of the strings in this file...' );
 		$o[] = 'global $l10n_default_strings_lang;';
-		$o[] = "\$l10n_default_strings_lang = '$lang';" . comment_block( $full_name , 1 , 0);
+		$o[] = "\$l10n_default_strings_lang = '$lang';" . StringHandler::comment_block( $full_name , 1 , 0);
 		$o[] = '';
-		$o[] = comment_block( 'These strings are always needed, they will get installed in the language array...' );
-		$o[] = dmp_array( 'l10n_default_strings_perm' , $vals );
+		$o[] = StringHandler::comment_block( 'These strings are always needed, they will get installed in the language array...' );
+		$o[] = StringHandler::dmp_array( 'l10n_default_strings_perm' , $vals );
 		$o[] = '';
-		$o[] = comment_block( 'These are the regular mlp pack strings that will get installed into the txp_lang table...' );
-		$o[] = dmp_array( 'l10n_default_strings' , $vals );
+		$o[] = StringHandler::comment_block( 'These are the regular mlp pack strings that will get installed into the txp_lang table...' );
+		$o[] = StringHandler::dmp_array( 'l10n_default_strings' , $vals );
 		$o[] = '';
 		$o[] = '?>';
 
