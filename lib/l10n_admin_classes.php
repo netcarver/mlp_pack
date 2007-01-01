@@ -480,10 +480,10 @@ class MLPArticles
 
 	}
 
-class SnippetHandler
+class MLPSnips
 	{
 	/*
-	class SnippetHandler implements localised "snippets" within page and
+	class MLPSnips implements localised "snippets" within page and
 	form templates. Uses the services of the string_handler to localise the
 	strings therein.
 	*/
@@ -521,7 +521,7 @@ class SnippetHandler
 
 	function has_localisation_tags( &$thing )
 		{
-		$p = SnippetHandler::get_pattern( 'tag_localise' );
+		$p = MLPSnips::get_pattern( 'tag_localise' );
 		$i = 0;
 		$matches = array();
 		$r = preg_match_all( $p , $thing , $matches );
@@ -538,7 +538,7 @@ class SnippetHandler
 			{
 			case 'remove' :
 			$count = 0;
-			$p = SnippetHandler::get_pattern( 'tag_localise' );
+			$p = MLPSnips::get_pattern( 'tag_localise' );
 			$thing = trim( preg_replace( $p , '' , $thing , -1 , $count ) );
 			return $count;
 			break;
@@ -549,7 +549,7 @@ class SnippetHandler
 
 			default:
 			case 'check':
-			return SnippetHandler::has_localisation_tags( $thing );
+			return MLPSnips::has_localisation_tags( $thing );
 			break;
 			}
 		}
@@ -564,9 +564,9 @@ class SnippetHandler
 		$tags = array();
 
 		# Match all directly included snippets...
-		preg_match_all( SnippetHandler::get_pattern('snippet') , $thing , $out );
+		preg_match_all( MLPSnips::get_pattern('snippet') , $thing , $out );
 		# Match all snippets included as txp tags...
-		preg_match_all( SnippetHandler::get_pattern('snippet_tag') , $thing , $tags );
+		preg_match_all( MLPSnips::get_pattern('snippet_tag') , $thing , $tags );
 
 		#	cleanup and trim the output arrays a little...
 		array_shift( $out );
@@ -2352,8 +2352,8 @@ class LocalisationStringView extends GBPAdminTabView
 				{
 				$snippets 	= array();
 				$raw_count = 0;
-				$snippets = SnippetHandler::find_snippets_in_block( $a['data'] , $raw_count );
-				$localised = SnippetHandler::do_localise( $a['data'] );
+				$snippets = MLPSnips::find_snippets_in_block( $a['data'] , $raw_count );
+				$localised = MLPSnips::do_localise( $a['data'] );
 				$count = count( $snippets );
 				$marker = ($count) ? '['.$count.']' : '';
 				$guts = $a['name'].' '.$marker;
@@ -2670,8 +2670,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$stats 	= array();
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
 		$raw_count = 0;
-		$snippets = SnippetHandler::find_snippets_in_block( $data , $raw_count );
-		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
+		$snippets = MLPSnips::find_snippets_in_block( $data , $raw_count );
+		$strings  = MLPSnips::get_snippet_strings( $snippets , $stats );
 		$can_edit = $this->pref('l10n-inline_editing');
 
 		$out[] = '<div class="l10n_string_list">';
@@ -2709,8 +2709,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$stats 	= array();
 		$owner = 'special';
 		$raw_count = 1;
-		$snippets = SnippetHandler::get_special_snippets();
-		$strings  = SnippetHandler::get_snippet_strings( $snippets , $stats );
+		$snippets = MLPSnips::get_special_snippets();
+		$strings  = MLPSnips::get_snippet_strings( $snippets , $stats );
 
 		$out[] = '<div class="l10n_string_list">';
 		$out[] = '<h3>'.gTxt('l10n-special').' '.gTxt('l10n-snippets').'</h3>'.n;
@@ -2739,7 +2739,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
-		$localised = SnippetHandler::do_localise( $data );
+		$localised = MLPSnips::do_localise( $data );
 
 		if( !$localised )
 			{
@@ -2980,7 +2980,7 @@ class LocalisationStringView extends GBPAdminTabView
 	function localise_pageform()
 		{
 		$data = gps('data');
-		$data = SnippetHandler::do_localise( $data , 'insert' );
+		$data = MLPSnips::do_localise( $data , 'insert' );
 		$_POST['data'] = $data;
 		LocalisationStringView::save_pageform();
 		}
@@ -3198,7 +3198,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$results = array();
 		$raw_count = 0;
 
-		$snips = SnippetHandler::find_snippets_in_block( $row['data'] , $raw_count );
+		$snips = MLPSnips::find_snippets_in_block( $row['data'] , $raw_count );
 		foreach( $snips as $k=>$v )
 			$results[$v] = $v;
 
@@ -3207,7 +3207,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 	function get_special_snippets()
 		{
 		$snippets = array();
-		$snips = SnippetHandler::get_special_snippets();
+		$snips = MLPSnips::get_special_snippets();
 		foreach( $snips as $k=>$v )
 			$snippets[$v] = $v;
 		return $snippets;
