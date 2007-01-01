@@ -99,7 +99,7 @@ function zem_crl_enumerate_strings($event , $step='' , $pre=0)
 	{
 	global $zem_crl_strings;
 	$r = array	(
-				'owner'		=> 'zem_contact_lang_mlp',	#	Name the plugin these strings are for.
+				'owner'		=> 'zem_contact_lang-mlp',	#	Name the plugin these strings are for.
 				'prefix'	=> ZCRL_PREFIX,				#	Its unique string prefix
 				'lang'		=> 'en-gb',					#	The language of the initial strings.
 				'event'		=> 'public',				#	public/admin/common = which interface the strings will be loaded into
