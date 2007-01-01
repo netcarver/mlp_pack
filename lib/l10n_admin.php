@@ -11,33 +11,33 @@ if( $l10n_view->installed() )
 	#
 	#	Article handlers...
 	#
-	register_callback( 'l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
-	register_callback( 'l10n_add_rendition_to_article_cb' 		, 'article' );
+	register_callback( '_l10n_setup_article_buffer_processor'	, 'article' , '' , 1 );
+	register_callback( '_l10n_add_rendition_to_article_cb' 	, 'article' );
 
 	#
 	#	Article list handlers...
 	#
-	register_callback( 'l10n_pre_multi_edit_cb'				, 'list' , 'list_multi_edit' , 1 );
-	register_callback( 'l10n_post_multi_edit_cb'				, 'list' , 'list_multi_edit' );
-	register_callback( 'l10n_list_filter'						, 'list' , '' , 1 );
+	register_callback( '_l10n_pre_multi_edit_cb'				, 'list' , 'list_multi_edit' , 1 );
+	register_callback( '_l10n_post_multi_edit_cb'				, 'list' , 'list_multi_edit' );
+	register_callback( '_l10n_list_filter'						, 'list' , '' , 1 );
 
 	#
 	#	Comment handlers...
 	#
-	register_callback( 'l10n_pre_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' , 1 );
-	register_callback( 'l10n_post_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' );
+	register_callback( '_l10n_pre_discuss_multi_edit' 			, 'discuss' , 'discuss_multi_edit' , 1 );
+	register_callback( '_l10n_post_discuss_multi_edit' 		, 'discuss' , 'discuss_multi_edit' );
 
 	#
 	#	Language management handlers (to stop language strings from being deleted) ...
 	#
-	register_callback( 'l10_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
-	register_callback( 'l10_language_handler_callback_post' , 'prefs' , 'get_language' );
+	register_callback( '_l10n_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
+	register_callback( '_l10n_language_handler_callback_post' , 'prefs' , 'get_language' );
 
 	#
 	#	Insert the handlers for extending DB fields...
 	#
 	global $l10n_mappings;
-	$l10n_mappings = l10n_remap_fields( '' , '' , true );
+	$l10n_mappings = _l10n_remap_fields( '' , '' , true );
 	foreach( $l10n_mappings as $table=>$field_map )
 		{
 		//echo br , "Processing $table";
@@ -90,7 +90,7 @@ function _l10n_register_painter( $fn , $e, $s )
 #	The following two routines were added to stop the TxP language update/intsall
 # from a file from trampling all over any other strings in that language.
 #
-function l10_language_handler_callback_pre( $event , $step )
+function _l10n_language_handler_callback_pre( $event , $step )
 	{
 	global $l10n_file_import_details;
 
@@ -117,7 +117,7 @@ function l10_language_handler_callback_pre( $event , $step )
 		$ok = safe_update( 'txp_lang' , "`lastmod`='$new_time'" , "`lang`='$lang' and `lastmod` > $lastmod" );
 		}
 	}
-function l10_language_handler_callback_post( $event , $step )
+function _l10n_language_handler_callback_post( $event , $step )
 	{
 	$force = gps( 'force' );
 	if( 'file' !== $force )
@@ -168,7 +168,7 @@ function _l10n_create_temp_textpattern( $languages )
 	$sql = "create TEMPORARY table `".PFX."textpattern` $indexes select * from `".PFX."textpattern` where `Lang` IN ($languages)";
 	@safe_query( $sql );
 	}
-function l10n_list_filter( $event, $step )
+function _l10n_list_filter( $event, $step )
 	{
 	if( $event !== 'list' )
 		return;
@@ -206,7 +206,7 @@ function l10n_list_filter( $event, $step )
 		default:
 			break;
 		}
-	ob_start( 'l10n_list_buffer_processor' );
+	ob_start( '_l10n_list_buffer_processor' );
 	}
 function _l10n_match_cb( $matches )
 	{
@@ -236,7 +236,7 @@ function _l10n_chooser( $permitted_langs )
 	$count = 0;
 	foreach( $langs as $lang )
 		{
-		$table = make_textpattern_name(array('long'=>$lang));
+		$table = _l10n_make_textpattern_name(array('long'=>$lang));
 		$lang_rendition_count = safe_count( $table , "`Lang`='$lang'" );
 		$lang_has_renditions = ($lang_rendition_count > 0);
 
@@ -293,7 +293,7 @@ function _l10n_chooser( $permitted_langs )
 	$o = join( '' , $o );
 	return $o;
 	}
-function l10n_list_buffer_processor( $buffer )
+function _l10n_list_buffer_processor( $buffer )
 	{
 	$count = 0;
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
@@ -310,7 +310,7 @@ function l10n_list_buffer_processor( $buffer )
 
 	return $buffer;
 	}
-function l10n_setup_vars( $event , $step )
+function _l10n_setup_vars( $event , $step )
 	{
 	#
 	#	Read the variables we need and stash them away for use in the buffer
@@ -343,13 +343,13 @@ function l10n_setup_vars( $event , $step )
 
 	$l10n_vars['step']			= $step;
 	}
-function l10n_setup_article_buffer_processor( $event , $step )
+function _l10n_setup_article_buffer_processor( $event , $step )
 	{
 	#	Setup the buffer process routine. It will inject new page elements
 	# into the article edit page...
 	#
-	ob_start( 'l10n_article_buffer_processor' );
-	l10n_setup_vars( $event , $step );
+	ob_start( '_l10n_article_buffer_processor' );
+	_l10n_setup_vars( $event , $step );
 
 	#
 	#	If we are posting a new article from an existing one, force some simple
@@ -438,7 +438,7 @@ function _l10n_process_admin_page($page)
 	return $page;
 	}
 
-function l10n_article_buffer_processor( $buffer )
+function _l10n_article_buffer_processor( $buffer )
 	{
 	global $l10n_vars;
 	global $l10n_view;
@@ -568,7 +568,7 @@ function _l10n_replace_rendition( $lang , $replace=false , $id='' )
 		echo br , "Invalid language code '$lang' calculated in _l10n_add_rendition()";
 		return;
 		}
-	$table_name = safe_pfx( make_textpattern_name($lang) );
+	$table_name = safe_pfx( _l10n_make_textpattern_name($lang) );
 	$safe_txp = safe_pfx( 'textpattern' );
 
 	$sql = $op." INTO $table_name SELECT * FROM $safe_txp WHERE $safe_txp.ID='$id' LIMIT 1";
@@ -581,10 +581,10 @@ function _l10n_remove_rendition( $lang , $id )
 		echo br , "Invalid language code '$lang' calculated in _l10n_add_rendition()";
 		return;
 		}
-	$table_name = safe_pfx( make_textpattern_name($lang) );
+	$table_name = safe_pfx( _l10n_make_textpattern_name($lang) );
 	safe_delete( $table_name , "`ID`='$id'" );
 	}
-function l10n_add_rendition_to_article_cb( $event , $step )
+function _l10n_add_rendition_to_article_cb( $event , $step )
 	{
 	require_privs('article');
 
@@ -618,7 +618,7 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Read the variables to continue the edit...
 			#
-			l10n_setup_vars( $event , $step );
+			_l10n_setup_vars( $event , $step );
 			break;
 		case 'save':
 			#
@@ -653,12 +653,12 @@ function l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Read the variables to continue the edit...
 			#
-			l10n_setup_vars( $event , $step );
+			_l10n_setup_vars( $event , $step );
 			break;
 		}
 	}
 
-function l10n_changeauthor_notify_routine()
+function _l10n_changeauthor_notify_routine()
 	{
 	global $l10n_view;
 
@@ -720,7 +720,7 @@ function l10n_changeauthor_notify_routine()
 		$ok = @txpMail($email, $subject, $body, $replyto);
 		}
 	}
-function l10n_post_multi_edit_cb( $event , $step )
+function _l10n_post_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
 	global $l10n_view;
@@ -736,7 +736,7 @@ function l10n_post_multi_edit_cb( $event , $step )
 	switch( $method )
 		{
 		case 'changeauthor':
-			l10n_changeauthor_notify_routine();
+			_l10n_changeauthor_notify_routine();
 			break;
 		}
 
@@ -787,7 +787,7 @@ function l10n_post_multi_edit_cb( $event , $step )
 		$l10n_view->redirect( $search );
 		}
 	}
-function l10n_pre_multi_edit_cb( $event , $step )
+function _l10n_pre_multi_edit_cb( $event , $step )
 	{
 	global $l10n_vars;
 	$method = gps('edit_method');
@@ -866,7 +866,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 		echo br , "Invalid language code '$code' calculated in _l10n_generate_lang_table()";
 		return;
 		}
-	$table_name = make_textpattern_name( $code );
+	$table_name = _l10n_make_textpattern_name( $code );
 
 	$where = '';
 	if( $filter )
@@ -879,7 +879,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$ok = @safe_query( $sql );
 	@safe_query( 'unlock tables' ) ;
 	}
-function l10n_pre_discuss_multi_edit( $event , $step )
+function _l10n_pre_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
 	//$languages = array();
@@ -933,7 +933,7 @@ function l10n_pre_discuss_multi_edit( $event , $step )
 		//$l10n_vars['update_tables'] = $languages;
 	$l10n_vars['update_work'] = $work;
 	}
-function l10n_post_discuss_multi_edit( $event , $step )
+function _l10n_post_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
 	$method   = gps('edit_method');
@@ -970,7 +970,7 @@ function l10n_post_discuss_multi_edit( $event , $step )
 		}
 	}
 
-function l10n_build_sql_set( $table )
+function _l10n_build_sql_set( $table )
 	{
 	global $l10n_mappings;
 	$langs = LanguageHandler::get_site_langs();
@@ -1002,7 +1002,7 @@ function l10n_build_sql_set( $table )
 	}
 
 
-function l10n_category_paint( $page )
+function _l10n_category_paint( $page )
 	{
 	global $l10n_mappings;
 	$id = gps( 'id' );
@@ -1056,17 +1056,17 @@ function l10n_category_paint( $page )
 	return $page;
 	}
 
-function l10n_category_save( $event , $step )
+function _l10n_category_save( $event , $step )
 	{
 	$id_name = 'id';
 	$table   = 'txp_category';
 	$id = gps( $id_name );
 	$where = "`$id_name`='$id'";
-	$set = l10n_build_sql_set( $table );
+	$set = _l10n_build_sql_set( $table );
 	@safe_update( $table , $set , $where );
 	}
 
-function l10n_section_paint( $page )
+function _l10n_section_paint( $page )
 	{
 	$default = LanguageHandler::get_site_default_lang();
 
@@ -1121,17 +1121,17 @@ function l10n_section_paint( $page )
 
 	return $page;
 	}
-function l10n_section_save( $event , $step )
+function _l10n_section_save( $event , $step )
 	{
 	$id_name = 'name';
 	$table   = 'txp_section';
 	$id = gps( $id_name );
 	$where = "`$id_name`='$id'";
-	$set = l10n_build_sql_set( $table );
+	$set = _l10n_build_sql_set( $table );
 	@safe_update( $table , $set , $where );
 	}
 
-function l10n_file_paint( $page )
+function _l10n_file_paint( $page )
 	{
 	$default = LanguageHandler::get_site_default_lang();
 
@@ -1181,16 +1181,16 @@ function l10n_file_paint( $page )
 	return $page;
 	}
 
-function l10n_file_save( $event , $step )
+function _l10n_file_save( $event , $step )
 	{
 	$id_name = 'id';
 	$table   = 'txp_file';
 	$id = gps( $id_name );
 	$where = "`$id_name`='$id'";
-	$set = l10n_build_sql_set( $table );
+	$set = _l10n_build_sql_set( $table );
 	@safe_update( $table , $set , $where );
 	}
-function l10n_link_paint( $page )
+function _l10n_link_paint( $page )
 	{
 	$default = LanguageHandler::get_site_default_lang();
 
@@ -1250,7 +1250,7 @@ function l10n_link_paint( $page )
 
 	return $page;
 	}
-function l10n_link_save( $event , $step )
+function _l10n_link_save( $event , $step )
 	{
 	$id_name = 'id';
 	$table   = 'txp_link';
@@ -1261,11 +1261,11 @@ function l10n_link_save( $event , $step )
 		$id = gps( $id_name );
 		}
 	$where = "`$id_name`='$id'";
-	$set = l10n_build_sql_set( $table );
+	$set = _l10n_build_sql_set( $table );
 	@safe_update( $table , $set , $where );
 	}
 
-function l10n_image_paint( $page )
+function _l10n_image_paint( $page )
 	{
 	$default = LanguageHandler::get_site_default_lang();
 
@@ -1326,13 +1326,13 @@ function l10n_image_paint( $page )
 
 	return $page;
 	}
-function l10n_image_save( $event , $step )
+function _l10n_image_save( $event , $step )
 	{
 	$id_name = 'id';
 	$table   = 'txp_image';
 	$id = gps( $id_name );
 	$where = "`$id_name`='$id'";
-	$set = l10n_build_sql_set( $table );
+	$set = _l10n_build_sql_set( $table );
 	@safe_update( $table , $set , $where );
 	}
 

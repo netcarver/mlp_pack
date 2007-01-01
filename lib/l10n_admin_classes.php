@@ -1488,7 +1488,7 @@ class LocalisationView extends GBPPlugin
 			foreach( $langs as $name )
 				{
 				$name = PFX.L10N_RENDITION_TABLE_PREFIX.$name;
-				$names[] = _l10n_clean_table_name($name);
+				$names[] = _l10n_clean_sql_name($name);
 				}
 
 		#
@@ -1521,7 +1521,7 @@ class LocalisationView extends GBPPlugin
 				#
 				#	Add fields for this language...
 				#
-				l10n_mappings_walker( array( &$this , 'add_field' ) , $lang );
+				_l10n_walk_mappings( array( &$this , 'add_field' ) , $lang );
 
 				#
 				#	Conditionally extend the snip-site_slogan to include the new language...
@@ -1558,14 +1558,14 @@ class LocalisationView extends GBPPlugin
 				#
 				#	Remove fields for this language...
 				#
-				l10n_mappings_walker( array( &$this , 'drop_field' ) , $lang );
+				_l10n_walk_mappings( array( &$this , 'drop_field' ) , $lang );
 				}
 			}
 
 		#
 		#	Process the new default language ... copy fields as needed...
 		#
-		l10n_mappings_walker( array( &$this , 'copy_defaults' ) , $langs[0] );
+		_l10n_walk_mappings( array( &$this , 'copy_defaults' ) , $langs[0] );
 		}
 	function add_field( $table , $field , $attributes , $language )
 		{
@@ -3561,7 +3561,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			$insert[] = '`ID`=\''.doSlash( $rendition_id ).'\'';
 			$insert_sql = join( ', ' , $insert );
-			$table_name = make_textpattern_name( array( 'long'=>$lang ) );
+			$table_name = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
 			safe_insert( $table_name , $insert_sql );
 
 			#
@@ -3664,7 +3664,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		foreach( $renditions as $rendition )
 			{
 			$lang = $rendition['Lang'];
-			$rendition_table = make_textpattern_name( array( 'long'=>$lang ) );
+			$rendition_table = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
 			safe_delete( $rendition_table , "`Group`='$article'" );
 			}
 
@@ -3705,7 +3705,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Delete from the correct language rendition table...
 		#
-		$rendition_table = make_textpattern_name( array( 'long'=>$lang ) );
+		$rendition_table = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
 		$rendition_deleted = @safe_delete( $rendition_table , "`ID`='$rendition'" );
 
 		#
@@ -4531,7 +4531,7 @@ class LocalisationWizardView extends GBPWizardTabView
 	function setup_4() 		# Localise fields in content tables
 		{
 		$this->add_report_item( gTxt('l10n-setup_4_main').'&#8230;' );
-		l10n_mappings_walker( array( &$this , 'setup_4_cb' ) );
+		_l10n_walk_mappings( array( &$this , 'setup_4_cb' ) );
 		}
 	function setup_4_cb( $table , $field , $attributes )
 		{
@@ -4591,7 +4591,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code       = LanguageHandler::compact_code( $lang );
-			$table_name = make_textpattern_name( $code );
+			$table_name = _l10n_make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
@@ -4719,7 +4719,7 @@ class LocalisationWizardView extends GBPWizardTabView
 	function cleanup_4a()	# Remove Localised content from tables
 		{
 		$this->add_report_item( gTxt('l10n-clean_4a_main').'&#8230;' );
-		l10n_mappings_walker( array( &$this , 'cleanup_4a_cb' ) );
+		_l10n_walk_mappings( array( &$this , 'cleanup_4a_cb' ) );
 		}
 	function cleanup_4a_cb( $table , $field , $attributes )
 		{
@@ -4746,7 +4746,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $lang )
 			{
 			$code  = LanguageHandler::compact_code( $lang );
-			$table_name = make_textpattern_name( $code );
+			$table_name = _l10n_make_textpattern_name( $code );
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
 			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );

@@ -8,7 +8,7 @@
 global $txpcfg , $event;
 include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
-function l10n_redirect_textpattern($table)
+function _l10n_redirect_textpattern($table)
 	{
 	if( @txpinterface !== 'public' )
 		return $table;
@@ -21,7 +21,7 @@ function l10n_redirect_textpattern($table)
 		$language_ok	= true;
 		if( $language_set and $language_ok )
 			{
-			$table = make_textpattern_name( $l10n_language );
+			$table = _l10n_make_textpattern_name( $l10n_language );
 			}
 		}
 	elseif ( L10N_MASTER_TEXTPATTERN === $table )
@@ -31,7 +31,7 @@ function l10n_redirect_textpattern($table)
 	return $table;
 	}
 
-function l10n_remap_fields( $thing , $table , $get_mappings=false )
+function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	{
 	static $interfaces = array( 'public' , 'admin' );
 	static $mappings = array	(
@@ -40,9 +40,9 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 				'sql' 			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" ,
 				'e' 			=> 'category',
 				'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
-				'paint' 		=> 'l10n_category_paint',
+				'paint' 		=> '_l10n_category_paint',
 				'save_steps'	=> array( 'cat_article_create', 'cat_article_save', 'cat_link_create', 'cat_link_save', 'cat_image_create', 'cat_image_save', 'cat_file_create', 'cat_file_save', ),
-				'save'			=> 'l10n_category_save',
+				'save'			=> '_l10n_category_save',
 				),
 			),
 		'txp_file' 		=> array(
@@ -50,9 +50,9 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL" ,
 				'e' 			=> 'file',
 				'paint_steps'	=> array( 'file_edit' ),
-				'paint' 		=> 'l10n_file_paint',
+				'paint' 		=> '_l10n_file_paint',
 				'save_steps'	=> array( 'file_save' ),
-				'save'			=> 'l10n_file_save',
+				'save'			=> '_l10n_file_save',
 				),
 			),
 		'txp_image'		=> array(
@@ -60,9 +60,9 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 				'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
 				'e' 			=> 'image',
 				'paint_steps'	=> array( 'image_edit' ),
-				'paint' 		=> 'l10n_image_paint',
+				'paint' 		=> '_l10n_image_paint',
 				'save_steps'	=> array( 'image_save' ),
-				'save'			=> 'l10n_image_save',
+				'save'			=> '_l10n_image_save',
 				),
 			'caption' 	=> array(
 				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
@@ -78,9 +78,9 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
 				'e' 			=> 'link',
 				'save_steps'	=> array( 'link_post', 'link_save' ),
-				'save'			=> 'l10n_link_save',
+				'save'			=> '_l10n_link_save',
 				'paint_steps'	=> '',
-				'paint' 		=> 'l10n_link_paint',
+				'paint' 		=> '_l10n_link_paint',
 				),
 			),
 		'txp_section'	=> array(
@@ -88,9 +88,9 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 				'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
 				'e' 			=> 'section',
 				'paint_steps'	=> array( '' ),
-				'paint' 		=> 'l10n_section_paint',
+				'paint' 		=> '_l10n_section_paint',
 				'save_steps'	=> array( 'section_save', 'section_create' ),
-				'save'			=> 'l10n_section_save',
+				'save'			=> '_l10n_section_save',
 				),
 			),
 		);
@@ -135,18 +135,17 @@ function l10n_remap_fields( $thing , $table , $get_mappings=false )
 
 	return $thing;
 	}
-function l10n_mappings_walker( $fn , $atts='' )
+function _l10n_walk_mappings( $fn , $atts='' )
 	{
 	if( !is_callable( $fn ) )
 		return false;
 
 	global $l10n_mappings;
 	if( !is_array( $l10n_mappings ) )
-		$l10n_mappings = l10n_remap_fields( '' , '' , true );
+		$l10n_mappings = _l10n_remap_fields( '' , '' , true );
 
 	foreach( $l10n_mappings as $table=>$fields )
 		{
-		//$table = safe_pfx( $table );
 		foreach( $fields as $field=>$attributes )
 			{
 			//	The user function must create a safe table name by calling safe_pfx() on the table name
@@ -159,7 +158,7 @@ function l10n_mappings_walker( $fn , $atts='' )
 
 
 
-function _l10n_clean_table_name( $name )
+function _l10n_clean_sql_name( $name )
 	{
 	if( !is_string( $name ) )
 		{
@@ -171,7 +170,7 @@ function _l10n_clean_table_name( $name )
 	$result = strtr( $name , array( '-' => '_' ) );
 	return $result;
 	}
-function make_textpattern_name( $full_code )
+function _l10n_make_textpattern_name( $full_code )
 	{
 	if( is_string( $full_code ) )
 		{
@@ -185,7 +184,7 @@ function make_textpattern_name( $full_code )
 			$code = $full_code['short'];
 		else
 			{
-			$error = "make_textpattern_name() given an invalid input value $full_code";
+			$error = "_l10n_make_textpattern_name() given an invalid input value $full_code";
 			trigger_error( $error , E_USER_ERROR );
 			}
 		}
@@ -195,7 +194,7 @@ function make_textpattern_name( $full_code )
 		trigger_error( "$code is too short!" , E_USER_ERROR );
 		}
 
-	$result = _l10n_clean_table_name( L10N_RENDITION_TABLE_PREFIX . $code );
+	$result = _l10n_clean_sql_name( L10N_RENDITION_TABLE_PREFIX . $code );
 
 	return $result;
 	}
