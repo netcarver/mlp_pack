@@ -877,8 +877,8 @@ if (@txpinterface === 'public')
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $prefs;
-	$prefs['db_remap_tables_func'] = 'l10n_redirect_textpattern';
-	$prefs['db_remap_fields_func'] = 'l10n_remap_fields';
+	$prefs['db_remap_tables_func'] = '_l10n_redirect_textpattern';
+	$prefs['db_remap_fields_func'] = '_l10n_remap_fields';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
