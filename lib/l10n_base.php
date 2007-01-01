@@ -117,7 +117,9 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 
 	foreach( $mappings[$table] as $field => $sql )
 		{
-		$r = '`'.$lang."-$field` as `$field`";
+		$localised_field = _l10n_make_field_name( $field , $lang );
+		$r = "`$localised_field` as `$field`";
+		//$r = '`'.$lang."-$field` as `$field`";
 
 		#
 		#	Replace specific matches...
@@ -156,7 +158,11 @@ function _l10n_walk_mappings( $fn , $atts='' )
 	return true;
 	}
 
-
+function _l10n_make_field_name( $column , $lang )
+	{
+	$tmp = _l10n_clean_sql_name( L10N_NAME.'_'.$lang.'_'.$column );
+	return $tmp;
+	}
 
 function _l10n_clean_sql_name( $name )
 	{

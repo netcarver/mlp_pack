@@ -985,7 +985,8 @@ function _l10n_build_sql_set( $table )
 		{
 		foreach( $langs as $lang )
 			{
-			$f_name 	= $lang.'-'.$field;
+			//$f_name 	= $lang.'-'.$field;
+			$f_name = _l10n_make_field_name( $field , $lang );
 
 			if( $lang === $default )
 				$f_value = gps( $field );
@@ -1024,7 +1025,8 @@ function _l10n_category_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				$field_name = $lang.'-'.$field;
+				//$field_name = $lang.'-'.$field;
+				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">'.$full_name.'</td><td class="noline">';
 				$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="30" class="edit" tabindex="'.$count.'" type="text" '.$dir.'>';
 				$r .= '</td></tr>'.n;
@@ -1094,7 +1096,8 @@ function _l10n_section_paint( $page )
 					$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 					if( $lang !== $default )
 						{
-						$field_name = $lang.'-'.$field;
+						//$field_name = $lang.'-'.$field;
+						$field_name = _l10n_make_field_name( $field , $lang );
 						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">['.$full_name.']: </td><td class="noline">';
 						$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="20" class="edit" type="text" '.$dir.'>';
 						$r .= '</td></tr>'.n;
@@ -1153,7 +1156,8 @@ function _l10n_file_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				$field_name = $lang.'-'.$field;
+				//$field_name = $lang.'-'.$field;
+				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '<p>'.$full_name.'<br/>';
 				$r .= '<textarea name="'.$field_name .'" cols="40" rows="5" style="width: 400px; height: 100px;"'.$dir.'>';
 				$r .= $row[$field_name].'</textarea></p>'.n;
@@ -1218,7 +1222,8 @@ function _l10n_link_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				$field_name = $lang.'-'.$field;
+				//$field_name = $lang.'-'.$field;
+				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '</tr><tr><td style="text-align: right; vertical-align: top;">';
 				$r .= '<label for="link-description-'.$lang.'">'.$full_name.'</label></td><td>';
 				$r .= '<textarea id="link-description-'.$lang.'" name="'.$field_name .'" cols="40" '.$rows.$dir.'>';
@@ -1287,7 +1292,8 @@ function _l10n_image_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 			foreach( $fields as $field => $attributes )
 				{
-				$field_name = $lang.'-'.$field;
+				//$field_name = $lang.'-'.$field;
+				$field_name = _l10n_make_field_name( $field , $lang );
 
 				if( $field === 'alt' )
 					{

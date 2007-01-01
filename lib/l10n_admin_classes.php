@@ -1569,7 +1569,8 @@ class MLPPlugin extends GBPPlugin
 		}
 	function add_field( $table , $field , $attributes , $language )
 		{
-		$f = "$language-$field";
+		//$f = "$language-$field";
+		$f = _l10n_make_field_name( $field , $language );
 		$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
 		if( !$exists )
 			{
@@ -1579,13 +1580,15 @@ class MLPPlugin extends GBPPlugin
 		}
 	function drop_field( $table , $field , $attributes , $language )
 		{
-		$f = "$language-$field";
+		//$f = "$language-$field";
+		$f = _l10n_make_field_name( $field , $language );
 		$sql = "DROP `$f`";
 		$ok = @safe_alter( $table , $sql );
 		}
 	function copy_defaults( $table , $field , $attributes , $language )
 		{
-		$f = "$language-$field";
+		//$f = "$language-$field";
+		$f = _l10n_make_field_name( $field , $language );
 
 		#
 		#	If we make an existing lang the default, overwrite the master field
@@ -1611,7 +1614,8 @@ class MLPPlugin extends GBPPlugin
 				if( $lang === $language )
 					continue;	# skip the default language, already done.
 
-				$f = "$lang-$field";
+				//$f = "$lang-$field";
+				$f = _l10n_make_field_name( $field , $lang );
 				@safe_update( $table , "`$f`=`$field`" , "`$f`=''" );
 				}
 			}
@@ -4544,7 +4548,8 @@ class MLPWizView extends GBPWizardTabView
 		$safe_table = safe_pfx( $table );
 		foreach( $langs as $lang )
 			{
-			$f = "$lang-$field";
+			//$f = "$lang-$field";
+			$f = _l10n_make_field_name( $field , $lang );
 			$exists = getThing( "SHOW COLUMNS FROM $safe_table LIKE '$f'" );
 			if( $exists )
 				{
@@ -4727,7 +4732,8 @@ class MLPWizView extends GBPWizardTabView
 		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $lang )
 			{
-			$f = "$lang-$field";
+			//$f = "$lang-$field";
+			$f = _l10n_make_field_name( $field , $lang );
 			$sql = "DROP `$f`";
 			$ok = @safe_alter( $table , $sql );
 			$this->add_report_item( gTxt('l10n-drop_field',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
