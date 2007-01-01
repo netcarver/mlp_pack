@@ -544,11 +544,7 @@ class SnippetHandler
 			break;
 
 			case 'insert' :
-				$subtab = gps('subtab');
-				if( $subtab === 'page' )
-					return '<txp:l10n_localise page="true">'.$thing.'</txp:l10n_localise>';
-				else
-					return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
+				return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
 				break;
 
 			default:
