@@ -581,13 +581,13 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 
 	if( $long )
 		{
-		$site_langs = LanguageHandler::get_installation_langs();
+		$site_langs = MLPLanguageHandler::get_installation_langs();
 		$tmp = $code;
 		}
 	else
 		{
-		$site_langs = LanguageHandler::get_site_langs();
-		$tmp = LanguageHandler::expand_code( $code );
+		$site_langs = MLPLanguageHandler::get_site_langs();
+		$tmp = MLPLanguageHandler::expand_code( $code );
 		}
 
 	if( $debug )
@@ -597,7 +597,7 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 		{
 		if( $debug )
 			echo " ... in IF() ... " ;
-		$l10n_language = LanguageHandler::compact_code($tmp);
+		$l10n_language = MLPLanguageHandler::compact_code($tmp);
 
 		if( empty( $l10n_language['long'] ) )
 			$l10n_language['long'] = $tmp;
@@ -613,7 +613,7 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 			echo " ... in ELSE ... " ;
 		if( !isset($l10n_language) or !in_array( $l10n_language['long'] , $site_langs ))
 			{
-			$l10n_language = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+			$l10n_language = MLPLanguageHandler::compact_code( MLPLanguageHandler::get_site_default_lang() );
 			getlocale( $l10n_language['long'] );
 			$result = (!empty($tmp));
 			}
@@ -634,7 +634,7 @@ function _l10n_process_url( $use_get_params=false )
 	$debug = false;
 
 	@session_start();
-	$site_langs = LanguageHandler::get_site_langs();
+	$site_langs = MLPLanguageHandler::get_site_langs();
 
 	$req_method = $_SERVER['REQUEST_METHOD'];
 	$req_uri    = $_SERVER['REQUEST_URI'];
@@ -680,7 +680,7 @@ function _l10n_process_url( $use_get_params=false )
 		#	Admin side we use the installation languages, not just the more
 		# restricive 'site' languages used on the public side...
 		#
-		$site_langs = LanguageHandler::get_installation_langs();
+		$site_langs = MLPLanguageHandler::get_installation_langs();
 		if( !empty($temp) and in_array( $temp , $site_langs ) )
 			{
 			#
@@ -703,7 +703,7 @@ function _l10n_process_url( $use_get_params=false )
 		$tmp = array_shift( $path );
 		if( $debug )
 			echo br , "L10N MLP: Checking start of path for language ... " , var_dump($tmp);
-		$temp = LanguageHandler::expand_code( $tmp );
+		$temp = MLPLanguageHandler::expand_code( $tmp );
 		if( $debug )
 			echo br , "L10N MLP: expand_code($tmp) returned " , var_dump($temp);
 		$reduce_uri = true;
@@ -726,7 +726,7 @@ function _l10n_process_url( $use_get_params=false )
 			#
 			#	Not a language this site can serve...
 			#
-			if( !LanguageHandler::is_valid_short_code( $tmp ) )
+			if( !MLPLanguageHandler::is_valid_short_code( $tmp ) )
 				{
 				#
 				#	And not a known language so don't reduce the uri and use
@@ -771,14 +771,14 @@ function _l10n_process_url( $use_get_params=false )
 						$len = strlen( $code );
 						if( $len === 2 )
 							{
-							$lang = LanguageHandler::expand_code( $info[0] );
+							$lang = MLPLanguageHandler::expand_code( $info[0] );
 							if( !empty($lang) )
-								$lang = LanguageHandler::compact_code( $lang );
+								$lang = MLPLanguageHandler::compact_code( $lang );
 							else
 								continue;
 							}
 						elseif( $len === 5 )
-							$lang = LanguageHandler::compact_code( $info[0] );
+							$lang = MLPLanguageHandler::compact_code( $info[0] );
 						else
 							continue;
 
@@ -892,7 +892,7 @@ if (@txpinterface === 'public')
 
 		$syndicate_body_or_excerpt = $GLOBALS['prefs']['syndicate_body_or_excerpt'];
 
-		$dir = LanguageHandler::get_lang_direction_markup( $l10n_language['short'] );
+		$dir = MLPLanguageHandler::get_lang_direction_markup( $l10n_language['short'] );
 		$content = $thisarticle['body'];
 		$summary = $thisarticle['excerpt'];
 
@@ -1015,7 +1015,7 @@ if (@txpinterface === 'public')
 		$result = $matches[0];
 		if( !$external )
 			{
-			$has_lang_code = LanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
+			$has_lang_code = MLPLanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
 			if( !$has_lang_code )
 				{
 				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
@@ -1162,7 +1162,7 @@ if (@txpinterface === 'public')
 
 		$list = array();
 		static $alangs;
-		$slangs = LanguageHandler::get_site_langs();
+		$slangs = MLPLanguageHandler::get_site_langs();
 		$section = empty($pretext['s']) ? '' : $pretext['s'];
 		$id = $pretext['id'];
 		$url = trim($_SERVER['REQUEST_URI'] , '/');
@@ -1246,10 +1246,10 @@ if (@txpinterface === 'public')
 
 		foreach( $slangs as $lang )
 			{
-			$codes = LanguageHandler::compact_code($lang);
+			$codes = MLPLanguageHandler::compact_code($lang);
 			$short = $codes['short'];
 			$long  = $codes['long'];
-			$dir   = LanguageHandler::get_lang_direction_markup($lang);
+			$dir   = MLPLanguageHandler::get_lang_direction_markup($lang);
 
 			switch( $display )
 				{
@@ -1260,13 +1260,13 @@ if (@txpinterface === 'public')
 					$lname = $long;
 					break;
 				case 'native+':
-					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$short]";
+					$lname = MLPLanguageHandler::get_native_name_of_lang( $lang )." [$short]";
 					break;
 				case 'native++':
-					$lname = LanguageHandler::get_native_name_of_lang( $lang )." [$long]";
+					$lname = MLPLanguageHandler::get_native_name_of_lang( $lang )." [$long]";
 					break;
 				default:
-					$lname = LanguageHandler::get_native_name_of_lang( $lang );
+					$lname = MLPLanguageHandler::get_native_name_of_lang( $lang );
 					break;
 				}
 
@@ -1375,13 +1375,13 @@ if (@txpinterface === 'public')
 			{
 			#	Does the direction of the currently selected site language match that requested?
 			#	If so, parse the contained content.
-			if( $dir == LanguageHandler::get_lang_direction( $l10n_language['short'] ) )
+			if( $dir == MLPLanguageHandler::get_lang_direction( $l10n_language['short'] ) )
 				$out = parse($thing) . n;
 			}
 		elseif( $lang == $l10n_language['short'] or $lang == $l10n_language['long'] )
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
-			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 			$out = "<$wraptag lang=\"$lang\"$dir/>" . parse($thing) . "</$wraptag>" . n;
 			}
 
@@ -1406,7 +1406,7 @@ if (@txpinterface === 'public')
 		switch( $type )
 			{
 			case 'native' :
-				$result = LanguageHandler::get_native_name_of_lang( $l10n_language['long'] );
+				$result = MLPLanguageHandler::get_native_name_of_lang( $l10n_language['long'] );
 				break;
 			case 'long' :
 				$result = $l10n_language['long'];
@@ -1433,7 +1433,7 @@ if (@txpinterface === 'public')
 			if( $code === 'none' )
 				return feed_link( $atts );
 
-			$l10n_feed_link_lang = LanguageHandler::compact_code( $code );
+			$l10n_feed_link_lang = MLPLanguageHandler::compact_code( $code );
 			}
 
 		#
@@ -1461,11 +1461,11 @@ if (@txpinterface === 'public')
 		extract( lAtts( array( 'type'=>'short' ) , $atts ) );
 
 		if( !$l10n_language )
-			$lang = LanguageHandler::compact_code( LanguageHandler::get_site_default_lang() );
+			$lang = MLPLanguageHandler::compact_code( MLPLanguageHandler::get_site_default_lang() );
 		else
 			$lang = $l10n_language;
 
-		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
+		$dir = MLPLanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
 		}
 
