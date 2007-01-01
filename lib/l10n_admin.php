@@ -607,7 +607,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Create a group for this article
 			#
-			ArticleManager::create_article_and_add( $incoming );
+			MLPArticles::create_article_and_add( $incoming );
 
 			#
 			#	Update the language table for the target language...
@@ -636,7 +636,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Check for changes to the article language and groups ...
 			#
-			ArticleManager::move_to_article( $incoming );
+			MLPArticles::move_to_article( $incoming );
 
 			#
 			#	Now we can setup the tables again...
@@ -813,7 +813,7 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 				//$languages[$lang] = $lang;
 				$work[$id]=$lang;
 				if( 'delete' === $method )
-					ArticleManager::remove_rendition( $article , $id , $lang );
+					MLPArticles::remove_rendition( $article , $id , $lang );
 				}
 			}
 		}

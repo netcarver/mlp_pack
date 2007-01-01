@@ -139,7 +139,7 @@ class MLPTableManager
 		}
 	}
 
-class ArticleManager
+class MLPArticles
 	{
 	function create_table()
 		{
@@ -185,7 +185,7 @@ class ArticleManager
 		}
 	function change_rendition_language( $article_id , $rendition_id , $rendition_lang , $target_lang )
 		{
-		extract( ArticleManager::_get_article_info( $article_id ) );
+		extract( MLPArticles::_get_article_info( $article_id ) );
 
 		if( array_key_exists( $target_lang , $members ) )
 			return "Article $article_id already has a rendition for $target_lang.";
@@ -196,19 +196,19 @@ class ArticleManager
 
 		$members[$target_lang] = $rendition_id;
 
-		$ok = ArticleManager::_update_article( $article_id , $names , $members );
+		$ok = MLPArticles::_update_article( $article_id , $names , $members );
 		return $ok;
 		}
 	function add_rendition( $article_id , $rendition_id , $rendition_lang , $check_membership = true , $insert_group = false , $name = '' )
 		{
-		$info = ArticleManager::_get_article_info( $article_id );
+		$info = MLPArticles::_get_article_info( $article_id );
 		if( empty( $info ) )
 			{
 			if( $insert_group )
 				{
 				$title = '';
-				$article_id = ArticleManager::create_article( $title , array() , $article_id );
-				$info = ArticleManager::_get_article_info( $article_id );
+				$article_id = MLPArticles::create_article( $title , array() , $article_id );
+				$info = MLPArticles::_get_article_info( $article_id );
 				if( empty( $info ) )
 					return "Article $article_id does not exist and could not be added";
 				}
@@ -228,14 +228,14 @@ class ArticleManager
 
 		if( !empty( $name ) and $lang_match and $insert_group )
 			$names = $name;
-		$ok = ArticleManager::_update_article( $ID , $names , $members );
+		$ok = MLPArticles::_update_article( $ID , $names , $members );
 		if( !$ok )
 			$ok = "Could not update article $article_id.";
 		return $ok;
 		}
 	function remove_rendition( $article_id , $rendition_id , $rendition_lang )
 		{
-		$g_info = ArticleManager::_get_article_info( $article_id );
+		$g_info = MLPArticles::_get_article_info( $article_id );
 		if( empty($g_info) )
 			return "Article $article_id does not exist";
 
@@ -250,7 +250,7 @@ class ArticleManager
 
 		if( !empty( $members ) )
 			{
-			$result = ArticleManager::_update_article( $ID , $names , $members );
+			$result = MLPArticles::_update_article( $ID , $names , $members );
 			if(!$result)
 				$result = "Could not update article $article_id.";
 			}
@@ -265,7 +265,7 @@ class ArticleManager
 		}
 	function _add_mapping( $article_id , $mapping )
 		{
-		$info = ArticleManager::_get_article_info( $article_id );
+		$info = MLPArticles::_get_article_info( $article_id );
 		if( empty( $info ) or (count($mapping)!==1) )
 			return false;
 
@@ -279,7 +279,7 @@ class ArticleManager
 
 		$mappings[$lang] = $id;
 
-		ArticleManager::_update_article( $article_id , $info['names'] , $mappings );
+		MLPArticles::_update_article( $article_id , $info['names'] , $mappings );
 		return true;
 		}
 	function create_article_and_add( $rendition )
@@ -295,11 +295,11 @@ class ArticleManager
 		if( isset( $rendition['Group'] ) and !empty($rendition['Group']) )
 			{
 			$article_id = $rendition['Group'];
-			ArticleManager::_add_mapping( $article_id , $mapping );
+			MLPArticles::_add_mapping( $article_id , $mapping );
 			}
 		else
 			{
-			$article_id = ArticleManager::create_article( $name , $mapping );
+			$article_id = MLPArticles::create_article( $name , $mapping );
 			}
 
 		if( $article_id !== false and $article_id !== true )
@@ -316,7 +316,7 @@ class ArticleManager
 		#	Returns an array of the site languages that do not have existing renditions in this article...
 		#
 		$langs 	= MLPLanguageHandler::get_site_langs();
-		$info 	= ArticleManager::_get_article_info( $article_id );
+		$info 	= MLPArticles::_get_article_info( $article_id );
 		$to_do	= array();
 
 		if( !empty( $info ) and !empty($langs) )
@@ -357,7 +357,7 @@ class ArticleManager
 			}
 
 		#	Add rendition to new article...
-		$result = ArticleManager::add_rendition( $new_article , $rendition_id , $new_lang , false );
+		$result = MLPArticles::add_rendition( $new_article , $rendition_id , $new_lang , false );
 		if( $result !== true )
 			{
 			$l10n_article_message = 'Error: ' . $result;
@@ -365,11 +365,11 @@ class ArticleManager
 			}
 
 		#	Remove article from existing group...
-		$result = ArticleManager::remove_rendition( $current_article , $rendition_id , $current_lang );
+		$result = MLPArticles::remove_rendition( $current_article , $rendition_id , $current_lang );
 		if( $result !== true )
 			{
 			#	Attempt to remove from the article we just added to...
-			ArticleManager::remove_rendition( $new_article , $rendition_id , $new_lang );
+			MLPArticles::remove_rendition( $new_article , $rendition_id , $new_lang );
 			$l10n_article_message = 'Error: ' . $result;
 			return false;
 			}
@@ -404,7 +404,7 @@ class ArticleManager
 		#
 		#	Examing the groups table...
 		#
-		$articles = ArticleManager::get_articles( '1=1' );
+		$articles = MLPArticles::get_articles( '1=1' );
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
@@ -441,7 +441,7 @@ class ArticleManager
 						unset( $members[$lang] );
 						$result[] = array( 'delete' , $rendition , $ID , gTxt('l10n-del_phantom', array( '$rendition'=>$rendition, '$ID'=>$ID) ) );
 						}
-					ArticleManager::_update_article( $ID , $names , $members );
+					MLPArticles::_update_article( $ID , $names , $members );
 					}
 				if( $count_r_m > 0 )
 					{
@@ -465,7 +465,7 @@ class ArticleManager
 							continue;
 							}
 						$members[$lang] = $rendition;
-						ArticleManager::_update_article( $ID , $names , $members );
+						MLPArticles::_update_article( $ID , $names , $members );
 						$result[] = array( 'add' , $rendition , $ID , gTxt('l10n-add_missing_rend',array('$rendition'=>$rendition, '$ID'=>$ID)) );
 						}
 					}
@@ -3463,7 +3463,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 
 		if( $rebuild )
 			{
-			$results = ArticleManager::check_groups();
+			$results = MLPArticles::check_groups();
 			if( !empty( $results ) )
 				{
 				$desc = '';
@@ -3553,7 +3553,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Add this to the group (article) table...
 			#
-			ArticleManager::add_rendition( $article_id , $rendition_id , $lang );
+			MLPArticles::add_rendition( $article_id , $rendition_id , $lang );
 
 			#
 			#	Add into the rendition table for this lang ensuring this has the ID of the
@@ -3671,7 +3671,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Delete from the articles table...
 		#
-		ArticleManager::destroy_article( $article );
+		MLPArticles::destroy_article( $article );
 		}
 
 	function delete_rendition()
@@ -3711,14 +3711,14 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Delete from the article table...
 		#
-		$article_updated = ArticleManager::remove_rendition( $article , $rendition , $lang );
+		$article_updated = MLPArticles::remove_rendition( $article , $rendition , $lang );
 
 		$result = false;
 		if( $master_deleted and $rendition_deleted and $article_updated )
 			$this->parent->message = gTxt( 'l10n-rendition_delete_ok' , array('{rendition}' => $rendition) );
 		else
 			{
-			$results = ArticleManager::check_groups();
+			$results = MLPArticles::check_groups();
 			if( !empty( $results ) )
 				{
 				$this->parent->message = $results[0][3];
@@ -3855,7 +3855,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		extract( get_prefs() );				#	Need to do this to keep the articles/page count in sync.
 		extract( gpsa(array('page')) );
-		$total = ArticleManager::get_total();
+		$total = MLPArticles::get_total();
 		$limit = max(@$article_list_pageby, 15);
 		list($page, $offset, $numPages) = pager($total, $limit, $page);
 
@@ -3914,7 +3914,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Use values from the pager to grab the right sections of the table.
 		#
-		$articles = ArticleManager::get_articles( '1=1' , 'ID DESC' , $offset , $limit );
+		$articles = MLPArticles::get_articles( '1=1' , 'ID DESC' , $offset , $limit );
 		if( count( $articles ) )
 			{
 			while( $article = nextRow($articles) )
@@ -3971,7 +3971,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 						{
 						$this->parent->message = gTxt( 'l10n-missing_rendition' , array( '{id}'=>$ID ) );
 						$members[$lang] = $translations[$i]['ID'];
-						ArticleManager::_update_article( $ID , $names , $members );
+						MLPArticles::_update_article( $ID , $names , $members );
 						$n_valid_translations++;
 						}
 					else
@@ -3982,7 +3982,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 							{
 							//echo br , "Found incorrect rendition ID $rend_id in article table. Replacing with ID $master_id.";
 							$members[$lang] = $master_id;
-							ArticleManager::_update_article( $ID , $names , $members );
+							MLPArticles::_update_article( $ID , $names , $members );
 							$n_valid_translations++;
 							}
 						}
@@ -4190,7 +4190,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$title   = $details['Title'];
 		$article = $details['Group'];
 		$author  = $details['AuthorID'];
-		$to_do = ArticleManager::get_remaining_langs( $article );
+		$to_do = MLPArticles::get_remaining_langs( $article );
 		$count = count( $to_do );
 
 		#
@@ -4571,7 +4571,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 	function setup_5()		# Create the articles table
 		{
-		$ok = ArticleManager::create_table();
+		$ok = MLPArticles::create_table();
 		$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>L10N_ARTICLES_TABLE)) , $ok );
 		}
 
@@ -4593,6 +4593,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			$code       = MLPLanguageHandler::compact_code( $lang );
 			$table_name = _l10n_make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
+
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
 
@@ -4734,7 +4735,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 	function cleanup_5()	# Drop articles table
 		{
-		$ok = ArticleManager::destroy_table();
+		$ok = MLPArticles::destroy_table();
 		$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop','{table}'=>L10N_ARTICLES_TABLE)) , $ok );
 		}
 
@@ -4796,7 +4797,7 @@ class LocalisationWizardView extends GBPWizardTabView
 					#
 					#	Use any existing Lang/Group data there might be...
 					#
-					if( true === ArticleManager::add_rendition( $article_id , $id , $lang , true , true , $title ) )
+					if( true === MLPArticles::add_rendition( $article_id , $id , $lang , true , true , $title ) )
 						$i++;
 					}
 				else
@@ -4804,7 +4805,7 @@ class LocalisationWizardView extends GBPWizardTabView
 					#
 					#	Create a fresh group and add the info...
 					#
-					if( ArticleManager::create_article_and_add( $a ) )
+					if( MLPArticles::create_article_and_add( $a ) )
 						$i++;
 					}
 				}
