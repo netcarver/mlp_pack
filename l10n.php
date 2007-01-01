@@ -854,7 +854,7 @@ if( @txpinterface === 'admin' )
 
 	#
 	include_once $txpcfg['txpath'].'/lib/l10n_admin_classes.php';
-	$l10n_view = new LocalisationView( 'l10n-localisation' , L10N_NAME, 'content' );
+	$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );
 
 	#
 	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
@@ -879,6 +879,7 @@ if (@txpinterface === 'public')
 	global $prefs;
 	$prefs['db_remap_tables_func'] = '_l10n_redirect_textpattern';
 	$prefs['db_remap_fields_func'] = '_l10n_remap_fields';
+	//$prefs['db_remap_safe_q_func'] = '_l10n_redirect_safe_query';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
