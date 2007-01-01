@@ -48,7 +48,7 @@ h1(#top). l10n MLP Pack Help.
 
 <br />
 
-|_. Copyright 2006 Graeme Porteous and Stephen Dickinson. |
+|_. Copyright 2007 Graeme Porteous and Stephen Dickinson. |
 
 <br />
 
@@ -269,8 +269,6 @@ h3(#localise). "l10n_localise(Jump to the tag list)":#tags
 
 Use this tag to wrap entire pages and forms in which you wish to use snippets.
 
-|_. Attribute |_. Default |_. Description |
-| page | none | (Optional) Set this to any non-blank value when wrapping TxP pages to cause injection of language codes into the page's permlinks and other internal hrefs.<br/>This can help stop browsers from apparantly "loosing" track of your browse language by caching pages with the same url that you previously visited when browsing in a different language. |
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
@@ -293,6 +291,9 @@ The first language in this comma separated list of language codes is considered 
 
 You can use the basic 2 character code if you want but things don't work out as well with TxP's language strings when you do this.
 
+Every time you add new languages here new entries will be created for localising the category and section titles and the current defaults will be copied to the newly created entries.
+
+If you keep the original site slogan (in Admin > Prefs > Basic) set to the default install value of 'My Pithy Slogan' then a new snippet will be initialised to the name of the added language and this will be used to override the default so you always know what the current browse language is when you visit the site.
 
 h3(#l10n-show_legends). "Show Article Table Legend":#prefs
 
@@ -532,7 +533,6 @@ Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly e
 <br />
 
 -- _Stephen Dickinson_
-November 2006.
 
 </div>
 # --- END PLUGIN HELP ---
@@ -559,7 +559,7 @@ if( !defined( 'L10N_PREFS_LANGUAGES' ))
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
 if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
-	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_textpattern_' );
+	define( 'L10N_RENDITION_TABLE_PREFIX' , 'l10n_txp_' );
 if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
 	define( 'L10N_SNIPPET_IO_HEADER' , 'MDoibDEwbi1jbG9uZSI7czoxMjoi' );
 if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
@@ -1099,6 +1099,38 @@ if (@txpinterface === 'public')
 		return $out;
 		}
 
+	function _l10n_feed_link_cb( $matches )
+		{
+		global $l10n_feed_link_lang;
+
+		#
+		#	$matches[0] is the entire pattern...
+		#	$matches[1] is the href...
+		#
+		$path = trim( str_replace( trim(hu, '/'), '', $matches[1] ), '/' );
+		$path = $l10n_feed_link_lang['short'].'/'.$path;
+		$path = ' href="'.hu.$path.'"';
+		return $path;
+		}
+
+	function _l10n_inject_lang_markers( $buffer )
+		{
+		global $l10n_replace_strings;
+
+		# Insert the language code into all permlinks...
+		$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
+		$l10n_replace_strings['start'] = ' href="';
+		$l10n_replace_strings['stop']  = '"';
+		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+
+		# Insert language code into any URLs embedded as texts in hyperlinks...
+		$pattern = '/>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/a>/';
+		$l10n_replace_strings['start'] = '>';
+		$l10n_replace_strings['stop']  = '</a>';
+		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+
+		return $buffer;
+		}
 
 
 	/*
@@ -1388,20 +1420,6 @@ if (@txpinterface === 'public')
 		return $result;
 		}
 
-	function _l10n_feed_link_cb( $matches )
-		{
-		global $l10n_feed_link_lang;
-
-		#
-		#	$matches[0] is the entire pattern...
-		#	$matches[1] is the href...
-		#
-		$path = trim( str_replace( trim(hu, '/'), '', $matches[1] ), '/' );
-		$path = $l10n_feed_link_lang['short'].'/'.$path;
-		$path = ' href="'.hu.$path.'"';
-		return $path;
-		}
-
 	function l10n_feed_link( $atts )
 		{
 		global $l10n_language, $l10n_feed_link_lang;
@@ -1449,25 +1467,6 @@ if (@txpinterface === 'public')
 
 		$dir = LanguageHandler::get_lang_direction( $lang[$type] );
 		return $dir;
-		}
-
-	function _l10n_inject_lang_markers( $buffer )
-		{
-		global $l10n_replace_strings;
-
-		# Insert the language code into all permlinks...
-		$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
-		$l10n_replace_strings['start'] = ' href="';
-		$l10n_replace_strings['stop']  = '"';
-		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
-
-		# Insert language code into any URLs embedded as texts in hyperlinks...
-		$pattern = '/>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/a>/';
-		$l10n_replace_strings['start'] = '>';
-		$l10n_replace_strings['stop']  = '</a>';
-		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
-
-		return $buffer;
 		}
 
 	function l10n_localise($atts, $thing = '')
