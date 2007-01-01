@@ -152,12 +152,12 @@ function _l10n_get_user_languages( $user_id = null )
 	$power_users = array( '1', '2' );
 	$privs = safe_field('privs', 'txp_users', "user_id='$user_id'");
 	if( in_array( $privs , $power_users ) )
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 
 	#
 	#	Stub... replace with lookup of the user's languages....
 	#
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
 
 	return $langs;
 	}
@@ -177,7 +177,7 @@ function _l10n_list_filter( $event, $step )
 		{
 		case '':
 		case 'list':
-			$langs = LanguageHandler::get_site_langs();
+			$langs = MLPLanguageHandler::get_site_langs();
 			$selected = array();
 			$use_cookies = (gps( 'l10n_filter_method' ) !== 'post');
 			foreach( $langs as $lang )
@@ -218,13 +218,13 @@ function _l10n_match_cb( $matches )
 	$rs 		= safe_row(	'*', 'textpattern', "ID=$id" );
 	$code		= $rs['Lang'];
 	$article	= $rs['Group'];
-	$lang 		= LanguageHandler::get_native_name_of_lang( $code );
+	$lang 		= MLPLanguageHandler::get_native_name_of_lang( $code );
 	return $matches[0] . br . '<span class="articles_detail">' . $lang . ' [' . gTxt('article'). ' :' .$article . ']</span>';
 	}
 function _l10n_chooser( $permitted_langs )
 	{
 	$count = 0;
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
 	$o[] = '<div class="l10n_extensions"><fieldset><legend>' . gTxt('l10n-show_langs') . '</legend>' . n;
 	$use_cookies = (gps( 'l10n_filter_method' ) !== 'post');
 
@@ -246,7 +246,7 @@ function _l10n_chooser( $permitted_langs )
 		else
 			$checked = gps( $lang ) ? 'checked' : '' ;
 
-		$lang_name = LanguageHandler::get_native_name_of_lang( $lang );
+		$lang_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
 
 		if( !in_array( $lang , $permitted_langs ) )
 			{
@@ -274,7 +274,7 @@ function _l10n_chooser( $permitted_langs )
 
 	foreach( $showlangs as $lang=>$record )
 		{
-		$dir = LanguageHandler::get_lang_direction( $lang );
+		$dir = MLPLanguageHandler::get_lang_direction( $lang );
 		$rtl = ( $dir == 'rtl' );
 
 		extract( $record );
@@ -299,7 +299,7 @@ function _l10n_list_buffer_processor( $buffer )
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
 
 	#	Inject the language chooser...
-	$chooser = _l10n_chooser( LanguageHandler::get_site_langs() );
+	$chooser = _l10n_chooser( MLPLanguageHandler::get_site_langs() );
 	$f = '<p><label for="list-search">';
 	$buffer = str_replace( $f , $chooser.br.n.$f , $buffer );
 
@@ -338,7 +338,7 @@ function _l10n_setup_vars( $event , $step )
 		}
 	else
 		{
-		$l10n_vars['article_lang']	= LanguageHandler::get_site_default_lang();
+		$l10n_vars['article_lang']	= MLPLanguageHandler::get_site_default_lang();
 		}
 
 	$l10n_vars['step']			= $step;
@@ -371,8 +371,8 @@ function _l10n_setup_article_buffer_processor( $event , $step )
 function _l10n_inject_switcher_form()
 	{
 	global $event, $l10n_language;
-	$langs = LanguageHandler::get_installation_langs();
-	$langs = LanguageHandler::do_fleshout_names( $langs );
+	$langs = MLPLanguageHandler::get_installation_langs();
+	$langs = MLPLanguageHandler::do_fleshout_names( $langs );
 
 	$tab = gps('tab');
 	$tab = ( !empty($tab) ) ? hInput( 'tab' , $tab ) : '';
@@ -456,7 +456,7 @@ function _l10n_article_buffer_processor( $buffer )
 	$lang 		= $l10n_vars['article_lang'];
 	//$from_view	= gps( 'from_view' );
 	$user_sel_lang = cs( 'rendition_lang_selection' );
-	$user_langs = LanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
+	$user_langs = MLPLanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
 
 	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
 	$has_reassign_privs = has_privs( 'l10n.reassign' );
@@ -502,7 +502,7 @@ function _l10n_article_buffer_processor( $buffer )
 			}
 		else
 			{
-			$r .= 	hInput( 'Lang' , $lang )      . gTxt('language') . ': ' . strong( LanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
+			$r .= 	hInput( 'Lang' , $lang )      . gTxt('language') . ': ' . strong( MLPLanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
 			$r .= 	hInput( 'Group' , $group_id ) . gTxt('article')    . ': ' . strong( $group_id );
 			}
 		}
@@ -523,7 +523,7 @@ function _l10n_article_buffer_processor( $buffer )
 		#
 		#	Inject direction markup...
 		#
-		$r = LanguageHandler::get_lang_direction_markup( $lang );
+		$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
 		$buffer = str_replace( $f , $f.$r , $buffer );
 		$f = 'id="body"';
 		$buffer = str_replace( $f , $f.$r , $buffer );
@@ -536,7 +536,7 @@ function _l10n_article_buffer_processor( $buffer )
 		#	Inject direction markup...
 		#
 		$f = '<td id="article-main"';
-		$r = LanguageHandler::get_lang_direction_markup( $lang );
+		$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
 		$buffer = str_replace( $f , $f.$r , $buffer );
 
 		#
@@ -563,7 +563,7 @@ function _l10n_replace_rendition( $lang , $replace=false , $id='' )
 			$id = gps('ID');
 		}
 
-	if( !LanguageHandler::is_valid_code($lang) )
+	if( !MLPLanguageHandler::is_valid_code($lang) )
 		{
 		echo br , "Invalid language code '$lang' calculated in _l10n_add_rendition()";
 		return;
@@ -576,7 +576,7 @@ function _l10n_replace_rendition( $lang , $replace=false , $id='' )
 	}
 function _l10n_remove_rendition( $lang , $id )
 	{
-	if( !LanguageHandler::is_valid_code($lang) )
+	if( !MLPLanguageHandler::is_valid_code($lang) )
 		{
 		echo br , "Invalid language code '$lang' calculated in _l10n_add_rendition()";
 		return;
@@ -598,7 +598,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 	if ($publish) $step = 'publish';
 
 	$incoming = gpsa($new_vars);
-	$default = LanguageHandler::get_site_default_lang();
+	$default = MLPLanguageHandler::get_site_default_lang();
 	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : $default;
 
 	switch(strtolower($step))
@@ -689,7 +689,7 @@ function _l10n_changeauthor_notify_routine()
 				#	Make a link to the article...
 				#
 				extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
-				$lang   = LanguageHandler::get_native_name_of_lang( $Lang );
+				$lang   = MLPLanguageHandler::get_native_name_of_lang( $Lang );
 				$status = $statuses[$Status];
 				$msg = 	gTxt('title')  . ": \"$Title\"\r\n" .
 						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [$Lang] , " . gTxt('group' ) . ": $Group.\r\n";
@@ -845,7 +845,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 
 	if( strlen( $lang ) > 2 )
 		{
-		$code = LanguageHandler::compact_code( $lang );
+		$code = MLPLanguageHandler::compact_code( $lang );
 		if( isset( $code['long'] ) )
 			$code = $code['long'];
 		else
@@ -861,7 +861,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 		return;
 		}
 
-	if( !LanguageHandler::is_valid_code($code) )
+	if( !MLPLanguageHandler::is_valid_code($code) )
 		{
 		echo br , "Invalid language code '$code' calculated in _l10n_generate_lang_table()";
 		return;
@@ -973,8 +973,8 @@ function _l10n_post_discuss_multi_edit( $event , $step )
 function _l10n_build_sql_set( $table )
 	{
 	global $l10n_mappings;
-	$langs = LanguageHandler::get_site_langs();
-	$default = LanguageHandler::get_site_default_lang();
+	$langs = MLPLanguageHandler::get_site_langs();
+	$default = MLPLanguageHandler::get_site_default_lang();
 	$set = '';
 
 	if( !isset($l10n_mappings[$table]) )
@@ -1006,8 +1006,8 @@ function _l10n_category_paint( $page )
 	{
 	global $l10n_mappings;
 	$id = gps( 'id' );
-	$langs = LanguageHandler::get_site_langs();
-	$default = LanguageHandler::get_site_default_lang();
+	$langs = MLPLanguageHandler::get_site_langs();
+	$default = MLPLanguageHandler::get_site_default_lang();
  	$fields = $l10n_mappings['txp_category'];
 	$row = safe_row( '*' , 'txp_category' , "`id`='$id'" );
 	$r = '';
@@ -1020,8 +1020,8 @@ function _l10n_category_paint( $page )
 		{
 		foreach( $langs as $lang )
 			{
-			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
-			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
+			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
 				$field_name = $lang.'-'.$field;
@@ -1042,7 +1042,7 @@ function _l10n_category_paint( $page )
 	#
 	#	Insert the default title field's language's direction...
 	#
-	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
 	$f = '<input type="text" name="title"';
 	$page = str_replace( $f , $f.$dir , $page );
 
@@ -1050,7 +1050,7 @@ function _l10n_category_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = ';">'.gTxt('article_category_title');
-	$r = ' - '.LanguageHandler::get_native_name_of_lang( $default );
+	$r = ' - '.MLPLanguageHandler::get_native_name_of_lang( $default );
 	$page = str_replace( $f , $f.sp.$r , $page );
 
 	return $page;
@@ -1068,13 +1068,13 @@ function _l10n_category_save( $event , $step )
 
 function _l10n_section_paint( $page )
 	{
-	$default = LanguageHandler::get_site_default_lang();
+	$default = MLPLanguageHandler::get_site_default_lang();
 
 	#
 	#	Insert the remaining language title fields...
 	#
 	global $l10n_mappings;
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_section'];
 	$rows = safe_rows_start( '*' , 'txp_section' , "1=1" );
 	$c = @mysql_num_rows($rows);
@@ -1090,8 +1090,8 @@ function _l10n_section_paint( $page )
 				$r = '';
 				foreach( $langs as $lang )
 					{
-					$full_name = LanguageHandler::get_native_name_of_lang( $lang );
-					$dir = LanguageHandler::get_lang_direction_markup( $lang );
+					$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
+					$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 					if( $lang !== $default )
 						{
 						$field_name = $lang.'-'.$field;
@@ -1108,7 +1108,7 @@ function _l10n_section_paint( $page )
 	#
 	#	Insert the default title field's language's direction...
 	#
-	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
 	$f = '<td class="noline"><input type="text" name="title"';
 	$page = str_replace( $f , $f.$dir , $page );
 
@@ -1116,7 +1116,7 @@ function _l10n_section_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = '">'.gTxt('section_longtitle');
-	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$r = ' ['.MLPLanguageHandler::get_native_name_of_lang( $default ) . ']';
 	$page = str_replace( $f , $f.sp.$r , $page );
 
 	return $page;
@@ -1133,13 +1133,13 @@ function _l10n_section_save( $event , $step )
 
 function _l10n_file_paint( $page )
 	{
-	$default = LanguageHandler::get_site_default_lang();
+	$default = MLPLanguageHandler::get_site_default_lang();
 
 	#
 	#	Insert the remaining language fields...
 	#
 	global $l10n_mappings;
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_file'];
 	$id = gps( 'id' );
 	$row = safe_row( '*' , 'txp_file' , "`id`='$id'" );
@@ -1149,8 +1149,8 @@ function _l10n_file_paint( $page )
 		{
 		foreach( $langs as $lang )
 			{
-			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
-			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
+			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
 				$field_name = $lang.'-'.$field;
@@ -1167,7 +1167,7 @@ function _l10n_file_paint( $page )
 	#
 	#	Insert the default title field's language's direction...
 	#
-	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
 	$f = '<textarea name="description"';
 	$page = str_replace( $f , $f.$dir , $page );
 
@@ -1175,7 +1175,7 @@ function _l10n_file_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = '<p>'.gTxt('description');
-	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$r = ' ['.MLPLanguageHandler::get_native_name_of_lang( $default ) . ']';
 	$page = str_replace( $f , $f.sp.$r , $page );
 
 	return $page;
@@ -1192,13 +1192,13 @@ function _l10n_file_save( $event , $step )
 	}
 function _l10n_link_paint( $page )
 	{
-	$default = LanguageHandler::get_site_default_lang();
+	$default = MLPLanguageHandler::get_site_default_lang();
 
 	#
 	#	Insert the remaining language fields...
 	#
 	global $l10n_mappings , $step;
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_link'];
 	$r = '';
 	$rows = 'rows="2"';
@@ -1214,8 +1214,8 @@ function _l10n_link_paint( $page )
 			$save_steps = array( $save_steps );
 		foreach( $langs as $lang )
 			{
-			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
-			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
+			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
 				$field_name = $lang.'-'.$field;
@@ -1234,7 +1234,7 @@ function _l10n_link_paint( $page )
 	#
 	#	Insert the default title field's language's direction...
 	#
-	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
 	$f = '<textarea id="link-description" name="description"';
 	$page = str_replace( $f , $f.$dir , $page );
 
@@ -1242,7 +1242,7 @@ function _l10n_link_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = 'for="link-description">'.gTxt('description');
-	$r = ' ['.LanguageHandler::get_native_name_of_lang( $default ) . ']';
+	$r = ' ['.MLPLanguageHandler::get_native_name_of_lang( $default ) . ']';
 	$page = str_replace( $f , $f.br.$r , $page );
 
 	$f = 'rows="7"';
@@ -1267,13 +1267,13 @@ function _l10n_link_save( $event , $step )
 
 function _l10n_image_paint( $page )
 	{
-	$default = LanguageHandler::get_site_default_lang();
+	$default = MLPLanguageHandler::get_site_default_lang();
 
 	#
 	#	Insert the remaining language fields...
 	#
 	global $l10n_mappings;
-	$langs = LanguageHandler::get_site_langs();
+	$langs = MLPLanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_image'];
 	$id = gps( 'id' );
 	$row = safe_row( '*' , 'txp_image' , "`id`='$id'" );
@@ -1283,8 +1283,8 @@ function _l10n_image_paint( $page )
 		{
 		if( $lang !== $default )
 			{
-			$full_name = LanguageHandler::get_native_name_of_lang( $lang );
-			$dir = LanguageHandler::get_lang_direction_markup( $lang );
+			$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
+			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 			foreach( $fields as $field => $attributes )
 				{
 				$field_name = $lang.'-'.$field;
@@ -1309,7 +1309,7 @@ function _l10n_image_paint( $page )
 	#
 	#	Insert the default title field's language's direction...
 	#
-	$dir = LanguageHandler::get_lang_direction_markup( $default ) . ' ';
+	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
 	$f = '<input type="text" name="alt"';
 	$page = str_replace( $f , $f.$dir , $page );
 	$f = '<textarea id="caption"';
@@ -1319,7 +1319,7 @@ function _l10n_image_paint( $page )
 	#	Insert the default title field's language name...
 	#
 	$f = 'for="alt-text">'.gTxt('alt_text');
-	$r = ' '.LanguageHandler::get_native_name_of_lang( $default );
+	$r = ' '.MLPLanguageHandler::get_native_name_of_lang( $default );
 	$page = str_replace( $f , $f.sp.$r , $page );
 	$f = 'for="caption">'.gTxt('caption');
 	$page = str_replace( $f , $f.sp.$r , $page );
@@ -1358,8 +1358,8 @@ function _l10n_inject_js()
 	$rtl = doSlash( gTxt( 'l10n-rtl' ) );
 	$toggle_title = doSlash( gTxt('l10n-toggle') );
 
-	$langs = LanguageHandler::get_installation_langs();
-	$langs = LanguageHandler::do_fleshout_dirs( $langs );
+	$langs = MLPLanguageHandler::get_installation_langs();
+	$langs = MLPLanguageHandler::do_fleshout_dirs( $langs );
 	$langs = _l10n_php2js_array( 'langs' , $langs );
 
 	$fn = <<<end_js

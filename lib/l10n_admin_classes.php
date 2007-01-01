@@ -224,7 +224,7 @@ class ArticleManager
 			return "Rendition $rendition_id is already a member of article $article_id.";
 
 		$members[$rendition_lang] = $rendition_id;
-		$lang_match = ($rendition_lang === LanguageHandler::get_site_default_lang());
+		$lang_match = ($rendition_lang === MLPLanguageHandler::get_site_default_lang());
 
 		if( !empty( $name ) and $lang_match and $insert_group )
 			$names = $name;
@@ -286,7 +286,7 @@ class ArticleManager
 		{
 		$result = false;
 		$name = doSlash($rendition['Title']);
-		$lang = (@$rendition['Lang'] !== '-') ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
+		$lang = (@$rendition['Lang'] !== '-') ? $rendition['Lang'] : MLPLanguageHandler::get_site_default_lang();
 		$id = @$GLOBALS['ID'];
 		if( !isset( $id ) or empty( $id ) )
 			$id = $rendition['ID'];
@@ -315,7 +315,7 @@ class ArticleManager
 		#
 		#	Returns an array of the site languages that do not have existing renditions in this article...
 		#
-		$langs 	= LanguageHandler::get_site_langs();
+		$langs 	= MLPLanguageHandler::get_site_langs();
 		$info 	= ArticleManager::_get_article_info( $article_id );
 		$to_do	= array();
 
@@ -325,7 +325,7 @@ class ArticleManager
 			foreach( $langs as $lang )
 				{
 				if( !array_key_exists($lang , $mapped_langs) )
-					$to_do[$lang] = LanguageHandler::get_native_name_of_lang($lang);
+					$to_do[$lang] = MLPLanguageHandler::get_native_name_of_lang($lang);
 				}
 			}
 
@@ -337,7 +337,7 @@ class ArticleManager
 
 		#	Get the new entries...
 		$new_article	= $rendition['Group'];
-		$new_lang		= (@$rendition['Lang']) ? $rendition['Lang'] : LanguageHandler::get_site_default_lang();
+		$new_lang		= (@$rendition['Lang']) ? $rendition['Lang'] : MLPLanguageHandler::get_site_default_lang();
 		$rendition_id	= $rendition['ID'];
 
 		#	Read the existing rendition entries...
@@ -399,7 +399,7 @@ class ArticleManager
 		$result = array();
 
 		$members_count = 0;
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 
 		#
 		#	Examing the groups table...
@@ -1134,13 +1134,13 @@ class StringHandler
 
 		if( $use_admin && !isset( $admin_langs ) )
 			{
-			$admin_langs = LanguageHandler::get_installation_langs();
+			$admin_langs = MLPLanguageHandler::get_installation_langs();
 			$admin_langs = array_flip( $admin_langs );
 			ksort( $admin_langs );
 			}
 		elseif( !isset( $public_langs ) )
 			{
-			$public_langs = LanguageHandler::get_site_langs();
+			$public_langs = MLPLanguageHandler::get_site_langs();
 			$public_langs = array_flip( $public_langs );
 			ksort( $public_langs );
 			}
@@ -1178,7 +1178,7 @@ class StringHandler
 			while ( $a = nextRow($rs) )
 				{
 				$lang = $a['lang'];
-				if( LanguageHandler::is_valid_code( $lang ) )
+				if( MLPLanguageHandler::is_valid_code( $lang ) )
 					{
 					unset( $a['lang'] );	# will be used as key, no need to store it twice.
 					$result[ $lang ] = $a;
@@ -1243,7 +1243,7 @@ class StringHandler
 		}
 	function build_txp_langfile( $lang , $exclude_plugins = true , $media = 'file' )
 		{
-		$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+		$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
 		$where = " `lang`='$lang' ";
 		if( $exclude_plugins )
 			$where .= " AND `owner`=''";
@@ -1355,13 +1355,13 @@ class StringHandler
 		}
  	function build_l10n_default_strings_file( $lang )
 		{
-		$langs = LanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_installation_langs();
 
 		if( !in_array( $lang, $langs ) )
 			return '';
 
 		$vals = load_lang( $lang );
-		$full_name = LanguageHandler::get_native_name_of_lang( $lang );
+		$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
 
 		$o[] = '<?php';
 		$o[] = '';
@@ -1411,10 +1411,10 @@ class LocalisationView extends GBPPlugin
 			register_callback(array(&$this, '_initiate_callbacks'), 'l10n' , '' , 1 );
 
 			# First run, setup the languages array to the currently installed admin side languages...
-			$langs = LanguageHandler::get_site_langs( false );
+			$langs = MLPLanguageHandler::get_site_langs( false );
 			if( NULL === $langs )
 				{
-				$langs = LanguageHandler::get_installation_langs();
+				$langs = MLPLanguageHandler::get_installation_langs();
 				$prefs[L10N_PREFS_LANGUAGES] = join( ',' , $langs );
 				}
 
@@ -1477,7 +1477,7 @@ class LocalisationView extends GBPPlugin
 		#	Update the set of translation tables based on any changes made to the site
 		# languages...
 		#
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 		$tables = getThings( 'show tables like \''.PFX.L10N_RENDITION_TABLE_PREFIX.'%\'' );
 
 		#
@@ -1508,7 +1508,7 @@ class LocalisationView extends GBPPlugin
 				#
 				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
 				$lang = strtr( $lang , array( '_'=>'-' ) );
-				if( !LanguageHandler::is_valid_code( $lang ) )
+				if( !MLPLanguageHandler::is_valid_code( $lang ) )
 					continue;
 
 				#
@@ -1531,7 +1531,7 @@ class LocalisationView extends GBPPlugin
 				$exists = !empty( $exists );
 				if( !$exists and @$prefs['site_slogan'] === 'My pithy slogan' )
 					{
-					$langname = LanguageHandler::get_native_name_of_lang( $lang );
+					$langname = MLPLanguageHandler::get_native_name_of_lang( $lang );
 					StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $lang , $langname );
 					}
 				}
@@ -1552,7 +1552,7 @@ class LocalisationView extends GBPPlugin
 				#
 				$lang = str_replace( PFX.L10N_RENDITION_TABLE_PREFIX , '' , $full_name );
 				$lang = strtr( $lang , array( '_'=>'-' ) );
-				if( !LanguageHandler::is_valid_code( $lang ) )
+				if( !MLPLanguageHandler::is_valid_code( $lang ) )
 					continue;
 
 				#
@@ -1605,7 +1605,7 @@ class LocalisationView extends GBPPlugin
 		$extend_all = array( 'txp_category' , 'txp_section' );
 		if( in_array( $table , $extend_all ) )
 			{
-			$langs = LanguageHandler::get_site_langs();
+			$langs = MLPLanguageHandler::get_site_langs();
 			foreach( $langs as $lang )
 				{
 				if( $lang === $language )
@@ -2031,7 +2031,7 @@ class LocalisationStringView extends GBPAdminTabView
 		#
 		#	Grab the names of every string in the system...
 		#
-		$admin_langs = LanguageHandler::get_installation_langs();
+		$admin_langs = MLPLanguageHandler::get_installation_langs();
 
 		$stats = array();
 		$full_names = safe_rows_start( 'name,lang', 'txp_lang', '1=1 ORDER BY name ASC' );
@@ -2159,7 +2159,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$data = str_ireplace( $search_term, '<span class="l10n_highlite">'.$search_term.'</span>', $data );
 
 				if( empty($lang) or $lang==='-' )
-					$language = ' ['.LanguageHandler::get_native_name_of_lang( $a['lang'] ).']';
+					$language = ' ['.MLPLanguageHandler::get_native_name_of_lang( $a['lang'] ).']';
 				else
 					$language = '';
 
@@ -2185,8 +2185,8 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		global $l10n_language;
 
-		$site_langs  = LanguageHandler::get_site_langs();
-		$admin_langs = LanguageHandler::get_installation_langs();
+		$site_langs  = MLPLanguageHandler::get_site_langs();
+		$admin_langs = MLPLanguageHandler::get_installation_langs();
 
 		#
 		#	Grab the names of every string in the system...
@@ -2217,8 +2217,8 @@ class LocalisationStringView extends GBPAdminTabView
 		$out[] = form( join( '', $picker ) ) . br . n;
 
 
-		$langs = LanguageHandler::get_installation_langs();
-		$langs = LanguageHandler::do_fleshout_names( $langs , '' , false );
+		$langs = MLPLanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::do_fleshout_names( $langs , '' , false );
 		$sel   = gTxt('l10n-all_languages');
 		$langs = array_merge( array( '-' => $sel ) , $langs );
 
@@ -2300,7 +2300,7 @@ class LocalisationStringView extends GBPAdminTabView
 		foreach( $stats as $iso_code=>$count )
 			{
 			$lang_extras_found = false;
-			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
+			$name = MLPLanguageHandler::get_native_name_of_lang( $iso_code );
 			$out[]= tr( td( $name ).td( '&nbsp;'.$count ) , ' style="text-align:right;" ' );
 			}
 		$out[] = tr( tdcs( '<hr/>' , 2 ) );
@@ -2412,7 +2412,7 @@ class LocalisationStringView extends GBPAdminTabView
 				$marker = ( !$plugin_found )
 					? ' <strong>*</strong>' : '';
 				$out[] = '<li><a href="' . $this->parent->url( array(L10N_PLUGIN_CONST=>$plugin,'prefix'=>$pfx) , true ) . '">' .
-						//$plugin . br . ' [~' .$num . sp . LanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
+						//$plugin . br . ' [~' .$num . sp . MLPLanguageHandler::get_native_name_of_lang($lang) . '] ' . $marker.
 						$plugin . ' [' .$event . '] ' . $marker.
 						'</a></li>';
 				}
@@ -2475,7 +2475,7 @@ class LocalisationStringView extends GBPAdminTabView
 		if( !$strings_exist )
 			return '';
 
-		$site_langs = LanguageHandler::get_site_langs();
+		$site_langs = MLPLanguageHandler::get_site_langs();
 
 		$needs_legend = false;
 
@@ -2513,8 +2513,8 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _render_string_stats( $string_name , &$stats )					# Right pane stats render subroutine
 		{
-		$site_langs  = LanguageHandler::get_site_langs();
-		$admin_langs = LanguageHandler::get_installation_langs();
+		$site_langs  = MLPLanguageHandler::get_site_langs();
+		$admin_langs = MLPLanguageHandler::get_installation_langs();
 
 		$out[] = '<h3>'.gTxt('l10n-summary').'</h3>'.n;
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">&nbsp;&nbsp;&#035;&nbsp;</td>' . td('') . td('') ).n.'</thead><tbody>';
@@ -2523,7 +2523,7 @@ class LocalisationStringView extends GBPAdminTabView
 		foreach( $stats as $iso_code=>$count )
 			{
 			$lang_extras_found = false;
-			$name = LanguageHandler::get_native_name_of_lang( $iso_code );
+			$name = MLPLanguageHandler::get_native_name_of_lang( $iso_code );
 			$remove = '';
 			$export = '';
 			$supported = in_array( $iso_code , $site_langs ) || in_array( $iso_code , $admin_langs );
@@ -2578,7 +2578,7 @@ class LocalisationStringView extends GBPAdminTabView
 					if( !$supported )
 						{
 						$remove = array();
-						$name = LanguageHandler::get_native_name_of_lang( $iso_code );
+						$name = MLPLanguageHandler::get_native_name_of_lang( $iso_code );
 						$count = safe_count( 'txp_lang' , "`lang`='$iso_code'" );
 
 						$remove[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('delete'), '').'</span>';
@@ -2791,7 +2791,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$final_codes = array();
 
 		#	Complete the set with any missing language codes and empty data...
-		$lang_codes = LanguageHandler::get_site_langs();
+		$lang_codes = MLPLanguageHandler::get_site_langs();
 		if( $type === 'plugin' )
 			{
 			$admin_plugin = safe_field( 'type' , 'txp_plugin' , "`name`='$owner'" );
@@ -2801,11 +2801,11 @@ class LocalisationStringView extends GBPAdminTabView
 			# installation (admin) languages...
 			#
 			if( $admin_plugin > 0 )
-				$lang_codes = LanguageHandler::get_installation_langs();
+				$lang_codes = MLPLanguageHandler::get_installation_langs();
 			}
 		elseif( $type === 'search' )
 			{
-			$lang_codes = LanguageHandler::get_installation_langs();
+			$lang_codes = MLPLanguageHandler::get_installation_langs();
 			}
 
 		foreach($lang_codes as $code)
@@ -2821,8 +2821,8 @@ class LocalisationStringView extends GBPAdminTabView
 			$e = $data['event'];
 			if( empty( $e ) )
 				$e = $event;
-			$lang = LanguageHandler::get_native_name_of_lang($code);
-			$dir  = LanguageHandler::get_lang_direction_markup( $code );
+			$lang = MLPLanguageHandler::get_native_name_of_lang($code);
+			$dir  = MLPLanguageHandler::get_lang_direction_markup( $code );
 
 			$warning = '';
 			if( empty( $data['id'] ) )
@@ -2878,7 +2878,7 @@ class LocalisationStringView extends GBPAdminTabView
 		else
 			{
 			$f1[] = gTxt('plugin') . ': <strong>'.$d['owner'].'</strong>'.br.n;
-			$f1[] = gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($d['lang']).' ['.$d['lang'].']</strong>'.br.br.n;
+			$f1[] = gTxt('language') . ': <strong>'.MLPLanguageHandler::get_native_name_of_lang($d['lang']).' ['.$d['lang'].']</strong>'.br.br.n;
 			$f1[] = hInput( 'data' , gps('data') );
 			$f1[] = hInput( 'plugin' , $d['owner'] );
 			$f1[] = hInput( 'prefix' , $d['prefix'] );
@@ -2888,7 +2888,7 @@ class LocalisationStringView extends GBPAdminTabView
 			$f1[] = hInput( 'commit', 'true' );
 			$f1[] = $this->parent->form_inputs();
 
-			$direction_markup = LanguageHandler::get_lang_direction_markup( $d['lang'] );
+			$direction_markup = MLPLanguageHandler::get_lang_direction_markup( $d['lang'] );
 
 			foreach( $d['strings'] as $k=>$v )
 				{
@@ -3073,9 +3073,9 @@ class SnippetInOutView extends GBPAdminSubTabView
 	function render_main()
 		{
 		global $l10n_language;
-		$site_langs 		= LanguageHandler::get_site_langs();
-		$installation_langs	= LanguageHandler::get_installation_langs();
-		$installation_langs	= LanguageHandler::do_fleshout_names( $installation_langs );
+		$site_langs 		= MLPLanguageHandler::get_site_langs();
+		$installation_langs	= MLPLanguageHandler::get_installation_langs();
+		$installation_langs	= MLPLanguageHandler::do_fleshout_names( $installation_langs );
 
 		$snip_string = gTxt('l10n-snippet');
 
@@ -3087,7 +3087,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$out[] = '<table>'.n.'<thead>'.n.tr( '<td align="right">'.gTxt('language').'</td>'.n.'<td align="right">'.sp.sp.gTxt('select').sp.'</td>' ).n.'</thead><tbody>';
 		foreach( $site_langs as $lang )
 			{
-			$name = t . '<label for="'.$lang.'">' . LanguageHandler::get_native_name_of_lang( $lang ) . '</label>';
+			$name = t . '<label for="'.$lang.'">' . MLPLanguageHandler::get_native_name_of_lang( $lang ) . '</label>';
 			$choice = t . '<input type="checkbox" class="checkbox" value="'.$lang.'" name="'.$lang.'" id="'.$lang.'"/>' . n;
 			$export[]= tr( td( $name ).td( $choice ) , ' style="text-align:right;" ' );
 			}
@@ -3159,7 +3159,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		if( empty( $lang ) )
 			$lang = $l10n_language['long'];
 
-		$langs = LanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_installation_langs();
 		if( !in_array( $lang , $langs ) )
 			{
 			echo br , gTxt('l10n-cannot_export' , array( '$lang'=>$lang ) );
@@ -3180,7 +3180,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		if( empty( $lang ) )
 			$lang = $l10n_language['long'];
 
-		$langs = LanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_installation_langs();
 		if( !in_array( $lang , $langs ) )
 			{
 			echo br , gTxt('l10n-cannot_export' , array( '$lang'=>$lang ) );
@@ -3269,7 +3269,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 		#	For each selected language, grab the snippet strings from the txp_lang table and add it to the
 		# export structure...
 		#
-		$site_langs 	= LanguageHandler::get_site_langs();
+		$site_langs 	= MLPLanguageHandler::get_site_langs();
 
 		$export_data = array();
 		foreach( $site_langs as $lang )
@@ -3295,7 +3295,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 	function render_import_list()
 		{
 		$count = 0;
-		$site_langs = LanguageHandler::get_site_langs();
+		$site_langs = MLPLanguageHandler::get_site_langs();
 		$d = gps( 'data' );
 		$d = @unserialize( @base64_decode( @str_replace( "\r\n", '', $d ) ) );
 		$subtab = gps('subtab');
@@ -3319,7 +3319,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 				$f[] = $this->parent->form_inputs().n;
 				foreach( $d['data'] as $lang=>$set )
 					{
-					$dir_markup	= LanguageHandler::get_lang_direction_markup( $lang );
+					$dir_markup	= MLPLanguageHandler::get_lang_direction_markup( $lang );
 
 					if( empty( $lang ) or !in_array( $lang, $site_langs ) or empty( $set ) )
 						{
@@ -3327,7 +3327,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 						}
 					else
 						{
-						$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.LanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
+						$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.MLPLanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
 						foreach( $set as $name=>$couplet )
 							{
 							$data	= htmlspecialchars($couplet[0]);
@@ -3365,7 +3365,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			return;
 			}
 
-		$site_langs 	= LanguageHandler::get_site_langs();
+		$site_langs 	= MLPLanguageHandler::get_site_langs();
 
 		$d 	= gps( 'data' );
 		$d = unserialize( base64_decode( str_replace( "\r\n", '', $d ) ) );
@@ -3491,7 +3491,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
 
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 
 		$clone_to = array();
 		foreach( $langs as $lang )
@@ -3567,7 +3567,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Now we know the article ID, store this against the author for email notification...
 			#
-			$language = LanguageHandler::get_native_name_of_lang( $lang );
+			$language = MLPLanguageHandler::get_native_name_of_lang( $lang );
 			$notify[$new_author][$lang] = array( 'id' => $rendition_id , 'title'=>$source['Title'] , 'language'=>$language );
 			}
 
@@ -3868,9 +3868,9 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		#	Init language related vars...
 		#
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 		$full_lang_count = count( $langs );
-		$default_lang = LanguageHandler::get_site_default_lang();
+		$default_lang = MLPLanguageHandler::get_site_default_lang();
 
 		#
 		#	Render the filter/search form...
@@ -3891,7 +3891,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		foreach( $langs as $lang )
 			{
 			$colgroup[] = n.t.'<col id="'.$lang.'" />';
-			$name = LanguageHandler::get_native_name_of_lang($lang);
+			$name = MLPLanguageHandler::get_native_name_of_lang($lang);
 
 			#
 			#	Default language markup -- if needed.
@@ -4419,7 +4419,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		#
 		#	First things first, set the installation langs...
 		#
-		$languages = LanguageHandler::get_installation_langs();
+		$languages = MLPLanguageHandler::get_installation_langs();
 		$this->set_preference('l10n-languages', $languages);
 
 		#
@@ -4443,7 +4443,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		#
 		#	Also add any strings we can for other installation languages...
 		#
-		$langs = LanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_installation_langs();
 		if( empty( $langs ) )
 			return;
 
@@ -4535,8 +4535,8 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 	function setup_4_cb( $table , $field , $attributes )
 		{
-		$langs      = LanguageHandler::get_site_langs();
-		$default    = LanguageHandler::get_site_default_lang();
+		$langs      = MLPLanguageHandler::get_site_langs();
+		$default    = MLPLanguageHandler::get_site_default_lang();
 
 		$extend_all = array( 'txp_category' , 'txp_section' );
 		$do_all     = in_array( $table , $extend_all );
@@ -4590,13 +4590,13 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
-			$code       = LanguageHandler::compact_code( $lang );
+			$code       = MLPLanguageHandler::compact_code( $lang );
 			$table_name = _l10n_make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
 
-			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
+			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>MLPLanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
 		}
 
@@ -4656,10 +4656,10 @@ class LocalisationWizardView extends GBPWizardTabView
 
 	function setup_12()		# Configure site slogan to reflect the browse language...
 		{
-		$langs = LanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_installation_langs();
 		foreach( $langs as $code )
 			{
-			$langname = LanguageHandler::get_native_name_of_lang( $code );
+			$langname = MLPLanguageHandler::get_native_name_of_lang( $code );
 			StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $code , $langname );
 			}
 		$this->add_report_item( gTxt('l10n-setup_12_main') , true );
@@ -4723,7 +4723,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 	function cleanup_4a_cb( $table , $field , $attributes )
 		{
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $lang )
 			{
 			$f = "$lang-$field";
@@ -4745,11 +4745,11 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Drop','{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
-			$code  = LanguageHandler::compact_code( $lang );
+			$code  = MLPLanguageHandler::compact_code( $lang );
 			$table_name = _l10n_make_textpattern_name( $code );
 			$sql = 'drop table `'.PFX.$table_name.'`';
 			$ok = @safe_query( $sql );
-			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
+			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Drop' ,'{table}'=>MLPLanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
 		}
 
@@ -4762,7 +4762,7 @@ class LocalisationWizardView extends GBPWizardTabView
 			$lang = trim( $lang );
 			$time = time() - 3600;
 			$ok = setcookie( $lang , $lang , $time );
-			$this->add_report_item( gTxt('l10n-delete_cookie',array('{lang}'=>LanguageHandler::get_native_name_of_lang( $lang ))) , $ok , true );
+			$this->add_report_item( gTxt('l10n-delete_cookie',array('{lang}'=>MLPLanguageHandler::get_native_name_of_lang( $lang ))) , $ok , true );
 			}
 		}
 

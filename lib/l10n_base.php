@@ -105,7 +105,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		return $thing;
 
 	if( @txpinterface === 'admin' )
-		$lang = LanguageHandler::get_site_default_lang();
+		$lang = MLPLanguageHandler::get_site_default_lang();
 	else
 		{
 		global $l10n_language;
@@ -201,9 +201,9 @@ function _l10n_make_textpattern_name( $full_code )
 
 
 
-class LanguageHandler
+class MLPLanguageHandler
 	{
-	#	class LanguageHandler implements ISO-693-1 language support.
+	#	class MLPLanguageHandler implements ISO-693-1 language support.
 	function do_fleshout_names( &$langs , $suffix='' , $append_code = true , $append_default=false , $use_long=true )
 		{
 		$result = array();
@@ -212,14 +212,14 @@ class LanguageHandler
 			foreach( $langs as $code )
 				{
 				$code = trim( $code );
-				$tmp = LanguageHandler::get_native_name_of_lang( $code );
+				$tmp = MLPLanguageHandler::get_native_name_of_lang( $code );
 				if( $append_code )
 					$tmp .= ' [' . $code . ']';
 				if( !$use_long )
 					$code = substr( $code , 0 , 2 );
 				if( !empty( $suffix ) )
 					$tmp .= ' ' . $suffix;
-				if( $append_default and ($code === LanguageHandler::get_site_default_lang() ) )
+				if( $append_default and ($code === MLPLanguageHandler::get_site_default_lang() ) )
 					$tmp .= ' - ' . gTxt('default');
 				$result[$code] = $tmp;
 				}
@@ -234,7 +234,7 @@ class LanguageHandler
 			foreach( $langs as $code )
 				{
 				$code = trim( $code );
-				$tmp = LanguageHandler::get_lang_direction( $code );
+				$tmp = MLPLanguageHandler::get_lang_direction( $code );
 				$result[$code] = $tmp;
 				}
 			}
@@ -253,7 +253,7 @@ class LanguageHandler
 		if( !is_string( $long_code ) )
 			{
 			echo br , 'compact_code( ' , var_dump( $long_code ) , ').';
-			trigger_error( 'Invalid type passed to LanguageHandler::compact_code()', E_USER_ERROR);
+			trigger_error( 'Invalid type passed to MLPLanguageHandler::compact_code()', E_USER_ERROR);
 			}
 
 		$long_code = trim( $long_code );
@@ -286,11 +286,11 @@ class LanguageHandler
 			return null;
 			}
 
-		$langs = LanguageHandler::get_site_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $code )
 			{
 			$code = trim( $code );
-			$r = LanguageHandler::compact_code( $code );
+			$r = MLPLanguageHandler::compact_code( $code );
 			if( $short_code === $r['short'] )
 				$result[] = $code;
 			}
@@ -307,7 +307,7 @@ class LanguageHandler
 			{
 			default:
 			case 'lang':
-				$r = LanguageHandler::compact_code( $input );
+				$r = MLPLanguageHandler::compact_code( $input );
 				$short = $r['short'];
 				if( isset($r['long']) ) $long = $r['long'];
 
@@ -328,16 +328,16 @@ class LanguageHandler
 			break;
 
 			case 'long2short':
-				$r = LanguageHandler::compact_code( $input );
+				$r = MLPLanguageHandler::compact_code( $input );
 				return $r['short'];
 			break;
 
 			case 'short2long':
-				return LanguageHandler::expand_code( $input );
+				return MLPLanguageHandler::expand_code( $input );
 			break;
 
 			case 'dir':
-				extract( LanguageHandler::compact_code( $input ) );
+				extract( MLPLanguageHandler::compact_code( $input ) );
 				return (array_key_exists( $short, $iso_693_1_langs ) and array_key_exists('dir', $iso_693_1_langs[$short]))
 					?	$iso_693_1_langs[$short]['dir']
 					:	NULL;
@@ -361,10 +361,10 @@ class LanguageHandler
 		/*
 		Check the given string is a valid language code.
 		*/
-		$lang = LanguageHandler::compact_code( $code );
+		$lang = MLPLanguageHandler::compact_code( $code );
 		$short = $lang['short'];
 		if( isset( $short ) )
-			return LanguageHandler::is_valid_short_code($short);
+			return MLPLanguageHandler::is_valid_short_code($short);
 
 		return false;
 		}
@@ -378,7 +378,7 @@ class LanguageHandler
 		$code = trim( $code );
 		if( 2 == strlen( $code ) )
 			{
-			$result = ( LanguageHandler::iso_693_1_langs( $code ) );
+			$result = ( MLPLanguageHandler::iso_693_1_langs( $code ) );
 			}
 		return $result;
 		}
@@ -392,7 +392,7 @@ class LanguageHandler
 
 		if( $name and !empty( $name ) )
 			{
-			$out = LanguageHandler::iso_693_1_langs( $name, 'code' );
+			$out = MLPLanguageHandler::iso_693_1_langs( $name, 'code' );
 			}
 
 		if (empty($out))
@@ -407,7 +407,7 @@ class LanguageHandler
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		$dir = ' dir="ltr"';
-		if( !empty($lang) and ('rtl' == LanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = ' dir="rtl"';
 		return $dir;
 		}
@@ -418,7 +418,7 @@ class LanguageHandler
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		$dir = 'ltr';
-		if( !empty($lang) and ('rtl' == LanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_693_1_langs( $lang, 'dir' ) ) )
 			$dir = 'rtl';
 		return $dir;
 		}
@@ -428,7 +428,7 @@ class LanguageHandler
 		/*
 		Returns the native name of the given language code.
 		*/
-		return (LanguageHandler::iso_693_1_langs( $code )) ? LanguageHandler::iso_693_1_langs( $code ) : LanguageHandler::iso_693_1_langs( 'en' ) ;
+		return (MLPLanguageHandler::iso_693_1_langs( $code )) ? MLPLanguageHandler::iso_693_1_langs( $code ) : MLPLanguageHandler::iso_693_1_langs( 'en' ) ;
 		}
 
 	function get_site_langs( $set_if_empty = false )
@@ -465,7 +465,7 @@ class LanguageHandler
 		/*
 		Returns a string containing the ISO-693-1 language to be used as the site's default.
 		*/
-		$lang_codes = LanguageHandler::get_site_langs();
+		$lang_codes = MLPLanguageHandler::get_site_langs();
 		return $lang_codes[0];
 		}
 	function get_installation_langs( $limit = 400 )
