@@ -633,11 +633,11 @@ class MLPSnips
 		$where = " `name` IN ($name_set)";
 		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 
-		return array_merge( $result , StringHandler::get_strings( $rs , $stats ) );
+		return array_merge( $result , MLPStrings::get_strings( $rs , $stats ) );
 		}
 	}
 
-class StringHandler
+class MLPStrings
 	{
 	function convert_case( $string , $convert = MB_CASE_TITLE )
 		{
@@ -670,7 +670,7 @@ class StringHandler
 	function make_legend( $title , $args = null )
 		{
 		$title = gTxt( $title , $args );
-		$title = StringHandler::convert_case( $title , MB_CASE_TITLE );
+		$title = MLPStrings::convert_case( $title , MB_CASE_TITLE );
 		$title = tag( $title.'&#8230;', 'legend' );
 		return $title;
 		}
@@ -719,7 +719,7 @@ class StringHandler
 			return false;
 			}
 
-		$name = StringHandler::do_prefs_name( $plugin );
+		$name = MLPStrings::do_prefs_name( $plugin );
 		if( empty($name) )
 			{
 			//echo " ... Invalid name, returning.";
@@ -782,7 +782,7 @@ class StringHandler
 		//echo br , "\$keys = $keys";
 		$keys = md5( $keys );
 
-		$name = StringHandler::do_prefs_name( $plugin );
+		$name = MLPStrings::do_prefs_name( $plugin );
 		$vals = serialize( array( 'pfx'=>doSlash($pfx) , 'num'=>$string_count , 'lang'=>$lang , 'event'=>doSlash($event) , 'md5'=>$keys ) );
 		$result = set_pref( doSlash($name) , $vals , L10N_NAME , 2 );
 		if( $result !== false )
@@ -804,7 +804,7 @@ class StringHandler
 	function unregister_plugin( $plugin )
 		{
 		global $prefs;
-		$name = doSlash( StringHandler::do_prefs_name( $plugin ) );
+		$name = doSlash( MLPStrings::do_prefs_name( $plugin ) );
 		$ok = @safe_delete( 'txp_prefs' , "`name`='$name' AND `event`='".L10N_NAME.'\'' );
 		unset( $prefs[$name] );
 		return $ok;
@@ -828,8 +828,8 @@ class StringHandler
 
 			# If needed, register the plugin...
 			$num = count($strings);
-			if( false === StringHandler::if_plugin_registered( $owner , $lang , $num , $strings ) )
-				StringHandler::register_plugin( $owner , $pfx , $num , $lang , $event , $strings );
+			if( false === MLPStrings::if_plugin_registered( $owner , $lang , $num , $strings ) )
+				MLPStrings::register_plugin( $owner , $pfx , $num , $lang , $event , $strings );
 			elseif( !$override )
 				return false;
 
@@ -929,7 +929,7 @@ class StringHandler
 			$where = "`owner`=\'$plugin\'";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
-			StringHandler::unregister_plugin( $plugin );
+			MLPStrings::unregister_plugin( $plugin );
 			}
 		}
 
@@ -980,7 +980,7 @@ class StringHandler
 			}
 
 		if( !empty($plugin) )
-			StringHandler::unregister_plugin( $plugin );
+			MLPStrings::unregister_plugin( $plugin );
 
 		return $result;
 		}
@@ -994,7 +994,7 @@ class StringHandler
 		*/
 		global $textarray;
 
-		$extras = StringHandler::load_strings($lang);
+		$extras = MLPStrings::load_strings($lang);
 		$textarray = array_merge( $textarray , $extras );
 		return count( $extras );
 		}
@@ -1038,7 +1038,7 @@ class StringHandler
 					);
 
 		$filter = " AND `owner`='$owner'";
-		$r['strings'] = StringHandler::load_strings( $lang, $filter );
+		$r['strings'] = MLPStrings::load_strings( $lang, $filter );
 		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
 		return $result;
 		}
@@ -1052,11 +1052,11 @@ class StringHandler
 		global $prefs;
 
 		$result = array();
-		$p = StringHandler::do_prefs_name( '' );
+		$p = MLPStrings::do_prefs_name( '' );
 
 		foreach( $prefs as $k=>$v )
 			if( false !== strpos($k , $p) )
-				$result[StringHandler::do_prefs_name( $k , false )] = unserialize($v);
+				$result[MLPStrings::do_prefs_name( $k , false )] = unserialize($v);
 
 		if( count( $result ) > 1 )
 			ksort( $result );
@@ -1125,7 +1125,7 @@ class StringHandler
 		$prefix = doSlash( $prefix );
 		$where = " `owner`='$plugin'";
 		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
-		return StringHandler::get_strings( $rs , $stats );
+		return MLPStrings::get_strings( $rs , $stats );
 		}
 
 	function is_complete( $langs , $use_admin = false )
@@ -1365,22 +1365,22 @@ class StringHandler
 
 		$o[] = '<?php';
 		$o[] = '';
-		$o[] = StringHandler::comment_block( 'The language of the strings in this file...' );
+		$o[] = MLPStrings::comment_block( 'The language of the strings in this file...' );
 		$o[] = 'global $l10n_default_strings_lang;';
-		$o[] = "\$l10n_default_strings_lang = '$lang';" . StringHandler::comment_block( $full_name , 1 , 0);
+		$o[] = "\$l10n_default_strings_lang = '$lang';" . MLPStrings::comment_block( $full_name , 1 , 0);
 		$o[] = '';
-		$o[] = StringHandler::comment_block( 'These strings are always needed, they will get installed in the language array...' );
-		$o[] = StringHandler::dmp_array( 'l10n_default_strings_perm' , $vals );
+		$o[] = MLPStrings::comment_block( 'These strings are always needed, they will get installed in the language array...' );
+		$o[] = MLPStrings::dmp_array( 'l10n_default_strings_perm' , $vals );
 		$o[] = '';
-		$o[] = StringHandler::comment_block( 'These are the regular mlp pack strings that will get installed into the txp_lang table...' );
-		$o[] = StringHandler::dmp_array( 'l10n_default_strings' , $vals );
+		$o[] = MLPStrings::comment_block( 'These are the regular mlp pack strings that will get installed into the txp_lang table...' );
+		$o[] = MLPStrings::dmp_array( 'l10n_default_strings' , $vals );
 		$o[] = '';
 		$o[] = '?>';
 
 		return join( n , $o );
 		}
 
-	} // End class StringHandler
+	} // End class MLPStrings
 
 class LocalisationView extends GBPPlugin
 	{
@@ -1435,9 +1435,9 @@ class LocalisationView extends GBPPlugin
 			if( $installed and $this->insert_in_debug_mode and ('debug' === @$production_status) )
 				{
 				$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
-				$ok = StringHandler::remove_strings_by_name( $l10n_default_strings , 'admin' , 'l10n' , $l10n_default_strings_lang );
-				$ok = StringHandler::insert_strings( $this->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
-				StringHandler::load_strings_into_textarray( LANG );
+				$ok = MLPStrings::remove_strings_by_name( $l10n_default_strings , 'admin' , 'l10n' , $l10n_default_strings_lang );
+				$ok = MLPStrings::insert_strings( $this->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
+				MLPStrings::load_strings_into_textarray( LANG );
 				}
 			}
 
@@ -1532,7 +1532,7 @@ class LocalisationView extends GBPPlugin
 				if( !$exists and @$prefs['site_slogan'] === 'My pithy slogan' )
 					{
 					$langname = MLPLanguageHandler::get_native_name_of_lang( $lang );
-					StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $lang , $langname );
+					MLPStrings::store_translation_of_string( 'snip-site_slogan' , 'public' , $lang , $langname );
 					}
 				}
 			}
@@ -1641,7 +1641,7 @@ class LocalisationView extends GBPPlugin
 		if( $owner and $prefix and $strings and $lang and $event and (count($strings)) )
 			{
 			//echo br , "In _process_string_callbacks( $event , $step , $pre , $func ), inserting strings...";
-			if( StringHandler::insert_strings( $prefix , $strings , $lang , $event , $owner ) )
+			if( MLPStrings::insert_strings( $prefix , $strings , $lang , $event , $owner ) )
 				$result = true;
 			}
 
@@ -2035,7 +2035,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$stats = array();
 		$full_names = safe_rows_start( 'name,lang', 'txp_lang', '1=1 ORDER BY name ASC' );
-		$names = StringHandler::get_strings( $full_names , $stats );
+		$names = MLPStrings::get_strings( $full_names , $stats );
 		$num_names = count( $names );
 
 		if( !$names || $num_names == 0 )
@@ -2193,7 +2193,7 @@ class LocalisationStringView extends GBPAdminTabView
 		#
 		$stats = array();
 		$full_names = safe_rows_start( 'name,lang', 'txp_lang', '1=1 ORDER BY name ASC' );
-		$names = StringHandler::get_strings( $full_names , $stats );
+		$names = MLPStrings::get_strings( $full_names , $stats );
 		$num_names = count( $names );
 
 		#
@@ -2396,7 +2396,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 	function _generate_plugin_list()											# left pane subroutine
 		{
-		$rps = StringHandler::discover_registered_plugins();
+		$rps = MLPStrings::discover_registered_plugins();
 		if( count( $rps ) )
 			{
 			$plugins = $this->_extend_plugin_list();
@@ -2484,7 +2484,7 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			foreach( $strings as $string=>$langs )
 				{
-				$complete = StringHandler::is_complete( $langs , ($event!=='public') );
+				$complete = MLPStrings::is_complete( $langs , ($event!=='public') );
 				if( !$complete )
 					$needs_legend = true;
 				$guts = $string . ' ['.( ($langs) ? $langs : gTxt('none') ).']';
@@ -2504,7 +2504,7 @@ class LocalisationStringView extends GBPAdminTabView
 			{
 			if( $event !== 'public' )
 				$event = 'admin';
-			$event = StringHandler::convert_case( gTxt( $event ) , MB_CASE_LOWER );
+			$event = MLPStrings::convert_case( gTxt( $event ) , MB_CASE_LOWER );
 			$out[] = graf( gTxt('l10n-add_string_rend',array('{side}'=>$event)) );
 			}
 
@@ -2547,7 +2547,7 @@ class LocalisationStringView extends GBPAdminTabView
 					}
 				}
 
-			$details =  StringHandler::if_plugin_registered( $string_name , $iso_code );
+			$details =  MLPStrings::if_plugin_registered( $string_name , $iso_code );
 			if( false !== $details )
 				{
 				$export[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-export'), '').'</span>';
@@ -2620,9 +2620,9 @@ class LocalisationStringView extends GBPAdminTabView
 		Show all the strings and localisations for the given plugin.
 		*/
 		$stats 			= array();
-		$strings 		= StringHandler::get_plugin_strings( $plugin , $stats , $prefix );
+		$strings 		= MLPStrings::get_plugin_strings( $plugin , $stats , $prefix );
 		$strings_exist 	= ( count( $strings ) > 0 );
-		$details		= StringHandler::if_plugin_registered( $plugin , '' );
+		$details		= MLPStrings::if_plugin_registered( $plugin , '' );
 		$event			= $details['event'];
 
 		$out[] = '<div class="l10n_plugin_list">';
@@ -2787,7 +2787,7 @@ class LocalisationStringView extends GBPAdminTabView
 
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
 
-		$x = StringHandler::get_string_set( $id );
+		$x = MLPStrings::get_string_set( $id );
 		$final_codes = array();
 
 		#	Complete the set with any missing language codes and empty data...
@@ -2909,14 +2909,14 @@ class LocalisationStringView extends GBPAdminTabView
 		{
 		$remove_langs 	= gps('lang_code');
 		$plugin 		= gps( L10N_PLUGIN_CONST );
-		StringHandler::remove_strings( $plugin , $remove_langs );
+		MLPStrings::remove_strings( $plugin , $remove_langs );
 		unset( $_POST['step'] );
 		}
 	function remove_language()
 		{
 		$remove_lang 	= gps('lang_code');
 		if( !empty($remove_lang) )
-			StringHandler::remove_lang( $remove_lang );
+			MLPStrings::remove_lang( $remove_lang );
 		unset( $_POST['step'] );
 		}
 
@@ -2957,7 +2957,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( !$exists and empty( $translation ) )
 				continue;
 
-			StringHandler::store_translation_of_string( $string_name , $event , $code , $translation , $id , $owner );
+			MLPStrings::store_translation_of_string( $string_name , $event , $code , $translation , $id , $owner );
 			}
 		}
 
@@ -2991,11 +2991,11 @@ class LocalisationStringView extends GBPAdminTabView
 		$lang   = gps('language');
 		$prefix = gps('prefix');
 
-		$details =  StringHandler::if_plugin_registered( $plugin , $lang );
+		$details =  MLPStrings::if_plugin_registered( $plugin , $lang );
 		if( false !== $details )
 			{
 			//$details = unserialize( $details );
-			$data = StringHandler::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
+			$data = MLPStrings::serialize_strings( $lang , $plugin , $prefix , $details['event'] );
 			$this->parent->serve_file( $data , $plugin . '.' . $lang . '.inc' );
 			}
 		}
@@ -3010,7 +3010,7 @@ class LocalisationStringView extends GBPAdminTabView
 			if( is_array( $d ) )
 				{
 				if( array_key_exists( 'strings' , $d ) )
-					StringHandler::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['owner'] , true );
+					MLPStrings::insert_strings( $d['prefix'] , $d['strings'] , $d['lang'] , $d['event'] , $d['owner'] , true );
 				}
 			unset( $_POST['step'] );
 			}
@@ -3166,7 +3166,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			exit(0);
 			}
 
-		$file  = StringHandler::build_txp_langfile( $lang );
+		$file  = MLPStrings::build_txp_langfile( $lang );
 		$title = $lang.'.txt';
 		$desc  = 'Textpattern '.$lang.' '.gTxt('l10n-strings');
 		$this->parent->parent->serve_file( $file , $title , $desc , 'text/plain;charset=utf-8' );
@@ -3187,7 +3187,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			exit(0);
 			}
 
-		$file  = StringHandler::build_l10n_default_strings_file( $lang );
+		$file  = MLPStrings::build_l10n_default_strings_file( $lang );
 		$title = 'l10n_'.$lang.'_strings.php';
 		$desc  = 'MLP Pack '.$lang.' '.gTxt('l10n-strings');
 		$this->parent->parent->serve_file( $file , $title , $desc, 'text/plain;charset=utf-8;' );
@@ -3263,7 +3263,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 		sort( $snippet_names );
 
-		$snippet_nameset = StringHandler::make_nameset($snippet_names);
+		$snippet_nameset = MLPStrings::make_nameset($snippet_names);
 
 		#
 		#	For each selected language, grab the snippet strings from the txp_lang table and add it to the
@@ -3279,7 +3279,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 			if( !$present )
 				continue;
 
-			$lang_set = StringHandler::get_set_by_lang( $snippet_nameset , $lang );
+			$lang_set = MLPStrings::get_set_by_lang( $snippet_nameset , $lang );
 
 			$export_data[$lang] = $lang_set;
 			}
@@ -3774,7 +3774,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Convert to title case for the comparison...
 			#
-			$matches = do_list( StringHandler::convert_case( $string, MB_CASE_TITLE ) );
+			$matches = do_list( MLPStrings::convert_case( $string, MB_CASE_TITLE ) );
 
 			#
 			#	Status strings to status codes...
@@ -3794,7 +3794,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 			#
 			#	Convert names or sections to lower case for the comparison...
 			#
-			$matches = do_list( StringHandler::convert_case( $string, MB_CASE_LOWER ) );
+			$matches = do_list( MLPStrings::convert_case( $string, MB_CASE_LOWER ) );
 			}
 
 		#
@@ -3802,7 +3802,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 		#
 		foreach( $set as $lang=>$item )
 			{
-			$item = StringHandler::convert_case( $item, MB_CASE_LOWER );
+			$item = MLPStrings::convert_case( $item, MB_CASE_LOWER );
 			if( !in_array($item , $matches) )
 				unset($langs[$lang]);
 			}
@@ -4437,7 +4437,7 @@ class LocalisationWizardView extends GBPWizardTabView
 
 		# Adds the strings this class needs. These lines makes them editable via the "plugins" string tab.
 		$l10n_default_strings = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
-		$ok = StringHandler::insert_strings( $this->parent->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' );
+		$ok = MLPStrings::insert_strings( $this->parent->strings_prefix , $l10n_default_strings , $l10n_default_strings_lang , 'admin' , 'l10n' );
 		$this->add_report_item( gTxt('l10n-setup_2_main') , $ok );
 
 		#
@@ -4462,7 +4462,7 @@ class LocalisationWizardView extends GBPWizardTabView
 				{
 				include_once $file_name;
 				$merged = array_merge( $l10n_default_strings , $l10n_default_strings_perm );
-				StringHandler::insert_strings( $this->parent->strings_prefix , $merged , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
+				MLPStrings::insert_strings( $this->parent->strings_prefix , $merged , $l10n_default_strings_lang , 'admin' , 'l10n' , true );
 				}
 			}
 		if( isset( $merged ) )
@@ -4661,7 +4661,7 @@ class LocalisationWizardView extends GBPWizardTabView
 		foreach( $langs as $code )
 			{
 			$langname = MLPLanguageHandler::get_native_name_of_lang( $code );
-			StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $code , $langname );
+			MLPStrings::store_translation_of_string( 'snip-site_slogan' , 'public' , $code , $langname );
 			}
 		$this->add_report_item( gTxt('l10n-setup_12_main') , true );
 		}
@@ -4687,10 +4687,10 @@ class LocalisationWizardView extends GBPWizardTabView
 		# Remove the l10n strings...
 		$this->add_report_item( gTxt('l10n-clean_2_main') );
 		$temp = array_merge( $l10n_default_strings_perm , $l10n_default_strings );
-		$ok = StringHandler::remove_strings_by_name( $temp , 'admin' , 'l10n' );
+		$ok = MLPStrings::remove_strings_by_name( $temp , 'admin' , 'l10n' );
 		$this->add_report_item( ($ok===true)?gTxt('l10n-clean_2_remove_all'): gTxt('l10n-clean_2_remove_count',array('{count}'=>$ok)) , true , true );
 
-		$rps = StringHandler::discover_registered_plugins();
+		$rps = MLPStrings::discover_registered_plugins();
 		if( count($rps) )
 			{
 			foreach($rps as $name=>$vals)
@@ -4698,7 +4698,7 @@ class LocalisationWizardView extends GBPWizardTabView
 				if( !is_array( $vals ) )
 					continue;
 
-				$ok = StringHandler::unregister_plugin( $name );
+				$ok = MLPStrings::unregister_plugin( $name );
 				$this->add_report_item( gTxt( 'l10n-clean_2_unreg' , array( '{name}'=>$name ) ) , $ok , true );
 				}
 			}
