@@ -34,6 +34,111 @@ else
 #
 #	Classes for admin side operations...
 #
+class MLPTableManager
+	{
+	function walk_table_return_array( $table , $fname , $fdata , $fn , $fn_data = null )
+		{
+		if( !is_callable( $fn ) )
+			return;
+
+		$results = array();
+
+		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
+		if( $rs && mysql_num_rows($rs) > 0 )
+			{
+			while ( $row = nextRow($rs) )
+				{
+				$r = call_user_func( $fn , $table , $row , $fn_data );
+				if( is_array( $r ) )
+					$results = array_merge( $results , $r );
+				}
+			}
+
+		return $results;
+		}
+	function walk_table_find( $table , $fname , $fdata , $string , $markup = false )
+		{
+		$fndata = array(
+			'q'     => $string ,
+			'fname' => $fname ,
+			'fdata' => $fdata ,
+			'markup'=> $markup
+			);
+		$fn = array( 'MLPTableManager' , 'find_cb' );
+		$results = MLPTableManager::walk_table_return_array( $table , $fname , $fdata , $fn , $fndata );
+		return $results;
+		}
+	function walk_table_replace_simple( $table , $fname , $fdata , $fstrings , $rstrings )
+		{
+		$fndata = array(
+			'fstrings'  => $fstrings ,
+			'rstrings'  => $rstrings ,
+			'fname'     => $fname ,
+			'fdata'     => $fdata ,
+			);
+		$fn = array( 'MLPTableManager' , 'replace_cb' );
+		$results = MLPTableManager::walk_table_return_array( $table , $fname , $fdata , $fn , $fndata );
+		return $results;
+		}
+	function replace_cb( $table , $row , $fndata )
+		{
+		extract( $fndata );
+		extract( $row );
+
+		//echo br , "replace_cb( $table." . $name . ' , ' . htmlspecialchars($fstrings) . ' , ' . htmlspecialchars($rstrings) . ' )';
+		//echo br , var_dump( $fndata );
+
+		$data  = str_replace( $fstrings , $rstrings , $data );
+
+		$data  = doSlash( $data );
+		$name  = doSlash( $name );
+		$fdata = doSlash( $fdata );
+		$fname = doSlash( $fname );
+		$ok = safe_update( $table , " `$fdata`='$data'" , " `$fname`='$name'" );
+
+		$r[$table.'.'.$name] = $ok;
+
+		return $r;
+		}
+	function find_cb( $table , $row , $data )
+		{
+		$markup    = false;
+		extract( $data );								# override the default value of 'markup' variable
+														# if set to true => not a regex find. Replace search term
+														# with html highlight.
+		$qq        = '/'.preg_quote( $q ).'/';			# processed search term.
+		$qr        = '<span class="l10n_highlite">'.htmlspecialchars( $q ).'</span>';	#search term html highlight
+		$marker    = md5( $q );
+		$col_name  = $row['name'];						# name of the row we are processing
+		$input     = explode( "\n" , $row['data'] );	# array of lines obtained from the row data
+
+		//echo br , "find_cb( $table." . $col_name . ' , '.htmlspecialchars($q).' )';
+
+		$r = preg_grep( $qq , $input );					# find all matching rows!
+
+		$result = array();
+		if( !empty( $r ) )
+			foreach( $r as $line_num=>$match )
+				{
+				++$line_num;							# convert to 1 based indexing
+
+				if( $markup )
+					{
+					$match = str_replace( $q , $marker , $match );
+					$match = htmlspecialchars( $match );
+					$match = str_replace( $marker , $qr , $match );
+					$result[$table.'.'.$col_name][$line_num] = $match;
+					}
+				else
+					$result[$table.'.'.$col_name][$line_num] = trim( htmlspecialchars($match) );
+
+				//echo br , t , " ... $line_num " , trim($match);
+				}
+
+		return $result;
+		}
+	}
+
 class ArticleManager
 	{
 	function create_table()
@@ -1421,6 +1526,18 @@ class LocalisationView extends GBPPlugin
 				#	Add fields for this language...
 				#
 				l10n_mappings_walker( array( &$this , 'add_field' ) , $lang );
+
+				#
+				#	Conditionally extend the snip-site_slogan to include the new language...
+				#
+				global $prefs;
+				$exists = @safe_row( '*' , 'txp_lang' , "`lang`='$lang' AND `name`='snip-site_slogan'" );
+				$exists = !empty( $exists );
+				if( !$exists and @$prefs['site_slogan'] === 'My pithy slogan' )
+					{
+					$langname = LanguageHandler::get_native_name_of_lang( $lang );
+					StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $lang , $langname );
+					}
 				}
 			}
 
@@ -1478,14 +1595,30 @@ class LocalisationView extends GBPPlugin
 		#	If we make an existing lang the default, overwrite the master field
 		# with any data from the (now default) field...
 		#
-		$sql = "UPDATE $table SET `$field`=`$f` WHERE `$f` <> ''";
-		$ok = @safe_query( $sql );
+		@safe_update( $table , "`$field`=`$f`" , "`$f` <> ''" );
 
 		#
-		#	Copy the master fields over to the new defualt field
+		#	Copy the master fields over to the new default field
 		#
-		$sql = "UPDATE $table SET `$f`=`$field` WHERE `$field` <> ''";
-		$ok = @safe_query( $sql );
+		@safe_update( $table , "`$f`=`$field`" , "`$field` <> ''" );
+
+		#
+		#	For certain tables, iterate over each site language x row, setting
+		# any blanks to the new default value...
+		#
+		$extend_all = array( 'txp_category' , 'txp_section' );
+		if( in_array( $table , $extend_all ) )
+			{
+			$langs = LanguageHandler::get_site_langs();
+			foreach( $langs as $lang )
+				{
+				if( $lang === $language )
+					continue;	# skip the default language, already done.
+
+				$f = "$lang-$field";
+				@safe_update( $table , "`$f`=`$field`" , "`$f`=''" );
+				}
+			}
 		}
 
 	function installed( $recheck=false )
@@ -3064,24 +3197,17 @@ class SnippetInOutView extends GBPAdminSubTabView
 		$this->parent->parent->serve_file( $file , $title , $desc, 'text/plain;charset=utf-8;' );
 		}
 
-	function _get_snippet_names( $table , $fname , $fdata )
+	function _get_snippet_names( $table , $row , $unused )
 		{
-		$snippets 	= array();
-		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
-		if( $rs && mysql_num_rows($rs) > 0 )
-			{
-			$explain = false;
-			while ( $a = nextRow($rs) )
-				{
-				$raw_count = 0;
-				$snips = SnippetHandler::find_snippets_in_block( $a['data'] , $raw_count );
-				foreach( $snips as $k=>$v )
-					$snippets[$v] = $v;
-				}
-			}
-		return $snippets;
-		}
+		$results = array();
+		$raw_count = 0;
 
+		$snips = SnippetHandler::find_snippets_in_block( $row['data'] , $raw_count );
+		foreach( $snips as $k=>$v )
+			$results[$v] = $v;
+
+		return $results;
+		}
 	function get_special_snippets()
 		{
 		$snippets = array();
@@ -3133,7 +3259,7 @@ class SnippetInOutView extends GBPAdminSubTabView
 				}
 			else
 				{
-				$snips = $this->_get_snippet_names( $table , $name , $data );
+				$snips = MLPTableManager::walk_table_return_array( $table , $name , $data , array($this,'_get_snippet_names') );
 				}
 			if( is_array( $snips ) )
 				$snippet_names = array_merge( $snippet_names , $snips );
@@ -4184,6 +4310,9 @@ class LocalisationWizardView extends GBPWizardTabView
 				'setup'   => gTxt('l10n-comment_op',array('{op}'=>'Clear')),
 				'cleanup' => gTxt('l10n-comment_op',array('{op}'=>'Restore')),
 				),
+			'11'=> array(
+				'setup'   => gTxt('l10n-setup_11_main') , 'optional'=>true, 'checked'=>1
+				),
 			);
 
 		#
@@ -4192,7 +4321,18 @@ class LocalisationWizardView extends GBPWizardTabView
 		global $prefs;
 		if( @$prefs['site_slogan'] === 'My pithy slogan' )
 			{
-			$steps['11'] = array( 'setup' => gTxt('l10n-setup_11_main') , 'optional'=>true, 'checked'=>1 );
+			$steps['12'] = array( 'setup' => gTxt('l10n-setup_12_main') , 'optional'=>true, 'checked'=>1 );
+			}
+
+		#
+		#	If there are any of Graeme's gbp_ tags hanging around from v0.5 of gbp_l10n then upgrade them to the new ones...
+		#
+		$page_data = MLPTableManager::walk_table_find( 'txp_page' , 'name' , 'user_html' , 'gbp_localize' , true );
+		$form_data = MLPTableManager::walk_table_find( 'txp_form' , 'name' , 'Form' , 'gbp_localize' , true );
+		$data = array_merge( $page_data, $form_data );
+		if( !empty( $data ) )
+			{
+			$steps['13'] = array( 'setup' => gTxt('l10n-setup_13_main') );
 			}
 
 		return $steps;
@@ -4399,8 +4539,12 @@ class LocalisationWizardView extends GBPWizardTabView
 		}
 	function setup_4_cb( $table , $field , $attributes )
 		{
-		$langs = LanguageHandler::get_site_langs();
-		$default = LanguageHandler::get_site_default_lang();
+		$langs      = LanguageHandler::get_site_langs();
+		$default    = LanguageHandler::get_site_default_lang();
+
+		$extend_all = array( 'txp_category' , 'txp_section' );
+		$do_all     = in_array( $table , $extend_all );
+
 		$safe_table = safe_pfx( $table );
 		foreach( $langs as $lang )
 			{
@@ -4416,11 +4560,16 @@ class LocalisationWizardView extends GBPWizardTabView
 			$ok = @safe_alter( $table , $sql );
 			$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
 
-			if( $ok && $lang===$default )
+			if( !$ok )
+				continue;
+
+			if( $do_all or $lang===$default )
 				{
-				$sql = "UPDATE $safe_table SET `$f`=`$field`";
+				$sql = "UPDATE $safe_table SET `$f`=`$field` WHERE `$f`=''";
 				$ok = @safe_query( $sql );
-				$this->add_report_item( gTxt('l10n-copy_defaults',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
+
+				if( $lang === $default )
+					$this->add_report_item( gTxt('l10n-copy_defaults',array('{field}'=>$f,'{table}'=>$table)) , $ok , true );
 				}
 			}
 		}
@@ -4445,11 +4594,12 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
-			$code  = LanguageHandler::compact_code( $lang );
+			$code       = LanguageHandler::compact_code( $lang );
 			$table_name = make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
 			$ok = @safe_query( $sql );
+
 			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>LanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
 		}
@@ -4461,7 +4611,54 @@ class LocalisationWizardView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-comment_op',array('{op}'=>'Clear')) , $ok );
 		}
 
-	function setup_11()		# Configure site slogan to reflect the browse language...
+	function setup_11()		# Optionally insert l10n tags into the pages/forms.
+		{
+		static $default_md5s = array (
+			'txp_page'     => array (
+				'default'          => 'c9797b38809d64cb8f5d33ad1f62a144',
+				'archive'          => 'c9797b38809d64cb8f5d33ad1f62a144',
+				'error_default'    => '909ada7984ebdc41a86f74861d6a0944',
+				),
+			);
+
+		#	Determine if we are running a default installation...
+		$table = 'txp_page';
+		$pages = safe_rows( "name, user_html as data", $table, '1=1' ) ;
+		$skipped = '';
+		foreach( $pages as $page )
+			{
+			extract( $page );
+			if( md5( $data ) == $default_md5s[$table][$name] )
+				{
+				$f = ' lang="en"';
+				$r = ' lang="<txp:l10n_get_lang/>"';
+				$data = str_replace( $f , $r , $data );
+				$f = ' xml:lang="en"';
+				$r = ' xml:lang="<txp:l10n_get_lang type="long" />"';
+				$data = str_replace( $f , $r , $data );
+
+				$f = '<body>';
+				$r = '<body dir="<txp:l10n_get_lang_dir />" >';
+				$data = str_replace( $f , $r , $data );
+
+				$f = '<div id="sidebar-1">';
+				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
+				$r = "<txp:l10n_lang_list $err404/>";
+				$data = str_replace( $f , $f.n.t.$r , $data );
+
+				#	Save it...
+				$name = doSlash( $name );
+				$data = doSlash( $data );
+				safe_update( $table , "`user_html`='$data'", "`name`='$name'" );
+				}
+			#else
+			#	$skipped .= sp.'-'.$name.sp;
+			}
+
+		$this->add_report_item( gTxt('l10n-setup_11_main').$skipped , true );
+		}
+
+	function setup_12()		# Configure site slogan to reflect the browse language...
 		{
 		$langs = LanguageHandler::get_installation_langs();
 		foreach( $langs as $code )
@@ -4469,7 +4666,14 @@ class LocalisationWizardView extends GBPWizardTabView
 			$langname = LanguageHandler::get_native_name_of_lang( $code );
 			StringHandler::store_translation_of_string( 'snip-site_slogan' , 'public' , $code , $langname );
 			}
-		$this->add_report_item( gTxt('l10n-setup_11_main') , true );
+		$this->add_report_item( gTxt('l10n-setup_12_main') , true );
+		}
+
+	function setup_13()
+		{
+		$pdata = MLPTableManager::walk_table_replace_simple( 'txp_page' , 'name' , 'user_html' , "gbp_localize"  , 'l10n_localise' );
+		$fdata = MLPTableManager::walk_table_replace_simple( 'txp_form' , 'name' , 'Form'      , "gbp_localize"  , 'l10n_localise' );
+		$this->add_report_item( gTxt('l10n-setup_13_main') , true );
 		}
 
 	function cleanup_1()	# Drop the txp_lang.owner field
