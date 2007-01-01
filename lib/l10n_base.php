@@ -5,6 +5,13 @@
 # of the plugin.
 #
 
+if( !defined( 'L10N_COL_OWNER' ) )
+	define( 'L10N_COL_OWNER' , L10N_NAME.'_owner' );
+if( !defined( 'L10N_COL_LANG' ) )
+	define( 'L10N_COL_LANG' , L10N_NAME.'_lang' );
+if( !defined( 'L10N_COL_GROUP' ) )
+	define( 'L10N_COL_GROUP' , L10N_NAME.'_group' );
+
 global $txpcfg , $event;
 include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
