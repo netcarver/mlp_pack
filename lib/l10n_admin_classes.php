@@ -1382,7 +1382,7 @@ class MLPStrings
 
 	} // End class MLPStrings
 
-class LocalisationView extends GBPPlugin
+class MLPPlugin extends GBPPlugin
 	{
 	var $gp = array();
 	var $preferences = array(
@@ -1400,7 +1400,7 @@ class LocalisationView extends GBPPlugin
 	var $permissions = '1,2,3,6';
 
 	// Constructor
-	function LocalisationView( $title_alias , $event , $parent_tab = 'extensions' )
+	function MLPPlugin( $title_alias , $event , $parent_tab = 'extensions' )
 		{
 		global $textarray , $production_status , $prefs;
 		global $l10n_default_strings , $l10n_default_strings_lang , $l10n_default_strings_perm;
@@ -1452,23 +1452,23 @@ class LocalisationView extends GBPPlugin
 	function preload()
 		{
 		if( has_privs('plugin') )
-			new LocalisationStringView( gTxt('plugins'), 'plugin', $this );
+			new MLPStringView( gTxt('plugins'), 'plugin', $this );
 		if( has_privs('page') or has_privs('form') )
 			{
-			$snippet_tab = new SnippetTabView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
-			new LocalisationStringView( gTxt('search') , 'search' , $snippet_tab );
-			new LocalisationStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
+			$snippet_tab = new MLPSnipView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
+			new MLPStringView( gTxt('search') , 'search' , $snippet_tab );
+			new MLPStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
 			if (has_privs('page'))
-				new LocalisationStringView( gTxt('pages') , 'page' , $snippet_tab , true );
+				new MLPStringView( gTxt('pages') , 'page' , $snippet_tab , true );
 			if (has_privs('form'))
-				new LocalisationStringView( gTxt('forms') , 'form' , $snippet_tab );
-			new SnippetInOutView( gTxt( 'l10n-inout' ) , 'inout' , $snippet_tab );
+				new MLPStringView( gTxt('forms') , 'form' , $snippet_tab );
+			new MLPSnipIOView( gTxt( 'l10n-inout' ) , 'inout' , $snippet_tab );
 			}
 		if( has_privs('article.edit') )
-			new LocalisationArticleTabView( gTxt('articles'), 'article', $this, true );
+			new MLPArticleView( gTxt('articles'), 'article', $this, true );
 
 		new GBPPreferenceTabView($this);
-		new LocalisationWizardView($this, NULL , gTxt('l10n-wizard') );
+		new MLPWizView($this, NULL , gTxt('l10n-wizard') );
 		}
 
 	function prefs_save_cb( $event='' , $step='' )
@@ -1621,7 +1621,7 @@ class LocalisationView extends GBPPlugin
 		{
 		static $result;
 		if (!isset($result) || $recheck)
-			$result = LocalisationWizardView::installed();
+			$result = MLPWizView::installed();
 		return $result;
 		}
 
@@ -1749,7 +1749,7 @@ class LocalisationView extends GBPPlugin
 	}
 
 
-class SnippetTabView extends GBPAdminTabView
+class MLPSnipView extends GBPAdminTabView
 	{
 	var $tabs = array();
 	var $active_tab = 0;
@@ -1821,10 +1821,10 @@ class SnippetTabView extends GBPAdminTabView
 		echo join('', $out);
 		}
 	}
-class GBPAdminSubTabView extends GBPAdminTabView
+class MLPSubTabView extends GBPAdminTabView
 	{
 	var $sub_tab = '';
-	function GBPAdminSubTabView( $title, $event, &$parent, $is_default = NULL , $subtab = '' )
+	function MLPSubTabView( $title, $event, &$parent, $is_default = NULL , $subtab = '' )
 		{
 		if( !empty($subtab) )
 			$this->sub_tab = $subtab;
@@ -1849,7 +1849,7 @@ class GBPAdminSubTabView extends GBPAdminTabView
 		return $this->parent->url( $vars , $gp );
 		}
 	}
-class LocalisationStringView extends GBPAdminTabView
+class MLPStringView extends GBPAdminTabView
 	{
 	/*
 	Implements a three-pane view for the categorisation, selection and editing of string based
@@ -1875,7 +1875,7 @@ class LocalisationStringView extends GBPAdminTabView
 		return $this->parent->url( $vars , $gp );
 		}
 
-	function LocalisationStringView($title, $event, &$parent, $is_default = NULL)
+	function MLPStringView($title, $event, &$parent, $is_default = NULL)
 		{
 		if( $event !== 'plugin' )
 			{
@@ -2982,7 +2982,7 @@ class LocalisationStringView extends GBPAdminTabView
 		$data = gps('data');
 		$data = MLPSnips::do_localise( $data , 'insert' );
 		$_POST['data'] = $data;
-		LocalisationStringView::save_pageform();
+		MLPStringView::save_pageform();
 		}
 
 	function export_languageset()
@@ -3018,11 +3018,11 @@ class LocalisationStringView extends GBPAdminTabView
 
 	}
 
-class SnippetInOutView extends GBPAdminSubTabView
+class MLPSnipIOView extends MLPSubTabView
 	{
-	function SnippetInOutView($title, $event, &$parent, $is_default = NULL)
+	function MLPSnipIOView($title, $event, &$parent, $is_default = NULL)
 		{
-		GBPAdminSubTabView::GBPAdminSubTabView( $title , 'snippets' , $parent , $is_default , $event );
+		MLPSubTabView::MLPSubTabView( $title , 'snippets' , $parent , $is_default , $event );
 		}
 
 	function preload()
@@ -3420,10 +3420,10 @@ class SnippetInOutView extends GBPAdminSubTabView
 
 	}
 
-class LocalisationArticleTabView extends GBPAdminTabView
+class MLPArticleView extends GBPAdminTabView
 	{
 	var	$statuses = array();
-	function LocalisationArticleTabView( $title, $event, &$parent, $is_default = NULL )
+	function MLPArticleView( $title, $event, &$parent, $is_default = NULL )
 		{
 		$this->statuses = array(
 			1 => gTxt('draft'),
@@ -4260,7 +4260,7 @@ class LocalisationArticleTabView extends GBPAdminTabView
 	}
 
 
-class LocalisationWizardView extends GBPWizardTabView
+class MLPWizView extends GBPWizardTabView
 	{
  	function get_steps()
 		{
