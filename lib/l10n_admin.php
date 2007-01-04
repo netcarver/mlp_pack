@@ -612,8 +612,6 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Update the language table for the target language...
 			#
-			/* WIP OPTIMISE THIS */
-			//_l10n_generate_lang_table( $new_lang );
 			_l10n_replace_rendition( $new_lang );
 			#
 			#	Read the variables to continue the edit...
@@ -629,9 +627,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 
 			$info = safe_row( '*' , 'textpattern' , "`ID`='$rendition_id'" );
 			if( $info !== false )
-				{
 				$current_lang	= $info[L10N_COL_LANG];
-				}
 
 			#
 			#	Check for changes to the article language and groups ...
@@ -641,14 +637,9 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 			#
 			#	Now we can setup the tables again...
 			#
-			/* OPTIMISE THIS */
 			_l10n_replace_rendition( $new_lang , true , $rendition_id );
-			//_l10n_generate_lang_table( $new_lang );
 			if( $new_lang != $current_lang )
-				{
 				_l10n_remove_rendition( $current_lang , $rendition_id );
-				//_l10n_generate_lang_table( $current_lang );
-				}
 
 			#
 			#	Read the variables to continue the edit...
@@ -756,26 +747,6 @@ function _l10n_post_multi_edit_cb( $event , $step )
 			}
 		}
 
-	/*
-	if( $update and isset( $l10n_vars['update_tables'] ) )
-		{
-		$tables = $l10n_vars['update_tables'];
-
-		if( $tables AND !empty( $tables ) )
-			{
-			unset( $l10n_vars['update_tables'] );
-
-			#
-			#	Re-generate each language table touched by the edit...
-			#
-			foreach( $tables as $k=>$lang )
-				{
-				_l10n_generate_lang_table( $lang );
-				}
-			}
-		}
-	*/
-
 	if( $redirect )
 		{
 		while (@ob_end_clean());
@@ -792,9 +763,7 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 	global $l10n_vars;
 	$method = gps('edit_method');
 	$things = gps('selected');
-
-	//$languages = array();
-	$work = array();
+	$work 	= array();
 
 	#
 	#	Scan the selected items, building a table of languages touched by the edit.
@@ -810,7 +779,6 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 				{
 				$article	= $info[L10N_COL_GROUP];
 				$lang  		= $info[L10N_COL_LANG];
-				//$languages[$lang] = $lang;
 				$work[$id]=$lang;
 				if( 'delete' === $method )
 					MLPArticles::remove_rendition( $article , $id , $lang );
@@ -822,14 +790,12 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 	#	Pass the languages array to the post-process routine to reconstruct the
 	# per-language tables that were changed by the edit...
 	#
-	//if( !empty( $languages ) )
-		//$l10n_vars['update_tables'] = $languages;
 	$l10n_vars['update_work'] = $work;
 	}
-function _l10n_generate_lang_table( $lang , $filter = true )
-	{
-	//echo "_l10n_generate_lang_table( $lang , $filter )";
 
+/*
+	function _l10n_generate_lang_table( $lang , $filter = true )
+	{
 	if( !is_string( $lang ) )
 		{
 		echo br , "Non-string language passed to _l10n_generate_lang_table() ... " , var_dump($lang);
@@ -879,6 +845,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$ok = @safe_query( $sql );
 	@safe_query( 'unlock tables' ) ;
 	}
+	*/
 function _l10n_pre_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
@@ -937,25 +904,6 @@ function _l10n_post_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
 	$method   = gps('edit_method');
-	/*
-	if( isset( $l10n_vars['update_tables'] ) )
-		{
-		$tables = $l10n_vars['update_tables'];
-
-		if( $tables AND !empty( $tables ) )
-			{
-			unset( $l10n_vars['update_tables'] );
-
-			#
-			#	Re-generate each language table touched by the edit...
-			#
-			foreach( $tables as $k=>$lang )
-				{
-				_l10n_generate_lang_table( $lang );
-				}
-			}
-		}
-	*/
 	if( isset( $l10n_vars['update_work'] ) )
 		{
 		$work = $l10n_vars['update_work'];
