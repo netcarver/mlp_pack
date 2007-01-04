@@ -439,7 +439,7 @@ class MLPArticles
 					foreach( $diff_members_renditions as $lang=>$rendition )
 						{
 						unset( $members[$lang] );
-						$result[] = array( 'delete' , $rendition , $ID , gTxt('l10n-del_phantom', array( '$rendition'=>$rendition, '$ID'=>$ID) ) );
+						$result[] = array( 'delete' , $rendition , $ID , gTxt('l10n-del_phantom', array( '{rendition}'=>$rendition, '{ID}'=>$ID) ) );
 						}
 					MLPArticles::_update_article( $ID , $names , $members );
 					}
@@ -461,12 +461,12 @@ class MLPArticles
 						#
 						if( !in_array( $lang , $langs ) )
 							{
-							$result[] = array( 'skip' , $rendition , $ID , gTxt('l10n-skip_rendition' , array('$rendition'=>$rendition,'$ID'=>$ID,'$lang'=>$lang)) );
+							$result[] = array( 'skip' , $rendition , $ID , gTxt('l10n-skip_rendition' , array('{rendition}'=>$rendition,'{ID}'=>$ID,'{lang}'=>$lang)) );
 							continue;
 							}
 						$members[$lang] = $rendition;
 						MLPArticles::_update_article( $ID , $names , $members );
-						$result[] = array( 'add' , $rendition , $ID , gTxt('l10n-add_missing_rend',array('$rendition'=>$rendition, '$ID'=>$ID)) );
+						$result[] = array( 'add' , $rendition , $ID , gTxt('l10n-add_missing_rend',array('{rendition}'=>$rendition, '{ID}'=>$ID)) );
 						}
 					}
 				}
@@ -2546,7 +2546,7 @@ class MLPStringView extends GBPAdminTabView
 					$remove[] = hInput( 'subtab' , $this->sub_tab );
 					$remove = form( join( '' , $remove ) ,
 									'' ,
-									"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('$var1'=>$name)) ) .
+									"verify('" . doSlash(gTxt('l10n-lang_remove_warning' , array('{var1}'=>$name)) ) .
 									 doSlash(gTxt('are_you_sure')) . "')");
 					}
 				}
@@ -2591,9 +2591,9 @@ class MLPStringView extends GBPAdminTabView
 						$remove[] = hInput( 'container' , gps('container') );
 						$remove[] = hInput( 'lang_code' , $iso_code );
 						$remove[] = hInput( 'subtab' , $this->sub_tab );
-						$out[]    = form( gTxt('l10n-delete_whole_lang' , array('$var1'=>$name,'$var2'=>$count) ) . sp . join( '' , $remove ) ,
+						$out[]    = form( gTxt('l10n-delete_whole_lang' , array('{var1}'=>$name,'{var2}'=>$count) ) . sp . join( '' , $remove ) ,
 										'' ,
-										"verify('" . doSlash(gTxt('l10n-lang_remove_warning2' , array('$var1'=>$name)) ) .
+										"verify('" . doSlash(gTxt('l10n-lang_remove_warning2' , array('{var1}'=>$name)) ) .
 										 doSlash(gTxt('are_you_sure')) . "')") . br . n;
 						}
 					}
@@ -2686,7 +2686,7 @@ class MLPStringView extends GBPAdminTabView
 		if( $can_edit )
 			 $out[] = '<span style="float:right;"><a href="' .
 					 $this->parent->url( array( 'container'=>$owner , 'step'=>'l10n_edit_pageform' , 'subtab'=>$this->sub_tab ) , true ) . '">' .
-					 gTxt('l10n-edit_resource' , array('$type'=>gTxt($this->event),'$owner'=>$owner) ) .
+					 gTxt('l10n-edit_resource' , array('{type}'=>gTxt($this->event),'{owner}'=>$owner) ) .
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
@@ -2740,7 +2740,7 @@ class MLPStringView extends GBPAdminTabView
 	function render_pageform_edit( $table , $fname, $fdata, $owner )			# Right pane page/form edit textarea.
 		{
 		$out[] = '<div class="l10n_values_list">';
-		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('$type'=>$this->event,'$owner'=>$owner) ).'</h3>' . n;
+		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('{type}'=>$this->event,'{owner}'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
 		$localised = MLPSnips::do_localise( $data );
@@ -3166,7 +3166,7 @@ class MLPSnipIOView extends MLPSubTabView
 		$langs = MLPLanguageHandler::get_installation_langs();
 		if( !in_array( $lang , $langs ) )
 			{
-			echo br , gTxt('l10n-cannot_export' , array( '$lang'=>$lang ) );
+			echo br , gTxt('l10n-cannot_export' , array( '{lang}'=>$lang ) );
 			exit(0);
 			}
 
@@ -3187,7 +3187,7 @@ class MLPSnipIOView extends MLPSubTabView
 		$langs = MLPLanguageHandler::get_installation_langs();
 		if( !in_array( $lang , $langs ) )
 			{
-			echo br , gTxt('l10n-cannot_export' , array( '$lang'=>$lang ) );
+			echo br , gTxt('l10n-cannot_export' , array( '{lang}'=>$lang ) );
 			exit(0);
 			}
 
@@ -4425,6 +4425,7 @@ class MLPWizView extends GBPWizardTabView
 		#
 		$languages = MLPLanguageHandler::get_installation_langs();
 		$this->set_preference('l10n-languages', $languages);
+		$this->add_report_item( gTxt( 'l10n-setup_2_langs' , array( '{langs}' => join( ', ' , $languages ) ) ) , true );
 
 		#
 		#	Reset the session variable (in case of a language switch and then a reinstall)...
