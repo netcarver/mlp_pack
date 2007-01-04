@@ -1046,13 +1046,13 @@ if (@txpinterface === 'public')
 		# given article...
 		#
 		$result = array();
-		$where = "`Group`='$article_id' and `Status` >= '$status' and `Lang`<>'$exclude_lang'";
+		$where = "`".L10N_COL_GROUP."`='$article_id' and `Status` >= '$status' and `".L10N_COL_LANG."`<>'$exclude_lang'";
 		$rows = safe_rows_start( '*,ID as thisid, unix_timestamp(Posted) as posted' , L10N_MASTER_TEXTPATTERN , $where );
 		if( count( $rows ) )
 			{
 			while( $row = nextRow($rows) )
 				{
-				$lang = $row['Lang'];
+				$lang = $row[L10N_COL_LANG];
 				$row['Title'] = escape_title($row['Title']);
 				$result[$lang] = $row;
 				}
@@ -1062,15 +1062,13 @@ if (@txpinterface === 'public')
 	function _l10n_get_alternate_mappings( $rendition_id , $exclude_lang , $use_master=false )
 		{
 		if( $use_master )
-			$info = safe_row( '`Group`' , L10N_MASTER_TEXTPATTERN , "`ID`='$rendition_id'" );
+			$info = safe_row( L10N_COL_GROUP , L10N_MASTER_TEXTPATTERN , "`ID`='$rendition_id'" );
 		else
-			$info = safe_row( '`Group`' , 'textpattern' , "`ID`='$rendition_id'" );
+			$info = safe_row( L10N_COL_GROUP , 'textpattern' , "`ID`='$rendition_id'" );
 		if( empty($info) )
-			{
 			return $info;
-			}
 
-		$article_id = $info['Group'];
+		$article_id = $info[L10N_COL_GROUP];
 		$alternatives = _l10n_get_article_members( $article_id , $exclude_lang );
 		return $alternatives;
 		}
