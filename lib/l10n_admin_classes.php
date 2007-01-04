@@ -85,9 +85,6 @@ class MLPTableManager
 		extract( $fndata );
 		extract( $row );
 
-		//echo br , "replace_cb( $table." . $name . ' , ' . htmlspecialchars($fstrings) . ' , ' . htmlspecialchars($rstrings) . ' )';
-		//echo br , var_dump( $fndata );
-
 		$data  = str_replace( $fstrings , $rstrings , $data );
 
 		$data  = doSlash( $data );
@@ -112,8 +109,6 @@ class MLPTableManager
 		$col_name  = $row['name'];						# name of the row we are processing
 		$input     = explode( "\n" , $row['data'] );	# array of lines obtained from the row data
 
-		//echo br , "find_cb( $table." . $col_name . ' , '.htmlspecialchars($q).' )';
-
 		$r = preg_grep( $qq , $input );					# find all matching rows!
 
 		$result = array();
@@ -131,8 +126,6 @@ class MLPTableManager
 					}
 				else
 					$result[$table.'.'.$col_name][$line_num] = trim( htmlspecialchars($match) );
-
-				//echo br , t , " ... $line_num " , trim($match);
 				}
 
 		return $result;
@@ -1087,9 +1080,9 @@ class MLPStrings
 				{
 				ksort( $langs );
 
-				//
-				//	Build the language stats for the strings...
-				//
+				#
+				#	Build the language stats for the strings...
+				#
 				foreach( $langs as $lang=>$count )
 					{
 					if( array_key_exists( $lang, $stats ) )
@@ -1380,7 +1373,7 @@ class MLPStrings
 		return join( n , $o );
 		}
 
-	} // End class MLPStrings
+	} # End class MLPStrings
 
 class MLPPlugin extends GBPPlugin
 	{
@@ -1399,7 +1392,6 @@ class MLPPlugin extends GBPPlugin
 	var $insert_in_debug_mode = false;
 	var $permissions = '1,2,3,6';
 
-	// Constructor
 	function MLPPlugin( $title_alias , $event , $parent_tab = 'extensions' )
 		{
 		global $textarray , $production_status , $prefs;
@@ -1569,7 +1561,6 @@ class MLPPlugin extends GBPPlugin
 		}
 	function add_field( $table , $field , $attributes , $language )
 		{
-		//$f = "$language-$field";
 		$f = _l10n_make_field_name( $field , $language );
 		$exists = getThing( "SHOW COLUMNS FROM $table LIKE '$f'" );
 		if( !$exists )
@@ -1580,14 +1571,12 @@ class MLPPlugin extends GBPPlugin
 		}
 	function drop_field( $table , $field , $attributes , $language )
 		{
-		//$f = "$language-$field";
 		$f = _l10n_make_field_name( $field , $language );
 		$sql = "DROP `$f`";
 		$ok = @safe_alter( $table , $sql );
 		}
 	function copy_defaults( $table , $field , $attributes , $language )
 		{
-		//$f = "$language-$field";
 		$f = _l10n_make_field_name( $field , $language );
 
 		#
@@ -1614,7 +1603,6 @@ class MLPPlugin extends GBPPlugin
 				if( $lang === $language )
 					continue;	# skip the default language, already done.
 
-				//$f = "$lang-$field";
 				$f = _l10n_make_field_name( $field , $lang );
 				@safe_update( $table , "`$f`=`$field`" , "`$f`=''" );
 				}
@@ -1769,24 +1757,24 @@ class MLPSnipView extends GBPAdminTabView
 		}
 	function &add_tab($tab, $is_default = NULL)
 		{
-		// Check to see if the tab is active
+		# Check to see if the tab is active...
 		$gps_tab = gps(gbp_tab);
 		$sub_tab = gps('subtab');
 
 		if (($is_default && !$gps_tab) || ($gps_tab == $tab->event && $sub_tab == $tab->sub_tab) )
 			$this->active_tab = count($this->tabs);
 
-		// Store the tab
+		# Store the tab
 		$this->tabs[] = $tab;
 
-		// We've got a tab, lets assume we want to use it
+		# We've got a tab, lets assume we want to use it
 		$this->use_tabs = true;
 
 		return $this;
 		}
 	function preload()
 		{
-		// Let the active_tab know it's active and call it's preload()
+		# Let the active_tab know it's active and call it's preload()
 		$tab = &$this->tabs[$this->active_tab];
 		$tab->is_active = 1;
 		$tab->preload();
@@ -1799,19 +1787,18 @@ class MLPSnipView extends GBPAdminTabView
 		}
 	function render_tab_main()
 		{
-		// Call main() for the active_tab
 		$tab = &$this->tabs[$this->active_tab];
 		$tab->main();
 		}
 	function render_tabs()
 		{
-		// This table, which contains the tags, will have to be changed if any improvements
-		// happen to the admin interface
+		#	This table, which contains the tags, will have to be changed if any improvements
+		# happen to the admin interface
 		$out[] = '<table cellpadding="0" cellspacing="0" width="100%" style="margin-top:-2em;margin-bottom:2em;">';
 		$out[] = '<tr><td align="center" class="tabs" id="l10n_tabs_row">';
 		$out[] = '<table cellpadding="0" cellspacing="0" align="center"><tr>';
 
-		// Force the wizard to be the only tab if the plugin isn't installed
+		# Force the wizard to be the only tab if the plugin isn't installed
 		foreach (array_keys($this->tabs) as $key)
 			{
 			$tab = &$this->tabs[$key];
@@ -1837,10 +1824,10 @@ class MLPSubTabView extends GBPAdminTabView
 
 	function render_tab()
 		{
-		// Grab the url to this tab
+		# Grab the url to this tab
 		$url = $this->url(array(gbp_tab => $this->event), true);
 
-		// Will need updating if any improvements happen to the admin interface
+		# Will need updating if any improvements happen to the admin interface
 		$out[] = '<td class="' . ($this->is_active ? 'tabup' : 'tabdown2');
 		$out[] = '" onclick="window.location.href=\'' .$url. '\'">';
 		$out[] = '<a href="' .$url. '" class="plain">' .$this->title. '</a></td>';
@@ -1863,10 +1850,10 @@ class MLPStringView extends GBPAdminTabView
 	var $sub_tab = '';
 	function render_tab()
 		{
-		// Grab the url to this tab
+		# Grab the url to this tab
 		$url = $this->url(array(gbp_tab => $this->event), true);
 
-		// Will need updating if any improvements happen to the admin interface
+		# Will need updating if any improvements happen to the admin interface
 		$out[] = '<td class="' . ($this->is_active ? 'tabup' : 'tabdown2');
 		$out[] = '" onclick="window.location.href=\'' .$url. '\'">';
 		$out[] = '<a href="' .$url. '" class="plain">' .$this->title. '</a></td>';
@@ -3487,10 +3474,7 @@ class MLPArticleView extends GBPAdminTabView
 		{
 		$has_privs = has_privs( 'l10n.clone' );
 		if( !$has_privs )
-			{
-			//$this->parent->message( 'You cannot clone articles.' );
-			return;
-			}
+			return;		# User cannot clone articles.
 
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
@@ -3641,10 +3625,7 @@ class MLPArticleView extends GBPAdminTabView
 		{
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
-			{
-			//$this->parent->message( 'You cannot delete articles.' );
-			return;
-			}
+			return; 	# User cannot delete articles
 
 		#
 		#	Deletes an article (multiple renditions) from the DB.
@@ -3682,9 +3663,7 @@ class MLPArticleView extends GBPAdminTabView
 		{
 		$has_privs = has_privs( 'article.delete' );
 		if( !$has_privs )
-			{
 			return false;
-			}
 
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
@@ -3694,9 +3673,7 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 		if( empty( $details ) )
-			{
 			return true;
-			}
 
 		$lang = $details[L10N_COL_LANG];
 		$article = $details[L10N_COL_GROUP];
@@ -4203,9 +4180,7 @@ class MLPArticleView extends GBPAdminTabView
 		$assign_authors = false;
 		$authors = safe_column('name', 'txp_users', "privs not in(0,6)");
 		if( $authors )
-			{
 			$assign_authors = true;
-			}
 
 		$o[] = startTable( /*id*/ 'l10n_clone_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
 		$o[] = '<caption><strong>'.gTxt('l10n-clone_and_translate' , array( '{article}'=>$title ) ).'</strong></caption>';
@@ -4215,9 +4190,7 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		$checked = '';
 		if( $count === 1 )
-			{
 			$checked = 'checked';
-			}
 
 		#
 		#	Build the thead...
@@ -4546,7 +4519,6 @@ class MLPWizView extends GBPWizardTabView
 		$safe_table = safe_pfx( $table );
 		foreach( $langs as $lang )
 			{
-			//$f = "$lang-$field";
 			$f = _l10n_make_field_name( $field , $lang );
 			$exists = getThing( "SHOW COLUMNS FROM $safe_table LIKE '$f'" );
 			if( $exists )
@@ -4709,7 +4681,6 @@ class MLPWizView extends GBPWizardTabView
 		#
 		#	Set TxP's language preference to the currently active admin language this user is viewing the site in...
 		#
-		//$this->add_report_item( "Reset language variable to ".LANG , true , true );
 		@safe_update('txp_prefs', "`val`='".doSlash(LANG)."'" , "`name`='language'");
 		}
 
@@ -4730,7 +4701,6 @@ class MLPWizView extends GBPWizardTabView
 		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $lang )
 			{
-			//$f = "$lang-$field";
 			$f = _l10n_make_field_name( $field , $lang );
 			$sql = "DROP `$f`";
 			$ok = @safe_alter( $table , $sql );
@@ -4820,6 +4790,6 @@ class MLPWizView extends GBPWizardTabView
 		return "$i of $count";
 		}
 
-	}
+	}	# End of MLPWizView class
 
 ?>
