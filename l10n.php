@@ -376,7 +376,7 @@ None of these codes may be used for section names in the MLP installation if the
 *You can improve the efficiency of your MLP installation by editing the array and commenting out (or removing) all the entries you don't use on the public and admin sides of the site.*
 
 <pre class="code_tag">
-static $iso_693_1_langs = array(
+static $iso_693_langs = array(
 	'aa'=>array( 'aa'=>'Afaraf' ),
 	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
 	'af'=>array( 'af'=>'Afrikaans' ),
