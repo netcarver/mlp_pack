@@ -165,7 +165,7 @@ function _l10n_get_user_languages( $user_id = null )
 function _l10n_create_temp_textpattern( $languages )
 	{
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-	$sql = "create TEMPORARY table `".PFX."textpattern` $indexes select * from `".PFX."textpattern` where `Lang` IN ($languages)";
+	$sql = "create TEMPORARY table `".PFX."textpattern` $indexes select * from `".PFX."textpattern` where ".L10N_COL_LANG." IN ($languages)";
 	@safe_query( $sql );
 	}
 function _l10n_list_filter( $event, $step )
@@ -216,8 +216,8 @@ function _l10n_match_cb( $matches )
 	#
 	$id 		= $matches[1];
 	$rs 		= safe_row(	'*', 'textpattern', "ID=$id" );
-	$code		= $rs['Lang'];
-	$article	= $rs['Group'];
+	$code		= $rs[L10N_COL_LANG];
+	$article	= $rs[L10N_COL_GROUP];
 	$lang 		= MLPLanguageHandler::get_native_name_of_lang( $code );
 	return $matches[0] . br . '<span class="articles_detail">' . $lang . ' [' . gTxt('article'). ' :' .$article . ']</span>';
 	}
@@ -237,7 +237,7 @@ function _l10n_chooser( $permitted_langs )
 	foreach( $langs as $lang )
 		{
 		$table = _l10n_make_textpattern_name(array('long'=>$lang));
-		$lang_rendition_count = safe_count( $table , "`Lang`='$lang'" );
+		$lang_rendition_count = safe_count( $table , L10N_COL_LANG."='$lang'" );
 		$lang_has_renditions = ($lang_rendition_count > 0);
 
 		$rw = '';
@@ -332,8 +332,8 @@ function _l10n_setup_vars( $event , $step )
 		{
 		$rs = safe_row(	'*, unix_timestamp(Posted) as sPosted, unix_timestamp(LastMod) as sLastMod', 'textpattern', "ID=$ID" );
 		$l10n_vars['article_id'] 	= $ID;
-		$l10n_vars['article_lang']	= $rs['Lang'];
-		$l10n_vars['article_group']	= $rs['Group'];
+		$l10n_vars['article_lang']	= $rs[L10N_COL_LANG];
+		$l10n_vars['article_group']	= $rs[L10N_COL_GROUP];
 		$l10n_vars['article_author_id'] = $rs['AuthorID'];
 		}
 	else
@@ -363,8 +363,8 @@ function _l10n_setup_article_buffer_processor( $event , $step )
 		$_POST['publish_now'] = '1';	#	Force update of publish time to NOW.
 		unset($_POST['reset_time']);
 		$_POST['url_title'] = '';		#	Force the url_title to be rebuilt.
-		$_POST['Lang'] = $_POST['CloneLang'];		#	The article language and group comes
-		$_POST['Group'] = $_POST['CloneGroup'];	# from the clone selector elements.
+		$_POST[L10N_COL_LANG] = $_POST['CloneLang'];		#	The article language and group comes
+		$_POST[L10N_COL_GROUP] = $_POST['CloneGroup'];	# from the clone selector elements.
 		}
 	}
 
@@ -482,13 +482,13 @@ function _l10n_article_buffer_processor( $buffer )
 		}
 	$r.= 'ID: ' . strong( $id_no ) . ' / ';
 
-	if( $group_id == '-' )	#	New article , don't setup a 'Group' element in the page!...
+	if( $group_id == '-' )	#	New article , don't setup a L10N_COL_GROUP element in the page!...
 		{
 		if( !empty( $user_sel_lang ) )
 			$lang = $user_sel_lang;
 
-		$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
-		$r .= 	gTxt('article')    . ': ' . strong( $group_id );
+		$r .=	gTxt('language') . ': ' . selectInput( L10N_COL_LANG , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
+		$r .= 	gTxt('article')  . ': ' . strong( $group_id );
 		}
 	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
 		{
@@ -497,13 +497,13 @@ function _l10n_article_buffer_processor( $buffer )
 			if( !empty( $user_sel_lang ) )
 				$lang = $user_sel_lang;
 
-			$r .=	gTxt('language') . ': ' . selectInput( 'Lang' , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
-			$r .=	gTxt('article')    . ': ' . fInput('edit','Group',$group_id , '', '', '', '4');
+			$r .=	gTxt('language') . ': ' . selectInput( L10N_COL_LANG , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
+			$r .=	gTxt('article')  . ': ' . fInput('edit' , L10N_COL_GROUP , $group_id , '', '', '', '4');
 			}
 		else
 			{
-			$r .= 	hInput( 'Lang' , $lang )      . gTxt('language') . ': ' . strong( MLPLanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
-			$r .= 	hInput( 'Group' , $group_id ) . gTxt('article')    . ': ' . strong( $group_id );
+			$r .= 	hInput( L10N_COL_LANG  , $lang )     . gTxt('language') . ': ' . strong( MLPLanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
+			$r .= 	hInput( L10N_COL_GROUP , $group_id ) . gTxt('article')  . ': ' . strong( $group_id );
 			}
 		}
 
@@ -589,7 +589,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 	require_privs('article');
 
 	global $vars;
-	$new_vars = array_merge( $vars , array( 'Lang' , 'Group' , 'original_ID' ) );
+	$new_vars = array_merge( $vars , array( L10N_COL_LANG , L10N_COL_GROUP , 'original_ID' ) );
 
 	$save = gps('save');
 	if ($save) $step = 'save';
@@ -599,7 +599,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 
 	$incoming = gpsa($new_vars);
 	$default = MLPLanguageHandler::get_site_default_lang();
-	$new_lang	= (@$incoming['Lang']) ? $incoming['Lang'] : $default;
+	$new_lang	= (@$incoming[L10N_COL_LANG]) ? $incoming[L10N_COL_LANG] : $default;
 
 	switch(strtolower($step))
 		{
@@ -630,7 +630,7 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 			$info = safe_row( '*' , 'textpattern' , "`ID`='$rendition_id'" );
 			if( $info !== false )
 				{
-				$current_lang	= $info['Lang'];
+				$current_lang	= $info[L10N_COL_LANG];
 				}
 
 			#
@@ -688,11 +688,12 @@ function _l10n_changeauthor_notify_routine()
 				#
 				#	Make a link to the article...
 				#
-				extract( safe_row('Title,Lang,`Group`,Status' , 'textpattern' , "`ID`='$id'") );
-				$lang   = MLPLanguageHandler::get_native_name_of_lang( $Lang );
+				$row = safe_row('Title , '.L10N_COL_LANG.' , `'.L10N_COL_GROUP.'` , Status' , 'textpattern' , "`ID`='$id'");
+				extract( $row );
+				$lang   = MLPLanguageHandler::get_native_name_of_lang( $row[L10N_COL_LANG] );
 				$status = $statuses[$Status];
 				$msg = 	gTxt('title')  . ": \"$Title\"\r\n" .
-						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [$Lang] , " . gTxt('group' ) . ": $Group.\r\n";
+						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [".$row[L10N_COL_LANG]."] , " . gTxt( 'group' ) . ": ".$row[L10N_COL_GROUP].".\r\n";
 				$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 				$links[] = $msg;
 				}
@@ -726,8 +727,7 @@ function _l10n_post_multi_edit_cb( $event , $step )
 	global $l10n_view;
 
 	$method   		= gps('edit_method');
-	$redirect 		= true;	#	Always redirect to the 'list' event. This forces a re-draw of the screen
-							#	with the correct language filters applied.
+	$redirect 		= true;	#	Redirect to the 'list' event, forcing a re-draw with the correct language filters applied.
 	$update   		= true;
 
 	#
@@ -808,8 +808,8 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 			$info = safe_row( '*' , 'textpattern' , "`ID`='$id'" );
 			if( $info !== false )
 				{
-				$article	= $info['Group'];
-				$lang  		= $info['Lang'];
+				$article	= $info[L10N_COL_GROUP];
+				$lang  		= $info[L10N_COL_LANG];
 				//$languages[$lang] = $lang;
 				$work[$id]=$lang;
 				if( 'delete' === $method )
@@ -870,7 +870,7 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 
 	$where = '';
 	if( $filter )
-		$where = " where `Lang`='$lang'";
+		$where = " where ".L10N_COL_LANG."='$lang'";
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern`$where";
 	$drop_sql = 'drop table `'.PFX."$table_name`";
@@ -910,12 +910,12 @@ function _l10n_pre_discuss_multi_edit( $event , $step )
 
 				if( $mark_lang )
 					{
-					$info = safe_row( 'Lang' , 'textpattern' , "`ID`='$id'" );
+					$info = safe_row( L10N_COL_LANG , 'textpattern' , "`ID`='$id'" );
 					if( $info !== false )
 						{
-						if( array_key_exists( 'Lang' , $info ) )
+						if( array_key_exists( L10N_COL_LANG , $info ) )
 							{
-							$lang = $info['Lang'];
+							$lang = $info[L10N_COL_LANG];
 							//$languages[$lang] = $lang;
 							$work[$id] = $lang;
 							}
@@ -985,7 +985,6 @@ function _l10n_build_sql_set( $table )
 		{
 		foreach( $langs as $lang )
 			{
-			//$f_name 	= $lang.'-'.$field;
 			$f_name = _l10n_make_field_name( $field , $lang );
 
 			if( $lang === $default )
@@ -1025,7 +1024,6 @@ function _l10n_category_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				//$field_name = $lang.'-'.$field;
 				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">'.$full_name.'</td><td class="noline">';
 				$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="30" class="edit" tabindex="'.$count.'" type="text" '.$dir.'>';
@@ -1096,7 +1094,6 @@ function _l10n_section_paint( $page )
 					$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 					if( $lang !== $default )
 						{
-						//$field_name = $lang.'-'.$field;
 						$field_name = _l10n_make_field_name( $field , $lang );
 						$r .= '<tr><td class="noline" style="text-align: right; vertical-align: middle;">['.$full_name.']: </td><td class="noline">';
 						$r .= '<input name="' . $field_name . '" value="'.$row[$field_name].'" size="20" class="edit" type="text" '.$dir.'>';
@@ -1156,7 +1153,6 @@ function _l10n_file_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				//$field_name = $lang.'-'.$field;
 				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '<p>'.$full_name.'<br/>';
 				$r .= '<textarea name="'.$field_name .'" cols="40" rows="5" style="width: 400px; height: 100px;"'.$dir.'>';
@@ -1222,7 +1218,6 @@ function _l10n_link_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
  			if( $lang !== $default )
 				{
-				//$field_name = $lang.'-'.$field;
 				$field_name = _l10n_make_field_name( $field , $lang );
 				$r .= '</tr><tr><td style="text-align: right; vertical-align: top;">';
 				$r .= '<label for="link-description-'.$lang.'">'.$full_name.'</label></td><td>';
@@ -1292,7 +1287,6 @@ function _l10n_image_paint( $page )
 			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
 			foreach( $fields as $field => $attributes )
 				{
-				//$field_name = $lang.'-'.$field;
 				$field_name = _l10n_make_field_name( $field , $lang );
 
 				if( $field === 'alt' )
@@ -1344,7 +1338,7 @@ function _l10n_image_save( $event , $step )
 
 function _l10n_php2js_array($name, $array)
 	{
-	// From PHP.net (thanks Graeme!)
+	# From PHP.net (thanks Graeme!)
 	if (is_array($array))
 		{
 		$result = $name.' = new Array();'.n;

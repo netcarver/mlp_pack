@@ -286,15 +286,15 @@ class MLPArticles
 		{
 		$result = false;
 		$name = doSlash($rendition['Title']);
-		$lang = (@$rendition['Lang'] !== '-') ? $rendition['Lang'] : MLPLanguageHandler::get_site_default_lang();
+		$lang = (@$rendition[L10N_COL_LANG] !== '-') ? $rendition[L10N_COL_LANG] : MLPLanguageHandler::get_site_default_lang();
 		$id = @$GLOBALS['ID'];
 		if( !isset( $id ) or empty( $id ) )
 			$id = $rendition['ID'];
 		$mapping =  array( $lang=>strval($id) );
 
-		if( isset( $rendition['Group'] ) and !empty($rendition['Group']) )
+		if( isset( $rendition[L10N_COL_GROUP] ) and !empty($rendition[L10N_COL_GROUP]) )
 			{
-			$article_id = $rendition['Group'];
+			$article_id = $rendition[L10N_COL_GROUP];
 			MLPArticles::_add_mapping( $article_id , $mapping );
 			}
 		else
@@ -304,9 +304,9 @@ class MLPArticles
 
 		if( $article_id !== false and $article_id !== true )
 			{
-			//	echo br, "Added article '$name'[$article_id], updating rendition $id ... `Lang` = '$lang',`Group` = '$article_id'";
+			//	echo br, "Added article '$name'[$article_id], updating rendition $id ... L10N_COL_LANG = '$lang' , L10N_COL_GROUP = '$article_id'";
 			#	Update the rendition to point to its article and have a translation accounted to it...
-			$result = @safe_update( 'textpattern', "`Lang` = '$lang',`Group` = '$article_id'" , "ID='$id'" );
+			$result = @safe_update( 'textpattern', "`".L10N_COL_LANG."` = '$lang',`".L10N_COL_GROUP."` = '$article_id'" , "ID='$id'" );
 			}
 		return $result;
 		}
@@ -336,8 +336,8 @@ class MLPArticles
 		global $l10n_article_message;
 
 		#	Get the new entries...
-		$new_article	= $rendition['Group'];
-		$new_lang		= (@$rendition['Lang']) ? $rendition['Lang'] : MLPLanguageHandler::get_site_default_lang();
+		$new_article	= $rendition[L10N_COL_GROUP];
+		$new_lang		= (@$rendition[L10N_COL_LANG]) ? $rendition[L10N_COL_LANG] : MLPLanguageHandler::get_site_default_lang();
 		$rendition_id	= $rendition['ID'];
 
 		#	Read the existing rendition entries...
@@ -348,8 +348,8 @@ class MLPArticles
 			return false;
 			}
 
-		$current_article	= $info['Group'];
-		$current_lang		= $info['Lang'];
+		$current_article	= $info[L10N_COL_GROUP];
+		$current_lang		= $info[L10N_COL_LANG];
 
 		if( ($new_article == $current_article) and ($new_lang == $current_lang) )
 			{
@@ -375,7 +375,7 @@ class MLPArticles
 			}
 
 		# 	Update the entries in the article...
-		$ok = safe_update( 'textpattern', "`Group`='$new_article' , `Lang`='$new_lang'" , "`ID`='$rendition_id'" );
+		$ok = safe_update( 'textpattern', "`".L10N_COL_GROUP."`='$new_article' , `".L10N_COL_LANG."`='$new_lang'" , "`ID`='$rendition_id'" );
 		if( $ok )
 			$l10n_article_message = "Language: {$current_lang}->{$new_lang}, article:{$current_article}->{$new_article}";
 		else
@@ -420,7 +420,7 @@ class MLPArticles
 				#
 				#	Find the members from the textpattern table too...
 				#
-				$renditions = safe_column( 'ID', 'textpattern' , "`Group`='$ID'" );
+				$renditions = safe_column( 'ID', 'textpattern' , "`".L10N_COL_GROUP."`='$ID'" );
 				$t_count = count( $renditions );
 
 				#
@@ -452,7 +452,7 @@ class MLPArticles
 						{
 						$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 						if( !empty( $details ) )
-							$lang = $details['Lang'];
+							$lang = $details[L10N_COL_LANG];
 						else
 							continue;
 
@@ -1515,7 +1515,7 @@ class MLPPlugin extends GBPPlugin
 				#	Add language tables as needed and populate them as far as possible...
 				#
 				$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where Lang='$lang'";
+				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where ".L10N_COL_LANG."='$lang'";
 				$ok = @safe_query( $sql );
 
 				#
@@ -3519,7 +3519,7 @@ class MLPArticleView extends GBPAdminTabView
 		#	Prepare the source rendition data...
 		#
 		$source = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
-		$article_id = $source['Group'];
+		$article_id = $source[L10N_COL_GROUP];
 
 		#
 		#	Create the articles, substituting new authors and status as needed...
@@ -3529,7 +3529,7 @@ class MLPArticleView extends GBPAdminTabView
 			{
 			unset( $source['ID' ] );
 			$source['AuthorID'] = $new_author;
-			$source['Lang'] = $lang;
+			$source[L10N_COL_LANG] = $lang;
 			$source['Status'] = 1;
 			//$source['Posted'] = 'now()';	# Don't reset the time to now() as we want the articles to appear in the same order in both the cloned and original language sites.
 			$source['LastMod'] = 'now()';
@@ -3655,21 +3655,21 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
-		$renditions = safe_rows( '*' , 'textpattern' , "`Group`='$article'" );
+		$renditions = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."='$article'" );
 
 		#
 		#	Delete from the master table...
 		#
-		$master_deleted = safe_delete( 'textpattern' , "`Group`='$article'" );
+		$master_deleted = safe_delete( 'textpattern' , L10N_COL_GROUP."='$article'" );
 
 		#
 		#	Delete from the rendition tables...
 		#
 		foreach( $renditions as $rendition )
 			{
-			$lang = $rendition['Lang'];
+			$lang = $rendition[L10N_COL_LANG];
 			$rendition_table = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
-			safe_delete( $rendition_table , "`Group`='$article'" );
+			safe_delete( $rendition_table , L10N_COL_GROUP."='$article'" );
 			}
 
 		#
@@ -3698,8 +3698,8 @@ class MLPArticleView extends GBPAdminTabView
 			return true;
 			}
 
-		$lang = $details['Lang'];
-		$article = $details['Group'];
+		$lang = $details[L10N_COL_LANG];
+		$article = $details[L10N_COL_GROUP];
 
 		#
 		#	Delete from the master table...
@@ -3939,7 +3939,7 @@ class MLPArticleView extends GBPAdminTabView
 				#	Pull the translations for this article from the master translations table
 				# (that is, from the textpattern table)...
 				#
-				$translations = safe_rows( '*' , 'textpattern' , "`Group`='$ID'" );
+				$translations = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."='$ID'" );
 				$n_translations = count( $translations );
 				$n_valid_translations = 0;
 
@@ -3952,7 +3952,7 @@ class MLPArticleView extends GBPAdminTabView
 				$tr_authors  = array();
 				for( $i=0 ; $i < $n_translations ; $i++ )
 					{
-					$lang = $translations[$i]['Lang'];
+					$lang = $translations[$i][L10N_COL_LANG];
 					if( in_array( $lang , $langs ) )
 						{
 						$n_valid_translations++;
@@ -4065,10 +4065,10 @@ class MLPArticleView extends GBPAdminTabView
 						#
 						#	Check for consistency with the group data...
 						#	Deprecated?
-						if( $details['Lang'] != $lang )
+						if( $details[L10N_COL_LANG] != $lang )
 							{
 							$tdclass .= 'warning';
-							$msg = br . strong( gTxt('l10n-warn_lang_mismatch') ) . br . "Art[$lang] : tsl[{$details['Lang']}]";
+							$msg = br . strong( gTxt('l10n-warn_lang_mismatch') ) . br . "Art[$lang] : tsl[{$details[L10N_COL_LANG]}]";
 							}
 
 						#
@@ -4192,7 +4192,7 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
 		$title   = $details['Title'];
-		$article = $details['Group'];
+		$article = $details[L10N_COL_GROUP];
 		$author  = $details['AuthorID'];
 		$to_do = MLPArticles::get_remaining_langs( $article );
 		$count = count( $to_do );
@@ -4281,10 +4281,10 @@ class MLPWizView extends GBPWizardTabView
 				'cleanup' => gTxt('l10n-clean_2_main')
 				),
 			'3' => array(
-				'setup'   => gTxt('l10n-setup_3_main'),
+				'setup'   => gTxt('l10n-setup_3_main' , array('{lang}'=>L10N_COL_LANG, '{group}'=>L10N_COL_GROUP) ),
 				),
 			'3a'=> array(
-				'cleanup' => gTxt('l10n-clean_3a_main').br.gTxt('l10n-clean_3a_main_2'), 'optional' => true , 'checked'=>0
+				'cleanup' => gTxt('l10n-clean_3a_main' , array('{lang}'=>L10N_COL_LANG, '{group}'=>L10N_COL_GROUP)).br.gTxt('l10n-clean_3a_main_2'), 'optional' => true , 'checked'=>0
 				),
 			'4' => array(
 				'setup'   => gTxt('l10n-setup_4_main'),
@@ -4493,9 +4493,9 @@ class MLPWizView extends GBPWizardTabView
 			{
 			foreach( $result as $r )
 				{
-				if( !$lang_found and $r['Field'] === 'Lang' )
+				if( !$lang_found and $r['Field'] === L10N_COL_LANG )
 					$lang_found = true;
-				if( !$article_id_found and $r['Field'] === 'Group' )
+				if( !$article_id_found and $r['Field'] === L10N_COL_GROUP )
 					$article_id_found = true;
 
 				if( $article_id_found and $lang_found )
@@ -4504,32 +4504,29 @@ class MLPWizView extends GBPWizardTabView
 			}
 
 		if( !$lang_found )
-			{
-			$sql[] = " ADD `Lang` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci ";
-			$sql[] = " NOT NULL DEFAULT '-' AFTER `LastModID` , ";
-			}
+			$sql[] = " ADD `".L10N_COL_LANG."` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '-' AFTER `LastModID`";
 
 		if( !$article_id_found )
-			$sql[] = " ADD `Group` INT( 11 ) NOT NULL DEFAULT '0' AFTER `Lang`";
+			$sql[] = " ADD `".L10N_COL_GROUP."` INT( 11 ) NOT NULL DEFAULT '0' AFTER `".L10N_COL_LANG."`";
 
 		$this->add_report_item( gTxt('l10n-setup_3_title') );
 		if( !empty( $sql ) )
 			{
-			$ok = @safe_alter( 'textpattern' , join('', $sql) );
+			$ok = @safe_alter( 'textpattern' , join(',', $sql) );
 
 			if( $lang_found )
-				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'lang','{table}'=>'textpattern')) , $ok , true );
+				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>L10N_COL_LANG,'{table}'=>'textpattern')) , $ok , true );
 			else
-				$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'lang','{table}'=>'textpattern')) , $ok , true );
+				$this->add_report_item( gTxt('l10n-add_field',array('{field}' =>L10N_COL_LANG,'{table}'=>'textpattern')) , $ok , true );
 			if( $article_id_found )
-				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'group','{table}'=>'textpattern')) , $ok , true );
+				$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>L10N_COL_GROUP,'{table}'=>'textpattern')) , $ok , true );
 			else
-				$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'group','{table}'=>'textpattern')) , $ok , true );
+				$this->add_report_item( gTxt('l10n-add_field',array('{field}' =>L10N_COL_GROUP,'{table}'=>'textpattern')) , $ok , true );
 			}
 		else
 			{
-			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'lang' ,'{table}'=>'textpattern')) , true , true );
-			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>'group','{table}'=>'textpattern')) , true , true );
+			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>L10N_COL_LANG ,'{table}'=>'textpattern')) , true , true );
+			$this->add_report_item( gTxt('l10n-skip_field',array('{field}'=>L10N_COL_GROUP,'{table}'=>'textpattern')) , true , true );
 			}
 		}
 	function setup_4() 		# Localise fields in content tables
@@ -4592,14 +4589,14 @@ class MLPWizView extends GBPWizardTabView
 		# textpattern table so users on the public side still see everything until we start editing
 		# articles.
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
+		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Add' ,'{tables}'=>'per-language article')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$code       = MLPLanguageHandler::compact_code( $lang );
 			$table_name = _l10n_make_textpattern_name( $code );
 			$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 
-			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `Lang`='$lang'";
+			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `".L10N_COL_LANG."`='$lang'";
 			$ok = @safe_query( $sql );
 
 			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>MLPLanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
@@ -4717,9 +4714,9 @@ class MLPWizView extends GBPWizardTabView
 
 	function cleanup_3a()	# Drop lang/group from textpattern
 		{
-		$sql = "drop `Lang`, drop `Group`";
+		$sql = 'drop `'.L10N_COL_LANG.'`, drop `'.L10N_COL_GROUP.'`';
 		$ok = @safe_alter( 'textpattern' , $sql );
-		$this->add_report_item( gTxt('l10n-clean_3a_main') , $ok );
+		$this->add_report_item( gTxt('l10n-clean_3a_main' , array( '{lang}'=>L10N_COL_LANG , '{group}'=>L10N_COL_GROUP ) ) , $ok );
 		}
 
 	function cleanup_4a()	# Remove Localised content from tables
@@ -4749,7 +4746,7 @@ class MLPWizView extends GBPWizardTabView
 		{
 		global $prefs;
 		$langs = $this->pref('l10n-languages');
-		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Drop','{tables}'=>'per-language l10n_textpattern')).'&#8230;' );
+		$this->add_report_item( gTxt('l10n-op_tables',array('{op}'=>'Drop','{tables}'=>'per-language article')).'&#8230;' );
 		foreach( $langs as $lang )
 			{
 			$code  = MLPLanguageHandler::compact_code( $lang );
@@ -4785,7 +4782,7 @@ class MLPWizView extends GBPWizardTabView
 		# 	Scans the articles, creating a group for each and adding it and setting the
 		# language to the site default...
 		$where = "1";
-		$rs = @safe_rows_start( 'ID , Title , Lang , `Group`' , 'textpattern' , $where );
+		$rs = @safe_rows_start( 'ID , Title , '.L10N_COL_LANG.' , `'.L10N_COL_GROUP.'`' , 'textpattern' , $where );
 		$count = @mysql_num_rows($rs);
 
 		$i = 0;
@@ -4794,8 +4791,8 @@ class MLPWizView extends GBPWizardTabView
 			while ( $a = nextRow($rs) )
 				{
 				$title = $a['Title'];
-				$lang  = $a['Lang'];
-				$article_id = $a['Group'];
+				$lang  = $a[L10N_COL_LANG];
+				$article_id = $a[L10N_COL_GROUP];
 				$id    = $a['ID'];
 
 				if( $lang !== '-' and $article_id !== 0 )

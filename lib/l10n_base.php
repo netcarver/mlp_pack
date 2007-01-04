@@ -166,7 +166,7 @@ function _l10n_walk_mappings( $fn , $atts='' )
 
 function _l10n_make_field_name( $column , $lang )
 	{
-	$tmp = _l10n_clean_sql_name( L10N_NAME.'_'.$lang.'_'.$column );
+	$tmp = _l10n_clean_sql_name( L10N_NAME.'_'.$column.'_'.$lang );
 	return $tmp;
 	}
 
