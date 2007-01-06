@@ -618,7 +618,8 @@ class MLPSnips
 			$name_set = "''";
 
 		$where = " `name` IN ($name_set)";
-		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
+		$rs = safe_rows_start( 'lang, name, '.L10N_COL_OWNER, 'txp_lang', $where );
+		//$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 
 		return array_merge( $result , MLPStrings::get_strings( $rs , $stats ) );
 		}
@@ -783,7 +784,8 @@ class MLPStrings
 		# has a matching prefix. This catches and re-enables residual strings on a re-install.
 		#
 		$where = ' `name` LIKE "'.$pfx.L10N_SEP.'%"';
-		@safe_update( 'txp_lang' , "`owner`='$plugin'" , $where );
+		@safe_update( 'txp_lang' , '`'.L10N_COL_OWNER."`='$plugin'" , $where );
+		//@safe_update( 'txp_lang' , "`owner`='$plugin'" , $where );
 
 		return $result;
 		}
@@ -843,9 +845,7 @@ class MLPStrings
 			else
 				$name = doSlash( $name );
 
-			//echo br , "Processing string [$name]";
-
-			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data', `owner`='$owner'";
+			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data', `".L10N_COL_OWNER."`='$owner'";
 			$where 	= ", `name`='$name'";
 			$added = @safe_insert( 'txp_lang' , $set . $where );
 			if( $override )
@@ -882,7 +882,7 @@ class MLPStrings
 		$id = doSlash( $id );
 
 		$lastmod 		= date('YmdHis');
-		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation', `owner`='$owner'" ;
+		$set 	= " `lang`='$new_lang', `name`='$name', `lastmod`='$lastmod', `event`='$event', `data`='$translation', `".L10N_COL_OWNER."`='$owner'" ;
 
 		if( !empty( $id ) )
 			{
@@ -907,13 +907,13 @@ class MLPStrings
 		*/
 		if( $remove_lang and !empty( $remove_lang ) )
 			{
-			$where = "(`lang` IN ('$remove_lang')) AND (`owner` <> '')";
+			$where = "(`lang` IN ('$remove_lang')) AND (`".L10N_COL_OWNER."` <> '')";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			}
 		elseif( $plugin and !empty( $plugin ) )
 			{
-			$where = "`owner`=\'$plugin\'";
+			$where = '`'.L10N_COL_OWNER."`=\'$plugin\'";
 			@safe_delete( 'txp_lang' , $where , $debug );
 			@safe_optimize( 'txp_lang' , $debug );
 			MLPStrings::unregister_plugin( $plugin );
@@ -1005,7 +1005,7 @@ class MLPStrings
 		if( @txpinterface == 'admin' )
 			$close = 'OR event=\'admin\' )';
 
-		$rs = safe_rows_start('name, data, owner','txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
+		$rs = safe_rows_start('name, data, '.L10N_COL_OWNER ,'txp_lang','lang=\''.doSlash($lang).'\'' . $where . $close . $filter );
 		$count = @mysql_num_rows($rs);
 		if( $rs && $count > 0 )
 			{
@@ -1024,7 +1024,7 @@ class MLPStrings
 					'event'		=> $event,		#	public/admin/common = which interface the strings will be loaded into
 					);
 
-		$filter = " AND `owner`='$owner'";
+		$filter = " AND `".L10N_COL_OWNER."`='$owner'";
 		$r['strings'] = MLPStrings::load_strings( $lang, $filter );
 		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
 		return $result;
@@ -1110,8 +1110,8 @@ class MLPStrings
 		*/
 		$plugin = doSlash( $plugin );
 		$prefix = doSlash( $prefix );
-		$where = " `owner`='$plugin'";
-		$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
+		$where = " `".L10N_COL_OWNER."`='$plugin'";
+		$rs = safe_rows_start( 'lang, name,'.L10N_COL_OWNER , 'txp_lang', $where );
 		return MLPStrings::get_strings( $rs , $stats );
 		}
 
@@ -1159,7 +1159,7 @@ class MLPStrings
 		$where = ' `name` = "'.doSlash($string_name).'"';
 		if( $string_event )
 			$where .= ' AND `event`="' . doSlash($string_event) . '"';
-		$rs = safe_rows_start( 'lang, id, event, data, owner', 'txp_lang', $where );
+		$rs = safe_rows_start( 'lang, id, event, data, '.L10N_COL_OWNER , 'txp_lang', $where );
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
 			while ( $a = nextRow($rs) )
@@ -1233,7 +1233,7 @@ class MLPStrings
 		$full_name = MLPLanguageHandler::get_native_name_of_lang( $lang );
 		$where = " `lang`='$lang' ";
 		if( $exclude_plugins )
-			$where .= " AND `owner`=''";
+			$where .= " AND `".L10N_COL_OWNER."`=''";
 		$strings = safe_rows( 'name,event,data' , 'txp_lang' , $where . " ORDER BY `event`,`name` ASC" );
 		$total = count( $strings );
 		if( $total == 0 )
@@ -3354,7 +3354,7 @@ class MLPSnipIOView extends MLPSubTabView
 					$event = doSlash( $event );
 					$data = doSlash( $data );
 
-					$set = "`lang`='$lang', `event`='$event', `data`='$data', `owner`='', `name`='$name'";
+					$set = "`lang`='$lang', `event`='$event', `data`='$data', `".L10N_COL_OWNER."`='', `name`='$name'";
 
 					$id = safe_field( 'id' , 'txp_lang' , "`name`='$name' AND `lang`='$lang'" );
 					if( false === $id )
@@ -4215,7 +4215,7 @@ class MLPWizView extends GBPWizardTabView
 		$steps = array(
 			'1' => array(
 				'setup'   => gTxt('l10n-setup_1_main'),
-				'cleanup' => gTxt('l10n-drop_field',array('{field}'=>'owner','{table}'=>'txp_lang'))
+				'cleanup' => gTxt('l10n-drop_field',array('{field}'=>L10N_COL_OWNER,'{table}'=>'txp_lang'))
 				),
 			'2' => array(
 				'setup'   => gTxt('l10n-setup_2_main'),
@@ -4344,7 +4344,7 @@ class MLPWizView extends GBPWizardTabView
 		return $tests;
 		}
 
-	function setup_1()		# Extend the `txp_lang.data` field from TINYTEXT to TEXT and add the `owner` field
+	function setup_1()		# Extend the `txp_lang.data` field from TINYTEXT to TEXT and add the `l10n_owner` field
 		{
 		$this->add_report_item( gTxt('l10n-setup_1_title') );
 
@@ -4352,9 +4352,9 @@ class MLPWizView extends GBPWizardTabView
 		$ok = @safe_alter( 'txp_lang' , $sql );
 		$this->add_report_item( gTxt('l10n-setup_1_extend') , $ok , true );
 
-		$sql = "ADD `owner` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' AFTER `data`";
+		$sql = "ADD `".L10N_COL_OWNER."` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' AFTER `data`";
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>'owner','{table}'=>'txp_lang')) , $ok , true );
+		$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>L10N_COL_OWNER ,'{table}'=>'txp_lang')) , $ok , true );
 		}
 
 	function setup_2()		# Add strings...
@@ -4663,11 +4663,11 @@ class MLPWizView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-setup_13_main') , true );
 		}
 
-	function cleanup_1()	# Drop the txp_lang.owner field
+	function cleanup_1()	# Drop the txp_lang.l10n_owner field
 		{
-		$sql = "DROP `owner`";
+		$sql = 'DROP `'.L10N_COL_OWNER.'`';
 		$ok = @safe_alter( 'txp_lang' , $sql );
-		$this->add_report_item( gTxt('l10n-drop_field',array('{field}'=>'owner','{table}'=>'txp_lang')) , $ok );
+		$this->add_report_item( gTxt('l10n-drop_field',array('{field}'=>L10N_COL_OWNER, '{table}'=>'txp_lang')) , $ok );
 		}
 
 	function cleanup_2()	# Remove MLP strings/de-register plugins
