@@ -4615,6 +4615,14 @@ class MLPWizView extends GBPWizardTabView
 			{
 			extract( $page );
 
+			if( md5( $data ) == $default_md5s[$table][$name] )
+				{
+				$f = '<div id="sidebar-1">';
+				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
+				$r = "<txp:l10n_lang_list $err404/>";
+				$data = str_replace( $f , $f.n.t.$r , $data );
+				}
+
 			$f = ' lang="en"';
 			$r = ' lang="<txp:l10n_get_lang/>"';
 			$data = str_replace( $f , $r , $data );
@@ -4625,14 +4633,6 @@ class MLPWizView extends GBPWizardTabView
 			$f = '<body>';
 			$r = '<body dir="<txp:l10n_get_lang_dir />" >';
 			$data = str_replace( $f , $r , $data );
-
-			if( md5( $data ) == $default_md5s[$table][$name] )
-				{
-				$f = '<div id="sidebar-1">';
-				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
-				$r = "<txp:l10n_lang_list $err404/>";
-				$data = str_replace( $f , $f.n.t.$r , $data );
-				}
 
 			#	Save it...
 			$name = doSlash( $name );
