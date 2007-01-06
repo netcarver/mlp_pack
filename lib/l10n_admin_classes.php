@@ -4396,10 +4396,11 @@ class MLPWizView extends GBPWizardTabView
 		#
 		#	First things first, try to set the installation langs...
 		#
+		$gbp_l10n_key = 'gbp_admin_library_languages';
 		$l10n_wiz_upgrade = array();
 		$prev_gbp_l10n_langs = array();
-		if( isset( $prefs['gbp_l10n_languages'] ) )
-			$prev_gbp_l10n_langs = $prefs['gbp_l10n_languages'];
+		if( isset( $prefs[$gbp_l10n_key] ) )
+			$prev_gbp_l10n_langs = $prefs[$gbp_l10n_key];
 
 		$prev_l10n_langs = $this->parent->preferences['l10n-languages']['value'];
 
@@ -4429,18 +4430,12 @@ class MLPWizView extends GBPWizardTabView
 
 			$l10n_wiz_upgrade = $langs;
 			$languages = $langs;
-			@safe_delete( 'txp_prefs' , "`name`='gbp_l10n_languages'" );
+			@safe_delete( 'txp_prefs' , "`name`='$gbp_l10n_key'" );
 			}
 		elseif( !empty($prev_l10n_langs) )			# reinstall, keep old language settings.
 			$languages = $prev_l10n_langs;
 		else										# fresh install, use all currently installed languages.
 			$languages = MLPLanguageHandler::get_installation_langs();
-
-		//echo br , '$prev_gbp_l10n_langs => ' , var_dump( $prev_gbp_l10n_langs ) , br;
-		//echo br , '$prev_l10n_langs     => ' , var_dump( $prev_l10n_langs ) , br;
-		//echo br , 'Installation langs   => ' , var_dump( MLPLanguageHandler::get_installation_langs() ) , br;
-		//echo br , 'New langs            => ' , var_dump( $languages ) , br;
-		//exit(0);
 
 		$this->set_preference('l10n-languages', $languages);
 		$this->add_report_item( gTxt( 'l10n-setup_2_langs' , array( '{langs}' => join( ', ' , $languages ) ) ) , true );
