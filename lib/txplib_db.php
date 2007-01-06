@@ -64,6 +64,15 @@ $DB = new DB;
 	}
 
 //-------------------------------------------------------------
+	function safe_process_results( $thing , $table , $where , $results , $is_a_set=false ) {
+		global $prefs;
+
+		if (isset($prefs['db_process_result_func']) and is_callable($prefs['db_process_result_func']))
+			$results = call_user_func( $prefs['db_process_result_func'] , $thing , $table , $where , $results , $is_a_set );
+		return $results;
+	}
+
+//-------------------------------------------------------------
 	function safe_pfx($table) {
 		$table = safe_remap_tables($table);
 		$name = PFX.$table;
@@ -198,6 +207,7 @@ $DB = new DB;
 		if (@mysql_num_rows($r) > 0) {
 			$f = mysql_result($r,0);
 			mysql_free_result($r);
+			$f = safe_process_results( $thing , $table , $where , $f );
 			return $f;
 		}
 		return false;
@@ -226,6 +236,7 @@ $DB = new DB;
 		$q = "select $things from ".safe_pfx_j($table)." where $where";
 		$rs = getRow($q,$debug);
 		if ($rs) {
+			$rs = safe_process_results( $things , $table , $where , $rs );
 			return $rs;
 		}
 		return array();
@@ -281,6 +292,7 @@ $DB = new DB;
 		if ($r = safe_query($q,$debug)) {
 			$thing = (mysql_num_rows($r) > 0) ? mysql_result($r,0) : '';
 			mysql_free_result($r);
+			$thing = safe_process_results( $col , $table , array($key,$val) , $thing );
 			return $thing;
 		}
 		return false;
@@ -469,14 +481,14 @@ $DB = new DB;
 		);
 		return $right+1;
 	}
-	
+
 //-------------------------------------------------------------
 	function rebuild_tree_full($type)
 	{
 		# fix circular references, otherwise rebuild_tree() could get stuck in a loop
 		safe_update('txp_category', "parent=''", "type='".doSlash($type)."' and name='root'");
 		safe_update('txp_category', "parent='root'", "type='".doSlash($type)."' and parent=name");
-		
+
 		rebuild_tree('root', 1, $type);
 	}
 
