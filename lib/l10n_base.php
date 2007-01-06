@@ -15,6 +15,49 @@ if( !defined( 'L10N_COL_GROUP' ) )
 global $txpcfg , $event;
 include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
+function _l10n_process_pageform_access( $thing , $table , $where , $results , $is_a_set )
+	{
+	if( @txpinterface !== 'public' )
+		return $results;
+
+	switch( $table )
+		{
+		case 'txp_page' :
+			if( $thing !== 'user_html' )
+				break;
+
+			if( $is_a_set && is_array( $results ) )
+				{
+				$out = array();
+				foreach( $results as $key => $result )
+					{
+					$out[$key] = _l10n_substitute_snippets( $result );
+					}
+				$results = $out;
+				}
+			else
+				$results = _l10n_substitute_snippets( $results );
+			break;
+		case 'txp_form' :
+			if( $thing !== 'Form' and $thing !== 'form' )
+				break;
+
+			if( $is_a_set && is_array( $results ) )
+				{
+				$out = array();
+				foreach( $results as $key => $result )
+					{
+					$out[$key] = _l10n_substitute_snippets( $result );
+					}
+				$results = $out;
+				}
+			else
+				$results = _l10n_substitute_snippets( $results );
+			break;
+		}
+
+	return $results;
+	}
 function _l10n_redirect_textpattern($table)
 	{
 	if( @txpinterface !== 'public' )
