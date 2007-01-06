@@ -102,7 +102,7 @@ $l10n_default_strings = array(
 	'l10n-missing_rendition'	=> 'Article: {id} missing a rendition.',
 	'l10n-no_langs_selected' 	=> 'No languages selected for clone.',
 	'l10n-no_plugin_heading'	=> 'Notice&#8230;',
-	'l10n-pageform-markup'		=> '<p><strong>Bold</strong> = localised.<br/>(Not all items will need localising.)<br/>[#] = snippet count.</p>',
+	'l10n-pageform-markup'		=> '<p>[#] = snippet count.</p>',
 	'l10n-plugin'				=> 'Plugin',
 	'l10n-registered_plugins'	=> 'Registered Plugins.' ,
 	'l10n-remove_plugin'		=> "This plugin is no longer installed or may be running from the cache directory.<br/><br/>If this plugin's strings are no longer needed you can remove them.",

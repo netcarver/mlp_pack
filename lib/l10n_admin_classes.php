@@ -514,13 +514,7 @@ class MLPSnips
 
 	function has_localisation_tags( &$thing )
 		{
-		$p = MLPSnips::get_pattern( 'tag_localise' );
-		$i = 0;
-		$matches = array();
-		$r = preg_match_all( $p , $thing , $matches );
-		if( $r !== false )
-			$i += $r;
-		return ($i > 1);
+		return true;	# No need for the l10n_localise tag now.
 		}
 
 	function do_localise( &$thing , $action = 'check' )
@@ -1913,10 +1907,6 @@ class MLPStringView extends GBPAdminTabView
 					$this->save_pageform();
 					break;
 
-				case 'l10n_localise_pageform':
-					$this->localise_pageform();
-					break;
-
 				case 'l10n_export_languageset':
 					$this->export_languageset();
 					break;
@@ -2353,8 +2343,6 @@ class MLPStringView extends GBPAdminTabView
 					$guts .= ' *';
 					$explain = true;
 					}
-				if( $localised or ($count) )
-					$guts = '<strong>'.$guts.'</strong>';
 				$out[] = '<li><a href="'.$this->url( array('container'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
@@ -2730,19 +2718,6 @@ class MLPStringView extends GBPAdminTabView
 		$out[] = '<h3>'.gTxt('l10n-edit_resource' , array('{type}'=>$this->event,'{owner}'=>$owner) ).'</h3>' . n;
 
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
-		$localised = MLPSnips::do_localise( $data );
-
-		if( !$localised )
-			{
-			$l[] = '<p>'.gTxt('l10n-add_tags').n;
-			$l[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('add'), '').'</div></p>';
-			$l[] = sInput('l10n_localise_pageform').n;
-			$l[] = $this->parent->form_inputs();
-			$l[] = hInput('container', $owner);
-			$l[] = hInput('data', $data);
-			$l[] = hInput('subtab' , $this->sub_tab );
-			$out[] = form( join('', $l) , 'border: 1px solid grey; padding: 0.5em; margin: 1em;' );
-			}
 
 		$f[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' .
 			 $data .
@@ -2968,13 +2943,6 @@ class MLPStringView extends GBPAdminTabView
 			@safe_update( 'txp_page' , "`user_html`='$data'" , "`name`='$owner'" );
 		}
 
-	function localise_pageform()
-		{
-		$data = gps('data');
-		$data = MLPSnips::do_localise( $data , 'insert' );
-		$_POST['data'] = $data;
-		MLPStringView::save_pageform();
-		}
 
 	function export_languageset()
 		{
@@ -4686,10 +4654,12 @@ class MLPWizView extends GBPWizardTabView
 		$this->add_report_item( gTxt('l10n-setup_12_main') , true );
 		}
 
-	function setup_13()
+	function setup_13()		# Remove legacy gbp_localize tags...
 		{
-		$pdata = MLPTableManager::walk_table_replace_simple( 'txp_page' , 'name' , 'user_html' , "gbp_localize"  , 'l10n_localise' );
-		$fdata = MLPTableManager::walk_table_replace_simple( 'txp_form' , 'name' , 'Form'      , "gbp_localize"  , 'l10n_localise' );
+		$pdata = MLPTableManager::walk_table_replace_simple( 'txp_page' , 'name' , 'user_html' , "<txp:gbp_localize>"  , '' );
+		$pdata = MLPTableManager::walk_table_replace_simple( 'txp_page' , 'name' , 'user_html' , "</txp:gbp_localize>"  , '' );
+		$fdata = MLPTableManager::walk_table_replace_simple( 'txp_form' , 'name' , 'Form'      , "<txp:gbp_localize>"  , '' );
+		$fdata = MLPTableManager::walk_table_replace_simple( 'txp_form' , 'name' , 'Form'      , "</txp:gbp_localize>"  , '' );
 		$this->add_report_item( gTxt('l10n-setup_13_main') , true );
 		}
 
