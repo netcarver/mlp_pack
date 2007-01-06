@@ -4671,7 +4671,7 @@ class MLPWizView extends GBPWizardTabView
 
 	function setup_12()		# Configure site slogan to reflect the browse language...
 		{
-		$langs = MLPLanguageHandler::get_installation_langs();
+		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $code )
 			{
 			$langname = MLPLanguageHandler::get_native_name_of_lang( $code );
