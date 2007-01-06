@@ -4592,6 +4592,12 @@ class MLPWizView extends GBPWizardTabView
 
 	function setup_6()		# Run the import routine selected by the user from the install wizard tab...
 		{
+		global $l10n_wiz_upgrade;
+
+		$ok = false;
+		if( !empty($l10n_wiz_upgrade) )
+			$this->_upgrade_gbp_l10n();
+
 		$ok = $this->_import_fixed_lang();
 		$this->add_report_item( ($ok===true) ? gTxt('l10n-setup_6_main',array( '{count}'=>'all existing')) : gTxt('l10n-setup_6_main',array( '{count}'=>$ok))  , true );
 		}
@@ -4827,6 +4833,57 @@ class MLPWizView extends GBPWizardTabView
 			return true;
 
 		return "$i of $count";
+		}
+
+	function _upgrade_table( $table , $table_key )
+		{
+		global $l10n_wiz_upgrade;
+
+		$keys = safe_rows( '*' , $table , "1=1" );
+		foreach( $keys as $key )
+			{
+			$index = $key[$table_key];
+
+			#	Pull all gbp_l10n rows that are associated with this key...
+			$ttable = PFX.$table;
+			$rows = safe_rows('id,entry_value,language', 'gbp_l10n', "`entry_column` = 'title' AND `entry_id`='$index' AND `table` = '$ttable'" );
+			if( empty( $rows ) )
+				continue;
+
+			#	Build up values for each field...
+			$set = array();
+			foreach( $rows as $row )
+				{
+				$lang  = MLPLanguageHandler::find_lang( $row['language'] , $l10n_wiz_upgrade );
+				$field = _l10n_make_field_name( 'title' , $lang );
+
+				$f_value = doSlash( $row['entry_value'] );
+				$set[] = "`$field`='$f_value'";
+
+				if( $lang === $l10n_wiz_upgrade[0] )
+					$set[] = "`title`='$f_value'";
+				}
+
+			#	Write the row back...
+			$set = join( ', ', $set );
+			safe_update( $table , $set , "`$table_key`='$index'" );
+
+			#	Delete the gbp_l10n entries used...
+			safe_delete( 'gbp_l10n' , "`entry_column` = 'title' AND `entry_id`='$index' AND `table` = '$ttable'" );
+			}
+		}
+
+	function _upgrade_gbp_l10n()
+		{
+		global $l10n_wiz_upgrade;	# holds the languages of the previous gbp_l10n installation.
+
+		#	Grab the localised section and category titles (if any)...
+		$this->_upgrade_table( 'txp_section'  , 'name' );
+		$this->_upgrade_table( 'txp_category' , 'id' );
+
+		#	I'm not going to attempt to resolve the localised items from the gbp_l10n table
+		# as I'll have to make (probably) incorrect assumptions about what the default
+		# language is for each article.
 		}
 
 	}	# End of MLPWizView class
