@@ -508,6 +508,31 @@ class MLPLanguageHandler
 		$lang_codes = MLPLanguageHandler::get_site_langs();
 		return $lang_codes[0];
 		}
+	function find_lang( $partial_key , $langs )
+		{
+		$result = $partial_key;
+		$len = strlen( $partial_key );
+		switch( $len )
+			{
+			case 5:
+				break;
+			default:
+				if( !empty( $langs ) )
+					{
+					foreach( $langs as $lang )
+						{
+						if( substr( $lang , 0 , $len ) === $partial_key )
+							{
+							$result = $lang;
+							break;
+							}
+						}
+					}
+				break;
+			}
+
+		return $result;
+		}
 	function get_installation_langs( $limit = 400 )
 		{
 		/*
