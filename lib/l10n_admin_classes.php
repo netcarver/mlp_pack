@@ -4640,31 +4640,30 @@ class MLPWizView extends GBPWizardTabView
 		foreach( $pages as $page )
 			{
 			extract( $page );
+
+			$f = ' lang="en"';
+			$r = ' lang="<txp:l10n_get_lang/>"';
+			$data = str_replace( $f , $r , $data );
+			$f = ' xml:lang="en"';
+			$r = ' xml:lang="<txp:l10n_get_lang type="long" />"';
+			$data = str_replace( $f , $r , $data );
+
+			$f = '<body>';
+			$r = '<body dir="<txp:l10n_get_lang_dir />" >';
+			$data = str_replace( $f , $r , $data );
+
 			if( md5( $data ) == $default_md5s[$table][$name] )
 				{
-				$f = ' lang="en"';
-				$r = ' lang="<txp:l10n_get_lang/>"';
-				$data = str_replace( $f , $r , $data );
-				$f = ' xml:lang="en"';
-				$r = ' xml:lang="<txp:l10n_get_lang type="long" />"';
-				$data = str_replace( $f , $r , $data );
-
-				$f = '<body>';
-				$r = '<body dir="<txp:l10n_get_lang_dir />" >';
-				$data = str_replace( $f , $r , $data );
-
 				$f = '<div id="sidebar-1">';
 				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
 				$r = "<txp:l10n_lang_list $err404/>";
 				$data = str_replace( $f , $f.n.t.$r , $data );
-
-				#	Save it...
-				$name = doSlash( $name );
-				$data = doSlash( $data );
-				safe_update( $table , "`user_html`='$data'", "`name`='$name'" );
 				}
-			#else
-			#	$skipped .= sp.'-'.$name.sp;
+
+			#	Save it...
+			$name = doSlash( $name );
+			$data = doSlash( $data );
+			safe_update( $table , "`user_html`='$data'", "`name`='$name'" );
 			}
 
 		$this->add_report_item( gTxt('l10n-setup_11_main').$skipped , true );
