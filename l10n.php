@@ -48,7 +48,7 @@ h1(#top). l10n MLP Pack Help.
 
 <br />
 
-|_. Copyright 2007 Graeme Porteous and Stephen Dickinson. |
+|_. Copyright 2007 Stephen Dickinson and Graeme Porteous. |
 
 <br />
 
@@ -65,7 +65,6 @@ h2. Table Of Contents.
 ** "l10n_get_lang":#get_lang
 ** "l10n_feed_link":#feed_link
 ** "l10n_get_lang_dir":#get_lang_dir
-** "l10n_localise":#localise
 * "Preferences Help":#prefs
 * "Snippets > Export Help":#export
 * "Supported Languages.":#langs
@@ -185,8 +184,7 @@ However, snippets differ a little from the 'text' tag as they are parsed before 
 
 To add snippets to pages or forms...
 
-# Make sure the page/form is wrapped with the @<txp:l10n_localise>@ ... @</txp:l10n_localise>@ statements.
-# Within those statements type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
+# Within your chosen page, or form, type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
 # On the *content > MLP > Snippets* tab, look for your page or form on the correct subtab.
 # Click on the page/form name to bring up a list of all snippets it contains.
 # You should see your snippet "my_first_snippet" listed with no renditions.
@@ -204,7 +202,6 @@ h2(#tags). Tag Directory
 | "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
 | "*l10n_feed_link*":#feed_link    | Outputs a language specific feed link. |
 | "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
-| "*l10n_localise*":#localise      | Used as a wrap tag on entire pages/forms to enable snippet support. |
 
 <hr/>
 
@@ -265,9 +262,6 @@ Outputs the direction of the visitor's browse language. <br/> Use this in the ht
 |_. Attribute |_. Default |_. Description |
 | type | short | (Optional) Which of the language's codes to use during the direction lookup.<br/>Valid values are 'long','short' <br/>In practice 'short' should be all you need. |
 
-h3(#localise). "l10n_localise(Jump to the tag list)":#tags
-
-Use this tag to wrap entire pages and forms in which you wish to use snippets.
 
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
@@ -393,18 +387,18 @@ static $iso_693_langs = array(
 	'bn'=>array( 'bn'=>'বাংলা' ),
 	'bo'=>array( 'bo'=>'Bod Skad' ) ,
 	'br'=>array( 'br'=>'ar Brezhoneg' ) ,
-	'ca'=>array( 'ca'=>'Català' ) ,
+	'ca'=>array( 'ca'=>'Català', 'ca-es'=>'Català' ) ,
 	'co'=>array( 'co'=>'Corsu' ) ,
-	'cs'=>array( 'cs'=>'Čeština' ) ,
+	'cs'=>array( 'cs'=>'Čeština' , 'cs-cz'=>'Čeština' ) ,
 	'cy'=>array( 'cy'=>'Cymraeg' ) ,
-	'da'=>array( 'da'=>'Dansk' ) ,
+	'da'=>array( 'da'=>'Dansk', 'da-dk'=>'Dansk' ) ,
 	'de'=>array( 'de'=>'Deutsch' ) ,
 	'dz'=>array( 'dz'=>'Dzongkha' ) ,
-	'el'=>array( 'el'=>'Ελληνικά' ) ,
+	'el'=>array( 'el'=>'Ελληνικά' , 'el-gr'=>'Ελληνικά' ) ,
 	'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
 	'eo'=>array( 'eo'=>'Esperanto' ),
 	'es'=>array( 'es'=>'Español' ),
-	'et'=>array( 'et'=>'Eesti Keel' ),
+	'et'=>array( 'et'=>'Eesti Keel', 'et-ee'=>'Eesti Keel' ),
 	'eu'=>array( 'eu'=>'Euskera' ),
 	'fa'=>array( 'fa'=>'Fārsī' ),
 	'fi'=>array( 'fi'=>'Suomi' ),
@@ -418,7 +412,7 @@ static $iso_693_langs = array(
 	'gn'=>array( 'gn'=>"Avañe'ẽ" ),
 	'gu'=>array( 'gu'=>'ગુજરાતી' ),
 	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),
-	'he'=>array( 'he'=>'עִבְרִית' ,'dir'=>'rtl' ),
+	'he'=>array( 'he'=>'עִבְרִית' , 'he_il'=>'עִבְרִית' , 'dir'=>'rtl' ),
 	'hi'=>array( 'hi'=>'हिन्दी' ),
 	'hr'=>array( 'hr'=>'Hrvatski' ),
 	'hu'=>array( 'hu'=>'Magyar' ),
@@ -430,7 +424,7 @@ static $iso_693_langs = array(
 	'is'=>array( 'is'=>'Íslenska' ),
 	'it'=>array( 'it'=>'Italiano' ),
 	'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),
-	'ja'=>array( 'ja'=>'日本語' ),
+	'ja'=>array( 'ja'=>'日本語' , 'ja-jp'=>'日本語' ),
 	'jw'=>array( 'jw'=>'basa Jawa' ),
 	'ka'=>array( 'ka'=>'ქართული' ),
 	'kk'=>array( 'kk'=>'Қазақ' ),
@@ -488,7 +482,7 @@ static $iso_693_langs = array(
 	'ss'=>array( 'ss'=>'siSwati' ),
 	'st'=>array( 'st'=>'seSotho' ),
 	'su'=>array( 'su'=>'basa Sunda' ),
-	'sv'=>array( 'sv'=>'Svenska' ),
+	'sv'=>array( 'sv'=>'Svenska', 'sv-se'=>'Svenska' ),
 	'sw'=>array( 'sw'=>'Kiswahili' ),
 	'ta'=>array( 'ta'=>'தமிழ்' ),
 	'te'=>array( 'te'=>'తెలుగు' ),
@@ -504,7 +498,7 @@ static $iso_693_langs = array(
 	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),
 	'tw'=>array( 'tw'=>'Twi' ),
 	'ug'=>array( 'ug'=>'uyghur tili' ),
-	'uk'=>array( 'uk'=>"Українська" ),
+	'uk'=>array( 'uk'=>"Українська", 'uk-ua'=>"Українська" ),
 	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),
 	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),
 	'vi'=>array( 'vi'=>'Tiếng Việt' ),
@@ -527,6 +521,8 @@ h2(#credits). Credits.
 Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
 
 Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
+
+The Greek renditions for the MLP Pack were translated by Marios.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
@@ -877,8 +873,9 @@ if (@txpinterface === 'public')
 	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
 
 	global $prefs;
-	$prefs['db_remap_tables_func'] = '_l10n_redirect_textpattern';
-	$prefs['db_remap_fields_func'] = '_l10n_remap_fields';
+	$prefs['db_remap_tables_func']   = '_l10n_redirect_textpattern';
+	$prefs['db_remap_fields_func']   = '_l10n_remap_fields';
+	$prefs['db_process_result_func'] = '_l10n_process_pageform_access';
 	//$prefs['db_remap_safe_q_func'] = '_l10n_redirect_safe_query';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
@@ -1468,7 +1465,7 @@ if (@txpinterface === 'public')
 		return $dir;
 		}
 
-	function l10n_localise($atts, $thing = '')
+	/* function l10n_localise($atts, $thing = '')
 		{
 		global $l10n_language;
 
@@ -1477,14 +1474,14 @@ if (@txpinterface === 'public')
 			if ($thing)
 				{
 				# Process the direct snippet substitutions needed in the contained content.
-				$thing = _l10n_substitute_snippets( $thing );
+				//$thing = _l10n_substitute_snippets( $thing );
 				$html = parse($thing);
 				return $html;
 				}
 			}
 
 		return null;
-		}
+		} */
 	}
 
 # --- END PLUGIN CODE ---
