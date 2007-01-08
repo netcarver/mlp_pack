@@ -4214,7 +4214,7 @@ class MLPWizView extends GBPWizardTabView
 		#
 		$steps = array(
 			'1' => array(
-				'setup'   => gTxt('l10n-setup_1_main'),
+				'setup'   => gTxt('l10n-setup_1_main',array('{field}'=>L10N_COL_OWNER,'{table}'=>'txp_lang')),
 				'cleanup' => gTxt('l10n-drop_field',array('{field}'=>L10N_COL_OWNER,'{table}'=>'txp_lang'))
 				),
 			'2' => array(
