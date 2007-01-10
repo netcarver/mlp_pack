@@ -2720,7 +2720,7 @@ class MLPStringView extends GBPAdminTabView
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
 
 		$f[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' .
-			 $data .
+			 htmlspecialchars($data) .
 			 '</textarea></p>'.br.n;
 		$f[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 		$f[] = sInput('l10n_save_pageform');
@@ -3128,7 +3128,7 @@ class MLPSnipIOView extends MLPSubTabView
 		$file  = MLPStrings::build_txp_langfile( $lang );
 		$title = $lang.'.txt';
 		$desc  = 'Textpattern '.$lang.' '.gTxt('l10n-strings');
-		$this->parent->parent->serve_file( $file , $title , $desc , 'text/plain;charset=utf-8' );
+		$this->parent->parent->serve_file( $file , $title , $desc , 'text/plain; charset=utf-8' );
 		}
 
 	function export_l10n_stringfile()
@@ -3149,7 +3149,7 @@ class MLPSnipIOView extends MLPSubTabView
 		$file  = MLPStrings::build_l10n_default_strings_file( $lang );
 		$title = 'l10n_'.$lang.'_strings.php';
 		$desc  = 'MLP Pack '.$lang.' '.gTxt('l10n-strings');
-		$this->parent->parent->serve_file( $file , $title , $desc, 'text/plain;charset=utf-8;' );
+		$this->parent->parent->serve_file( $file , $title , $desc, 'text/plain; charset=utf-8' );
 		}
 
 	function _get_snippet_names( $table , $row , $unused )
