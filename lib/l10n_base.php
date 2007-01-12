@@ -597,4 +597,12 @@ class MLPLanguageHandler
 
 	}
 
+if (!function_exists('stripos'))
+	{
+	function stripos( $str, $needle, $offset=0 )
+		{
+		return strpos(strtolower($str), strtolower($needle), $offset);
+		}
+	}
+
 ?>
