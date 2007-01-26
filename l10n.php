@@ -1188,7 +1188,7 @@ if (@txpinterface === 'public')
 
 					case 'year_month_day_title':
 						$when = "$u0-$u1-$u2";
-						$rs = safe_row("ID,Section","l10n_master_textpattern",	"posted like '".doSlash($when)."%' and url_title like '".doSlash($u3)."' and Status >= 4 limit 1");
+						$rs = safe_row("ID,Section",L10N_MASTER_TEXTPATTERN,	"posted like '".doSlash($when)."%' and url_title like '".doSlash($u3)."' and Status >= 4 limit 1");
 						$id = (!empty($rs['ID'])) ? $rs['ID'] : '';
 						break;
 
