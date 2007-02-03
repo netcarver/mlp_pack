@@ -1168,7 +1168,7 @@ if (@txpinterface === 'public')
 		//echo br , "url = " , $_SERVER['REQUEST_URI'];
 		//echo br , "parts = " , var_dump( $parts );
 
-		if( $on404 )
+		if( $on404 or $processing404 )
 			{
 			#
 			#	Find the section and id of the faulting article (if possible)...
