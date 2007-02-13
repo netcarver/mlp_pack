@@ -597,6 +597,20 @@ class MLPLanguageHandler
 
 	}
 
+#
+#	For non multi-byte compiled versions of php...
+#
+if( !defined( 'MB_CASE_UPPER' ) )
+	define( 'MB_CASE_UPPER' , '0' );
+if( !defined( 'MB_CASE_LOWER' ) )
+	define( 'MB_CASE_LOWER' , '1' );
+if( !defined( 'MB_CASE_TITLE' ) )
+	define( 'MB_CASE_TITLE' , '2' );
+
+#
+#	PHP4 replacements of PHP5 functions...
+#
+
 if (!function_exists('stripos'))
 	{
 	function stripos( $str, $needle, $offset=0 )
@@ -605,4 +619,12 @@ if (!function_exists('stripos'))
 		}
 	}
 
+if (!function_exists('str_ireplace')) 
+	{
+	// Running a Php Version less than 5...
+	function str_ireplace($torep, $replace, $text) 
+		{
+		return str_replace(strtolower($torep), strtolower($replace), strtolower($text));
+		}
+	}
 ?>
