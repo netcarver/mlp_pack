@@ -69,6 +69,7 @@ h2. Table Of Contents.
 * "Snippets > Export Help":#export
 * "Supported Languages.":#langs
 * "Credits":#credits
+* "Donors":#donors
 
 <br/>
 
@@ -242,7 +243,9 @@ This is used on the demo site to output a second CSS file for RTL languages. As 
 
 h3(#get_lang). "l10n_get_lang(Jump to the tag list)":#tags
 
-Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's Doctype.
+Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's "lang" and "xml:lang" attributes.
+
+Note, you should only use the short(default) option in the "lang" attribute but for "xml:lang" it is ok to use the 'long' version.
 
 |_. Attribute |_. Default |_. Description |
 | type | short | (Optional) How to format the resulting string. Valid values are 'long','short','native' |
@@ -523,6 +526,22 @@ Thanks go to Marios for making the initial plugin request and pledging support f
 Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
 
 The Greek renditions for the MLP Pack were translated by Marios.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+
+
+h2(#donors). Donors.
+
+The following people supported the development of the MLP Pack and made it available to the whole TxP community...
+
+* "NeMe":http://www.neme.org/
+* "Jakob"
+* "woof"
+* Luke Chambers of "Flickerbox":http://www.flickerbox.com.au/
+* "Jelle van der Heijde":http://www.jvdh.net/
+* "Christian Nolle":http://cnolle.com/
+* "sbonzix"
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
