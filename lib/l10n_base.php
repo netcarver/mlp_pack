@@ -81,72 +81,91 @@ function _l10n_redirect_textpattern($table)
 	return $table;
 	}
 
+function _l10n_get_db_charsetcollation()
+	{
+	global $txpcfg;
+
+	$result = 'CHARACTER SET '.$txpcfg['dbcharset'];
+	if( $txpcfg['dbcharset'] === 'utf8')
+		$result .= ' COLLATE utf8_general_ci';
+
+	return $result;
+	}
 function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	{
+	$charset_collation = _l10n_get_db_charsetcollation();
 	static $interfaces = array( 'public' , 'admin' );
-	static $mappings = array	(
-		'txp_category'	=> array(
-			'title' 		=> array(
-				'sql' 			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''" ,
-				'e' 			=> 'category',
-				'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
-				'paint' 		=> '_l10n_category_paint',
-				'save_steps'	=> array( 'cat_article_create', 'cat_article_save', 'cat_link_create', 'cat_link_save', 'cat_image_create', 'cat_image_save', 'cat_file_create', 'cat_file_save', ),
-				'save'			=> '_l10n_category_save',
+	static $mappings;
+
+	if( !isset( $mappings ) )
+		{
+		$mappings = array	(
+			'txp_category'	=> array(
+				'title' 		=> array(
+					'sql' 			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''" ,
+					'e' 			=> 'category',
+					'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
+					'paint' 		=> '_l10n_category_paint',
+					'save_steps'	=> array( 'cat_article_create', 'cat_article_save', 'cat_link_create', 'cat_link_save', 'cat_image_create', 'cat_image_save', 'cat_file_create', 'cat_file_save', ),
+					'save'			=> '_l10n_category_save',
+					),
 				),
-			),
-		'txp_file' 		=> array(
-			'description'	=> array(
-				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL" ,
-				'e' 			=> 'file',
-				'paint_steps'	=> array( 'file_edit' ),
-				'paint' 		=> '_l10n_file_paint',
-				'save_steps'	=> array( 'file_save' ),
-				'save'			=> '_l10n_file_save',
+			'txp_file' 		=> array(
+				'description'	=> array(
+					'sql'			=> "text $charset_collation NOT NULL" ,
+					'e' 			=> 'file',
+					'paint_steps'	=> array( 'file_edit' ),
+					'paint' 		=> '_l10n_file_paint',
+					'save_steps'	=> array( 'file_save' ),
+					'save'			=> '_l10n_file_save',
+					),
 				),
-			),
-		'txp_image'		=> array(
-			'alt'			=> array(
-				'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
-				'e' 			=> 'image',
-				'paint_steps'	=> array( 'image_edit' ),
-				'paint' 		=> '_l10n_image_paint',
-				'save_steps'	=> array( 'image_save' ),
-				'save'			=> '_l10n_image_save',
+			'txp_image'		=> array(
+				'alt'			=> array(
+					'sql'			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''",
+					'e' 			=> 'image',
+					'paint_steps'	=> array( 'image_edit' ),
+					'paint' 		=> '_l10n_image_paint',
+					'save_steps'	=> array( 'image_save' ),
+					'save'			=> '_l10n_image_save',
+					),
+				'caption' 	=> array(
+					'sql'			=> "text $charset_collation NOT NULL",
+					'e' 			=> '',
+					'paint_steps'	=> '',
+					'paint' 		=> '',
+					'save_steps'	=> '',
+					'save'			=> '',
+					),
 				),
-			'caption' 	=> array(
-				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
-				'e' 			=> '',
-				'paint_steps'	=> '',
-				'paint' 		=> '',
-				'save_steps'	=> '',
-				'save'			=> '',
+			'txp_link' 		=> array(
+				'description'	=> array(
+					'sql'			=> "text $charset_collation NOT NULL",
+					'e' 			=> 'link',
+					'save_steps'	=> array( 'link_post', 'link_save' ),
+					'save'			=> '_l10n_link_save',
+					'paint_steps'	=> '',
+					'paint' 		=> '_l10n_link_paint',
+					),
 				),
-			),
-		'txp_link' 		=> array(
-			'description'	=> array(
-				'sql'			=> "text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL",
-				'e' 			=> 'link',
-				'save_steps'	=> array( 'link_post', 'link_save' ),
-				'save'			=> '_l10n_link_save',
-				'paint_steps'	=> '',
-				'paint' 		=> '_l10n_link_paint',
+			'txp_section'	=> array(
+				'title' 		=> array(
+					'sql'			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''",
+					'e' 			=> 'section',
+					'paint_steps'	=> array( '' ),
+					'paint' 		=> '_l10n_section_paint',
+					'save_steps'	=> array( 'section_save', 'section_create' ),
+					'save'			=> '_l10n_section_save',
+					),
 				),
-			),
-		'txp_section'	=> array(
-			'title' 		=> array(
-				'sql'			=> "varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''",
-				'e' 			=> 'section',
-				'paint_steps'	=> array( '' ),
-				'paint' 		=> '_l10n_section_paint',
-				'save_steps'	=> array( 'section_save', 'section_create' ),
-				'save'			=> '_l10n_section_save',
-				),
-			),
-		);
+			);
+		}
 
 	if( $get_mappings )
+		{
+		//echo br , dmp( $mappings );
 		return $mappings;
+		}
 
 	if( !in_array( @txpinterface , $interfaces ) )
 		return $thing;
@@ -182,7 +201,6 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		if( false === stripos( $thing, '(*)' ) )
 			$thing = str_replace( '*' , '*,'.$r , $thing );
 		}
-
 
 	return $thing;
 	}
@@ -619,10 +637,10 @@ if (!function_exists('stripos'))
 		}
 	}
 
-if (!function_exists('str_ireplace')) 
+if (!function_exists('str_ireplace'))
 	{
 	// Running a Php Version less than 5...
-	function str_ireplace($torep, $replace, $text) 
+	function str_ireplace($torep, $replace, $text)
 		{
 		return str_replace(strtolower($torep), strtolower($replace), strtolower($text));
 		}
