@@ -1442,16 +1442,7 @@ class MLPPlugin extends GBPPlugin
 		if( has_privs('plugin') )
 			new MLPStringView( gTxt('plugins'), 'plugin', $this );
 		if( has_privs('page') or has_privs('form') )
-			{
-			$snippet_tab = new MLPSnipView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
-			new MLPStringView( gTxt('search') , 'search' , $snippet_tab );
-			new MLPStringView( gTxt('l10n-specials') , 'special' , $snippet_tab );
-			if (has_privs('page'))
-				new MLPStringView( gTxt('pages') , 'page' , $snippet_tab , true );
-			if (has_privs('form'))
-				new MLPStringView( gTxt('forms') , 'form' , $snippet_tab );
-			new MLPSnipIOView( gTxt( 'l10n-inout' ) , 'inout' , $snippet_tab );
-			}
+			$GLOBALS['mlp_snip_view'] = new MLPSnipView( gTxt('l10n-snippets_tab') , 'snippets' , $this );
 		if( has_privs('article.edit') )
 			new MLPArticleView( gTxt('articles'), 'article', $this, true );
 
@@ -1743,6 +1734,18 @@ class MLPSnipView extends GBPAdminTabView
 	var $active_tab = 0;
 	var $use_tabs = false;
 
+	function MLPSnipView( $title, $event, &$parent, $is_default = NULL )
+		{
+		$this->tabs[] = new MLPStringView( gTxt('search') , 'search' , $this );
+		$this->tabs[] = new MLPStringView( gTxt('l10n-specials') , 'special' , $this );
+		if (has_privs('page'))
+			$this->tabs[] = new MLPStringView( gTxt('pages') , 'page' , $this , true );
+		if (has_privs('form'))
+			$this->tabs[] = new MLPStringView( gTxt('forms') , 'form' , $this );
+		$this->tabs[] = new MLPSnipIOView( gTxt( 'l10n-inout' ) , 'inout' , $this );
+
+		GBPAdminTabView::GBPAdminTabView( $title , $event , $parent , $is_default );
+		}
 	function get_canvas_style()
 		{
 		if( $this->is_active )
@@ -1761,7 +1764,7 @@ class MLPSnipView extends GBPAdminTabView
 			$this->active_tab = count($this->tabs);
 
 		# Store the tab
-		$this->tabs[] = $tab;
+		//$this->tabs[] = $tab;
 
 		# We've got a tab, lets assume we want to use it
 		$this->use_tabs = true;
