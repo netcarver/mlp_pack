@@ -136,12 +136,14 @@ class MLPArticles
 	{
 	function create_table()
 		{
+		$db_charsetcollation = _l10n_get_db_charsetcollation();
+
 		$sql = array();
 		$sql[] = 'CREATE TABLE IF NOT EXISTS `'.PFX.L10N_ARTICLES_TABLE.'` (';
 		$sql[] = '`ID` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY , ';
-		$sql[] = '`names` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , ';
-		$sql[] = '`members` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL';
-		$sql[] = ') TYPE=MYISAM CHARACTER SET utf8 COLLATE utf8_general_ci';
+		$sql[] = "`names` TEXT $db_charsetcollation NOT NULL , ";
+		$sql[] = "`members` TEXT $db_charsetcollation NOT NULL";
+		$sql[] = ") TYPE=MYISAM $db_charsetcollation";
 		return @safe_query( join('', $sql) );
 		}
 	function destroy_table()
@@ -4346,13 +4348,15 @@ class MLPWizView extends GBPWizardTabView
 
 	function setup_1()		# Extend the `txp_lang.data` field from TINYTEXT to TEXT and add the `l10n_owner` field
 		{
+		$db_charsetcollation = _l10n_get_db_charsetcollation();
+
 		$this->add_report_item( gTxt('l10n-setup_1_title') );
 
-		$sql = ' CHANGE `data` `data` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL';
+		$sql = " CHANGE `data` `data` TEXT $db_charsetcollation NULL DEFAULT NULL";
 		$ok = @safe_alter( 'txp_lang' , $sql );
 		$this->add_report_item( gTxt('l10n-setup_1_extend') , $ok , true );
 
-		$sql = "ADD `".L10N_COL_OWNER."` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' AFTER `data`";
+		$sql = "ADD `".L10N_COL_OWNER."` TINYTEXT $db_charsetcollation NOT NULL DEFAULT '' AFTER `data`";
 		$ok = @safe_alter( 'txp_lang' , $sql );
 		$this->add_report_item( gTxt('l10n-add_field',array('{field}'=>L10N_COL_OWNER ,'{table}'=>'txp_lang')) , $ok , true );
 		}
@@ -4464,6 +4468,7 @@ class MLPWizView extends GBPWizardTabView
 
 	function setup_3()		# Extend the textpattern table...
 		{
+		$db_charsetcollation = _l10n_get_db_charsetcollation();
 		$sql = array();
 
 		$desc = 'COLUMNS';
@@ -4486,7 +4491,7 @@ class MLPWizView extends GBPWizardTabView
 			}
 
 		if( !$lang_found )
-			$sql[] = " ADD `".L10N_COL_LANG."` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '-' AFTER `LastModID`";
+			$sql[] = " ADD `".L10N_COL_LANG."` VARCHAR( 8 ) $db_charsetcollation NOT NULL DEFAULT '-' AFTER `LastModID`";
 
 		if( !$article_id_found )
 			$sql[] = " ADD `".L10N_COL_GROUP."` INT( 11 ) NOT NULL DEFAULT '0' AFTER `".L10N_COL_LANG."`";
