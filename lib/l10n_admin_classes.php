@@ -4332,6 +4332,8 @@ class MLPWizView extends GBPWizardTabView
 		{
 		global $prefs;
 
+		$can_setup_cleanup = $this->can_install();
+
 		$tests = array(
 					'TxP' => array(
 						'current'	=> $prefs['version'] ,
@@ -4346,7 +4348,153 @@ class MLPWizView extends GBPWizardTabView
 						'min'		=> '4.0' ,
 						),
 					);
+
+		if( true !== $can_setup_cleanup )
+			{
+			$req_privs  = $this->get_req_privs();
+
+			$list = '1 ';
+			foreach( $req_privs as $privs )
+				$list .= join( ', ' , $privs ) . ', ';
+			$list = trim( $list , ', ' );
+
+			$tests['MySQL Privileges'] = array(
+				'current'	=> gTxt( 'l10n-missing_thing' , array( '{thing}' => $can_setup_cleanup ) ),
+				'min'		=> $list ,
+				);
+			}
+
 		return $tests;
+		}
+	function get_req_privs()
+		{
+		static $req_privs	= array(
+			'setup'		=> array( 'SELECT' , 'INSERT' , 'UPDATE' , 'DELETE' , 'CREATE' , 'CREATE TEMPORARY TABLES' , 'ALTER' , 'LOCK TABLES', 'INDEX' ),
+			'cleanup'	=> array( 'DROP' )
+			);
+		return $req_privs;
+		}
+	function check_row( $row )
+		{
+		#
+		#	Output: (bool)TRUE	=> Meets minimum spec for privs.
+		#			(string) 	=> List of missing privs.
+		#
+		//echo br, "Processing row: $row";
+
+		global $txpcfg;
+		$user		= $txpcfg['user'];
+		$db			= $txpcfg['db'];
+		$result		= true;
+		$outlist	= '';
+		$fails 		= array( 'setup' => array() , 'cleanup' => array() );
+		$req_privs  = $this->get_req_privs();
+
+		if( false === strpos( $row , 'GRANT ALL PRIVILEGES' ) )
+			{
+			#
+			#	Strip off 'GRANT' and anything after the 'ON ...'
+			#
+			$pos = strpos( $row , ' ON' );
+			if( false !== $pos && $pos > 6)
+				{
+				$row = substr( $row , 6, $pos - 6);
+				//echo br, "Processing row: $row";
+
+				#
+				#	Explode the privs on the ','...
+				#
+				$privs = explode( ', ' , $row );
+				//echo br , dmp( $privs );
+
+				#
+				#	Build missing list if there are less than "all" privileges...
+				#
+				foreach( $req_privs as $type=>$list )
+					{
+					foreach( $list as $priv )
+						{
+						//echo br , "Checking for priv: `$type`:`$priv`";
+						$has_priv = in_array( $priv , $privs );
+						if( !$has_priv )
+							$fails[$type][] = $priv;
+						}
+					}
+				}
+			}
+
+
+		#
+		#	Process results...
+		#
+		foreach( $fails as $type=>$list )
+			{
+			if( !empty( $list ) )
+				{
+				$list = join( ', ' , $list );
+				//echo br, "User '$user' needs these privilages to $type the MLP Pack: $list";
+				$result = false;
+				$outlist .= $list.', ';
+				}
+			}
+
+		if( !$result )
+			$result = trim( $outlist , ', ' );
+		return $result;
+		}
+	function can_install()
+		{
+		global $txpcfg;
+		$user = $txpcfg['user'];
+		$db   = $txpcfg['db'];
+
+		#
+		#	Test the privilages of the user used to connect to the TxP DB...
+		#
+		if( $user === 'root' )
+			{
+			//echo br , 'Using root - skipping privileges checking.';
+			return true;
+			}
+
+		$sql  = "SHOW GRANTS;";
+		$rows = getThings( $sql );
+		$matched    = false;
+
+		//echo br, dmp( $rows );
+
+		if( !empty( $rows ) )
+			{
+			$global_row = '';
+
+			foreach( $rows as $row )
+				{
+				if( false !== strpos( $row , 'GRANT USAGE' ) )
+					continue;
+
+				if( false !== strpos( $row , 'ON *.*' ) )
+					{
+					$global_row = $row;
+					//echo br, "Storing global row for processing later.";
+					}
+				elseif( false !== strpos( $row , "ON `$db`" ) )
+					{
+					$matched = $this->check_row( $row );
+					if( $matched === true )
+						break;
+					}
+				}
+
+			if( ($matched === false) and !empty( $global_row ) )
+				{
+				//echo br,"Processing global row: $global_row";
+				$matched = $this->check_row( $global_row );
+				}
+			}
+
+		//echo br,br,'Mathed: ',var_dump($matched);
+
+		return $matched;
 		}
 
 	function setup_1()		# Extend the `txp_lang.data` field from TINYTEXT to TEXT and add the `l10n_owner` field
