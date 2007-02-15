@@ -4623,7 +4623,7 @@ class MLPWizView extends GBPWizardTabView
 			{
 			extract( $page );
 
-			if( md5( $data ) == $default_md5s[$table][$name] )
+			if( md5( $data ) === @$default_md5s[$table][$name] )
 				{
 				$f = '<div id="sidebar-1">';
 				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
