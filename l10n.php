@@ -1396,8 +1396,12 @@ if (@txpinterface === 'public')
 		elseif( $lang == $l10n_language['short'] or $lang == $l10n_language['long'] )
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
-			$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
-			$out = "<$wraptag lang=\"$lang\"$dir/>" . parse($thing) . "</$wraptag>" . n;
+			$out = parse( $thing );
+			if( !empty( $wraptag ) )
+				{
+				$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
+				$out = "<$wraptag lang=\"$lang\"$dir/>" . $out . "</$wraptag>" . n;
+				}
 			}
 
 		return $out;
