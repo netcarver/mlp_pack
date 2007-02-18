@@ -4384,7 +4384,7 @@ class MLPWizView extends GBPWizardTabView
 
 		global $txpcfg;
 		$user		= $txpcfg['user'];
-		$db			= $txpcfg['db'];
+		//$db			= $txpcfg['db'];
 		$result		= true;
 		$outlist	= '';
 		$fails 		= array( 'setup' => array() , 'cleanup' => array() );
@@ -4446,7 +4446,11 @@ class MLPWizView extends GBPWizardTabView
 		{
 		global $txpcfg;
 		$user = $txpcfg['user'];
-		$db   = $txpcfg['db'];
+
+		#
+		#	Make sure we escape the MySQL special name characters...
+		#
+		$db   = strtr( $txpcfg['db'] , array( '_' => '\_' , '%' => '\%' ) );
 
 		#
 		#	Test the privilages of the user used to connect to the TxP DB...
@@ -4457,7 +4461,8 @@ class MLPWizView extends GBPWizardTabView
 			return true;
 			}
 
-		$sql  = "SHOW GRANTS;";
+		$sql  = "SHOW GRANTS FOR '$user'@'".$txpcfg['host']."';";
+		//echo br , "Testing for DB:`$db`";
 		$rows = getThings( $sql );
 		$matched    = false;
 
@@ -4490,6 +4495,11 @@ class MLPWizView extends GBPWizardTabView
 				//echo br,"Processing global row: $global_row";
 				$matched = $this->check_row( $global_row );
 				}
+			}
+
+		if( $matched === false )
+			{
+			$matched = gTxt( 'l10n-missing_all_privs' , array( '{escaped_db}' => $db , '{db}'=>$txpcfg['db'] ) );
 			}
 
 		//echo br,br,'Mathed: ',var_dump($matched);
