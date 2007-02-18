@@ -35,6 +35,7 @@ $l10n_default_strings_perm = array(
 	'l10n-op_tables'      => '{op} the {tables} tables',
 	'l10n-comment_op'     => '{op} the default comment invitation',
 	'l10n-missing_thing'  => 'missing {thing}',
+	'l10n-missing_all_privs' => ' privs - or grants on DB (`{db}` as `{escaped_db}`) cannot be evaluated',
 	'l10n-add_field'      => 'Add the `{table}.{field}` field',
 	'l10n-skip_field'     => 'Skip the `{table}.{field}` field - it already exists',
 	'l10n-copy_defaults'  => 'Copy defaults to `{table}.{field}` field',
