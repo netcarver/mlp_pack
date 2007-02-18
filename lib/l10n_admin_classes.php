@@ -528,7 +528,7 @@ class MLPSnips
 			case 'remove' :
 			$count = 0;
 			$p = MLPSnips::get_pattern( 'tag_localise' );
-			$thing = trim( preg_replace( $p , '' , $thing , -1 , $count ) );
+			$thing = trim( preg_replace( $p , '' , $thing /*, -1 , $count*/ ) );
 			return $count;
 			break;
 
