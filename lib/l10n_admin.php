@@ -216,6 +216,13 @@ function _l10n_match_cb( $matches )
 	#
 	$id 		= $matches[1];
 	$rs 		= safe_row(	'*', 'textpattern', "ID=$id" );
+	//$rs = array( L10N_COL_LANG => 'test' );
+	if( empty( $rs ) )
+		return $matches[0] . br . '<span class="articles_detail">' . "ID: $id" . gTxt( 'l10n-missing' ) .'</span>';
+
+	if( !isset($rs[L10N_COL_LANG]) or !isset($rs[L10N_COL_GROUP]) )
+		return $matches[0] . br . '<span class="articles_detail">' . "ID: $id - " . L10N_COL_GROUP . ' || '. L10N_COL_LANG . ' ' . gTxt( 'l10n-missing' ) .'</span>';
+
 	$code		= $rs[L10N_COL_LANG];
 	$article	= $rs[L10N_COL_GROUP];
 	$lang 		= MLPLanguageHandler::get_native_name_of_lang( $code );
@@ -295,7 +302,7 @@ function _l10n_chooser( $permitted_langs )
 	}
 function _l10n_list_buffer_processor( $buffer )
 	{
-	$count = 0;
+	//$count = 0;
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
 
 	#	Inject the language chooser...
@@ -304,7 +311,7 @@ function _l10n_list_buffer_processor( $buffer )
 	$buffer = str_replace( $f , $chooser.br.n.$f , $buffer );
 
 	#	Inject the language markers...
-	$result = preg_replace_callback( $pattern , '_l10n_match_cb' , $buffer , -1 , $count );
+	$result = preg_replace_callback( $pattern , '_l10n_match_cb' , $buffer /*, -1 , $count*/ );
 	if( !empty( $result ) )
 		return $result;
 
