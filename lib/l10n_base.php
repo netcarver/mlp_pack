@@ -91,9 +91,19 @@ function _l10n_get_db_charsetcollation()
 
 	return $result;
 	}
+function _l10n_get_dbserver_type()
+	{
+	$version = mysql_get_server_info();
+	//Use "ENGINE" if version of MySQL > (4.0.18 or 4.1.2)
+	$type = ( intval($version[0]) >= 5 || preg_match('#^4\.(0\.[2-9]|(1[89]))|(1\.[2-9])#',$version))
+					? "ENGINE=MyISAM"
+					: "TYPE=MyISAM";
+
+	return $type;
+	}
 function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	{
-	$charset_collation = _l10n_get_db_charsetcollation();
+	//$charset_collation = _l10n_get_db_charsetcollation();
 	static $interfaces = array( 'public' , 'admin' );
 	static $mappings;
 
@@ -102,7 +112,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		$mappings = array	(
 			'txp_category'	=> array(
 				'title' 		=> array(
-					'sql' 			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''" ,
+					'sql' 			=> "varchar(255) NOT NULL DEFAULT ''" ,
 					'e' 			=> 'category',
 					'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
 					'paint' 		=> '_l10n_category_paint',
@@ -112,7 +122,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_file' 		=> array(
 				'description'	=> array(
-					'sql'			=> "text $charset_collation NOT NULL" ,
+					'sql'			=> "text NOT NULL" ,
 					'e' 			=> 'file',
 					'paint_steps'	=> array( 'file_edit' ),
 					'paint' 		=> '_l10n_file_paint',
@@ -122,7 +132,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_image'		=> array(
 				'alt'			=> array(
-					'sql'			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''",
+					'sql'			=> "varchar(255) NOT NULL DEFAULT ''",
 					'e' 			=> 'image',
 					'paint_steps'	=> array( 'image_edit' ),
 					'paint' 		=> '_l10n_image_paint',
@@ -130,7 +140,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 					'save'			=> '_l10n_image_save',
 					),
 				'caption' 	=> array(
-					'sql'			=> "text $charset_collation NOT NULL",
+					'sql'			=> "text NOT NULL",
 					'e' 			=> '',
 					'paint_steps'	=> '',
 					'paint' 		=> '',
@@ -140,7 +150,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_link' 		=> array(
 				'description'	=> array(
-					'sql'			=> "text $charset_collation NOT NULL",
+					'sql'			=> "text NOT NULL",
 					'e' 			=> 'link',
 					'save_steps'	=> array( 'link_post', 'link_save' ),
 					'save'			=> '_l10n_link_save',
@@ -150,7 +160,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_section'	=> array(
 				'title' 		=> array(
-					'sql'			=> "varchar(255) $charset_collation NOT NULL DEFAULT ''",
+					'sql'			=> "varchar(255) NOT NULL DEFAULT ''",
 					'e' 			=> 'section',
 					'paint_steps'	=> array( '' ),
 					'paint' 		=> '_l10n_section_paint',
