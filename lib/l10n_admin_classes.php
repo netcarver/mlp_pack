@@ -4451,31 +4451,40 @@ class MLPWizView extends GBPWizardTabView
 	function can_install()
 		{
 		global $txpcfg;
-		$user = $txpcfg['user'];
+		$user  = $txpcfg['user'];
+		$matched = false;
+
+		$debug = gps( 'debugwiz' );
+		$debug = (!empty($debug));
 
 		#
 		#	Make sure we escape the MySQL special name characters...
 		#
 		$db   = strtr( $txpcfg['db'] , array( '_' => '\_' , '%' => '\%' ) );
 
+		if( $debug ) echo br , "Testing for privs to DB:`$db` on Server:$host, v:$version. Connected using user: $user.";
+
 		#
 		#	Test the privilages of the user used to connect to the TxP DB...
 		#
 		if( $user === 'root' )
 			{
-			//echo br , 'Using root - skipping privileges checking.';
+			if( $debug ) echo br , 'Using root - skipping privileges checking.';
 			return true;
 			}
 
-		$sql  = "SHOW GRANTS FOR '$user'@'".$txpcfg['host']."';";
-		//echo br , "Testing for DB:`$db`";
-		$rows = getThings( $sql );
-		$matched    = false;
-
-		//echo br, dmp( $rows );
+		#
+		#	This should work for all versions of MySQL...
+		#
+		$sql  = "SHOW GRANTS FOR '$user'@'".$host."';";
+		if( $debug )
+			$rows = getThings( $sql , 1 );
+		else
+			$rows = @getThings( $sql );
 
 		if( !empty( $rows ) )
 			{
+			if( $debug ) echo dmp( $rows );
 			$global_row = '';
 
 			foreach( $rows as $row )
@@ -4486,7 +4495,7 @@ class MLPWizView extends GBPWizardTabView
 				if( false !== strpos( $row , 'ON *.*' ) )
 					{
 					$global_row = $row;
-					//echo br, "Storing global row for processing later.";
+					if( $debug ) echo br, "Storing global row for processing later.";
 					}
 				elseif( false !== strpos( $row , "ON `$db`" ) )
 					{
@@ -4498,7 +4507,7 @@ class MLPWizView extends GBPWizardTabView
 
 			if( ($matched === false) and !empty( $global_row ) )
 				{
-				//echo br,"Processing global row: $global_row";
+				if( $debug ) echo br,"Processing global row: $global_row";
 				$matched = $this->check_row( $global_row );
 				}
 			}
@@ -4508,7 +4517,7 @@ class MLPWizView extends GBPWizardTabView
 			$matched = gTxt( 'l10n-missing_all_privs' , array( '{escaped_db}' => $db , '{db}'=>$txpcfg['db'] ) );
 			}
 
-		//echo br,br,'Mathed: ',var_dump($matched);
+		if( $debug ) echo br,br,'Mathed: ',var_dump($matched);
 
 		return $matched;
 		}
