@@ -4511,6 +4511,16 @@ class MLPWizView extends GBPWizardTabView
 				$matched = $this->check_row( $global_row );
 				}
 			}
+		else
+			{
+			#
+			#	The SHOW GRANTS query failed. So we cannot check anything using that.
+			# Instead, allow installation to continue but show a warning to the user
+			# At the head of the setup wizard.
+			#
+			$matched = true;
+			if( $debug ) echo br , 'Could not determine your user grants on the database; will continue anyway.';
+			}
 
 		if( $matched === false )
 			{
