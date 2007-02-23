@@ -473,7 +473,12 @@ class MLPArticles
 		{
 		return safe_count(L10N_ARTICLES_TABLE, "1" );
 		}
-
+	function retitle_article( $article_id , $new_title )
+		{
+		$new_title = doSlash( $new_title );
+		$info = MLPArticles::_get_article_info( $article_id );
+		MLPArticles::_update_article( $article_id , $new_title , $info['members'] );
+		}
 	}
 
 class MLPSnips

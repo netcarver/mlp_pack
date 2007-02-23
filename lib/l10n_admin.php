@@ -649,6 +649,16 @@ function _l10n_add_rendition_to_article_cb( $event , $step )
 				_l10n_remove_rendition( $current_lang , $rendition_id );
 
 			#
+			#	If this rendition is in the default language then update the article
+			# title...
+			#
+			$default_lang = MLPLanguageHandler::get_site_default_lang();
+			if( isset( $info['Title'] ) and isset( $info[L10N_COL_GROUP] ) and $current_lang === $default_lang )
+				{
+				MLPArticles::retitle_article( $info[L10N_COL_GROUP] , $info['Title'] );
+				}
+
+			#
 			#	Read the variables to continue the edit...
 			#
 			_l10n_setup_vars( $event , $step );
