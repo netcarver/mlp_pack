@@ -28,6 +28,11 @@ if( $l10n_view->installed() )
 	register_callback( '_l10n_post_discuss_multi_edit' 		, 'discuss' , 'discuss_multi_edit' );
 
 	#
+	#	Section hanlders...
+	#
+	register_callback( '_l10n_post_sectionsave'				, 'section' , 'section_save' );
+
+	#
 	#	Language management handlers (to stop language strings from being deleted) ...
 	#
 	register_callback( '_l10n_language_handler_callback_pre'  , 'prefs' , 'get_language' , 1 );
@@ -167,6 +172,23 @@ function _l10n_create_temp_textpattern( $languages )
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 	$sql = "create TEMPORARY table `".PFX."textpattern` $indexes select * from `".PFX."textpattern` where ".L10N_COL_LANG." IN ($languages)";
 	@safe_query( $sql );
+	}
+function _l10n_post_sectionsave( $event , $step )
+	{
+	//echo br , "_l10n_post_sectionsave( $event , $step )";
+
+	$old_name = doSlash( ps('old_name') );
+	$name     = doSlash( sanitizeForUrl( ps('name') ) );
+
+	if( $name !== $old_name )
+		{
+		$langs = MLPLanguageHandler::get_site_langs();
+		foreach( $langs as $lang )
+			{
+			$table = _l10n_make_textpattern_name(array('long'=>$lang));
+			@safe_update( $table , "Section = '$name'", "Section = '$old_name'" );
+			}
+		}
 	}
 function _l10n_list_filter( $event, $step )
 	{
