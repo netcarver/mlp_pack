@@ -651,8 +651,8 @@ function _l10n_process_url( $use_get_params=false )
 	@session_start();
 	$site_langs = MLPLanguageHandler::get_site_langs();
 
-	$req_method = $_SERVER['REQUEST_METHOD'];
-	$req_uri    = $_SERVER['REQUEST_URI'];
+	$req_method = serverSet('REQUEST_METHOD');
+	$req_uri    = serverSet('REQUEST_URI');
 
 	#
 	#	Redirect empty GETs on the public side so that the URL used has the language code
@@ -667,15 +667,15 @@ function _l10n_process_url( $use_get_params=false )
 
 	if (!defined('rhu'))
 		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
-	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $_SERVER['REQUEST_URI']), '/'));
+	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $req_uri), '/'));
 
 	if( $debug )
 		{
 		echo br , "REQUEST_URI    : " , var_dump($req_uri);
 		echo br , "REQUEST_METHOD : " , $req_method;
-		echo br , "hu            : " , hu;
+		echo br , "hu             : " , hu;
 		echo br , "rhu            : " , rhu;
-		echo br , "\$path          : " , var_dump( $path );
+		echo br , "\$path         : " , var_dump( $path );
 		}
 
 	$ssname = 'l10n_short_lang';
@@ -765,7 +765,7 @@ function _l10n_process_url( $use_get_params=false )
 		#	If we are still missing a language for the session, try to get the prefered selection
 		# from the user agent's HTTP header.
 		#
-		$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
+		$req_lang = serverSet('HTTP_ACCEPT_LANGUAGE');
 		if( $debug )
 			echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
 		if( isset( $req_lang ) and !empty( $req_lang ) )
@@ -1179,11 +1179,11 @@ if (@txpinterface === 'public')
 		$slangs = MLPLanguageHandler::get_site_langs();
 		$section = empty($pretext['s']) ? '' : $pretext['s'];
 		$id = $pretext['id'];
-		$url = trim($_SERVER['REQUEST_URI'] , '/');
+		$url = trim(serverSet('REQUEST_URI') , '/');
 		$parts = chopUrl($url);
 
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
-		//echo br , "url = " , $_SERVER['REQUEST_URI'];
+		//echo br , "url = " , $url;
 		//echo br , "parts = " , var_dump( $parts );
 
 		if( $on404 or $processing404 )
@@ -1303,7 +1303,7 @@ if (@txpinterface === 'public')
 
 				if( !$current or $link_current )
 					{
-					$uri = rtrim( $_SERVER['REQUEST_URI'] , '/' );
+					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
 					if( $processing404 )
 						$uri = '';
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
