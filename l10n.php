@@ -895,7 +895,6 @@ if (@txpinterface === 'public')
 	$prefs['db_remap_tables_func']   = '_l10n_redirect_textpattern';
 	$prefs['db_remap_fields_func']   = '_l10n_remap_fields';
 	$prefs['db_process_result_func'] = '_l10n_process_pageform_access';
-	//$prefs['db_remap_safe_q_func'] = '_l10n_redirect_safe_query';
 
 	# register a routine to handle URLs until the permanent_links plugin is integrated.
 	register_callback( '_l10n_pretext' 					, 'pretext' );
@@ -1390,13 +1389,14 @@ if (@txpinterface === 'public')
 			{
 			#	Does the direction of the currently selected site language match that requested?
 			#	If so, parse the contained content.
-			if( $dir == MLPLanguageHandler::get_lang_direction( $l10n_language['short'] ) )
-				$out = parse($thing) . n;
+			$cond = ($dir == MLPLanguageHandler::get_lang_direction( $l10n_language['short'] ));
+			$out = parse( EvalElse($thing, $cond) ) . n;
 			}
-		elseif( $lang == $l10n_language['short'] or $lang == $l10n_language['long'] )
+		else
 			{
 			#	If the required language matches the site language, output a suitably marked up block of content.
-			$out = parse( $thing );
+			$cond = ( $lang == $l10n_language['short'] or $lang == $l10n_language['long'] );
+			$out = parse( EvalElse($thing, $cond) );
 			if( !empty( $wraptag ) )
 				{
 				$dir = MLPLanguageHandler::get_lang_direction_markup( $lang );
@@ -1488,23 +1488,6 @@ if (@txpinterface === 'public')
 		return $dir;
 		}
 
-	/* function l10n_localise($atts, $thing = '')
-		{
-		global $l10n_language;
-
-		if ($l10n_language)
-			{
-			if ($thing)
-				{
-				# Process the direct snippet substitutions needed in the contained content.
-				//$thing = _l10n_substitute_snippets( $thing );
-				$html = parse($thing);
-				return $html;
-				}
-			}
-
-		return null;
-		} */
 	}
 
 # --- END PLUGIN CODE ---
