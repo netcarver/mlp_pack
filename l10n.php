@@ -224,6 +224,8 @@ You can also use this tag on 404 pages to output a list of closely matching rend
 | link_current | '' | (Optional) Set to a non-blank value to make the current language an active hyperlink |
 | display | native | (Optional) How the language is displayed on the web page. Valid values are 'native++', 'native+', 'native', 'long' and 'short'. |
 | article_list | TXP's @$is_article_list@ variable | (Optional on single article pages) Set to a non-blank value to always output a site-wide list (even on single article pages).<br/>Be careful though as setting this option could lead to 404 page not found errors if the visitor then attempts to click through to pages that have no rendition in selected language. |
+| surpress_current | '' | (Optional) Set this to a non-empty value to cause the currently active browse language to be excluded from the list of languages.<br/>Note this might lead to an empty list, in which case you might want to specify an 'empty_title' attribute as well. |
+| empty_title | '' | (Optional) Set this string to the title that you want to be displayed if the output list is empty. |
 
 &nbsp;<br/>
 &nbsp;<br/>
@@ -1166,11 +1168,14 @@ if (@txpinterface === 'public')
 							'display'			=> 'native',			# 	How the language is displayed on the web page
 																		#	'native++' | 'native+' | 'native' | 'long' | 'short'
 							'article_list' 		=> $is_article_list,	#	Set to '1' to always output a site-wide list in this location
+							'surpress_current'	=> '',					#	Set to any non-blank to omit the viewer's browse language from the list
+							'empty_title'		=> '',					#	Title to show if the output list is empty
 							),$atts));
 
 		$on404			= !empty($on404);	# User marked this list as a 404 special lookup list.
 		$show_empty		= !empty($show_empty);
 		$link_current	= !empty($link_current);
+		$surpress_current = !empty($surpress_current);
 
 		$processing404	= ($pretext['status'] === '404');
 
@@ -1265,6 +1270,14 @@ if (@txpinterface === 'public')
 			$long  = $codes['long'];
 			$dir   = MLPLanguageHandler::get_lang_direction_markup($lang);
 
+			#
+			#	Surpress the current item when needed...
+			#
+			$current = ($l10n_language['long'] === $lang);
+			if( $current && $surpress_current )
+				continue;
+
+
 			switch( $display )
 				{
 				case 'short':
@@ -1290,7 +1303,6 @@ if (@txpinterface === 'public')
 				#	No individual ID but we should be able to serve all the languages
 				# so use the current url and inject the language component into each one...
 				#
-				$current = ($l10n_language['long'] === $lang);
 				$text    = tag( $lname , 'span' , $dir);
 
 				#
@@ -1327,7 +1339,6 @@ if (@txpinterface === 'public')
 					$record = $alangs[$lang];
 					$lang_rendition_title	= $record['Title'];
 					$lang_rendition_id		= $record['ID'];
-					$current 	= ($l10n_language['long'] === $lang);
 					$text		= $lname;
 					if( $processing404 )
 						$text	= strong($text) . sp . ':' . sp . $lang_rendition_title;
@@ -1362,8 +1373,12 @@ if (@txpinterface === 'public')
 			}
 
 
-		$list = tag( join( "\n\t" , $list ) , 'ul' , " class=\"$list_class\"" );
-		return $title . $list;
+		if( !empty( $list ) )
+			$list = $title . tag( join( "\n\t" , $list ) , 'ul' , " class=\"$list_class\"" );
+		else
+			$list = tag( $empty_title , 'p' ) . n;
+
+		return $list;
 		}
 
 	function l10n_if_lang( $atts , $thing )
