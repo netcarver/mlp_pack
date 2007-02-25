@@ -28,7 +28,7 @@ if( $l10n_view->installed() )
 	register_callback( '_l10n_post_discuss_multi_edit' 		, 'discuss' , 'discuss_multi_edit' );
 
 	#
-	#	Section hanlders...
+	#	Section handlers...
 	#
 	register_callback( '_l10n_post_sectionsave'				, 'section' , 'section_save' );
 
