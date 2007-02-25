@@ -26,7 +26,7 @@ function _l10n_process_pageform_access( $thing , $table , $where , $results , $i
 			if( $thing !== 'user_html' )
 				break;
 
-			if( $is_a_set && is_array( $results ) )
+			if( is_array( $results ) )
 				{
 				$out = array();
 				foreach( $results as $key => $result )
@@ -42,7 +42,7 @@ function _l10n_process_pageform_access( $thing , $table , $where , $results , $i
 			if( $thing !== 'Form' and $thing !== 'form' )
 				break;
 
-			if( $is_a_set && is_array( $results ) )
+			if( is_array( $results ) )
 				{
 				$out = array();
 				foreach( $results as $key => $result )
