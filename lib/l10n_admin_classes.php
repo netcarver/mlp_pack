@@ -4451,7 +4451,9 @@ class MLPWizView extends GBPWizardTabView
 	function can_install()
 		{
 		global $txpcfg;
+		$host  = $txpcfg['host'];
 		$user  = $txpcfg['user'];
+		$version = mysql_get_server_info();
 		$matched = false;
 
 		$debug = gps( 'debugwiz' );
@@ -4460,7 +4462,8 @@ class MLPWizView extends GBPWizardTabView
 		#
 		#	Make sure we escape the MySQL special name characters...
 		#
-		$db   = strtr( $txpcfg['db'] , array( '_' => '\_' , '%' => '\%' ) );
+		$db_lean = $txpcfg['db'];
+		$db = strtr( $db_lean , array( '_' => '\_' , '%' => '\%' ) );
 
 		if( $debug ) echo br , "Testing for privs to DB:`$db` on Server:$host, v:$version. Connected using user: $user.";
 
@@ -4476,11 +4479,30 @@ class MLPWizView extends GBPWizardTabView
 		#
 		#	This should work for all versions of MySQL...
 		#
-		$sql  = "SHOW GRANTS FOR '$user'@'".$host."';";
+		$sql  = "SHOW GRANTS FOR '$user'@'$host';";
 		if( $debug )
 			$rows = getThings( $sql , 1 );
 		else
 			$rows = @getThings( $sql );
+
+		#
+		#	But, if it failed then retry using a different command (if possible)...
+		#
+		if( empty( $rows ) )
+			{
+			if( $debug ) echo br , "Initial SHOW GRANTS query failed";
+			if( version_compare( $version, '4.1.2' , '>=') )
+				{
+				$sql  = "SHOW GRANTS;";
+				if( $debug )
+					{
+					echo ', re-trying.';
+					$rows = getThings( $sql , 1 );
+					}
+				else
+					$rows = @getThings( $sql );
+				}
+			}
 
 		if( !empty( $rows ) )
 			{
@@ -4497,7 +4519,7 @@ class MLPWizView extends GBPWizardTabView
 					$global_row = $row;
 					if( $debug ) echo br, "Storing global row for processing later.";
 					}
-				elseif( false !== strpos( $row , "ON `$db`" ) )
+				elseif( false !== strpos( $row , "ON `$db`" ) OR false !== strpos( $row , "ON `$db_lean`" ) )
 					{
 					$matched = $this->check_row( $row );
 					if( $matched === true )
@@ -4524,7 +4546,7 @@ class MLPWizView extends GBPWizardTabView
 
 		if( $matched === false )
 			{
-			$matched = gTxt( 'l10n-missing_all_privs' , array( '{escaped_db}' => $db , '{db}'=>$txpcfg['db'] ) );
+			$matched = gTxt( 'l10n-missing_all_privs' , array( '{escaped_db}' => $db , '{db}'=>$db_lean ) );
 			}
 
 		if( $debug ) echo br,br,'Mathed: ',var_dump($matched);
