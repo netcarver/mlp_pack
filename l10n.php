@@ -643,7 +643,7 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 
 function _l10n_process_url( $use_get_params=false )
 	{
-	global $l10n_language;
+	global $l10n_language , $prefs;
 
 	$redirects = array( '' , '/' );
 	$redirect = false;
@@ -677,7 +677,8 @@ function _l10n_process_url( $use_get_params=false )
 		echo br , "REQUEST_METHOD : " , $req_method;
 		echo br , "hu             : " , hu;
 		echo br , "rhu            : " , rhu;
-		echo br , "\$path         : " , var_dump( $path );
+		echo br , "\$path          : " , var_dump( $path );
+		echo br , "\$prefs-Site Url: " , $prefs['siteurl'];
 		}
 
 	$ssname = 'l10n_short_lang';
