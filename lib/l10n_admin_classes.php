@@ -4462,7 +4462,7 @@ class MLPWizView extends GBPWizardTabView
 				{
 				$matches = array();
 				$count = preg_match( $pattern , $row , $matches );
-				if( $count === 10 )
+				if( $count === 1 )
 					$row = strtr( $row , array( $matches[1] => '****************' ) );
 
 				$result[] = $row;
