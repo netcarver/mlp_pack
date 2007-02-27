@@ -4525,9 +4525,65 @@ class MLPWizView extends GBPWizardTabView
 					if( $matched === true )
 						break;
 					}
+				#
+				#	Check for wildcard DB cases in the grants list.
+				#
+				elseif( false !== strpos( $row , '%' ) )
+					{
+					$matches = array();
+					$pattern = "/ ON `(.*)`/";
+
+					#
+					#	Extract the DB name...
+					#
+					if( $debug ) echo br , "Extracting DB name pattern [$pattern] from $row.";
+					$count = preg_match( $pattern , $row , $matches );
+					if( $count !== 1 )
+						{
+						if( $debug ) echo br , "Could not match DB name pattern.";
+						continue;
+						}
+					$name = $matches[1];
+					if( $debug ) echo br , "Matched db name: [$name] - ";
+
+					#
+					#	Get start of the name...
+					#
+					$s = strpos( $name , '%' );
+					$name = substr( $name , 0 , $s );
+					if( $debug ) echo "Stripped down to [$name] - ";
+					$len = strlen( $name );
+
+					#
+					#	Strip escape sequences...
+					#
+					if( $len > 0 )
+						{
+						$name = strtr( $name , array( "\\\\"=>'' , "\\"=>'' ));
+						if( $debug ) echo "Stripped down to [$name] - ";
+						}
+
+					#
+					#	Prepare the comparison string...
+					#
+					$len = strlen( $name );
+					$cmp = substr( $db_lean , 0 , $len );
+
+					#
+					#	Compare to the db name we are testing for...
+					#
+					if( $debug ) echo "Comparing [$name] with [$cmp] ... ";
+					if( $name === $cmp )
+						{
+						if( $debug ) echo "matched! Checking privs as usual... ";
+						$matched = $this->check_row( $row );
+						if( $matched === true )
+							break;
+						}
+					}
 				}
 
-			if( ($matched === false) and !empty( $global_row ) )
+			if( ($matched !== true) and !empty( $global_row ) )
 				{
 				if( $debug ) echo br,"Processing global row: $global_row";
 				$matched = $this->check_row( $global_row );
@@ -4537,8 +4593,8 @@ class MLPWizView extends GBPWizardTabView
 			{
 			#
 			#	The SHOW GRANTS query failed. So we cannot check anything using that.
-			# Instead, allow installation to continue but show a warning to the user
-			# At the head of the setup wizard.
+			# Instead, allow installation to continue. Should we show a warning to the user
+			# At the head of the setup wizard?
 			#
 			$matched = true;
 			if( $debug ) echo br , 'Could not determine your user grants on the database; will continue anyway.';
