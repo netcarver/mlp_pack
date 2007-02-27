@@ -4448,6 +4448,29 @@ class MLPWizView extends GBPWizardTabView
 			$result = trim( $outlist , ', ' );
 		return $result;
 		}
+	function strip_pws( $rows )
+		{
+		#
+		#	Remove password hashes from debug output...
+		#
+		$result = array();
+
+		if( !empty( $rows ) )
+			{
+			$pattern = "/PASSWORD \'(.*)\'/";
+			foreach( $rows as $row )
+				{
+				$matches = array();
+				$count = preg_match( $pattern , $row , $matches );
+				if( $count === 10 )
+					$row = strtr( $row , array( $matches[1] => '****************' ) );
+
+				$result[] = $row;
+				}
+			}
+
+		return $result;
+		}
 	function can_install()
 		{
 		global $txpcfg;
@@ -4506,6 +4529,7 @@ class MLPWizView extends GBPWizardTabView
 
 		if( !empty( $rows ) )
 			{
+			$rows = $this->strip_pws( $rows );
 			if( $debug ) echo dmp( $rows );
 			$global_row = '';
 
@@ -4525,11 +4549,11 @@ class MLPWizView extends GBPWizardTabView
 					if( $matched === true )
 						break;
 					}
-				#
-				#	Check for wildcard DB cases in the grants list.
-				#
 				elseif( false !== strpos( $row , '%' ) )
 					{
+					#
+					#	Check for wildcard DB cases in the grants list.
+					#
 					$matches = array();
 					$pattern = "/ ON `(.*)`/";
 
