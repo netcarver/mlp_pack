@@ -844,6 +844,7 @@ function _l10n_process_url( $use_get_params=false )
 	else
 		_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
 
+	if( $debug ) echo br , "New first path is: $new_first_path";
 	return $new_first_path;
 	}
 
@@ -908,6 +909,9 @@ if (@txpinterface === 'public')
 
 	function _l10n_tag_feeds()
 		{
+		#
+		#	Insert the language direction markers into the feed xml...
+		#
 		global $l10n_language , $thisarticle;
 
 		$syndicate_body_or_excerpt = $GLOBALS['prefs']['syndicate_body_or_excerpt'];
@@ -1115,20 +1119,6 @@ if (@txpinterface === 'public')
 										return $out;'
 									), $thing );
 		return $out;
-		}
-
-	function _l10n_feed_link_cb( $matches )
-		{
-		global $l10n_feed_link_lang;
-
-		#
-		#	$matches[0] is the entire pattern...
-		#	$matches[1] is the href...
-		#
-		$path = trim( str_replace( trim(hu, '/'), '', $matches[1] ), '/' );
-		$path = $l10n_feed_link_lang['short'].'/'.$path;
-		$path = ' href="'.hu.$path.'"';
-		return $path;
 		}
 
 	function _l10n_inject_lang_markers( $buffer )
