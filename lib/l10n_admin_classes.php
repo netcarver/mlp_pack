@@ -4629,7 +4629,7 @@ class MLPWizView extends GBPWizardTabView
 			$matched = gTxt( 'l10n-missing_all_privs' , array( '{escaped_db}' => $db , '{db}'=>$db_lean ) );
 			}
 
-		if( $debug ) echo br,br,'Mathed: ',var_dump($matched);
+		if( $debug ) echo br,br,'Matched: ',var_dump($matched);
 
 		return $matched;
 		}
