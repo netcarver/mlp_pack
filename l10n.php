@@ -1029,34 +1029,46 @@ if (@txpinterface === 'public')
 			@ob_start('_l10n_inject_lang_markers');
 			}
 		}
+	function _l10n_markup( $s , $quote = false )
+		{
+		if( $quote )
+			$s = preg_quote( $s );
+		$s = strtr( $s , array( '/'=>'\/' ));
 
+		return $s;
+		}
+	function _l10n_make_pattern()
+		{
+		global $l10n_replace_strings , $prefs;
+
+		$siteurl = trim( $prefs['siteurl'] , '/' );
+		$siteurl = _l10n_markup( $siteurl , true );
+		$start = _l10n_markup( $l10n_replace_strings['start'] );
+		$stop  = _l10n_markup( $l10n_replace_strings['stop'] );
+
+		$result = '/'.$start.'(https?:\/\/'.$siteurl.')(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)'.$stop.'/';
+
+		return $result;
+		}
 	function _l10n_inject_lang_markers_cb( $matches )
 		{
 		global $l10n_language , $l10n_replace_strings;
 
-		$external = ( rtrim( $matches[1] , '/') !== rtrim( hu , '/') );
-
 		$result = $matches[0];
-		if( !$external )
+
+		$has_lang_code = MLPLanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
+		if( !$has_lang_code )
 			{
-			$has_lang_code = MLPLanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
-			if( !$has_lang_code )
-				{
-				$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
-				$result = $l10n_replace_strings['start']. $result . $l10n_replace_strings['stop'];
-				}
+			$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
+			$result = $l10n_replace_strings['start']. $result . $l10n_replace_strings['stop'];
 			}
 
 		return $result;
 		}
 	function _l10n_inject_feed_lang_markers( $buffer )
 		{
-		global $l10n_replace_strings;
-
 		# Insert language code into any URLs embedded as texts in hyperlinks...
-		$start = $l10n_replace_strings['start'];
-		$stop  = strtr( $l10n_replace_strings['stop'] , array('/'=>'\/') );
-		$pattern = '/'.$start.'(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)'.$stop.'/';
+		$pattern = _l10n_make_pattern();
 		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		return $buffer;
@@ -1126,16 +1138,16 @@ if (@txpinterface === 'public')
 		global $l10n_replace_strings;
 
 		# Insert the language code into all permlinks...
-		$pattern = '/ href="(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)"/';
 		$l10n_replace_strings['start'] = ' href="';
 		$l10n_replace_strings['stop']  = '"';
-		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+		$pattern1 = _l10n_make_pattern();
+		$buffer = preg_replace_callback( $pattern1 , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		# Insert language code into any URLs embedded as texts in hyperlinks...
-		$pattern = '/>(https?:\/\/[\w|\.|\-|\_]*)(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)<\/a>/';
 		$l10n_replace_strings['start'] = '>';
 		$l10n_replace_strings['stop']  = '</a>';
-		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+		$pattern2 = _l10n_make_pattern();
+		$buffer = preg_replace_callback( $pattern2 , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		return $buffer;
 		}
@@ -1308,6 +1320,7 @@ if (@txpinterface === 'public')
 				if( !$current or $link_current )
 					{
 					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
+					$uri = trim(str_replace(trim(rhu, '/'), '', $uri), '/');
 					if( $processing404 )
 						$uri = '';
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
