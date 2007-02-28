@@ -63,7 +63,7 @@ h2. Table Of Contents.
 ** "l10n_lang_list":#lang_list
 ** "l10n_if_lang":#if_lang
 ** "l10n_get_lang":#get_lang
-** "l10n_feed_link":#feed_link
+** "-l10n_feed_link- -- deprecated. (deprecated)":#feed_link
 ** "l10n_get_lang_dir":#get_lang_dir
 * "Preferences Help":#prefs
 * "Snippets > Export Help":#export
@@ -199,9 +199,9 @@ h2(#tags). Tag Directory
 
 |_. Tag |_. Description |
 | "*l10n_lang_list*":#lang_list    | Outputs an un-ordered list of languages. <br/> On an article list page, this outputs all of the site's available languages.<br/>On individual articles it lists only those languages the article has renditions for. |
-| "*l10n_if_lang*":#if_lang        | Conditional tag that tests the visitor's browse language against a target, or tests the visitor's language's _direction_ against the given direction. <br/> This is very useful for serving css files for Right-to-Left languages.  |
+| "*l10n_if_lang*":#if_lang        | Conditional tag that tests the visitor's browse language against a target, or tests the visitor's language's _direction_ against the given direction. <br/> This is very useful for serving css files for Right-to-Left languages.<br /> This works with txp's 'else' clause. |
 | "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
-| "*l10n_feed_link*":#feed_link    | Outputs a language specific feed link. |
+| "-l10n_feed_link-":#feed_link    | DEPRECATED. Use txp's own feed_link tag instead. |
 | "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
 
 <hr/>
@@ -243,6 +243,8 @@ This is used on the demo site to output a second CSS file for RTL languages. As 
 | dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
 | wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
 
+This tag can be used with Textpattern's own 'else' clause.
+
 h3(#get_lang). "l10n_get_lang(Jump to the tag list)":#tags
 
 Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's "lang" and "xml:lang" attributes.
@@ -253,12 +255,11 @@ Note, you should only use the short(default) option in the "lang" attribute but 
 | type | short | (Optional) How to format the resulting string. Valid values are 'long','short','native' |
 
 
-h3(#feed_link). "l10n_feed_link(Jump to the tag list)":#tags
+h3(#feed_link). "l10n_feed_link -- DEPRECATED(Jump to the tag list)":#tags
 
-Outputs a language specific feed link.
+*Just use the normal txp:feed_link tag instead.*
 
-|_. Attribute |_. Default |_. Description |
-| code | The visitor's current browse language | (Optional) If you want to override the language of a given feed link, set this to the code of the language you want to output the feed in. |
+This tag still works but will give you a warning in debugging or testing mode. No warning is given in live mode.
 
 h3(#get_lang_dir). "l10n_get_lang_dir(Jump to the tag list)":#tags
 
@@ -1457,31 +1458,22 @@ if (@txpinterface === 'public')
 
 	function l10n_feed_link( $atts )
 		{
-		global $l10n_language, $l10n_feed_link_lang;
-		$l10n_feed_link_lang = $l10n_language;
+		#
+		#	This is DEPRECATED, use the normal feed_link tag instead.
+		#
 
-		if( isset($atts['code']) )
-			{
-			$code = $atts['code'];
-			unset( $atts['code'] );
+		$result = '';
 
-			if( $code === 'none' )
-				return feed_link( $atts );
-
-			$l10n_feed_link_lang = MLPLanguageHandler::compact_code( $code );
-			}
+		global $production_status;
+		if( $production_status !== 'live' )
+			$result = 'DEPRECATED, please use txp:feed_link instead!' . br . n;
 
 		#
 		#	Get the standard result...
 		#
-		$result = feed_link( $atts );
+		$result .= feed_link( $atts );
 
-		#
-		#	Inject the language code into the url...
-		#
-		$pattern = '/ href="(.*)" /';
-		$result = preg_replace_callback( $pattern , '_l10n_feed_link_cb' , $result );
-
+		$result = tag( $result , 'p' );
 		return $result;
 		}
 
