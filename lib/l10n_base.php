@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 #
 #	This file contains functions/classes needed on both the admin and public side
