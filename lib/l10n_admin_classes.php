@@ -4351,7 +4351,7 @@ class MLPWizView extends GBPWizardTabView
 						),
 					'MySQL'  => array(
 						'current'	=> mysql_get_server_info() ,
-						'min'		=> '4.0' ,
+						'min'		=> '4.1' ,
 						),
 					);
 
