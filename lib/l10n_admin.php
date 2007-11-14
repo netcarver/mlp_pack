@@ -324,6 +324,13 @@ function _l10n_chooser( $permitted_langs )
 	}
 function _l10n_list_buffer_processor( $buffer )
 	{
+	global $DB; // NEEDED to fix the mark-up elements injected into the renditions (list) page.
+
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
+	// routine is called from the output buffer processor. 
+	if( !isset( $DB) )
+		$DB = new DB;
+
 	//$count = 0;
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
 
@@ -417,7 +424,13 @@ function _l10n_inject_switcher_form()
 	}
 function _l10n_process_admin_page($page)
 	{
-	global $event , $step , $l10n_painters;
+	global $event , $step , $l10n_painters , $DB;
+
+	//	NEEDED to populate the language switcher on admin tabs & change the text of the 'articles' tab.
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
+	// routine is called from the output buffer processor. 
+	if( !isset( $DB ) ) 
+	    $DB = new DB;
 
 	$mlp_js_events = array( 'l10n' , 'article' );
 	if( in_array( $event , $mlp_js_events )  )
@@ -486,6 +499,13 @@ function _l10n_article_buffer_processor( $buffer )
 	//$from_view	= gps( 'from_view' );
 	$user_sel_lang = cs( 'rendition_lang_selection' );
 	$user_langs = MLPLanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
+
+
+	//	Needed to prevent a blank content > write tab.
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
+	// routine is called from the output buffer processor. 
+	if( !isset( $l10n_view ) )
+		$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );	// <<<<
 
 	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
 	$has_reassign_privs = has_privs( 'l10n.reassign' );
