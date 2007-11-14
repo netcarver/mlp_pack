@@ -1024,7 +1024,7 @@ if (@txpinterface === 'public')
 				}
 			@ob_start('_l10n_inject_feed_lang_markers');
 			}
-		else
+		elseif( $first_chunk !== 'file_download' )
 			{
 			@ob_start('_l10n_inject_lang_markers');
 			}
