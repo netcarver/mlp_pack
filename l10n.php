@@ -75,7 +75,7 @@ h2. Table Of Contents.
 
 h2(#intro). Introduction &amp; Setup/Cleanup
 
-The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
+The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 and 4.0.5 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
 
 It is *not* implemented as a 'pure' plugin as it&#8230;
 
@@ -88,6 +88,7 @@ _If you are looking for a pure TxP plugin then this is not the option for you._
 
 Other things you might like to think about before installing the pack&#8230;
 
+* *It does not support subdirectory installations.*
 * It makes some extensive additions to the underlying database, notably a new 'textpattern' table per language you run the site in.
 * The 'articles' tab output is filtered using a temporary SQL table that hides the underlying table and allows additional filtering by language.
 * Changes are made to the basic txp_lang and textpattern tables.
@@ -110,7 +111,7 @@ h2(#terms). Terminology
 
  <br>
 
-To avoid confusion, the noun 'translation' *always* refers to the act of translating, *never* to the result of translating something.
+To avoid confusion, 'translation' *always* refers to the act of translating, *never* to the result of translating something.
 
 A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
 
@@ -181,7 +182,7 @@ Snippets are named strings that you can reference within pages or forms.
 
 They are very similar to strings that are output in pages and forms using TxP's 'text' tag. Indeed, the 'Snippets' tab (found under *Content > MLP*) will also detect and display the strings used in the TxP 'text' tag.
 
-However, snippets differ a little from the 'text' tag as they are parsed before the rest of the page/form and thus, can be used to provide localised strings as attributes to other tags. They are also very easy to use *but* they will not work once MLP is uninstalled.
+However, snippets differ a little from the 'text' tag as they are parsed before the rest of the page/form and thus, can be used to provide localised strings as attributes to other tags. They are also very easy to use *but* they will not work once MLP is uninstalled. _Therefore, whenever possible, you should prefer TxP's 'text' tag._
 
 To add snippets to pages or forms...
 
@@ -369,7 +370,7 @@ You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn
 
 _Generated codes *must* be in 2 character (xx) or 5 character (xx-yy) format: the MLP Pack understands no others._
 
-For example, were I to add Malaysian English (commonly known as Manglish) to the array then I might extend the 'en' sub-array thus @'en-ms'=>'Manglish'@
+For example, were I to add Malaysian English (uncommonly known as _Manglish_) to the array then I might extend the 'en' sub-array like this @'en-ms'=>'Manglish'@
 
 None of these codes may be used for section names in the MLP installation if the permlink mode starts with a section (for example, section/id/title.)
 
