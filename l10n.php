@@ -1321,7 +1321,6 @@ if (@txpinterface === 'public')
 				if( !$current or $link_current )
 					{
 					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
-					$uri = trim(str_replace(trim(rhu, '/'), '', $uri), '/');
 					if( $processing404 )
 						$uri = '';
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
