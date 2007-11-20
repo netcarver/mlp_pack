@@ -1183,7 +1183,9 @@ if (@txpinterface === 'public')
 		$surpress_current = !empty($surpress_current);
 
 		$processing404	= ($pretext['status'] === '404');
-		$processingcats = !empty($pretext['c']);
+		$messy_urls		= ($pretext['permlink_mode'] === 'messy' );
+		$category_list	= !empty($pretext['c']);
+		$processingcats = $category_list && !$messy_urls;	# Don't process (localise) category list urls in messy mode.
 
 		$list = array();
 		static $alangs;
