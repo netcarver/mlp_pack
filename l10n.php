@@ -1183,6 +1183,7 @@ if (@txpinterface === 'public')
 		$surpress_current = !empty($surpress_current);
 
 		$processing404	= ($pretext['status'] === '404');
+		$processingcats = !empty($pretext['c']);
 
 		$list = array();
 		static $alangs;
@@ -1195,6 +1196,21 @@ if (@txpinterface === 'public')
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
 		//echo br , "url = " , $url;
 		//echo br , "parts = " , var_dump( $parts );
+		
+		$cat_name_mappings = array();
+		if( $processingcats )
+			{
+			#echo br , "Processing by category: " ;
+			$cat_names = safe_rows_start( 'lang,data' , 'txp_lang' , "`name`='category'" );
+			if( $cat_names and mysql_num_rows($cat_names) > 0 )
+				{
+				while( $cat_name = nextRow($cat_names) )
+					{
+					$cat_name_mappings[ $cat_name['lang'] ] = urlencode( $cat_name['data'] ); 
+					}
+				}
+			#echo var_dump( $cat_name_mappings ) . br ;
+			}
 
 		if( $on404 or $processing404 )
 			{
@@ -1323,6 +1339,23 @@ if (@txpinterface === 'public')
 					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
 					if( $processing404 )
 						$uri = '';
+						
+					if( $processingcats )
+						{
+						#
+						#	Category lists are a special case. For this to work, we need to 
+						# replace the local 'category' string with it's name in the target language.
+						#
+						#	Not doing the replace results in 404 errors.
+						#
+						$target_cat_name = $cat_name_mappings[ $lang ];
+						#echo br . $uri . ' => ' . $lang . ' = ' . $target_cat_name . '(' . urldecode($target_cat_name) . ')';
+						
+						$chunks = explode( '/' , ltrim($uri , '/') );
+						$chunks[ 0 ] = $target_cat_name;
+						$uri = '/' . join( '/' , $chunks );
+						}
+						
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
 					}
 				else
