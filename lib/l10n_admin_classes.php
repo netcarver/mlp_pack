@@ -4924,10 +4924,10 @@ class MLPWizView extends GBPWizardTabView
 	function setup_11()		# Optionally insert l10n tags into the pages/forms.
 		{
 		static $default_md5s = array (
-			'txp_page'     => array (
-				'default'          => 'c9797b38809d64cb8f5d33ad1f62a144',
-				'archive'          => 'c9797b38809d64cb8f5d33ad1f62a144',
-				'error_default'    => '909ada7984ebdc41a86f74861d6a0944',
+			'txp_page'     => array (		 #Txp 4.0.4								#Txp 4.0.5	-- Add new entries as required.
+				'default'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896' ), 
+				'archive'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896' ),
+				'error_default'    => array( '909ada7984ebdc41a86f74861d6a0944',	'faca32c1d818cc017e1389124742fb74' )
 				),
 			);
 
@@ -4939,7 +4939,9 @@ class MLPWizView extends GBPWizardTabView
 			{
 			extract( $page );
 
-			if( md5( $data ) === @$default_md5s[$table][$name] )
+			$checksum = md5( $data );
+			$md5_array = is_array( @$default_md5s[$table][$name]) ? $default_md5s[$table][$name] : array() ;
+			if( in_array( $checksum , $md5_array ) )
 				{
 				$f = '<div id="sidebar-1">';
 				$err404 = ($name==='error_default') ? 'on404="1" ' : '' ;
