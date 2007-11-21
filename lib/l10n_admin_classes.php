@@ -4338,7 +4338,7 @@ class MLPWizView extends GBPWizardTabView
 		{
 		global $prefs;
 
-		$can_setup_cleanup = $this->can_install();
+		$can_setup_cleanup = (gps( 'skip-wiz-privilege-check' )) ? true : $this->can_install();
 
 		$tests = array(
 					'TxP' => array(
@@ -4359,18 +4359,49 @@ class MLPWizView extends GBPWizardTabView
 			{
 			$req_privs  = $this->get_req_privs();
 
-			$list = '1 ';
+			$list = '';
 			foreach( $req_privs as $privs )
 				$list .= join( ', ' , $privs ) . ', ';
 			$list = trim( $list , ', ' );
 
 			$tests['MySQL Privileges'] = array(
-				'current'	=> gTxt( 'l10n-missing_thing' , array( '{thing}' => $can_setup_cleanup ) ),
-				'min'		=> $list ,
+				#'current'	=> gTxt( 'l10n-missing_thing' , array( '{thing}' => $can_setup_cleanup ) ), # list of missing privileges.
+				'current'	=> $can_setup_cleanup, # list of missing privileges.
+				'min'		=> $list ,	# list of required privs. 
+				
+				# Setup a custom handler for this test...
+				'custom_handler'=> array( &$this , '_report_privileges' ),
 				);
 			}
 
 		return $tests;
+		}
+	function _report_privileges( $name , $data )
+		{
+		global $txpcfg;
+
+		$db		= $txpcfg['db'];
+		$host	= $txpcfg['host'];
+		$user	= $txpcfg['user'];
+		
+		$subs = array( '{name}'=>$name , '{db}'=>$db , '{host}'=>$host , '{user}'=>$user , '{missing}'=>$data['current'] , '{privs}'=>$data['min'] );
+		$p = gTxt( 'l10n-report_privs' , $subs );
+
+		$f1[] = eInput( 'l10n' );
+		$f1[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-try_again'), '').'</span>';
+		$f1 = form( join( br . n , $f1 ) );
+		
+		$f2[] = eInput( 'l10n' );
+		$f2[] = hInput( 'debugwiz' , '1' );
+		$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-try_again') . ' ' . gTxt('l10n-show_debug'), '').'</span>';
+		$f2 = form( join( br . n , $f2 ) );
+
+		$f3[] = eInput( 'l10n' );
+		$f3[] = hInput( 'skip-wiz-privilege-check' , '1' );
+		$f3[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-skip_priv_check'), '').'</span>' . br . n;
+		$f3 = form( join( br . n , $f3 ) );
+
+		return $p . $f1 . $f2 . $f3;
 		}
 	function get_req_privs()
 		{
