@@ -1186,6 +1186,8 @@ if (@txpinterface === 'public')
 		$messy_urls		= ($pretext['permlink_mode'] === 'messy' );
 		$category_list	= !empty($pretext['c']);
 		$processingcats = $category_list && !$messy_urls;	# Don't process (localise) category list urls in messy mode.
+		$author_list	= !empty($pretext['author']);
+		$processingauths= $author_list && !$messy_urls;	# Don't process (localise) author list urls in messy mode.
 
 		$list = array();
 		static $alangs;
@@ -1199,19 +1201,19 @@ if (@txpinterface === 'public')
 		//echo br , "url = " , $url;
 		//echo br , "parts = " , var_dump( $parts );
 		
-		$cat_name_mappings = array();
-		if( $processingcats )
+		$name_mappings = array();
+		if( $processingcats || $processingauths )
 			{
-			#echo br , "Processing by category: " ;
-			$cat_names = safe_rows_start( 'lang,data' , 'txp_lang' , "`name`='category'" );
-			if( $cat_names and mysql_num_rows($cat_names) > 0 )
+			# echo br , "Processing by category or author : ";
+			$info = safe_rows_start( 'name,lang,data' , 'txp_lang' , "`name` IN ('category','author')" );
+			if( $info and mysql_num_rows($info) > 0 )
 				{
-				while( $cat_name = nextRow($cat_names) )
+				while( $r = nextRow($info) )
 					{
-					$cat_name_mappings[ $cat_name['lang'] ] = urlencode( $cat_name['data'] ); 
+					$name_mappings[ $r['name'] ][ $r['lang'] ] = urlencode( $r['data'] ); 
 					}
 				}
-			#echo var_dump( $cat_name_mappings ) . br ;
+			# echo var_dump( $name_mappings ) . br ;
 			}
 
 		if( $on404 or $processing404 )
@@ -1342,19 +1344,20 @@ if (@txpinterface === 'public')
 					if( $processing404 )
 						$uri = '';
 						
-					if( $processingcats )
+					if( $processingcats || $processingauths )
 						{
 						#
 						#	Category lists are a special case. For this to work, we need to 
-						# replace the local 'category' string with it's name in the target language.
+						# replace the local 'category'/'author' string with it's name in the target language.
 						#
 						#	Not doing the replace results in 404 errors.
 						#
-						$target_cat_name = $cat_name_mappings[ $lang ];
-						#echo br . $uri . ' => ' . $lang . ' = ' . $target_cat_name . '(' . urldecode($target_cat_name) . ')';
+						$type = $processingcats ? 'category' : 'author';
+						$target_name = $name_mappings[$type][ $lang ];
+						#echo br . $uri . ' => ' . $lang . ' = ' . $target_name . '(' . urldecode($target_name) . ')';
 						
 						$chunks = explode( '/' , ltrim($uri , '/') );
-						$chunks[ 0 ] = $target_cat_name;
+						$chunks[ 0 ] = $target_name;
 						$uri = '/' . join( '/' , $chunks );
 						}
 						
