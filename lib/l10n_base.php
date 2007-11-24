@@ -306,6 +306,7 @@ class MLPLanguageHandler
 					$tmp .= ' - ' . gTxt('default');
 				$result[$code] = $tmp;
 				}
+			ksort( $result );
 			}
 		return $result;
 		}
@@ -610,13 +611,21 @@ class MLPLanguageHandler
 		Returns an array of all the languages in this TXP installation with more
 		than the limit number of strings in that lang...
 		*/
+		static $installation_langs;
+		
+		if( isset( $installation_langs ) )
+ 			return $installation_langs;
+
 		$installation_langs = array( LANG );
-		$langs = safe_column('lang','txp_lang',"1=1 GROUP BY 'lang'");
-		foreach( $langs as $lang )
+		$langs = safe_column('lang','txp_lang',"1=1 GROUP BY `lang`");
+		if( count( $langs ) )
 			{
-			$count = safe_count( 'txp_lang' , "`lang`='$lang'" );
-			if( ($count >= $limit) && ($lang !== LANG) )
-				$installation_langs[] = $lang;
+			foreach( $langs as $lang )
+				{
+				$count = safe_count( 'txp_lang' , "`lang`='$lang'" );
+				if( ($count >= $limit) && ($lang !== LANG) )
+					$installation_langs[] = $lang;
+				}
 			}
 		unset( $langs );
 
