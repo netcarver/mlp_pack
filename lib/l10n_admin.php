@@ -424,7 +424,7 @@ function _l10n_inject_switcher_form()
 	}
 function _l10n_process_admin_page($page)
 	{
-	global $event , $step , $l10n_painters , $DB;
+	global $event , $step , $l10n_painters , $DB , $prefs;
 
 	//	NEEDED to populate the language switcher on admin tabs & change the text of the 'articles' tab.
 	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
@@ -444,10 +444,26 @@ function _l10n_process_admin_page($page)
 		}
 
 	#
-	#	Add the language switcher...
+	#	Add the language switcher to the admin head area...
 	#
-	$f = '<form method="get" action="index.php" style="display: inline;">';
-	$page = str_replace( $f , _l10n_inject_switcher_form().sp.$f , $page);
+	$ls = _l10n_inject_switcher_form();
+	$ver = $prefs['version'];
+	$fs = array	(
+				'4.0.4' => '<form method="get" action="index.php" style="display: inline;">',
+				'4.0.6' => '<form method="get" action="index.php" class="navpop" style="display: inline;">',
+				);
+	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
+	$page = str_replace( $f , $ls.sp.$f , $page);
+	#
+	#	... and to the bottom of the admin form ...
+	#
+	$fs = array	(
+				'4.0.4' => '</form><a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
+				'4.0.6' => '</form>'.n.'<a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
+				);
+	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
+	$page = str_replace( $f , $f.br.n.$ls , $page);
+
 
 	#
 	#	Dynamically replace the 'tab_list' label...
