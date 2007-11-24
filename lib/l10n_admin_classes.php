@@ -2810,7 +2810,7 @@ class MLPStringView extends GBPAdminTabView
 			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.sp.'<a href="#" onClick="toggleDirection(\''.$code.'\')"><span id="'.$code.'-toggle">'.gTxt('l10n-toggle').'</span></a>' .'</dt>';
 			$out[] = '<dd><p>'.
 						'<textarea class="l10n_string_edit" id="' . $code . '-data" name="' . $code . '-data" cols="60" rows="2" title="' .
-						gTxt('l10n-textbox_title') . '"'. $dir .'>' . $data['data'] . '</textarea>' .
+						gTxt('l10n-textbox_title') . '"'. $dir .'>' . htmlspecialchars( $data['data'] ) . '</textarea>' .
 						hInput( $code.'-id' , $data['id'] ) .
 						hInput( $code.'-event' , $e ) .
 						'</p></dd>';
@@ -4365,7 +4365,6 @@ class MLPWizView extends GBPWizardTabView
 			$list = trim( $list , ', ' );
 
 			$tests['MySQL Privileges'] = array(
-				#'current'	=> gTxt( 'l10n-missing_thing' , array( '{thing}' => $can_setup_cleanup ) ), # list of missing privileges.
 				'current'	=> $can_setup_cleanup, # list of missing privileges.
 				'min'		=> $list ,	# list of required privs. 
 				
