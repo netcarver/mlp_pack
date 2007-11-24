@@ -1184,10 +1184,14 @@ if (@txpinterface === 'public')
 
 		$processing404	= ($pretext['status'] === '404');
 		$messy_urls		= ($pretext['permlink_mode'] === 'messy' );
+
 		$category_list	= !empty($pretext['c']);
-		$processingcats = $category_list && !$messy_urls;	# Don't process (localise) category list urls in messy mode.
+		$get_style_cat  = gps( 'c' );
+		$processingcats = $category_list && !$messy_urls && !$get_style_cat;	# Don't process (localise) category list urls in messy mode.
+
 		$author_list	= !empty($pretext['author']);
-		$processingauths= $author_list && !$messy_urls;	# Don't process (localise) author list urls in messy mode.
+		$get_style_auth = gps( 'author' );
+		$processingauths= $author_list && !$messy_urls && !$get_style_auth;	# Don't process (localise) author list urls in messy mode.
 
 		$list = array();
 		static $alangs;
@@ -1200,7 +1204,7 @@ if (@txpinterface === 'public')
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
 		//echo br , "url = " , $url;
 		//echo br , "parts = " , var_dump( $parts );
-		
+
 		$name_mappings = array();
 		if( $processingcats || $processingauths )
 			{
