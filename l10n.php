@@ -1082,7 +1082,8 @@ if (@txpinterface === 'public')
 		# given article...
 		#
 		$result = array();
-		$where = "`".L10N_COL_GROUP."`='$article_id' and `Status` >= '$status' and `".L10N_COL_LANG."`<>'$exclude_lang'";
+		$article_id = (int)$article_id;
+		$where = "`".L10N_COL_GROUP."`=$article_id and `Status` >= '$status' and `".L10N_COL_LANG."`<>'$exclude_lang'";
 		$rows = safe_rows_start( '*,ID as thisid, unix_timestamp(Posted) as posted' , L10N_MASTER_TEXTPATTERN , $where );
 		if( count( $rows ) )
 			{
@@ -1097,10 +1098,11 @@ if (@txpinterface === 'public')
 		}
 	function _l10n_get_alternate_mappings( $rendition_id , $exclude_lang , $use_master=false )
 		{
+		$rendition_id = (int)$rendition_id;
 		if( $use_master )
-			$info = safe_row( L10N_COL_GROUP , L10N_MASTER_TEXTPATTERN , "`ID`='$rendition_id'" );
+			$info = safe_row( L10N_COL_GROUP , L10N_MASTER_TEXTPATTERN , "`ID`=$rendition_id" );
 		else
-			$info = safe_row( L10N_COL_GROUP , 'textpattern' , "`ID`='$rendition_id'" );
+			$info = safe_row( L10N_COL_GROUP , 'textpattern' , "`ID`=$rendition_id" );
 		if( empty($info) )
 			return $info;
 
@@ -1214,7 +1216,7 @@ if (@txpinterface === 'public')
 				{
 				while( $r = nextRow($info) )
 					{
-					$name_mappings[ $r['name'] ][ $r['lang'] ] = urlencode( $r['data'] ); 
+					$name_mappings[ $r['name'] ][ $r['lang'] ] = urlencode( $r['data'] );
 					}
 				}
 			# echo var_dump( $name_mappings ) . br ;
@@ -1347,11 +1349,11 @@ if (@txpinterface === 'public')
 					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
 					if( $processing404 )
 						$uri = '';
-						
+
 					if( $processingcats || $processingauths )
 						{
 						#
-						#	Category lists are a special case. For this to work, we need to 
+						#	Category lists are a special case. For this to work, we need to
 						# replace the local 'category'/'author' string with it's name in the target language.
 						#
 						#	Not doing the replace results in 404 errors.
@@ -1359,12 +1361,12 @@ if (@txpinterface === 'public')
 						$type = $processingcats ? 'category' : 'author';
 						$target_name = $name_mappings[$type][ $lang ];
 						#echo br . $uri . ' => ' . $lang . ' = ' . $target_name . '(' . urldecode($target_name) . ')';
-						
+
 						$chunks = explode( '/' , ltrim($uri , '/') );
 						$chunks[ 0 ] = $target_name;
 						$uri = '/' . join( '/' , $chunks );
 						}
-						
+
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
 					}
 				else
