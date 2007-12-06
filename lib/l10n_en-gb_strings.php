@@ -83,7 +83,6 @@ $l10n_default_strings = array(
 	'l10n-email_end'			=> "Please don't forget to clear the url-only-title when you translate the rendition{s}!\r\n\r\nThank you,\r\n--\r\n{txp_username}.",
 	'l10n-empty'				=> 'empty',
 	'l10n-explain_extra_lang'	=> '<p>* These languages are not specified in the public site preferences but may be in use for the admin interface.</p><p>If they are not needed for your site you can delete them.</p>',
-	'l10n-explain_no_tags'		=> '<p>* = These forms/pages have snippets but do not have the <em>localise tags</em> needed to display the snippets.</p><p>You can fix this by inserting the needed tags into these pages/forms.</p>',
 	'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 	'l10n-export'				=> 'Export',
 	'l10n-export_title'			=> '<h2>Export {type} Strings {help}</h2><br/><p>Select languages you wish to include and then click the button.</p>',

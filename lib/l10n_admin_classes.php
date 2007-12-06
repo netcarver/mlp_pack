@@ -546,41 +546,9 @@ class MLPSnips
 			case 'snippet' :
 				return L10N_SNIPPET_PATTERN;
 			break;
-			case 'tag_localise':
-				return $tag_pattern;
-			break;
 			default :
 			case 'snippet_tag' :
 				return $snippet_tag_pattern;
-			break;
-			}
-		}
-
-	function has_localisation_tags( &$thing )
-		{
-		return true;	# No need for the l10n_localise tag now.
-		}
-
-	function do_localise( &$thing , $action = 'check' )
-		{
-		if( !$thing or empty( $thing ) )
-			return NULL;
-		switch( $action )
-			{
-			case 'remove' :
-			$count = 0;
-			$p = MLPSnips::get_pattern( 'tag_localise' );
-			$thing = trim( preg_replace( $p , '' , $thing /*, -1 , $count*/ ) );
-			return $count;
-			break;
-
-			case 'insert' :
-				return '<txp:l10n_localise>'.$thing.'</txp:l10n_localise>';
-				break;
-
-			default:
-			case 'check':
-			return MLPSnips::has_localisation_tags( $thing );
 			break;
 			}
 		}
@@ -2379,22 +2347,13 @@ class MLPStringView extends GBPAdminTabView
 			while ( $a = nextRow($rs) )
 				{
 				$snippets 	= array();
-				$raw_count = 0;
 				$snippets = MLPSnips::find_snippets_in_block( $a['data'] , $raw_count );
-				$localised = MLPSnips::do_localise( $a['data'] );
 				$count = count( $snippets );
 				$marker = ($count) ? '['.$count.']' : '';
 				$guts = $a['name'].' '.$marker;
-				if( !$localised and ($raw_count) )
-					{
-					$guts .= ' *';
-					$explain = true;
-					}
 				$out[] = '<li><a href="'.$this->url( array('container'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
-			if( $explain )
-				$out[] = gTxt('l10n-explain_no_tags') . n;
 			}
 		else
 			$out[] = '<li>'.gTxt('none').'</li>'.n;
