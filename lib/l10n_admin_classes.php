@@ -414,6 +414,7 @@ class MLPArticles
 				#	Get the article's members...
 				#
 				extract( $article );
+				$ID = (int)$ID;
 				$members = unserialize( $members );
 				$m_count = count( $members );
 				$members_count += $m_count;
@@ -451,6 +452,8 @@ class MLPArticles
 					#
 					foreach( $diff_renditions_members as $rendition )
 						{
+						$rendition = (int)$rendition;
+
 						$details = safe_row( '*' , 'textpattern' , "`ID`=$rendition" );
 						if( !empty( $details ) )
 							$lang = $details[L10N_COL_LANG];
