@@ -154,7 +154,7 @@ class MLPArticles
 		}
 	function _get_article_info( $id )
 		{
-		$info = safe_row( '*' , L10N_ARTICLES_TABLE , "`ID`='$id'" );
+		$info = safe_row( '*' , L10N_ARTICLES_TABLE , "`ID`=$id" );
 		if( !empty($info) )
 			$info['members'] = unserialize( $info['members'] );
 		return $info;
@@ -165,18 +165,18 @@ class MLPArticles
 		if( 0 === $article_id )
 			$article = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" );
 		else
-			$article = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members', `ID`='$article_id'" );
+			$article = safe_insert( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members', `ID`=$article_id" );
 		return $article;
 		}
 	function destroy_article( $article_id )
 		{
-		return safe_delete( L10N_ARTICLES_TABLE , "`ID`='$article_id'" );
+		return safe_delete( L10N_ARTICLES_TABLE , "`ID`=$article_id" );
 		}
 	function _update_article( $article_id , $title , $members )
 		{
 		$members = serialize( $members );
 		$title = doSlash( $title );
-		$article = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`='$article_id'" );
+		$article = safe_update( L10N_ARTICLES_TABLE , "`names`='$title', `members`='$members'" , "`ID`=$article_id" );
 		return $article;
 		}
 	function change_rendition_language( $article_id , $rendition_id , $rendition_lang , $target_lang )
@@ -190,6 +190,7 @@ class MLPArticles
 			return "Rendition $rendition_id in $rendition_lang does not belong to article $article_id.";
 		unset( $members[$rendition_lang] );
 
+		$rendition_id = (int)$rendition_id;
 		$members[$target_lang] = $rendition_id;
 
 		$ok = MLPArticles::_update_article( $article_id , $names , $members );
@@ -213,6 +214,7 @@ class MLPArticles
 			}
 
 		extract( $info );
+		$rendition_id = (int)$rendition_id;
 
 		if( array_key_exists( $rendition_lang , $members ) )
 			return "A rendition in $rendition_lang is already present in article $article_id.";
@@ -237,6 +239,8 @@ class MLPArticles
 
 		extract( $g_info );
 
+		$rendition_id = (int)$rendition_id;
+
 		if( $members[$rendition_lang] != $rendition_id )	# Rendition is not in this article under this language!
 			{
 			return "No $rendition_lang rendition in article $article_id.";
@@ -252,7 +256,7 @@ class MLPArticles
 			}
 		else
 			{
-			$result = safe_delete( L10N_ARTICLES_TABLE , "`ID`='$ID'" );
+			$result = safe_delete( L10N_ARTICLES_TABLE , "`ID`=$ID" );
 			if(!$result)
 				$result = "Could not delete article $article_id.";
 			}
@@ -286,7 +290,8 @@ class MLPArticles
 		$id = @$GLOBALS['ID'];
 		if( !isset( $id ) or empty( $id ) )
 			$id = $rendition['ID'];
-		$mapping =  array( $lang=>strval($id) );
+		$id = (int)$id;
+		$mapping =  array( $lang=> $id );
 
 		if( isset( $rendition[L10N_COL_GROUP] ) and !empty($rendition[L10N_COL_GROUP]) )
 			{
@@ -302,7 +307,7 @@ class MLPArticles
 			{
 			//	echo br, "Added article '$name'[$article_id], updating rendition $id ... L10N_COL_LANG = '$lang' , L10N_COL_GROUP = '$article_id'";
 			#	Update the rendition to point to its article and have a translation accounted to it...
-			$result = @safe_update( 'textpattern', "`".L10N_COL_LANG."` = '$lang',`".L10N_COL_GROUP."` = '$article_id'" , "ID='$id'" );
+			$result = @safe_update( 'textpattern', "`".L10N_COL_LANG."` = '$lang',`".L10N_COL_GROUP."` = $article_id" , "ID=$id" );
 			}
 		return $result;
 		}
@@ -334,10 +339,10 @@ class MLPArticles
 		#	Get the new entries...
 		$new_article	= $rendition[L10N_COL_GROUP];
 		$new_lang		= (@$rendition[L10N_COL_LANG]) ? $rendition[L10N_COL_LANG] : MLPLanguageHandler::get_site_default_lang();
-		$rendition_id	= $rendition['ID'];
+		$rendition_id	= (int)$rendition['ID'];
 
 		#	Read the existing rendition entries...
-		$info = safe_row( '*' , 'textpattern' , "`ID`='$rendition_id'" );
+		$info = safe_row( '*' , 'textpattern' , "`ID`=$rendition_id" );
 		if( $info === false )
 			{
 			$l10n_article_message = "Error: failed to read rendition $rendition_id data.";
@@ -371,7 +376,7 @@ class MLPArticles
 			}
 
 		# 	Update the entries in the article...
-		$ok = safe_update( 'textpattern', "`".L10N_COL_GROUP."`='$new_article' , `".L10N_COL_LANG."`='$new_lang'" , "`ID`='$rendition_id'" );
+		$ok = safe_update( 'textpattern', "`".L10N_COL_GROUP."`='$new_article' , `".L10N_COL_LANG."`='$new_lang'" , "`ID`=$rendition_id" );
 		if( $ok )
 			$l10n_article_message = "Language: {$current_lang}->{$new_lang}, article:{$current_article}->{$new_article}";
 		else
@@ -416,7 +421,7 @@ class MLPArticles
 				#
 				#	Find the members from the textpattern table too...
 				#
-				$renditions = safe_column( 'ID', 'textpattern' , "`".L10N_COL_GROUP."`='$ID'" );
+				$renditions = safe_column( 'ID', 'textpattern' , "`".L10N_COL_GROUP."`=$ID" );
 				$t_count = count( $renditions );
 
 				#
@@ -446,7 +451,7 @@ class MLPArticles
 					#
 					foreach( $diff_renditions_members as $rendition )
 						{
-						$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+						$details = safe_row( '*' , 'textpattern' , "`ID`=$rendition" );
 						if( !empty( $details ) )
 							$lang = $details[L10N_COL_LANG];
 						else
@@ -478,6 +483,37 @@ class MLPArticles
 		$new_title = doSlash( $new_title );
 		$info = MLPArticles::_get_article_info( $article_id );
 		MLPArticles::_update_article( $article_id , $new_title , $info['members'] );
+		}
+	function force_integer_ids()
+		{
+		#echo br , "Entering MLPArticles::force_integer_ids()";
+		$articles = MLPArticles::get_articles( '1=1' );
+		if( count( $articles ) )
+			{
+			while( $article = nextRow($articles) )
+				{
+				#
+				#	Get the article's members...
+				#
+				extract( $article );
+				$members = unserialize( $members );
+
+				#echo br , "Processing article $ID:$names " , dmp($members);
+
+				if( !empty( $members ) )
+					{
+					$new_members = array();
+
+					foreach( $members as $lang => $rendition_id )
+						$new_members[$lang] = (int)$rendition_id;
+
+					#echo "New members => " , dmp($new_members);
+
+					MLPArticles::_update_article( $ID , $names , $new_members );
+					}
+				}
+			}
+		#echo br , "Leaving MLPArticles::force_integer_ids()";
 		}
 	}
 
@@ -3407,7 +3443,7 @@ class MLPArticleView extends GBPAdminTabView
 
 	function preload()
 		{
-		$rebuild = false;
+		$rebuild = gps( 'rebuild' );
 		$step = gps('step');
 		if( $step )
 			{
@@ -3612,15 +3648,19 @@ class MLPArticleView extends GBPAdminTabView
 		$vars = array( 'article' );
 		extract( gpsa( $vars ) );
 
+		$article = (int)$article;
+		if( 0 == $article )
+			return false;
+
 		#
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
-		$renditions = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."='$article'" );
+		$renditions = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."=$article" );
 
 		#
 		#	Delete from the master table...
 		#
-		$master_deleted = safe_delete( 'textpattern' , L10N_COL_GROUP."='$article'" );
+		$master_deleted = safe_delete( 'textpattern' , L10N_COL_GROUP."=$article" );
 
 		#
 		#	Delete from the rendition tables...
@@ -3629,7 +3669,7 @@ class MLPArticleView extends GBPAdminTabView
 			{
 			$lang = $rendition[L10N_COL_LANG];
 			$rendition_table = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
-			safe_delete( $rendition_table , L10N_COL_GROUP."='$article'" );
+			safe_delete( $rendition_table , L10N_COL_GROUP."=$article" );
 			}
 
 		#
@@ -3647,10 +3687,14 @@ class MLPArticleView extends GBPAdminTabView
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
 
+		$rendition = (int)$rendition;
+		if( 0 == $rendition )
+			return false;
+
 		#
 		#	Read the translation from the master table, extracting Group and Lang...
 		#
-		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+		$details = safe_row( '*' , 'textpattern' , "`ID`=$rendition" );
 		if( empty( $details ) )
 			return true;
 
@@ -3660,13 +3704,13 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		#	Delete from the master table...
 		#
-		$master_deleted = @safe_delete( 'textpattern' , "`ID`='$rendition'" );
+		$master_deleted = @safe_delete( 'textpattern' , "`ID`=$rendition" );
 
 		#
 		#	Delete from the correct language rendition table...
 		#
 		$rendition_table = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
-		$rendition_deleted = @safe_delete( $rendition_table , "`ID`='$rendition'" );
+		$rendition_deleted = @safe_delete( $rendition_table , "`ID`=$rendition" );
 
 		#
 		#	Delete from the article table...
@@ -3704,6 +3748,11 @@ class MLPArticleView extends GBPAdminTabView
 						{
 						case 'start_clone':
 							$this->render_start_clone();
+							break;
+
+						case 'force_update_ids':
+							MLPArticles::force_integer_ids();
+							$this->render_article_table();
 							break;
 
 						default:
@@ -3895,7 +3944,7 @@ class MLPArticleView extends GBPAdminTabView
 				#	Pull the translations for this article from the master translations table
 				# (that is, from the textpattern table)...
 				#
-				$translations = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."='$ID'" );
+				$translations = safe_rows( '*' , 'textpattern' , L10N_COL_GROUP."=$ID" );
 				$n_translations = count( $translations );
 				$n_valid_translations = 0;
 
@@ -3930,14 +3979,14 @@ class MLPArticleView extends GBPAdminTabView
 					if( !array_key_exists( $lang , $members ) )
 						{
 						$this->parent->message = gTxt( 'l10n-missing_rendition' , array( '{id}'=>$ID ) );
-						$members[$lang] = $translations[$i]['ID'];
+						$members[$lang] = (int)$translations[$i]['ID'];
 						MLPArticles::_update_article( $ID , $names , $members );
 						$n_valid_translations++;
 						}
 					else
 						{
-						$master_id = $translations[$i]['ID'];
-						$rend_id   = $members[$lang];
+						$master_id = (int)$translations[$i]['ID'];
+						$rend_id   = (int)$members[$lang];
 						if( $master_id != $members[$lang] )
 							{
 							//echo br , "Found incorrect rendition ID $rend_id in article table. Replacing with ID $master_id.";
@@ -4366,8 +4415,8 @@ class MLPWizView extends GBPWizardTabView
 
 			$tests['MySQL Privileges'] = array(
 				'current'	=> $can_setup_cleanup, # list of missing privileges.
-				'min'		=> $list ,	# list of required privs. 
-				
+				'min'		=> $list ,	# list of required privs.
+
 				# Setup a custom handler for this test...
 				'custom_handler'=> array( &$this , '_report_privileges' ),
 				);
@@ -4382,14 +4431,14 @@ class MLPWizView extends GBPWizardTabView
 		$db		= $txpcfg['db'];
 		$host	= $txpcfg['host'];
 		$user	= $txpcfg['user'];
-		
+
 		$subs = array( '{name}'=>$name , '{db}'=>$db , '{host}'=>$host , '{user}'=>$user , '{missing}'=>$data['current'] , '{privs}'=>$data['min'] );
 		$p = gTxt( 'l10n-report_privs' , $subs );
 
 		$f1[] = eInput( 'l10n' );
 		$f1[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-try_again'), '').'</span>';
 		$f1 = form( join( br . n , $f1 ) );
-		
+
 		$f2[] = eInput( 'l10n' );
 		$f2[] = hInput( 'debugwiz' , '1' );
 		$f2[] = '<span class="l10n_form_submit">'.fInput('submit', '', gTxt('l10n-try_again') . ' ' . gTxt('l10n-show_debug'), '').'</span>';
@@ -4924,7 +4973,7 @@ class MLPWizView extends GBPWizardTabView
 		{
 		static $default_md5s = array (
 			'txp_page'     => array (		 #Txp 4.0.4								#Txp 4.0.5	-- Add new entries as required.
-				'default'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896' ), 
+				'default'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896' ),
 				'archive'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896' ),
 				'error_default'    => array( '909ada7984ebdc41a86f74861d6a0944',	'faca32c1d818cc017e1389124742fb74' )
 				),
