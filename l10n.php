@@ -277,12 +277,14 @@ h2(#prefs). Preferences Help
 
 * "Languages":#l10n-languages
 * "Show Article Table Legend":#l10n-show_legends
+* "Allow cloning by rendition ID in the article table?":#l10n-show_clone_by_id
 * "Email a user when assigning them a rendition?":#l10n-send_notifications
 * "… even when assigning to yourself?":#l10n-send_notice_to_self
 * "… even when author changed in content > renditions list?":#l10n-send_notice_on_changeauthor
 * "Power users can change a rendition's language or article?":#l10n-allow_writetab_changes
-* "Inline editing of pages and forms":#l10n-inline_editing
+* "Inline editing of pages and forms?":#l10n-inline_editing
 * "Allow strings to be totally deleted on the snippet > search tab?":#l10n-allow_search_delete
+* "Limit string searches to publicly available strings?":#l10n-search_public_strings_only
 
 h3(#l10n-languages). "Languages":#prefs
 
@@ -302,6 +304,9 @@ This option controls the visibility of the explanation that appears as the foote
 
 Setting this to 'no' can free up some screen space for you if you know what the colour scheme represents.
 
+h3(#l10n-show_clone_by_id). "Allow cloning by rendition ID in the article table?":#prefs
+
+If you set this to 'yes' an extra form will appear at the top of the article table that allows you to directly enter the ID of a rendition that you wish to clone. Hitting the 'go' button then starts the cloning process.
 
 h3(#l10n-send_notifications). "Email a user when assigning them a rendition?":#prefs
 
@@ -332,6 +337,10 @@ It also allows you access to a feature that allows pages and forms to automatica
 h3(#l10n-allow_search_delete). "Allow strings to be totally deleted on the snippet > search tab?":#prefs
 
 Choose 'yes' to allow all renditions of a string to be deleted when edited via the Content>MLP>Snippets>Search tab. Just select a string to edit, manually delete all renditions of the string and then hit 'save'. This will remove the string from your installation. You will be left on the edit page for that string so that you can re-enter rendition data if your deletion was a mistake.
+
+h3(#l10n-search_public_strings_only). "Limit string searches to publicly available strings?":#prefs
+
+Choose 'yes' to make the snippet > search tab only search against strings that are available to the public interface. This is useful if you are using the search feature to locate strings to use as snippets in your pages and forms. Prevents you from choosing admin only strings that will fail to render on your website's public interface.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
