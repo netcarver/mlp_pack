@@ -1390,12 +1390,14 @@ class MLPPlugin extends GBPPlugin
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
 		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
+		'l10n-show_clone_by_id' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_to_self'	=>	array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notice_on_changeauthor' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-allow_writetab_changes' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-inline_editing' => array('value' => 1, 'type' => 'yesnoradio'),
 		'l10n-allow_search_delete' => array( 'value' => 0, 'type' => 'yesnoradio' ),
+		'l10n-search_public_strings_only' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		);
 	var $strings_prefix = L10N_NAME;
 	var $insert_in_debug_mode = false;
@@ -2033,7 +2035,11 @@ class MLPStringView extends GBPAdminTabView
 		$admin_langs = MLPLanguageHandler::get_installation_langs();
 
 		$stats = array();
-		$full_names = safe_rows_start( 'name,lang', 'txp_lang', '1=1 ORDER BY name ASC' );
+		if( $this->pref('l10n-search_public_strings_only') )
+			$where = '`event` in ("public","common")';
+		else
+			$where = '1=1';
+		$full_names = safe_rows_start( 'name,lang', 'txp_lang', $where . ' ORDER BY name ASC' );
 		$names = MLPStrings::get_strings( $full_names , $stats );
 		$num_names = count( $names );
 
@@ -2096,7 +2102,10 @@ class MLPStringView extends GBPAdminTabView
 					}
 				break;
 			}
-		print graf( '<span id="l10n_result_count">'.$search_term.'</span>/' . count( $out ) . ' ' . gTxt('l10n-strings_match') ).n;
+
+		$subs['{interface}'] = 	($this->pref('l10n-search_public_strings_only')) ? 'public' : '';
+
+		print graf( '<span id="l10n_result_count">'.$search_term.'</span>/' . count( $out ) . ' ' . gTxt('l10n-strings_match' , $subs) ).n;
 		print '<ul id="l10n_sbn_result_list" class="l10n_visible" >';
 		print join( '' , $out );
 		print '</ul>'.n;
@@ -2133,6 +2142,10 @@ class MLPStringView extends GBPAdminTabView
 			$search_term = doSlash( $search_term );
 			$where = "`data` LIKE '%$search_term%'";
 
+			if( $this->pref('l10n-search_public_strings_only') )
+				$where = '`event` in ("public","common") AND ' . $where;
+
+
 			$lang = gps( 'l10n-lang' );
 			$lang = doSlash( $lang );
 			if( $lang and $lang!=='-' )
@@ -2144,7 +2157,8 @@ class MLPStringView extends GBPAdminTabView
 
 		if( $rs and $count > 0 )
 			{
-			$o[] = '<div>'.n.'<h3>' . $count.' '.gTxt('l10n-matches').'</h3>'.n.'<ul>'.n;
+			$subs['{interface}'] = 	($this->pref('l10n-search_public_strings_only')) ? 'public' : '';
+			$o[] = '<div>'.n.'<h3>' . $count.' '.gTxt('l10n-strings_match' , $subs).'</h3>'.n.'<ul>'.n;
 			while ( $a = nextRow($rs) )
 				{
 				$name = $a['name'];
@@ -2198,8 +2212,10 @@ class MLPStringView extends GBPAdminTabView
 		#
 		#	Render the search column...
 		#
+		$subs['{interface}'] = 	($this->pref('l10n-search_public_strings_only')) ? 'Public' : '';
+
 		$out[] = 	'<div class="l10n_owner_list">' . n;
-		$out[] = 	'<h3>' . gTxt('l10n-search_for_strings') . '</h3>' . n;
+		$out[] = 	'<h3>' . gTxt('l10n-search_for_strings' , $subs) . '</h3>' . n;
 
 		#
 		#	Render the search type picker form...
@@ -3834,14 +3850,16 @@ class MLPArticleView extends GBPAdminTabView
 		$x = n.join('', $x).n;
 
 		$out  = n.n.'<div id="l10n-filters">'.n;
-		$out .= form($f).n.br;
-		$out .= form($x).n;
-		if( $this->clone_by_id )
+		$out .= form($f).n;
+		if( $this->pref('l10n-show_clone_by_id') )
 			{
-			$out .= graf( gTxt('l10n-cannot_clone').sp.$this->clone_by_id , ' class="warning" ' );
-			$this->clone_by_id = '';
+			$out .= br.n.form($x).n;
+			if( $this->clone_by_id )
+				{
+				$out .= graf( gTxt('l10n-cannot_clone').sp.$this->clone_by_id , ' class="warning" ' );
+				$this->clone_by_id = '';
+				}
 			}
-
 		$out .= '</div>'.n;
 
 		return $out;
