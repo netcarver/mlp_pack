@@ -42,7 +42,7 @@ $iso_693_langs = array(
 	'gn'=>array( 'gn'=>"Avañe'ẽ" ),
 	'gu'=>array( 'gu'=>'ગુજરાતી' ),
 	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),
-	'he'=>array( 'he'=>'עִבְרִית' , 'he_il'=>'עִבְרִית' , 'dir'=>'rtl' ),
+	'he'=>array( 'he'=>'עִבְרִית' , 'he-il'=>'עִבְרִית' , 'dir'=>'rtl' ),
 	'hi'=>array( 'hi'=>'हिन्दी' ),
 	'hr'=>array( 'hr'=>'Hrvatski' ),
 	'hu'=>array( 'hu'=>'Magyar' ),
