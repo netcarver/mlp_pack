@@ -3390,6 +3390,7 @@ class MLPSnipIOView extends MLPSubTabView
 
 class MLPArticleView extends GBPAdminTabView
 	{
+	var $clone_by_id = '';
 	var	$statuses = array();
 	function MLPArticleView( $title, $event, &$parent, $is_default = NULL )
 		{
@@ -3455,7 +3456,7 @@ class MLPArticleView extends GBPAdminTabView
 
 		$vars = array( 'rendition' );
 		extract( gpsa( $vars ) );
-
+		$rendition = (int)$rendition;
 		$langs = MLPLanguageHandler::get_site_langs();
 
 		$clone_to = array();
@@ -3479,8 +3480,8 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		#	Prepare the source rendition data...
 		#
-		$source = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
-		$article_id = $source[L10N_COL_GROUP];
+		$source = safe_row( '*' , 'textpattern' , "`ID`=$rendition" );
+		$article_id = (int)$source[L10N_COL_GROUP];
 
 		#
 		#	Create the articles, substituting new authors and status as needed...
@@ -3524,7 +3525,7 @@ class MLPArticleView extends GBPAdminTabView
 			#	Add into the rendition table for this lang ensuring this has the ID of the
 			# just added master entry!
 			#
-			$insert[] = '`ID`=\''.doSlash( $rendition_id ).'\'';
+			$insert[] = '`ID`='.doSlash( $rendition_id );
 			$insert_sql = join( ', ' , $insert );
 			$table_name = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
 			safe_insert( $table_name , $insert_sql );
@@ -3533,7 +3534,7 @@ class MLPArticleView extends GBPAdminTabView
 			#	Now we know the article ID, store this against the author for email notification...
 			#
 			$language = MLPLanguageHandler::get_native_name_of_lang( $lang );
-			$notify[$new_author][$lang] = array( 'id' => $rendition_id , 'title'=>$source['Title'] , 'language'=>$language );
+			$notify[$new_author][$lang] = array( 'id' => "$rendition_id" , 'title'=>$source['Title'] , 'language'=>$language );
 			}
 
 		#
@@ -3780,7 +3781,7 @@ class MLPArticleView extends GBPAdminTabView
 
 		return $langs;
 		}
-	function _render_filter_form()
+	function _render_filter_form($page)
 		{
 		$f[] = '<label for="match_section">'.gTxt('Section').'</label>'.sp.
 				fInput( /*type*/ 	'input',
@@ -3814,8 +3815,36 @@ class MLPArticleView extends GBPAdminTabView
 						/*id*/		'match_status' ).n;
 		$f[] = $this->form_inputs().n;
 		$f[] = fInput( 'submit', 'search', gTxt('go'), 'smallerbox' , '', '', '', '4' );
+		$f = n.join('', $f).n;
 
-		return n.n.form( graf( n.join('', $f).n ).br.n , 'margin: auto; text-align: center;' );
+		$x[] = '<label for="clone-rendition">'.gTxt('l10n-clone_by_rend_id').'</label>'.sp.
+				fInput( /*type*/ 	'input',
+						/*name*/	'rendition',
+						/*value*/	('start_clone' === gps('step')) ? gps('rendition') : '',
+						/*class*/	'',
+						/*title*/	'',
+						/*onClick*/	'',
+						/*size*/	'',
+						/*tab*/		'5',
+						/*id*/		'rendition' ).n;
+		$x[] = $this->form_inputs().n;
+		$x[] = sInput( 'start_clone' );
+		$x[] = hInput( 'page' , $page );
+		$x[] = fInput( 'submit', 'search', gTxt('go'), 'smallerbox' , '', '', '', '6' );
+		$x = n.join('', $x).n;
+
+		$out  = n.n.'<div id="l10n-filters">'.n;
+		$out .= form($f).n.br;
+		$out .= form($x).n;
+		if( $this->clone_by_id )
+			{
+			$out .= graf( gTxt('l10n-cannot_clone').sp.$this->clone_by_id , ' class="warning" ' );
+			$this->clone_by_id = '';
+			}
+
+		$out .= '</div>'.n;
+
+		return $out;
 		}
 	function render_article_table()
 		{
@@ -3846,7 +3875,7 @@ class MLPArticleView extends GBPAdminTabView
 		#
 		#	Render the filter/search form...
 		#
-		$o[] = $this->_render_filter_form();
+		$o[] = $this->_render_filter_form( $page );
 
 		#
 		#	Start the table...
@@ -4154,15 +4183,41 @@ class MLPArticleView extends GBPAdminTabView
 		$vars = array( 'rendition' , 'page' );
 		extract( gpsa( $vars ) );
 
+		if( empty( $rendition ) )	# Empty input
+			{
+			$this->clone_by_id = gTxt('l10n-empty_rend_id');
+			return $this->render_article_table();
+			}
+
+		$rendition = (int)$rendition;
+		if( 0 == $rendition )	# Invalid string to int conversion
+			{
+			$this->clone_by_id = gTxt('l10n-invalid_rend_id');
+			return $this->render_article_table();
+			}
+
 		#
 		#	Get the un-translated languages for the article that owns this rendition...
 		#
 		$details = safe_row( '*' , 'textpattern' , "`ID`='$rendition'" );
+
+		if( empty( $details ) )		# No matching value
+			{
+			$this->clone_by_id = gTxt('l10n-no_rend_matching_id');
+			return $this->render_article_table();
+			}
+
 		$title   = $details['Title'];
 		$article = $details[L10N_COL_GROUP];
 		$author  = $details['AuthorID'];
 		$to_do = MLPArticles::get_remaining_langs( $article );
 		$count = count( $to_do );
+
+		if( 0 == $count )
+			{
+			$this->clone_by_id = gTxt('l10n-article_fully_populated' , array('{title}'=>$title , '{article}'=>$article) );
+			return $this->render_article_table();
+			}
 
 		#
 		#	Get the list of possible authors...
