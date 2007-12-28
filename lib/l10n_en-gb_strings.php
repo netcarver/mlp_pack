@@ -167,4 +167,3 @@ $l10n_default_strings = array(
 	);
 
 ?>
-
