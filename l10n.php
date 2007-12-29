@@ -1193,12 +1193,15 @@ if (@txpinterface === 'public')
 							'article_list' 		=> $is_article_list,	#	Set to '1' to always output a site-wide list in this location
 							'surpress_current'	=> '',					#	Set to any non-blank to omit the viewer's browse language from the list
 							'empty_title'		=> '',					#	Title to show if the output list is empty
+							'appendslash'		=> '',					#	Set to any non-blank to append a slash '/' to the end of the language marker (if needed)
 							),$atts));
 
 		$on404			= !empty($on404);	# User marked this list as a 404 special lookup list.
 		$show_empty		= !empty($show_empty);
 		$link_current	= !empty($link_current);
 		$surpress_current = !empty($surpress_current);
+
+		$appendslash	= !empty($appendslash);
 
 		$processing404	= ($pretext['status'] === '404');
 		$messy_urls		= ($pretext['permlink_mode'] === 'messy' );
@@ -1382,6 +1385,9 @@ if (@txpinterface === 'public')
 						$chunks[ 0 ] = $target_name;
 						$uri = '/' . join( '/' , $chunks );
 						}
+
+					if( !$processing404 && $appendslash && $uri == '' )
+						$uri = '/';
 
 					$line = '<a href="'.hu.$short.$uri.'">'.$text.'</a>';
 					}
