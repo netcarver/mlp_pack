@@ -1051,12 +1051,19 @@ if (@txpinterface === 'public')
 		{
 		global $l10n_replace_strings , $prefs;
 
-		$siteurl = trim( $prefs['siteurl'] , '/' );
-		$siteurl = _l10n_markup( $siteurl , true );
+		static $siteurl;
+
+		if( !isset( $siteurl ) )
+			{
+			$siteurl = trim( $prefs['siteurl'] , '/' );
+			$siteurl = _l10n_markup( $siteurl , true );
+			$siteurl = '(https?:\/\/'.$siteurl.')(\/[\w|\-|\.|\~|\#|\%|\?|\=|\+|\&]*)([\/|\w|\-|\.|\~|\#|\%|\?|\=||\+|\&]*)';
+			}
+
 		$start = _l10n_markup( $l10n_replace_strings['start'] );
 		$stop  = _l10n_markup( $l10n_replace_strings['stop'] );
 
-		$result = '/'.$start.'(https?:\/\/'.$siteurl.')(\/[\w|\-|\_]*)([\w|\/|\_|\?|\=|\-|\#|\%]*)'.$stop.'/';
+		$result = '/'.$start.$siteurl.$stop.'/';
 
 		return $result;
 		}
