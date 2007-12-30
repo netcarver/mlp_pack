@@ -15,7 +15,7 @@ if( !empty( $revision ) )
 
 $plugin['name'] = 'l10n';
 $plugin['version'] = '0.7' . $revision;
-$plugin['author'] = 'Graeme Porteous & Stephen Dickinson';
+$plugin['author'] = 'Graeme Porteous & Steve (Netcarver)';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
@@ -1076,7 +1076,7 @@ if (@txpinterface === 'public')
 		$has_lang_code = MLPLanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
 		if( !$has_lang_code && $matches[2] !== '/textpattern' && $matches[2] !== '/file_download' )
 			{
-			$result = rtrim( $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3] , '/' );
+			$result = $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3];
 			$result = $l10n_replace_strings['start']. $result . $l10n_replace_strings['stop'];
 			}
 
