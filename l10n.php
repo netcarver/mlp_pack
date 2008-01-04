@@ -659,7 +659,7 @@ function _l10n_process_url( $use_get_params=false )
 	$redirects = array( '' , '/' );
 	$redirect = false;
 	$new_first_path = '';
-	$debug = false;
+	$debug = (0) && (@txpinterface === 'public');
 
 	@session_start();
 	$site_langs = MLPLanguageHandler::get_site_langs();
@@ -674,9 +674,7 @@ function _l10n_process_url( $use_get_params=false )
 	#	This should stop search engines from caching 'fake' images of pages.
 	#
 	if( (@txpinterface==='public') && ('GET' === $req_method) && in_array( $req_uri , $redirects ) )
-		{
 		$redirect = true;
-		}
 
 	if (!defined('rhu'))
 		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
@@ -838,11 +836,15 @@ function _l10n_process_url( $use_get_params=false )
 
 	if( $redirect )
 		{
+		$location = hu.$_SESSION[$ssname];
 		if( $debug )
-			echo br , "L10N MLP: About to redirect.";
+			{
+			echo br , 'L10N MLP: About to redirect to: <a href="'.$location.'">'.$location.'</a>';
+			exit(0);
+			}
 		else
 			{
-			header('Location: '.hu.$_SESSION[$ssname]);
+			header('Location: '.$location);
 			header('Connection: close');
 			header('Content-Length: 0');
 			exit(0);
