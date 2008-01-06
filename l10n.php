@@ -913,7 +913,14 @@ if (@txpinterface === 'public')
 	$prefs['db_remap_fields_func']   = '_l10n_remap_fields';
 	$prefs['db_process_result_func'] = '_l10n_process_pageform_access';
 
-	# register a routine to handle URLs until the permanent_links plugin is integrated.
+	#	Ensure that the l10n pretext call is the first one made!
+	global $plugin_callback;
+	if( is_array( $plugin_callback ) )
+		{
+		$cback = array('function'=>'_l10n_pretext', 'event'=>'pretext', 'step'=>'', 'pre'=>0 );
+		array_unshift($plugin_callback, $cback);
+		}
+	else
 	register_callback( '_l10n_pretext' 					, 'pretext' );
 	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
 	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
