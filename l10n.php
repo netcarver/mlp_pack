@@ -665,33 +665,45 @@ function _l10n_process_url( $use_get_params=false )
 	$site_langs = MLPLanguageHandler::get_site_langs();
 
 	$req_method = serverSet('REQUEST_METHOD');
-	$req_uri    = serverSet('REQUEST_URI');
+	$request = serverSet('REQUEST_URI');
 
-	#
 	#	Redirect empty GETs on the public side so that the URL used has the language code
 	# embedded in it.
 	#
 	#	This should stop search engines from caching 'fake' images of pages.
 	#
-	if( (@txpinterface==='public') && ('GET' === $req_method) && in_array( $req_uri , $redirects ) )
+	if( (@txpinterface==='public') && ('GET' === $req_method) && in_array( $request , $redirects ) )
 		$redirect = true;
 
-	if (!defined('rhu'))
-		define("rhu", preg_replace("/https?:\/\/.+(\/.*)\/?$/U", "$1", hu));
-	$path = explode('/', trim(str_replace(trim(rhu, '/'), '', $req_uri), '/'));
+	#	The following section is taken verbatim from Textpattern's own Pretext().
+	# -- START VERBATIM --
+	// IIS fixes...
+	if (!$request and serverSet('SCRIPT_NAME'))
+		$request = serverSet('SCRIPT_NAME').( (serverSet('QUERY_STRING')) ? '?'.serverSet('QUERY_STRING') : '');
+	if (!$request and serverSet('argv'))
+		{
+		$argv = serverSet('argv');
+		$request = @substr($argv[0], strpos($argv[0], ';') + 1);
+		}
+
+	$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
+	$req = preg_replace("/^$subpath/i","/",$request);
+	# -- END VERBATIM --
+	if( !$use_get_params )
+		{
+		$parts = chopUrl($req);
+		extract($parts);
+		}
 
 	if( $debug )
 		{
-		echo br , "REQUEST_URI    : " , var_dump($req_uri);
-		echo br , "REQUEST_METHOD : " , $req_method;
-		echo br , "hu             : " , hu;
-		echo br , "rhu            : " , rhu;
-		echo br , "\$path          : " , var_dump( $path );
-		echo br , "\$prefs-Site Url: " , $prefs['siteurl'];
+		echo br ,'hu=' . hu . " REQUEST = " , $req_method , ' : ', var_dump($request);
+		echo br , var_dump( $parts );
 		}
 
 	$ssname = 'l10n_short_lang';
 	$lsname = 'l10n_long_lang';
+
 	if( $use_get_params )
 		{
 		#
@@ -715,59 +727,53 @@ function _l10n_process_url( $use_get_params=false )
 			#
 			$_SESSION[$ssname] = $tmp;
 			$_SESSION[$lsname] = $temp;
-			if( $debug )
-				echo br , "L10N MLP: Set session vars ($ssname < $tmp) ($lsname < $temp).";
+			if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $tmp) ($lsname < $temp).";
 			}
 		}
 
-	if( !$use_get_params and !empty( $path ) )
+	if( !$use_get_params and !empty( $u1 ) )
 		{
-		if( $debug )
-			echo br , "L10N MLP: Public - Checking URL ($path), LANG = " , LANG;
+		if( $debug ) echo br , "L10N MLP: Public - Checking URL ($req), LANG = " , LANG;
+
 		#
 		#	Examine the first path entry for the language request.
 		#
-		$tmp = array_shift( $path );
-		if( $debug )
-			echo br , "L10N MLP: Checking start of path for language ... " , var_dump($tmp);
-		$temp = MLPLanguageHandler::expand_code( $tmp );
-		if( $debug )
-			echo br , "L10N MLP: expand_code($tmp) returned " , var_dump($temp);
+		if( $debug ) echo br , "L10N MLP: Checking start of path for language ... " . $u1;
+		$temp = MLPLanguageHandler::expand_code( $u1 );
+		if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
 		$reduce_uri = true;
-		$new_first_path = (isset($path[0])) ? $path[0] : '' ;
+		$new_first_path = (isset($u2)) ? $u2 : '' ;
 
 		if( !empty($temp) and in_array( $temp , $site_langs ) )
 			{
 			#
 			#	Hit! We can serve this language...
 			#
-			if( $debug )
-				echo br , "L10N MLP: Set session vars ($ssname < $tmp) ($lsname < $temp).";
-			$_SESSION[$ssname] = $tmp;
+			if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $u1) ($lsname < $temp).";
+			$_SESSION[$ssname] = $u1;
 			$_SESSION[$lsname] = $temp;
 			}
 		else
 			{
-			if( $debug )
-				echo br , "L10N MLP: no-match branch";
+			if( $debug ) echo br , "L10N MLP: no-match branch";
 			#
 			#	Not a language this site can serve...
 			#
-			if( !MLPLanguageHandler::is_valid_short_code( $tmp ) )
+			if( !MLPLanguageHandler::is_valid_short_code( $u1 ) )
 				{
-				#
-				#	And not a known language so don't reduce the uri and use
-				# the original part of the path...
-				#
+				#	And not a known language so don't reduce the uri and use the original part of the path...
 				$reduce_uri = false;
-				$new_first_path = $tmp;
+				$new_first_path = $u1;
 				}
 			}
 
 		if( $reduce_uri )
 			{
-			$new_uri = '/' . join( '/' , $path );
+			$new_uri = substr( $request , strlen($u1)+1 );
+			if (empty( $new_uri ))
+				$new_uri = '/';
 			$_SERVER['REQUEST_URI'] = $new_uri;
+			if( $debug ) echo br , "REQUEST reduced to ... [$new_uri]";
 			}
 		}
 
@@ -778,8 +784,7 @@ function _l10n_process_url( $use_get_params=false )
 		# from the user agent's HTTP header.
 		#
 		$req_lang = serverSet('HTTP_ACCEPT_LANGUAGE');
-		if( $debug )
-			echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
+		if( $debug ) echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
 		if( isset( $req_lang ) and !empty( $req_lang ) )
 			{
 			$chunks = split( ',' , $req_lang );
@@ -830,13 +835,12 @@ function _l10n_process_url( $use_get_params=false )
 		$short = substr( $long , 0 , 2 );
 		$_SESSION[$ssname] = $short;
 		$_SESSION[$lsname] = $long;
-		if( $debug )
-			echo br , "L10N MLP: No language match found, setting to site default ... $long as $short";
+		if( $debug ) echo br , "L10N MLP: No language match found, setting to site default ... $long as $short";
 		}
 
 	if( $redirect )
 		{
-		$location = hu.$_SESSION[$ssname];
+		$location = hu.$_SESSION[$ssname].'/'; # QUESTION: Does this need a trailing slash?
 		if( $debug )
 			{
 			echo br , 'L10N MLP: About to redirect to: <a href="'.$location.'">'.$location.'</a>';
