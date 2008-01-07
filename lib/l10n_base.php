@@ -101,6 +101,68 @@ function _l10n_get_dbserver_type()
 
 	return $type;
 	}
+
+function _l10n_admin_remap_fields( $thing , $table )
+	{
+	global $event , $step;
+	static $mappings;
+
+	$debug = 0;
+
+	if( !isset( $mappings ) )
+		{
+		$mappings = array
+			(
+			'txp_category' => array( 	'field' 	=> 'title',
+										'events' 	=> array('article'=>'all','category'=>'none','list'=>'all'), ),
+			'txp_section'  => array( 	'field' 	=> 'title',
+										'events' 	=> array('list'=>'all'), ),
+			);
+		}
+
+	#	Return early if no matching mapping/event entries...
+	if( !array_key_exists( $table , $mappings ) )
+		return $thing;
+
+
+	if( !array_key_exists( $event , $mappings[$table]['events'] ) )
+		return $thing;
+
+	if( ($mappings[$table]['events'][$event] === 'none') && !empty($step) )
+		return $thing;
+
+	global $l10n_language;
+	if( isset( $l10n_language['long'] ) )
+		$lang = $l10n_language['long'];
+	else
+		$lang = LANG;
+
+	# Ok, this is an event we have to map for this table...
+	$field = $mappings[$table]['field'];
+	$localised_field = _l10n_make_field_name( $field , $lang );
+	$r = "`$localised_field` as `$field`";
+
+	#
+	#	Replace specific matches...
+	#
+	$newthing = str_replace( $field , $r , $thing );
+
+	#
+	#	Don't forget to override any wildcard search with specific mappings,
+	# but not in count ops...
+	#
+	if( false === stripos( $newthing, '(*)' ) )
+		$newthing = str_replace( '*' , '*,'.$r , $newthing );
+
+	if( $debug && $thing !== $newthing )
+		{
+		echo br , '_l10n_admin_remap_fields ... table('.$table.')';
+		echo br ,'   ... event/step('.$event.'/'.$step.') ... thing('.$thing.') ... newthing('.$newthing.')';
+		}
+
+	return $newthing;
+	}
+
 function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	{
 	//$charset_collation = _l10n_get_db_charsetcollation();
