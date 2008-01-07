@@ -886,6 +886,7 @@ if( @txpinterface === 'admin' )
 			$textarray = load_lang( $l10n_language['long'] );
 			$prefs['language'] = $l10n_language['long'];
 			}
+		$prefs['db_remap_fields_func']   = '_l10n_admin_remap_fields';
 		}
 
 	#
@@ -925,7 +926,7 @@ if (@txpinterface === 'public')
 		array_unshift($plugin_callback, $cback);
 		}
 	else
-	register_callback( '_l10n_pretext' 					, 'pretext' );
+		register_callback( '_l10n_pretext' 					, 'pretext' );
 	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
 	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
 	register_callback( '_l10n_tag_feeds'					, 'atom_entry' );
