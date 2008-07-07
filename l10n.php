@@ -153,6 +153,10 @@ function _l10n_process_url( $use_get_params=false )
 		{
 		echo br ,'hu=' . hu . " REQUEST = " , $req_method , ' : ', var_dump($request);
 		echo br , var_dump( $parts );
+		#global $plugin_callback;
+		#foreach( $plugin_callback as $cb )
+		#	if( $cb['event'] === 'pretext' )
+		#		echo br , var_dump( $cb );
 		}
 
 	$ssname = 'l10n_short_lang';
@@ -970,7 +974,7 @@ if (@txpinterface === 'public')
 		extract(lAtts(array(
 							'lang' => $l10n_language['short'] ,
 							'dir'  => '',
-							'wraptag' => 'div' ,
+							'wraptag' => '' ,
 							),$atts));
 
 		if( !empty($dir) and in_array( $dir , array( 'rtl', 'ltr') ) )
@@ -1289,7 +1293,7 @@ This is used on the demo site to output a second CSS file for RTL languages. As 
 |_. Attribute |_. Default |_. Description |
 | lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
 | dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
-| wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
+| wraptag | '' | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. *NB* This has changed from a default of 'div'. If you need a div, just set @wraptag="div"@ as an attribute. |
 
 This tag can be used with Textpattern's own 'else' clause.
 
@@ -1390,6 +1394,7 @@ h3(#l10n-search_public_strings_only). "Limit string searches to publicly availab
 Choose 'yes' to make the snippet > search tab only search against strings that are available to the public interface. This is useful if you are using the search feature to locate strings to use as snippets in your pages and forms. Prevents you from choosing admin only strings that will fail to render on your website's public interface.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
 
 h2(#export). Snippets > Export Help
 
