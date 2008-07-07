@@ -89,6 +89,7 @@ $l10n_default_strings = array(
 	'l10n-explain_specials'		=> 'A list of snippets that appear in the TxP system but not on any page or form.',
 	'l10n-export'				=> 'Export',
 	'l10n-export_title'			=> '<h2>Export {type} Strings {help}</h2><br/><p>Select languages you wish to include and then click the button.</p>',
+	'l10n-filter_label'			=> 'Live Filter&#8230;',
 	'l10n-import'				=> 'Import',
 	'l10n-import_count'			=> 'Imported {count} {type} strings.',
 	'l10n-import_title'			=> '<h2>Import {type} Strings</h2><br/><p>Paste exported file into the box below and click the button.</p>',

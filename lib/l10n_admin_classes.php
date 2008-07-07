@@ -2427,6 +2427,19 @@ class MLPStringView extends GBPAdminTabView
 		return join('', $out);
 		}
 
+	function _render_list_filter( $id )
+		{
+		return '<script type="text/javascript" src="jquery.js"></script>'.
+		'<script> $(document).ready(function(){ $(\'#inline-search\').'.
+		'search(\'#'.$id.' li\'); }); $.fn.search = function(searchElements) {'.
+		'$(this).keyup(function(){ var searchString = $(this).val();'.
+		' if (searchString.length > 0){ $(searchElements).hide();'.
+		'$(searchElements+\':contains(\' +searchString+ \')\').show(); }'.
+		'else { $(searchElements).show(); } }); }; </script>'.
+		'<div style="text-align:left;"><label>'.gTxt('l10n-filter_label').'</label><br />'.
+		'<input type="text" id="inline-search" /></div>';
+		}
+
 	function render_owner_list( $type )										#	Render the left pane
 		{
 		/*
@@ -2443,6 +2456,7 @@ class MLPStringView extends GBPAdminTabView
 				break;
 
 			case 'plugin':
+				#$out[] = $this->_render_list_filter( 'l10n_plugins' );
 				$out[] = 	'<h3>' . gTxt('l10n-registered_plugins') . '</h3>' . n .
 							'<div id="l10n_plugins">' . n .
 							'<ol>' . n;
@@ -2451,6 +2465,7 @@ class MLPStringView extends GBPAdminTabView
 				break;
 
 			case 'page':
+				#$out[] = $this->_render_list_filter( 'l10n_pages' );
 				$out[] = 	'<h3>' . gTxt('pages') . '</h3>' . n .
 							'<div id="l10n_pages"' . n .
 							'<ol>' . n;
@@ -2460,6 +2475,7 @@ class MLPStringView extends GBPAdminTabView
 
 			default:
 				case 'form':
+				$out[] = $this->_render_list_filter( 'l10n_forms' );
 				$out[] = 	'<h3>' . gTxt('forms') . '</h3>' . n .
 							'<div id="l10n_forms">' . n .
 							'<ol>' . n;
@@ -2625,7 +2641,8 @@ class MLPStringView extends GBPAdminTabView
 		*/
 		$stats 			= array();
 		$strings 		= MLPStrings::get_plugin_strings( $plugin , $stats , $prefix );
-		$strings_exist 	= ( count( $strings ) > 0 );
+		$raw_count 		= count( $strings );
+		$strings_exist 	= ( $raw_count > 0 );
 		$details		= MLPStrings::if_plugin_registered( $plugin , '' );
 		$event			= $details['event'];
 
@@ -2635,8 +2652,11 @@ class MLPStringView extends GBPAdminTabView
 				 $this->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
+		if( $raw_count > 10 )
+			$out[] = $this->_render_list_filter( 'l10n_plugin_strings' );
+		$out[] = '<div id="l10n_plugin_strings">' . n;
 		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix, $event );
-		$out[] = '</div>';
+		$out[] = '</div></div>';
 
 		# Render default view details in right hand pane...
  		if( empty( $string_name ) )
@@ -2690,8 +2710,11 @@ class MLPStringView extends GBPAdminTabView
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
+		if( $raw_count > 10 )
+			$out[] = $this->_render_list_filter( 'l10n_string_list' );
+		$out[] = '<div id="l10n_string_list">' . n;
 		$out[] = br . n . $this->_render_string_list( $strings , 'container', $owner , '' , 'public' ) . n;
-		$out[] = '</div>';
+		$out[] = '</div></div>';
 
 		#	Render default view details in right hand pane...
 		$step = gps('step');
