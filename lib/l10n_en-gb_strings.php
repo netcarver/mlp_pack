@@ -144,6 +144,7 @@ $l10n_default_strings = array(
 	'l10n-textbox_title'		=> 'Type in the text here.',
 	'l10n-total'				=> 'Total',
 	'l10n-unlocalised'			=> 'Unlocalised',
+	'l10n-use_browser_languages'	=> 'Use browser "accept-language" headers?',
 	'l10n-view_site'			=> 'View localised site',
 	'l10n-warn_section_mismatch' => 'Section mismatch',
 	'l10n-warn_lang_mismatch'	=> 'Language mismatch',

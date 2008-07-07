@@ -130,6 +130,7 @@ $l10n_default_strings = array(
 	'l10n-textbox_title'               => 'Εισάγετε το κείμενό σας εδώ.',
 	'l10n-total'                       => 'Σύνολο',
 	'l10n-unlocalised'                 => 'Μη τοπικοποιημένο',
+	'l10n-use_browser_languages'		=> 'Use browser "accept-language" headers?',
 	'l10n-view_site'                   => 'Εμφάνηση τοπικοποιημένης σελίδας',
 	'l10n-warn_section_mismatch'       => 'Σφάλμα Σχέσης τομέων',
 	'l10n-warn_lang_mismatch'          => 'Μη ορθολογικότητα σχέσης Γλωσσών',

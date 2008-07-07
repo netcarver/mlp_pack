@@ -159,6 +159,12 @@ class MLPArticles
 			$info['members'] = unserialize( $info['members'] );
 		return $info;
 		}
+	function rendition_exists( $article_id , $long_lang )
+		{
+		$info 	= MLPArticles::_get_article_info( $article_id );
+		$result = array_key_exists( $long_lang , $info['members'] );
+		return $result;
+		}
 	function create_article( $title , $members , $article_id=0 )
 		{
 		$members = serialize( $members );
@@ -1389,6 +1395,7 @@ class MLPPlugin extends GBPPlugin
 	var $gp = array();
 	var $preferences = array(
 		'l10n-languages' => array('value' => array(), 'type' => 'gbp_array_text'),
+		'l10n-use_browser_languages' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-show_legends' => array( 'value' => 1, 'type' => 'yesnoradio' ),
 		'l10n-show_clone_by_id' => array( 'value' => 0, 'type' => 'yesnoradio' ),
 		'l10n-send_notifications'	=>	array( 'value' => 1, 'type' => 'yesnoradio' ),
