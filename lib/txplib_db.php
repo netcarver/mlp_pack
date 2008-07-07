@@ -109,7 +109,7 @@ $DB = new DB;
 		}
 		$start = getmicrotime();
 		$result = $method($q,$DB->link);
-		$time = sprintf('%02.6f', getmicrotime() - $start);
+		$time = getmicrotime() - $start;
 		@$qtime += $time;
 		@$qcount++;
 		if ($result === false and (txpinterface === 'admin' or @$production_status == 'debug' or @$production_status == 'testing')) {
@@ -373,7 +373,7 @@ $DB = new DB;
 	}
 
 // -------------------------------------------------------------
-	function getTree($root, $type, $where='1=1')
+	function getTree($root, $type, $where='1=1', $tbl='txp_category')
 	{
 
 		$root = doSlash($root);
@@ -381,7 +381,7 @@ $DB = new DB;
 
 		$rs = safe_row(
 			"lft as l, rgt as r",
-			"txp_category",
+			$tbl,
 			"name='$root' and type = '$type'"
 		);
 
@@ -393,7 +393,7 @@ $DB = new DB;
 
 		$rs = safe_rows_start(
 			"id, name, lft, rgt, parent, title",
-			"txp_category",
+			$tbl,
 			"lft between $l and $r and type = '$type' and name != 'root' and $where order by lft asc"
 		);
 
@@ -418,12 +418,12 @@ $DB = new DB;
 	}
 
 // -------------------------------------------------------------
-	function getTreePath($target, $type)
+	function getTreePath($target, $type, $tbl='txp_category')
 	{
 
 		$rs = safe_row(
 			"lft as l, rgt as r",
-			"txp_category",
+			$tbl,
 			"name='".doSlash($target)."' and type = '".doSlash($type)."'"
 		);
 		if (!$rs) return array();
@@ -431,7 +431,7 @@ $DB = new DB;
 
 		$rs = safe_rows_start(
 			"*",
-			"txp_category",
+			$tbl,
 				"lft <= $l and rgt >= $r and type = '".doSlash($type)."' order by lft asc"
 		);
 
@@ -459,7 +459,7 @@ $DB = new DB;
 	}
 
 // -------------------------------------------------------------
-	function rebuild_tree($parent, $left, $type)
+	function rebuild_tree($parent, $left, $type, $tbl='txp_category')
 	{
 		$left  = assert_int($left);
 		$right = $left+1;
@@ -467,15 +467,15 @@ $DB = new DB;
 		$parent = doSlash($parent);
 		$type   = doSlash($type);
 
-		$result = safe_column("name", "txp_category",
+		$result = safe_column("name", $tbl,
 			"parent='$parent' and type='$type' order by name");
 
 		foreach($result as $row) {
-			$right = rebuild_tree($row, $right, $type);
+			$right = rebuild_tree($row, $right, $type, $tbl);
 		}
 
 		safe_update(
-			"txp_category",
+			$tbl,
 			"lft=$left, rgt=$right",
 			"name='$parent' and type='$type'"
 		);
@@ -483,13 +483,13 @@ $DB = new DB;
 	}
 
 //-------------------------------------------------------------
-	function rebuild_tree_full($type)
+	function rebuild_tree_full($type, $tbl='txp_category')
 	{
 		# fix circular references, otherwise rebuild_tree() could get stuck in a loop
-		safe_update('txp_category', "parent=''", "type='".doSlash($type)."' and name='root'");
-		safe_update('txp_category', "parent='root'", "type='".doSlash($type)."' and parent=name");
+		safe_update($tbl, "parent=''", "type='".doSlash($type)."' and name='root'");
+		safe_update($tbl, "parent='root'", "type='".doSlash($type)."' and parent=name");
 
-		rebuild_tree('root', 1, $type);
+		rebuild_tree('root', 1, $type, $tbl);
 	}
 
 //-------------------------------------------------------------
@@ -538,7 +538,6 @@ $DB = new DB;
 				{
 				if( l10n_installed( true ) )
 					{
-					#
 					#	First call and the plugin is installed and active so guess
 					# which language the user is browsing in based on the long session variable.
 					# This will not be set for the first visit to a page but it does reduce the need
@@ -569,7 +568,7 @@ $DB = new DB;
 	function db_down()
 	{
 		// 503 status might discourage search engines from indexing or caching the error message
-		header('Status: 503 Service Unavailable');
+		txp_status_header('503 Service Unavailable');
 		$error = mysql_error();
 		return <<<eod
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
