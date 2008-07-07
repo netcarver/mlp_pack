@@ -3460,6 +3460,10 @@ class MLPArticleView extends GBPAdminTabView
 			{
 			switch( $step )
 				{
+				case 'clone_all_from':
+					$this->clone_all_from();
+					break;
+
 				case 'clone':
 					$this->clone_for_translation();
 				break;
@@ -3494,6 +3498,97 @@ class MLPArticleView extends GBPAdminTabView
 			else
 				$this->parent->message = gTxt('l10n-article_table_ok');
 			}
+		}
+
+	function clone_all_from()
+		{
+		$has_privs = has_privs( 'l10n.clone' );
+		if( !$has_privs )
+			return;		# User cannot clone articles.
+
+		$vars = array( 'target_lang', 'clone_from_language' );
+		extract( gpsa( $vars ) );
+		$langs = MLPLanguageHandler::get_site_langs();
+
+		if( !in_array( $target_lang , $langs ) || !in_array( $clone_from_language, $langs) )
+			{
+			echo br , 'Invalid target or source langauge: ' , $target_lang , ' :: ' , $clone_from_language ;
+			return;
+			}
+
+		#echo br , 'Cloning all non-empty ' , $clone_from_language , ' => empty ' , $target_lang ;
+
+		# Extract all existing rendition's group IDs in the target language...
+		$existing_target_rends = array();
+		$tmp = safe_rows( '`'.L10N_COL_GROUP.'` as `article`' , 'textpattern' , '`'.L10N_COL_LANG.'`=\''.$target_lang.'\'' );
+		foreach( $tmp as $k=>$data )
+			$existing_target_rends[] = $data['article'];
+		unset( $tmp );
+
+		# Extract all non-empty source renditions...
+		$rows = safe_rows( '*' , 'textpattern' , '`'.L10N_COL_LANG.'`=\''.$clone_from_language.'\'' );
+		foreach( $rows as $row )
+			{
+			$article_id = $row[L10N_COL_GROUP];
+
+			if( in_array($article_id , $existing_target_rends) )
+				{
+				#echo br , 'Article '.$article_id.' already has an ['.$target_lang.'] rendition. Skipping it.';
+				continue;
+				}
+			else
+				{
+				$new_rendition_id = $this->_clone_rendition( $row , $article_id , $target_lang );
+				#echo br , 'Article '.$article_id.' has no ['.$target_lang.'] rendition. CLONED TO RENDITION :'.$new_rendition_id;
+				}
+
+			}
+		}
+
+	function _clone_rendition( $source , $article_id , $target_lang , $new_author='' )
+		{
+		unset( $source['ID' ] );
+		if( !empty( $new_author ) )
+			$source['AuthorID'] = $new_author;
+		$source[L10N_COL_LANG] = $target_lang;
+		$source['Status'] = 1;
+		$source['LastMod'] = 'now()';
+		$source['feed_time'] = 'now()';
+		$source['uid'] = md5(uniqid(rand(),true));
+		$source['comments_count'] = 0;	# Don't clone the comment count!
+
+		$insert = array();
+		foreach( $source as $k => $v )
+			{
+			$v = doSlash( $v );
+			if( $v === 'now()' )
+				$insert[] = "`$k`= $v";
+			else
+				$insert[] = "`$k`='$v'";
+			}
+		$insert_sql = join( ', ' , $insert );
+
+		#
+		#	Insert into the master textpattern table...
+		#
+		safe_insert( 'textpattern' , $insert_sql );
+		$rendition_id = mysql_insert_id();
+
+		#
+		#	Add this to the group (article) table...
+		#
+		MLPArticles::add_rendition( $article_id , $rendition_id , $target_lang );
+
+		#
+		#	Add into the rendition table for this lang ensuring this has the ID of the
+		# just added master entry!
+		#
+		$insert[] = '`ID`='.doSlash( $rendition_id );
+		$insert_sql = join( ', ' , $insert );
+		$table_name = _l10n_make_textpattern_name( array( 'long'=>$target_lang ) );
+		safe_insert( $table_name , $insert_sql );
+
+		return $rendition_id;
 		}
 
 	function clone_for_translation()
@@ -3537,50 +3632,9 @@ class MLPArticleView extends GBPAdminTabView
 		$notify   = array();		#	For email notices.
 		foreach( $clone_to as $lang=>$new_author )
 			{
-			unset( $source['ID' ] );
-			$source['AuthorID'] = $new_author;
-			$source[L10N_COL_LANG] = $lang;
-			$source['Status'] = 1;
-			//$source['Posted'] = 'now()';	# Don't reset the time to now() as we want the articles to appear in the same order in both the cloned and original language sites.
-			$source['LastMod'] = 'now()';
-			$source['feed_time'] = 'now()';
-			$source['uid'] = md5(uniqid(rand(),true));
-			$source['comments_count'] = 0;	//	Don't clone the comment count!
+			$rendition_id = $this->_clone_rendition( $source , $article_id , $lang , $new_author );
 
-			$insert = array();
-			foreach( $source as $k => $v )
-				{
-				$v = doSlash( $v );
-				if( $v === 'now()' )
-					$insert[] = "`$k`= $v";
-				else
-					$insert[] = "`$k`='$v'";
-				}
-			$insert_sql = join( ', ' , $insert );
-
-			#
-			#	Insert into the master textpattern table...
-			#
-			safe_insert( 'textpattern' , $insert_sql );
-			$rendition_id = mysql_insert_id();
-
-			#
-			#	Add this to the group (article) table...
-			#
-			MLPArticles::add_rendition( $article_id , $rendition_id , $lang );
-
-			#
-			#	Add into the rendition table for this lang ensuring this has the ID of the
-			# just added master entry!
-			#
-			$insert[] = '`ID`='.doSlash( $rendition_id );
-			$insert_sql = join( ', ' , $insert );
-			$table_name = _l10n_make_textpattern_name( array( 'long'=>$lang ) );
-			safe_insert( $table_name , $insert_sql );
-
-			#
-			#	Now we know the article ID, store this against the author for email notification...
-			#
+			#	Now we know rendition & article IDs, store against author for email notification...
 			$language = MLPLanguageHandler::get_native_name_of_lang( $lang );
 			$notify[$new_author][$lang] = array( 'id' => "$rendition_id" , 'title'=>$source['Title'] , 'language'=>$language );
 			}
@@ -3757,6 +3811,10 @@ class MLPArticleView extends GBPAdminTabView
 					{
 					switch( $step )
 						{
+						case 'start_clone_all_from':
+							$this->render_start_clone_all_from();
+							break;
+
 						case 'start_clone':
 							$this->render_start_clone();
 							break;
@@ -3896,6 +3954,21 @@ class MLPArticleView extends GBPAdminTabView
 
 		return $out;
 		}
+
+	function get_rendition_counts()
+		{
+		static $rendition_counts = true;
+		if( true === $rendition_counts )
+			{
+			$rendition_counts = array();
+			$rows = safe_rows( '`'.L10N_COL_LANG.'` as `lang`, COUNT(*) as `count`', 'textpattern' ,  '1=1 GROUP BY `'.L10N_COL_LANG.'`;' );
+			foreach( $rows as $data )
+				$rendition_counts[ $data['lang'] ] = (int)$data['count'];
+			unset( $rows );
+			}
+		return $rendition_counts;
+		}
+
 	function render_article_table()
 		{
 		$event = $this->parent->event;
@@ -3933,6 +4006,8 @@ class MLPArticleView extends GBPAdminTabView
 		$o[] = startTable( /*id*/ 'l10n_articles_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
 		$o[] = '<caption><strong>'.gTxt('l10n-renditions').'</strong></caption>';
 
+		$rendition_counts = $this->get_rendition_counts();
+
 		#
 		#	Setup the colgroup/thead...
 		#
@@ -3943,11 +4018,18 @@ class MLPArticleView extends GBPAdminTabView
 			$colgroup[] = n.t.'<col id="'.$lang.'" />';
 			$name = MLPLanguageHandler::get_native_name_of_lang($lang);
 
+			$clone_all_link = '';
+			if( @$rendition_counts[$lang] < $total )
+				$clone_all_link = '<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone_all_from','target_lang'=>$lang), true ) .
+				'" class="clone_all-link" title="' . gTxt('l10n-clone_all_from',array('{lang}'=>$name) ) . '"><img src="txp_img/l10n_clone_all.png" /></a>';
+
 			#
 			#	Default language markup -- if needed.
 			#
 			if( $lang === $default_lang )
 				$name .= br . gTxt('default');
+			else
+				$name .= ' '.$clone_all_link;
 
 			$thead[] = hCell( $name );
 			$counts[$lang] = 0;
@@ -4314,6 +4396,53 @@ class MLPArticleView extends GBPAdminTabView
 		$f[] = tr( tdrs( $s , 2 ) );
 
 		$o[] = tag( form( join( '' , $f )) , 'tbody' );
+		$o[] = endTable();
+
+		echo join( '' , $o );
+		}
+
+	function render_start_clone_all_from()
+		{
+		$vars = array( 'target_lang' , 'page' );
+		extract( gpsa( $vars ) );
+
+		if( empty( $target_lang ) )	# Empty target language...
+			{
+			$this->clone_by_id = gTxt('l10n-no_langs_selected');
+			return $this->render_article_table();
+			}
+
+		#
+		#	Init language related vars...
+		#
+		$langs = MLPLanguageHandler::get_site_langs();
+		$full_lang_count = count( $langs );
+		$default_lang = MLPLanguageHandler::get_site_default_lang();
+
+		# remove the target from the src list...
+		$langs = array_diff( $langs , array( $target_lang ) );
+
+		# remove empty source languages from the src list...
+		$langs = array_intersect( $langs , array_keys( $this->get_rendition_counts() ) );
+
+		$langs = MLPLanguageHandler::do_fleshout_names( $langs );
+		$name = MLPLanguageHandler::get_native_name_of_lang($target_lang);
+
+		$o[] = startTable( /*id*/ 'l10n_clone_all_table' , /*align*/ '' , /*class*/ '' , /*padding*/ '5px' );
+		$o[] = '<caption><strong>'.gTxt('l10n-clone_all_from' , array( '{lang}'=>$name.' ['.$target_lang.'] ' ) ).'</strong></caption>';
+
+		$s = selectInput( 'clone_from_language' , $langs , $default_lang , '' , '' ).' ';
+		$s .= '<input type="submit" value="'.gTxt('l10n-clone').'" class="publish" />' . n;
+		$s .= eInput( $this->parent->event );
+		$s .= sInput( 'clone_all_from' );
+		$s .= hInput( 'page' , $page );
+		$s .= hInput( 'tab' , 'article' );
+		$s .= hInput( 'target_lang' , $target_lang );
+
+		$f[] = tr( tdrs( $s , 1 ) );
+		$verify = ' verify(\'' . 	doSlash(gTxt('l10n-verify_clone_all' , array('{targ_lang}'=>$name.' ['.$target_lang.']') )) . '\')';
+
+		$o[] = tag( form( join( '' , $f ) , '' , $verify ) , 'tbody' );
 		$o[] = endTable();
 
 		echo join( '' , $o );
