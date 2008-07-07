@@ -348,8 +348,8 @@ function _l10n_list_buffer_processor( $buffer )
 	{
 	global $DB; // NEEDED to fix the mark-up elements injected into the renditions (list) page.
 
-	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
-	// routine is called from the output buffer processor. 
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this
+	// routine is called from the output buffer processor.
 	if( !isset( $DB) )
 		$DB = new DB;
 
@@ -449,9 +449,9 @@ function _l10n_process_admin_page($page)
 	global $event , $step , $l10n_painters , $DB , $prefs;
 
 	//	NEEDED to populate the language switcher on admin tabs & change the text of the 'articles' tab.
-	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
-	// routine is called from the output buffer processor. 
-	if( !isset( $DB ) ) 
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this
+	// routine is called from the output buffer processor.
+	if( !isset( $DB ) )
 	    $DB = new DB;
 
 	$mlp_js_events = array( 'l10n' , 'article' );
@@ -556,8 +556,8 @@ function _l10n_article_buffer_processor( $buffer )
 
 
 	//	Needed to prevent a blank content > write tab.
-	//	Fix for php5 behaviour change: the global object has been decostructed by the time this 
-	// routine is called from the output buffer processor. 
+	//	Fix for php5 behaviour change: the global object has been decostructed by the time this
+	// routine is called from the output buffer processor.
 	if( !isset( $l10n_view ) )
 		$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );	// <<<<
 
@@ -922,7 +922,7 @@ function _l10n_update_dirty_flag( $v )
 	$prefs[$l10n_dirty_flag] = $v;
 	}
 
-	function _l10n_generate_lang_table( $lang , $filter = true )
+function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	#echo 'Updating table defs for ' , $lang , br;
 
