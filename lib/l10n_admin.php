@@ -5,9 +5,31 @@ global $l10n_painters;
 $l10n_vars = array();
 $l10n_mappings = null;
 $l10n_painters = array();
+global $l10n_dirty_flag;
+$l10n_dirty_flag = 'l10n_txp_dirty';
 
 if( $l10n_view->installed() )
 	{
+	#
+	#	Detect the dirty-flag and re-build tables...
+	#
+	global $prefs, $l10n_dirty_flag;
+	if( @$prefs[$l10n_dirty_flag] === 'DIRTY' )
+		{
+		# Iterate over the site languages, rebuilding the tables...
+		$langs = MLPLanguageHandler::get_site_langs();
+		foreach( $langs as $lang )
+			_l10n_generate_lang_table( $lang );
+
+		# Clear the dirty flag...
+		_l10n_update_dirty_flag( '' );
+		}
+
+	#
+	#	Observors...
+	#
+	register_callback( '_l10n_observe_glz_custom_fields', 'glz_custom_fields' );
+
 	#
 	#	Article handlers...
 	#
@@ -868,15 +890,31 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 	$l10n_vars['update_work'] = $work;
 	}
 
-/*
+function _l10n_observe_glz_custom_fields( $event , $step )
+	{
+	# Observer for glz_custom_field events that change the structure of the textpattern table...
+	if( gps('delete') || gps('custom_field_number') )
+		{
+		_l10n_update_dirty_flag( 'DIRTY' );
+		}
+	}
+
+function _l10n_update_dirty_flag( $v )
+	{
+	global $prefs , $l10n_dirty_flag;
+	set_pref( $l10n_dirty_flag, $v , 'l10n', 2 );
+	$prefs[$l10n_dirty_flag] = $v;
+	}
+
 	function _l10n_generate_lang_table( $lang , $filter = true )
 	{
+	#echo 'Updating table defs for ' , $lang , br;
+
 	if( !is_string( $lang ) )
 		{
 		echo br , "Non-string language passed to _l10n_generate_lang_table() ... " , var_dump($lang);
 		return;
 		}
-
 
 	if( empty( $lang ) )
 		{
@@ -915,12 +953,14 @@ function _l10n_pre_multi_edit_cb( $event , $step )
 	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
 	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern`$where";
 	$drop_sql = 'drop table `'.PFX."$table_name`";
-	@safe_query( 'lock tables `'.PFX."$table_name` WRITE" ) ;
+	$lock_sql = 'lock tables `'.PFX."$table_name` WRITE";
+	$unlock_sql = 'unlock tables';
+	@safe_query( $lock_sql );
 	@safe_query( $drop_sql );
 	$ok = @safe_query( $sql );
-	@safe_query( 'unlock tables' ) ;
+	@safe_query( $unlock_sql ) ;
 	}
-	*/
+
 function _l10n_pre_discuss_multi_edit( $event , $step )
 	{
 	global $l10n_vars;
