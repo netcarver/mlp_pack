@@ -461,6 +461,7 @@ if (@txpinterface === 'public')
 		global $l10n_language , $textarray , $prefs;
 
 		$first_chunk = _l10n_process_url();
+		while( @ob_end_clean() );
 
 		#
 		#	Now we know what language this user is browsing in.
@@ -1254,7 +1255,9 @@ Plain Textpattern makes no differentiation between articles and renditions becau
 
 This means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work) as a table.
 
-Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon !/textpattern/txp_img/l10n_delete.png! in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon !/textpattern/txp_img/l10n_clone.png! in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
+Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon !/textpattern/txp_img/l10n_delete.png! in the top, right-hand, corner that allows the rendition to be deleted, and there will be a "clone" icon !/textpattern/txp_img/l10n_clone.png! in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
+
+If you want to clone all the articles from one language to another, then look for the "Clone all from" icon !/textpattern/txp_img/l10n_clone_all.png! next to the language you want to clone *into*. Click the icon then choose which language to clone *from* on the next page. Hit the clone button and verify the action and your target language will be as completely populated as possible from the source language you chose. _Existing renditions in the target language will not be overwritten._
 
 The content > write tab still allows the editing of individual renditions.
 
