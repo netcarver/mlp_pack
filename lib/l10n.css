@@ -54,5 +54,6 @@ l10n styles for other tabs...
 .l10n_visible		{ display: block; }
 .l10n_highlite		{ color:blue; background-color:yellow; }
 
-textarea#l10n_string_import {width: 95%;float:left;}
+div#l10n-filters	{ margin: 0 auto 10px; text-align: center; }
 
+textarea#l10n_string_import {width: 95%;float:left;}
