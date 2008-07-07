@@ -235,48 +235,54 @@ function _l10n_process_url( $use_get_params=false )
 			}
 		}
 
-	if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
+	if( @$prefs['l10n_l10n-use_browser_languages'] == '1' )
 		{
-		#
-		#	If we are still missing a language for the session, try to get the prefered selection
-		# from the user agent's HTTP header.
-		#
-		$req_lang = serverSet('HTTP_ACCEPT_LANGUAGE');
-		if( $debug ) echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
-		if( isset( $req_lang ) and !empty( $req_lang ) )
+		if( $debug ) echo br,br,"Checking browser accept-language headers.",br,br;
+		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
 			{
-			$chunks = split( ',' , $req_lang );
-			if( count( $chunks ) )
+			#
+			#	If we are still missing a language for the session, try to get the prefered selection
+			# from the user agent's HTTP header.
+			#
+			$req_lang = serverSet('HTTP_ACCEPT_LANGUAGE');
+			if( $debug ) echo br , "L10N MLP: processing browser language header :", var_dump($req_lang);
+
+			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
-				foreach( $chunks as $chunk )
+				$chunks = split( ',' , $req_lang );
+				if( count( $chunks ) )
 					{
-					$info = split( ';' , $chunk );
-					if( false === $info )
+					foreach( $chunks as $chunk )
 						{
-						$info[] = $chunk;
-						}
-					$code = $info[0];
-					if( isset($code) and !empty($code) )
-						{
-						$len = strlen( $code );
-						if( $len === 2 )
+						$info = split( ';' , $chunk );
+						if( false === $info )
 							{
-							$lang = MLPLanguageHandler::expand_code( $info[0] );
-							if( !empty($lang) )
-								$lang = MLPLanguageHandler::compact_code( $lang );
+							$info[] = $chunk;
+							}
+						$code = $info[0];
+						if( isset($code) and !empty($code) )
+							{
+							$len = strlen( $code );
+							if( $len === 2 )
+								{
+								$lang = MLPLanguageHandler::expand_code( $info[0] );
+								if( !empty($lang) )
+									$lang = MLPLanguageHandler::compact_code( $lang );
+								else
+									continue;
+								}
+							elseif( $len === 5 )
+								$lang = MLPLanguageHandler::compact_code( $info[0] );
 							else
 								continue;
-							}
-						elseif( $len === 5 )
-							$lang = MLPLanguageHandler::compact_code( $info[0] );
-						else
-							continue;
 
-						if( in_array( $lang['long'] , $site_langs ) )
-							{
-							$_SESSION[$ssname] = $lang['short'];
-							$_SESSION[$lsname] = $lang['long'];
-							break;
+							if( in_array( $lang['long'] , $site_langs ) )
+								{
+								$_SESSION[$ssname] = $lang['short'];
+								$_SESSION[$lsname] = $lang['long'];
+								if( $debug ) echo 'Setting language to '.$lang['long'].' from browser headers',br,br;
+								break;
+								}
 							}
 						}
 					}
@@ -1327,6 +1333,7 @@ Outputs the direction of the visitor's browse language. <br/> Use this in the ht
 h2(#prefs). Preferences Help
 
 * "Languages":#l10n-languages
+* "Use browser 'accept-language' headers?":#l10n-use_browser_languages
 * "Show Article Table Legend":#l10n-show_legends
 * "Allow cloning by rendition ID in the article table?":#l10n-show_clone_by_id
 * "Email a user when assigning them a rendition?":#l10n-send_notifications
@@ -1348,6 +1355,13 @@ You can use the basic 2 character code if you want but things don't work out as 
 Every time you add new languages here new entries will be created for localising the category and section titles and the current defaults will be copied to the newly created entries.
 
 If you keep the original site slogan (in Admin > Prefs > Basic) set to the default install value of 'My Pithy Slogan' then a new snippet will be initialised to the name of the added language and this will be used to override the default so you always know what the current browse language is when you visit the site.
+
+h3(#l10n-use_browser_languages). "Use browser 'accept-language' headers?":#prefs
+
+Set this to yes (the default value) and the MLP Pack will try to honour your site visitor's browser language headers. You might want to do this, at least temporarily, if you are adding a new language to a site and don't want visitors browsers requesting the new language before you have translated the renditions for the new language.
+
+Turn this to "no" if you want to force a site visitor to see the default site language on their first trip to your site.
+
 
 h3(#l10n-show_legends). "Show Article Table Legend":#prefs
 
