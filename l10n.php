@@ -1,7 +1,5 @@
 <?php
 
-$plugin['url'] = '$HeadURL$';
-$plugin['date'] = '$LastChangedDate$';
 $plugin['revision'] = '$LastChangedRevision$';
 
 $revision = @$plugin['revision'];
@@ -19,554 +17,10 @@ $plugin['author'] = 'Graeme Porteous & Steve (Netcarver)';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
+$plugin['order'] = 1;	## Make sure we get first shot at incomming url requests
 
 @include_once('../zem_tpl.php');
 
-if (0) {
-?>
-<!-- CSS SECTION
-# --- BEGIN PLUGIN CSS ---
-	<style type="text/css">
-	div#l10n_help td { vertical-align:top; }
-	div#l10n_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
-	div#l10n_help .code_tag{ font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
-	div#l10n_help a:link, div#l10n_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
-	div#l10n_help a:hover, div#l10n_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
-	div#l10n_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
-	div#l10n_help h2 { border-bottom: 2px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
-	div#l10n_help h2 a { text-decoration: none; }
-	div#l10n_help ul ul { font-size:85%; }
-	div#l10n_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase;}
-	</style>
-# --- END PLUGIN CSS ---
--->
-<!-- HELP SECTION
-# --- BEGIN PLUGIN HELP ---
-<div id="l10n_help">
-
-h1(#top). l10n MLP Pack Help.
-
-<br />
-
-|_. Copyright 2007 Stephen Dickinson and Graeme Porteous. |
-
-<br />
-
-h2. Table Of Contents.
-
-* "Introduction &amp; Setup/Cleanup":#intro
-* "Terminology":#terms
-* "Translation Paradigm":#paradigm
-* "What the MLP(Multi-Lingual Publishing) Pack provides.":#features
-* "Snippets":#snippets
-* "Tag Directory":#tags
-** "l10n_lang_list":#lang_list
-** "l10n_if_lang":#if_lang
-** "l10n_get_lang":#get_lang
-** "-l10n_feed_link- -- deprecated. (deprecated)":#feed_link
-** "l10n_get_lang_dir":#get_lang_dir
-* "Preferences Help":#prefs
-* "Snippets > Export Help":#export
-* "Supported Languages.":#langs
-* "Credits":#credits
-* "Donors":#donors
-
-<br/>
-
-h2(#intro). Introduction &amp; Setup/Cleanup
-
-The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 and 4.0.5 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
-
-It is *not* implemented as a 'pure' plugin as it&#8230;
-
-* exceeds the plugin size limit
-* uses an altered version of the txplib_db.php file
-
-_If you are looking for a pure TxP plugin then this is not the option for you._
-
-<br/>
-
-Other things you might like to think about before installing the pack&#8230;
-
-* *It does not support subdirectory installations.*
-* It makes some extensive additions to the underlying database, notably a new 'textpattern' table per language you run the site in.
-* The 'articles' tab output is filtered using a temporary SQL table that hides the underlying table and allows additional filtering by language.
-* Changes are made to the basic txp_lang and textpattern tables.
-
-All these are listed in the setup wizard (under the content > MLP tab).
-
-_If you cannot see the MLP tab at the end of the contents subtabs then please check you have enabled the l10n plugin and try again._
-
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#terms). Terminology
-
-|_. Term |_. Definition |
-| Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
-| Rendition | The expression of an authors _work_ in a single language. |
-| Article | The *set* of _renditions_ of a given author's _work_. An article always has at least one _rendition_. |
-| Translate/Translation | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into its first _rendition_. |
-| Translator | The person or persons doing the translation (could be the author of the original _work_ but doesn't have to be.) |
-
- <br>
-
-To avoid confusion, 'translation' *always* refers to the act of translating, *never* to the result of translating something.
-
-A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
-
-Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work. It has no need to distinguish between multiple renditions of a work -- to plain Textpattern, a rendition _is_ an article. Not so with an MLP setup; each article can have multiple renditions.
-
-This means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work) as a table.
-
-Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon !/textpattern/txp_img/l10n_delete.png! in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon !/textpattern/txp_img/l10n_clone.png! in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
-
-The content > write tab still allows the editing of individual renditions.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#paradigm). Translation Paradigm.
-
-Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. This meant _big_ changes to the existing write tab, or replacing the write tab with a complicated substitute.
-
-However, I happened upon Mary's 'Save New' plugin and that inspired the current solution that allows the write tab to remain virtually untouched and yet still allow translation. This is done by 'cloning' a source rendition and then translating the clone *in situ* in the write tab.
-
-The translator simply edits the clone, replacing the source text as they go, until it is all replaced with the target language. At that point the clone is a new rendition of the original author's work.
-
-It's much easier on the translators as they get to keep the interface they are used to.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#features). What the MLP(Multi-Lingual Publishing) Pack provides.
-
-On the admin side...
-* Each TxP user can choose their own admin language -- and switch between admin languages at will.
-* Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
-* Ability to search for, and edit, any TxP language string by name or by content -- in any of the languages supported by the site.
-** Also allows quick location of strings with missing renditions in any language.
-* Support for 'snippets' to simplify page/form editing and writing.
-* Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
-* Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
-* Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
-* Export of TxP strings using the TxP language file format for distribution to other/devs.
-* Support for articles as groups of renditions.
-* Support for cloning of renditions and their translation into other languages using the existing write tab.
-* Email notifications sent to translators when articles are cloned or have their author changed.
-* Extra filtering of the list of renditions by language.
-* No hijacking of existing fields (sections/categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
-* Full localisation of the following fields...
-** Categories
-** Sections
-** Image alt text and captions
-** Link descriptions
-** File descriptions
-* Setup and Cleanup wizards.
-
-On the public side...
-* Detection of the language the user wants to view a site in via the url or browser headers.
-* URLs re-written so that browser caches know the difference between the renditions of articles in different languages.
-* Automatic selection of the correct renditions of snippets in pages and forms.
-* Fully functional search/commenting/feeds for each language the site supports.
-* Localised (and direction adjusted) feeds.
-* Localised categories, sections, file & link descriptions, image alt text & captions.
-* 404 support for finding renditions that are not available in the requested language.
-* A tag to list all available renditions of a given article and allow switching between them.
-* Tags for accessing language codes and direction information.
-* Conditional tag for testing the visitor's language or the directionality of the language.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#snippets). Snippets
-
-Snippets are named strings that you can reference within pages or forms.
-
-They are very similar to strings that are output in pages and forms using TxP's 'text' tag. Indeed, the 'Snippets' tab (found under *Content > MLP*) will also detect and display the strings used in the TxP 'text' tag.
-
-However, snippets differ a little from the 'text' tag as they are parsed before the rest of the page/form and thus, can be used to provide localised strings as attributes to other tags. They are also very easy to use *but* they will not work once MLP is uninstalled. _Therefore, whenever possible, you should prefer TxP's 'text' tag._
-
-To add snippets to pages or forms...
-
-# Within your chosen page, or form, type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
-# On the *content > MLP > Snippets* tab, look for your page or form on the correct subtab.
-# Click on the page/form name to bring up a list of all snippets it contains.
-# You should see your snippet "my_first_snippet" listed with no renditions.
-# Click on the name of your snippet to bring up the edit boxes.
-# Supply appropriate renditions and hit the save button.
-# Now looking at your site should give you the correct rendition according to the url you type.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#tags). Tag Directory
-
-|_. Tag |_. Description |
-| "*l10n_lang_list*":#lang_list    | Outputs an un-ordered list of languages. <br/> On an article list page, this outputs all of the site's available languages.<br/>On individual articles it lists only those languages the article has renditions for. |
-| "*l10n_if_lang*":#if_lang        | Conditional tag that tests the visitor's browse language against a target, or tests the visitor's language's _direction_ against the given direction. <br/> This is very useful for serving css files for Right-to-Left languages.<br /> This works with txp's 'else' clause. |
-| "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
-| "-l10n_feed_link-":#feed_link    | DEPRECATED. Use txp's own feed_link tag instead. |
-| "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
-
-<hr/>
-
-h3(#lang_list). "l10n_lang_list(Jump to the tag list)":#tags
-
-Outputs an un-ordered list of languages.
-
-On an article list page, this outputs all of the site's available languages. On individual articles it lists only those languages the article has renditions for.
-
-You can also use this tag on 404 pages to output a list of closely matching renditions.
-
-|_. Attribute |_. Default |_. Description |
-| title | '' | (Optional) This string will be output as a paragraph before the list of languages. |
-| on404 | '' | (Optional) If you want to use this tag on a 404 page to output a list of closely matching renditions and their titles (when possible) then set this to a non-blank value. |
-| list_class | l10n_lang_list | CSS class for entire list . |
-| current_class | l10n_current | (Optional) Names the css class to give to the language in the list that matches the language the visitor is browsing in. |
-| language_class | long | (Optional) CSS class name to apply to all list items. Valid values are 'long' (giving the long code such as 'en-gb') or 'short' (giving 'en'.) |
-| show_empty | '' | (Optional on single article pages) Set to non-blank value to force the output of all languages, even ones with no rendition. |
-| link_current | '' | (Optional) Set to a non-blank value to make the current language an active hyperlink |
-| display | native | (Optional) How the language is displayed on the web page. Valid values are 'native++', 'native+', 'native', 'long' and 'short'. |
-| article_list | TXP's @$is_article_list@ variable | (Optional on single article pages) Set to a non-blank value to always output a site-wide list (even on single article pages).<br/>Be careful though as setting this option could lead to 404 page not found errors if the visitor then attempts to click through to pages that have no rendition in selected language. |
-| surpress_current | '' | (Optional) Set this to a non-empty value to cause the currently active browse language to be excluded from the list of languages.<br/>Note this might lead to an empty list, in which case you might want to specify an 'empty_title' attribute as well. |
-| empty_title | '' | (Optional) Set this string to the title that you want to be displayed if the output list is empty. |
-
-&nbsp;<br/>
-&nbsp;<br/>
-
-h3(#if_lang). "l10n_if_lang(Jump to the tag list)":#tags
-
-Conditional tag that tests the visitor's browse language against a target, or tests the _direction_ of the visitor's language against the given direction.
-
-This is very useful for serving css files for Right-to-Left languages or any other content you wish to make specific to language or language direction.
-
-This is used on the demo site to output a second CSS file for RTL languages. As the file is output after the default LTR file, it's CSS rules will override the LTR rules and the page layout is setup for correct RTL rendering.
-
-|_. Attribute |_. Default |_. Description |
-| lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
-| dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
-| wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
-
-This tag can be used with Textpattern's own 'else' clause.
-
-h3(#get_lang). "l10n_get_lang(Jump to the tag list)":#tags
-
-Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's "lang" and "xml:lang" attributes.
-
-Note, you should only use the short(default) option in the "lang" attribute but for "xml:lang" it is ok to use the 'long' version.
-
-|_. Attribute |_. Default |_. Description |
-| type | short | (Optional) How to format the resulting string. Valid values are 'long','short','native' |
-
-
-h3(#feed_link). "l10n_feed_link -- DEPRECATED(Jump to the tag list)":#tags
-
-*Just use the normal txp:feed_link tag instead.*
-
-This tag still works but will give you a warning in debugging or testing mode. No warning is given in live mode.
-
-h3(#get_lang_dir). "l10n_get_lang_dir(Jump to the tag list)":#tags
-
-Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page.
-
-|_. Attribute |_. Default |_. Description |
-| type | short | (Optional) Which of the language's codes to use during the direction lookup.<br/>Valid values are 'long','short' <br/>In practice 'short' should be all you need. |
-
-
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#prefs). Preferences Help
-
-* "Languages":#l10n-languages
-* "Show Article Table Legend":#l10n-show_legends
-* "Allow cloning by rendition ID in the article table?":#l10n-show_clone_by_id
-* "Email a user when assigning them a rendition?":#l10n-send_notifications
-* "… even when assigning to yourself?":#l10n-send_notice_to_self
-* "… even when author changed in content > renditions list?":#l10n-send_notice_on_changeauthor
-* "Power users can change a rendition's language or article?":#l10n-allow_writetab_changes
-* "Inline editing of pages and forms?":#l10n-inline_editing
-* "Allow strings to be totally deleted on the snippet > search tab?":#l10n-allow_search_delete
-* "Limit string searches to publicly available strings?":#l10n-search_public_strings_only
-
-h3(#l10n-languages). "Languages":#prefs
-
-When the setup wizard is run, this list will be populated with all the currently installed languages on the site (to install languages you need to go to Admin>Preferences>Languages).
-
-The first language in this comma separated list of language codes is considered to be the site's 'default' language and will be used if the MLP pack cannot serve the language the visitor is requesting. We recommend that you use the full, 5 character, language codes where possible (eg. el-gr for Greek, en-gb for British English etc) because TxP itself uses these 5 character codes to identify the currently selected language.
-
-You can use the basic 2 character code if you want but things don't work out as well with TxP's language strings when you do this.
-
-Every time you add new languages here new entries will be created for localising the category and section titles and the current defaults will be copied to the newly created entries.
-
-If you keep the original site slogan (in Admin > Prefs > Basic) set to the default install value of 'My Pithy Slogan' then a new snippet will be initialised to the name of the added language and this will be used to override the default so you always know what the current browse language is when you visit the site.
-
-h3(#l10n-show_legends). "Show Article Table Legend":#prefs
-
-This option controls the visibility of the explanation that appears as the footer of the article table on the Content>MLP>Articles tab.
-
-Setting this to 'no' can free up some screen space for you if you know what the colour scheme represents.
-
-h3(#l10n-show_clone_by_id). "Allow cloning by rendition ID in the article table?":#prefs
-
-If you set this to 'yes' an extra form will appear at the top of the article table that allows you to directly enter the ID of a rendition that you wish to clone. Hitting the 'go' button then starts the cloning process.
-
-h3(#l10n-send_notifications). "Email a user when assigning them a rendition?":#prefs
-
-Using the table of articles on the Content>MLP>Articles page it is possible to clone renditions for translation into other languages. When you do so, you must assign the translation work to a translator. If you set this option to 'yes' then the MLP pack will send a notification email to the translator telling them of their work assignment and providing a clickable link that takes them straight to that rendition to start work.
-
-
-h3(#l10n-send_notice_to_self). "… even when assigning to yourself?":#prefs
-
-Some users might even assign themselves as translator of a work, and in this case you can prevent the notification email from being sent to yourself by setting this option to 'no'. Set it to 'yes' if you still want to recieve an email notification.
-
-
-h3(#l10n-send_notice_on_changeauthor). "… even when author changed in content > renditions list?":#prefs
-
-The MLP pack can even send email notifications when a rendition's author is changed from the Contents>Renditions tab (that is the old 'article' tab.)
-
-
-h3(#l10n-allow_writetab_changes). "Power users can change a rendition's language or article?":#prefs
-
-Set this option to 'yes' allows some users (Publishers and Managing Editors) to change the language or article that a rendition is assigned to.
-
-
-h3(#l10n-inline_editing). "Inline editing of pages and forms":#prefs
-
-Setting this option to 'yes' allows pages and forms to be edited using a special link on the Content>MLP>Snippets>(Pages/Forms) tab. This allows you to work with snippets in pages and forms than if you had to keep swithing to the Presentation>(Pages/Forms) tabs.
-
-It also allows you access to a feature that allows pages and forms to automatically be wrapped with the l10n_localise tag.
-
-h3(#l10n-allow_search_delete). "Allow strings to be totally deleted on the snippet > search tab?":#prefs
-
-Choose 'yes' to allow all renditions of a string to be deleted when edited via the Content>MLP>Snippets>Search tab. Just select a string to edit, manually delete all renditions of the string and then hit 'save'. This will remove the string from your installation. You will be left on the edit page for that string so that you can re-enter rendition data if your deletion was a mistake.
-
-h3(#l10n-search_public_strings_only). "Limit string searches to publicly available strings?":#prefs
-
-Choose 'yes' to make the snippet > search tab only search against strings that are available to the public interface. This is useful if you are using the search feature to locate strings to use as snippets in your pages and forms. Prevents you from choosing admin only strings that will fail to render on your website's public interface.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-h2(#export). Snippets > Export Help
-
-* "Snippets Export":#l10n_export_languageset
-* "TxP Language File":#l10n_export_txp_file
-* "MLP Strings File":#l10n_export_l10n_string_file
-
-h3(#l10n_export_languageset). "Snippets Export":#export
-
-Allows you to export snippets from your specials, pages and forms in a format you can easily upload to live sites via the snippet import box on the recipient site.
-
-Select all the languages you wish to include in your export before you continue.
-
-h3(#l10n_export_txp_file). "TxP Language File":#export
-
-Export all non-plugin strings in a file format that TxP can load directly via the Admin > Prefs > Languages interface.
-Use this option if you are translating TxP's strings into a new language.
-
-This file should be in an acceptable format to be passed to the language leads/developers for inclusion on the Language file server.
-
-h3(#l10n_export_l10n_string_file). "MLP Strings File":#export
-
-This option allows you to export all of the standard MLP strings as an MLP Language file for redistribution as part of an out-of-the-box localised MLP Pack.
-
-For example, once you are happy with the localisation of all of your MLP Strings, export your translation and save it in the textpattern/lib directory of the MLP pack zip file along with the existing language files and anyone to whom you redistribute the pack will get the option of using that language straight out of the box -- even the install wizard can be localised this way.
-
-h2(#langs). Supported Languages.
-
-Here is the full list of ISO-693 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
-
-The array is located in the file @textpattern\lib\mlp_langs.php@.
-
-You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-693-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-693-2 code set) then you _could_ generate your own code for it.
-
-_Generated codes *must* be in 2 character (xx) or 5 character (xx-yy) format: the MLP Pack understands no others._
-
-For example, were I to add Malaysian English (uncommonly known as _Manglish_) to the array then I might extend the 'en' sub-array like this @'en-ms'=>'Manglish'@
-
-None of these codes may be used for section names in the MLP installation if the permlink mode starts with a section (for example, section/id/title.)
-
-*You can improve the efficiency of your MLP installation by editing the array and commenting out (or removing) all the entries you don't use on the public and admin sides of the site.*
-
-<pre class="code_tag">
-static $iso_693_langs = array(
-	'aa'=>array( 'aa'=>'Afaraf' ),
-	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
-	'af'=>array( 'af'=>'Afrikaans' ),
-	'am'=>array( 'am'=>'አማርኛ' ),
-	'ar'=>array( 'ar'=>'العربية' , 'ar-dz'=>'جزائري عربي' , 'dir'=>'rtl' ),
-	'as'=>array( 'as'=>'অসমীয়া' ),
-	'ay'=>array( 'ay'=>'Aymar aru' ),
-	'az'=>array( 'az'=>'Azərbaycan dili' ),
-	'ba'=>array( 'ba'=>'башҡорт теле' ),
-	'be'=>array( 'be'=>'Беларуская мова' ),
-	'bg'=>array( 'bg'=>'Български' ),
-	'bh'=>array( 'bh'=>'भोजपुरी' ),
-	'bi'=>array( 'bi'=>'Bislama' ),
-	'bn'=>array( 'bn'=>'বাংলা' ),
-	'bo'=>array( 'bo'=>'Bod Skad' ) ,
-	'br'=>array( 'br'=>'ar Brezhoneg' ) ,
-	'ca'=>array( 'ca'=>'Català', 'ca-es'=>'Català' ) ,
-	'co'=>array( 'co'=>'Corsu' ) ,
-	'cs'=>array( 'cs'=>'Čeština' , 'cs-cz'=>'Čeština' ) ,
-	'cy'=>array( 'cy'=>'Cymraeg' ) ,
-	'da'=>array( 'da'=>'Dansk', 'da-dk'=>'Dansk' ) ,
-	'de'=>array( 'de'=>'Deutsch' ) ,
-	'dz'=>array( 'dz'=>'Dzongkha' ) ,
-	'el'=>array( 'el'=>'Ελληνικά' , 'el-gr'=>'Ελληνικά' ) ,
-	'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
-	'eo'=>array( 'eo'=>'Esperanto' ),
-	'es'=>array( 'es'=>'Español' ),
-	'et'=>array( 'et'=>'Eesti Keel', 'et-ee'=>'Eesti Keel' ),
-	'eu'=>array( 'eu'=>'Euskera' ),
-	'fa'=>array( 'fa'=>'Fārsī' ),
-	'fi'=>array( 'fi'=>'Suomi' ),
-	'fj'=>array( 'fj'=>'vaka-Viti' ),
-	'fo'=>array( 'fo'=>'Føroyska' ),
-	'fr'=>array( 'fr'=>'Français' ),
-	'fy'=>array( 'fy'=>'Frysk' ),
-	'ga'=>array( 'ga'=>'Gaeilge' ),
-	'gd'=>array( 'gd'=>'Gàidhlig' ),
-	'gl'=>array( 'gl'=>'Galego' ),
-	'gn'=>array( 'gn'=>"Avañe'ẽ" ),
-	'gu'=>array( 'gu'=>'ગુજરાતી' ),
-	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),
-	'he'=>array( 'he'=>'עִבְרִית' , 'he_il'=>'עִבְרִית' , 'dir'=>'rtl' ),
-	'hi'=>array( 'hi'=>'हिन्दी' ),
-	'hr'=>array( 'hr'=>'Hrvatski' ),
-	'hu'=>array( 'hu'=>'Magyar' ),
-	'hy'=>array( 'hy'=>'Հայերէն' ),
-	'ia'=>array( 'ia'=>'Interlingua' ),
-	'id'=>array( 'id'=>'Bahasa Indonesia' ),
-	'ie'=>array( 'ie'=>'Interlingue' ),
-	'ik'=>array( 'ik'=>'Iñupiak' ),
-	'is'=>array( 'is'=>'Íslenska' ),
-	'it'=>array( 'it'=>'Italiano' ),
-	'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),
-	'ja'=>array( 'ja'=>'日本語' , 'ja-jp'=>'日本語' ),
-	'jw'=>array( 'jw'=>'basa Jawa' ),
-	'ka'=>array( 'ka'=>'ქართული' ),
-	'kk'=>array( 'kk'=>'Қазақ' ),
-	'kl'=>array( 'kl'=>'Kalaallisut' ),
-	'km'=>array( 'km'=>'ភាសាខ្មែរ' ),
-	'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),
-	'ko'=>array( 'ko'=>'한국어' ),
-	'ks'=>array( 'ks'=>'काऽशुर' ),
-	'ku'=>array( 'ku'=>'Kurdí' ),
-	'ky'=>array( 'ky'=>'Кыргызча' ),
-	'la'=>array( 'la'=>'Latine' ),
-	'ln'=>array( 'ln'=>'lokótá ya lingála' ),
-	'lo'=>array( 'lo'=>'ລາວ' ),
-	'lt'=>array( 'lt'=>'Lietuvių Kalba' ),
-	'lv'=>array( 'lv'=>'Latviešu' ),
-	'mg'=>array( 'mg'=>'Malagasy fiteny' ),
-	'mi'=>array( 'mi'=>'te Reo Māori' ),
-	'mk'=>array( 'mk'=>'Македонски' ),
-	'ml'=>array( 'ml'=>'മലയാളം' ),
-	'mn'=>array( 'mn'=>'Монгол' ),
-	'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),
-	'mr'=>array( 'mr'=>'मराठी' ),
-	'ms'=>array( 'ms'=>'Bahasa Melayu' ),
-	'mt'=>array( 'mt'=>'Malti' ),
-	'my'=>array( 'my'=>'ဗမာစကား' ),
-	'na'=>array( 'na'=>'Ekakairũ Naoero' ),
-	'ne'=>array( 'ne'=>'नेपाली' ),
-	'nl'=>array( 'nl'=>'Nederlands' ),
-	'no'=>array( 'no'=>'Norsk' ),
-	'oc'=>array( 'oc'=>'lenga occitana' ),
-	'om'=>array( 'om'=>'Afaan Oromo' ),
-	'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),
-	'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),
-	'pl'=>array( 'pl'=>'Polski' ),
-	'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),
-	'pt'=>array( 'pt'=>'Português' ),
-	'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),
-	'rm'=>array( 'en'=>'Rhaeto-Romance' ),
-	'rn'=>array( 'rn'=>'Kirundi' ),
-	'ro'=>array( 'ro'=>'Română' ),
-	'ru'=>array( 'ru'=>'Русский' ),
-	'rw'=>array( 'rw'=>'Kinyarwandi' ),
-	'sa'=>array( 'sa'=>'संस्कृतम्' ),
-	'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),
-	'sg'=>array( 'sg'=>'yângâ tî sängö' ),
-	'sh'=>array( 'sh'=>'Српскохрватски' ),
-	'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),
-	'sk'=>array( 'sk'=>'Slovenčina' ),
-	'sl'=>array( 'sl'=>'Slovenščina' ),
-	'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),
-	'sn'=>array( 'sn'=>'chiShona' ),
-	'so'=>array( 'so'=>'af Soomaali' ),
-	'sq'=>array( 'sq'=>'Shqip' ),
-	'sr'=>array( 'sr'=>'Srpski' ),
-	'ss'=>array( 'ss'=>'siSwati' ),
-	'st'=>array( 'st'=>'seSotho' ),
-	'su'=>array( 'su'=>'basa Sunda' ),
-	'sv'=>array( 'sv'=>'Svenska', 'sv-se'=>'Svenska' ),
-	'sw'=>array( 'sw'=>'Kiswahili' ),
-	'ta'=>array( 'ta'=>'தமிழ்' ),
-	'te'=>array( 'te'=>'తెలుగు' ),
-	'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),
-	'th'=>array( 'th'=>'ภาษาไทย' ),
-	'ti'=>array( 'ti'=>'ትግርኛ' ),
-	'tk'=>array( 'tk'=>'Türkmençe' ),
-	'tl'=>array( 'tl'=>'Tagalog' ),
-	'tn'=>array( 'tn'=>'Setswana' ),
-	'to'=>array( 'to'=>'Faka-Tonga' ),
-	'tr'=>array( 'tr'=>'Türkçe' ),
-	'ts'=>array( 'ts'=>'xiTsonga' ),
-	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),
-	'tw'=>array( 'tw'=>'Twi' ),
-	'ug'=>array( 'ug'=>'uyghur tili' ),
-	'uk'=>array( 'uk'=>"Українська", 'uk-ua'=>"Українська" ),
-	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),
-	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),
-	'vi'=>array( 'vi'=>'Tiếng Việt' ),
-	'vo'=>array( 'vo'=>"vad'd'a tšeel" ),
-	'wo'=>array( 'wo'=>'Wollof' ),
-	'xh'=>array( 'xh'=>'isiXhosa' ),
-	'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),
-	'yo'=>array( 'yo'=>'Yorùbá' ),
-	'za'=>array( 'za'=>'Sawcuengh' ),
-	'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
-	'zu'=>array( 'zu'=>'isiZulu' ),
-	);
-</pre>
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-
-h2(#credits). Credits.
-
-Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
-
-Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
-
-The Greek renditions for the MLP Pack were translated by Marios.
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-
-
-h2(#donors). Donors.
-
-The following people supported the development of the MLP Pack and made it available to the whole TxP community...
-
-* "NeMe":http://www.neme.org/
-* "Jakob"
-* "woof"
-* Luke Chambers of "Flickerbox":http://www.flickerbox.com.au/
-* "Jelle van der Heijde":http://www.jvdh.net/
-* "Christian Nolle":http://cnolle.com/
-* "sbonzix"
-
- <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
-
-<br />
-
--- _Stephen Dickinson_
-
-</div>
-# --- END PLUGIN HELP ---
--->
-<?php
-}
 # --- BEGIN PLUGIN CODE ---
 
 // require_plugin() will reset the $txp_current_plugin global
@@ -1583,4 +1037,543 @@ if (@txpinterface === 'public')
 	}
 
 # --- END PLUGIN CODE ---
+/*
+# --- BEGIN PLUGIN CSS ---
+	<style type="text/css">
+	div#l10n_help td { vertical-align:top; }
+	div#l10n_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
+	div#l10n_help .code_tag{ font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
+	div#l10n_help a:link, div#l10n_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
+	div#l10n_help a:hover, div#l10n_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
+	div#l10n_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
+	div#l10n_help h2 { border-bottom: 2px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
+	div#l10n_help h2 a { text-decoration: none; }
+	div#l10n_help ul ul { font-size:85%; }
+	div#l10n_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase; margin-bottom: 12px; }
+	</style>
+# --- END PLUGIN CSS ---
+# --- BEGIN PLUGIN HELP ---
+<div id="l10n_help">
+
+h1(#top). l10n MLP Pack Help.
+
+<br />
+
+|_. Copyright 2007-2008 Steve (Net-Carver) and Graeme Porteous. |
+
+<br />
+
+h2. Table Of Contents.
+
+* "Introduction &amp; Setup/Cleanup":#intro
+* "Terminology":#terms
+* "Translation Paradigm":#paradigm
+* "What the MLP(Multi-Lingual Publishing) Pack provides.":#features
+* "Snippets":#snippets
+* "Tag Directory":#tags
+** "l10n_lang_list":#lang_list
+** "l10n_if_lang":#if_lang
+** "l10n_get_lang":#get_lang
+** "-l10n_feed_link- -- deprecated. (deprecated)":#feed_link
+** "l10n_get_lang_dir":#get_lang_dir
+* "Preferences Help":#prefs
+* "Snippets > Export Help":#export
+* "Supported Languages.":#langs
+* "Credits":#credits
+* "Donors":#donors
+
+<br/>
+
+h2(#intro). Introduction &amp; Setup/Cleanup
+
+The MLP(Multi-Lingual Publishing) Pack is an add-on pack for Textpattern 4.0.4 and 4.0.5 that helps turn it into a productive MLP platform -- or at least, that is its intended aim.
+
+It is *not* implemented as a 'pure' plugin as it&#8230;
+
+* exceeds the plugin size limit
+* uses an altered version of the txplib_db.php file
+
+_If you are looking for a pure TxP plugin then this is not the option for you._
+
+<br/>
+
+Other things you might like to think about before installing the pack&#8230;
+
+* *It does not support subdirectory installations.*
+* It makes some extensive additions to the underlying database, notably a new 'textpattern' table per language you run the site in.
+* The 'articles' tab output is filtered using a temporary SQL table that hides the underlying table and allows additional filtering by language.
+* Changes are made to the basic txp_lang and textpattern tables.
+
+All these are listed in the setup wizard (under the content > MLP tab).
+
+_If you cannot see the MLP tab at the end of the contents subtabs then please check you have enabled the l10n plugin and try again._
+
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#terms). Terminology
+
+|_. Term |_. Definition |
+| Work | A collection of an author's (or authors') ideas/opinions/thoughts. |
+| Rendition | The expression of an authors _work_ in a single language. |
+| Article | The *set* of _renditions_ of a given author's _work_. An article always has at least one _rendition_. |
+| Translate/Translation | The act of translating one rendition into a new rendition. This also covers the process of conversion of the initial _work_ into its first _rendition_. |
+| Translator | The person or persons doing the translation (could be the author of the original _work_ but doesn't have to be.) |
+
+ <br>
+
+To avoid confusion, 'translation' *always* refers to the act of translating, *never* to the result of translating something.
+
+A 'rendition' *always* refers to the result of translating a work (or an existing rendition of a work) into a language.
+
+Plain Textpattern makes no differentiation between articles and renditions because it only supports a single rendition of any work. It has no need to distinguish between multiple renditions of a work -- to plain Textpattern, a rendition _is_ an article. Not so with an MLP setup; each article can have multiple renditions.
+
+This means that the old 'Articles' tab on the contents page has been renamed 'Renditions' and a new tab (under the MLP tab) is introduced to allow display and manipulation of articles (sets of renditions of a work) as a table.
+
+Each _row_ in the table represents an article, each _column_ a language and each _cell_ a rendition of an article in a language. When a cell has a rendition, it will show title, section and author summary information and be colour coded according to its published status (draft,hidden,pending,live or sticky). There is an icon !/textpattern/txp_img/l10n_delete.png! in the top, right-hand, corner that allows the rendition to be deleted, and if the article is live or sticky there will be a "clone" icon !/textpattern/txp_img/l10n_clone.png! in the bottom, left-hand, corner. Pressing this allows the rendition to be cloned to other languages (as a draft) and assigned to a translator for translation. (See the following section for more details).
+
+The content > write tab still allows the editing of individual renditions.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#paradigm). Translation Paradigm.
+
+Originally I wanted to allow the creation of new renditions by showing an exisiting rendition on one side of the screen and then allowing a translator to do the translating on the other side of the screen. This meant _big_ changes to the existing write tab, or replacing the write tab with a complicated substitute.
+
+However, I happened upon Mary's 'Save New' plugin and that inspired the current solution that allows the write tab to remain virtually untouched and yet still allow translation. This is done by 'cloning' a source rendition and then translating the clone *in situ* in the write tab.
+
+The translator simply edits the clone, replacing the source text as they go, until it is all replaced with the target language. At that point the clone is a new rendition of the original author's work.
+
+It's much easier on the translators as they get to keep the interface they are used to.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#features). What the MLP(Multi-Lingual Publishing) Pack provides.
+
+On the admin side...
+* Each TxP user can choose their own admin language -- and switch between admin languages at will.
+* Support for localisation of plugin strings via the admin interface (at last, no editing of source files!)
+* Ability to search for, and edit, any TxP language string by name or by content -- in any of the languages supported by the site.
+** Also allows quick location of strings with missing renditions in any language.
+* Support for 'snippets' to simplify page/form editing and writing.
+* Snippets can be entered in RTL or LTR mode (JS to toggle between the two.)
+* Write tab now allows title/body/excerpt and preview in RTL as well as LTR mode.
+* Import/export of your plugin strings or snippets so you can upload to live sites or share with others.
+* Export of TxP strings using the TxP language file format for distribution to other/devs.
+* Support for articles as groups of renditions.
+* Support for cloning of renditions and their translation into other languages using the existing write tab.
+* Email notifications sent to translators when articles are cloned or have their author changed.
+* Extra filtering of the list of renditions by language.
+* No hijacking of existing fields (sections/categories/custom fields) to store language information, so you are free to use the section/categories/custom fields in your application.
+* Full localisation of the following fields...
+** Categories
+** Sections
+** Image alt text and captions
+** Link descriptions
+** File descriptions
+* Setup and Cleanup wizards.
+
+On the public side...
+* Detection of the language the user wants to view a site in via the url or browser headers.
+* URLs re-written so that browser caches know the difference between the renditions of articles in different languages.
+* Automatic selection of the correct renditions of snippets in pages and forms.
+* Fully functional search/commenting/feeds for each language the site supports.
+* Localised (and direction adjusted) feeds.
+* Localised categories, sections, file & link descriptions, image alt text & captions.
+* 404 support for finding renditions that are not available in the requested language.
+* A tag to list all available renditions of a given article and allow switching between them.
+* Tags for accessing language codes and direction information.
+* Conditional tag for testing the visitor's language or the directionality of the language.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#snippets). Snippets
+
+Snippets are named strings that you can reference within pages or forms.
+
+They are very similar to strings that are output in pages and forms using TxP's 'text' tag. Indeed, the 'Snippets' tab (found under *Content > MLP*) will also detect and display the strings used in the TxP 'text' tag.
+
+However, snippets differ a little from the 'text' tag as they are parsed before the rest of the page/form and thus, can be used to provide localised strings as attributes to other tags. They are also very easy to use *but* they will not work once MLP is uninstalled. _Therefore, whenever possible, you should prefer TxP's 'text' tag._
+
+To add snippets to pages or forms...
+
+# Within your chosen page, or form, type a string starting and ending with two hash characters, like this "##my_first_snippet##" (no need for the quotation marks.)
+# On the *content > MLP > Snippets* tab, look for your page or form on the correct subtab.
+# Click on the page/form name to bring up a list of all snippets it contains.
+# You should see your snippet "my_first_snippet" listed with no renditions.
+# Click on the name of your snippet to bring up the edit boxes.
+# Supply appropriate renditions and hit the save button.
+# Now looking at your site should give you the correct rendition according to the url you type.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#tags). Tag Directory
+
+|_. Tag |_. Description |
+| "*l10n_lang_list*":#lang_list    | Outputs an un-ordered list of languages. <br/> On an article list page, this outputs all of the site's available languages.<br/>On individual articles it lists only those languages the article has renditions for. |
+| "*l10n_if_lang*":#if_lang        | Conditional tag that tests the visitor's browse language against a target, or tests the visitor's language's _direction_ against the given direction. <br/> This is very useful for serving css files for Right-to-Left languages.<br /> This works with txp's 'else' clause. |
+| "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
+| "-l10n_feed_link-":#feed_link    | DEPRECATED. Use txp's own feed_link tag instead. |
+| "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
+
+<hr/>
+
+h3(#lang_list). "l10n_lang_list(Jump to the tag list)":#tags
+
+Outputs an un-ordered list of languages.
+
+On an article list page, this outputs all of the site's available languages. On individual articles it lists only those languages the article has renditions for.
+
+You can also use this tag on 404 pages to output a list of closely matching renditions.
+
+|_. Attribute |_. Default |_. Description |
+| title | '' | (Optional) This string will be output as a paragraph before the list of languages. |
+| on404 | '' | (Optional) If you want to use this tag on a 404 page to output a list of closely matching renditions and their titles (when possible) then set this to a non-blank value. |
+| list_class | l10n_lang_list | CSS class for entire list . |
+| current_class | l10n_current | (Optional) Names the css class to give to the language in the list that matches the language the visitor is browsing in. |
+| language_class | long | (Optional) CSS class name to apply to all list items. Valid values are 'long' (giving the long code such as 'en-gb') or 'short' (giving 'en'.) |
+| show_empty | '' | (Optional on single article pages) Set to non-blank value to force the output of all languages, even ones with no rendition. |
+| link_current | '' | (Optional) Set to a non-blank value to make the current language an active hyperlink |
+| display | native | (Optional) How the language is displayed on the web page. Valid values are 'native++', 'native+', 'native', 'long' and 'short'. |
+| article_list | TXP's @$is_article_list@ variable | (Optional on single article pages) Set to a non-blank value to always output a site-wide list (even on single article pages).<br/>Be careful though as setting this option could lead to 404 page not found errors if the visitor then attempts to click through to pages that have no rendition in selected language. |
+| surpress_current | '' | (Optional) Set this to a non-empty value to cause the currently active browse language to be excluded from the list of languages.<br/>Note this might lead to an empty list, in which case you might want to specify an 'empty_title' attribute as well. |
+| empty_title | '' | (Optional) Set this string to the title that you want to be displayed if the output list is empty. |
+
+&nbsp;<br/>
+&nbsp;<br/>
+
+h3(#if_lang). "l10n_if_lang(Jump to the tag list)":#tags
+
+Conditional tag that tests the visitor's browse language against a target, or tests the _direction_ of the visitor's language against the given direction.
+
+This is very useful for serving css files for Right-to-Left languages or any other content you wish to make specific to language or language direction.
+
+This is used on the demo site to output a second CSS file for RTL languages. As the file is output after the default LTR file, it's CSS rules will override the LTR rules and the page layout is setup for correct RTL rendering.
+
+|_. Attribute |_. Default |_. Description |
+| lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
+| dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
+| wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
+
+This tag can be used with Textpattern's own 'else' clause.
+
+h3(#get_lang). "l10n_get_lang(Jump to the tag list)":#tags
+
+Outputs the language code and/or full native name of the language the visitor is browsing in. I use this in each page's "lang" and "xml:lang" attributes.
+
+Note, you should only use the short(default) option in the "lang" attribute but for "xml:lang" it is ok to use the 'long' version.
+
+|_. Attribute |_. Default |_. Description |
+| type | short | (Optional) How to format the resulting string. Valid values are 'long','short','native' |
+
+
+h3(#feed_link). "l10n_feed_link -- DEPRECATED(Jump to the tag list)":#tags
+
+*Just use the normal txp:feed_link tag instead.*
+
+This tag still works but will give you a warning in debugging or testing mode. No warning is given in live mode.
+
+h3(#get_lang_dir). "l10n_get_lang_dir(Jump to the tag list)":#tags
+
+Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page.
+
+|_. Attribute |_. Default |_. Description |
+| type | short | (Optional) Which of the language's codes to use during the direction lookup.<br/>Valid values are 'long','short' <br/>In practice 'short' should be all you need. |
+
+
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#prefs). Preferences Help
+
+* "Languages":#l10n-languages
+* "Show Article Table Legend":#l10n-show_legends
+* "Allow cloning by rendition ID in the article table?":#l10n-show_clone_by_id
+* "Email a user when assigning them a rendition?":#l10n-send_notifications
+* "… even when assigning to yourself?":#l10n-send_notice_to_self
+* "… even when author changed in content > renditions list?":#l10n-send_notice_on_changeauthor
+* "Power users can change a rendition's language or article?":#l10n-allow_writetab_changes
+* "Inline editing of pages and forms?":#l10n-inline_editing
+* "Allow strings to be totally deleted on the snippet > search tab?":#l10n-allow_search_delete
+* "Limit string searches to publicly available strings?":#l10n-search_public_strings_only
+
+h3(#l10n-languages). "Languages":#prefs
+
+When the setup wizard is run, this list will be populated with all the currently installed languages on the site (to install languages you need to go to Admin>Preferences>Languages).
+
+The first language in this comma separated list of language codes is considered to be the site's 'default' language and will be used if the MLP pack cannot serve the language the visitor is requesting. We recommend that you use the full, 5 character, language codes where possible (eg. el-gr for Greek, en-gb for British English etc) because TxP itself uses these 5 character codes to identify the currently selected language.
+
+You can use the basic 2 character code if you want but things don't work out as well with TxP's language strings when you do this.
+
+Every time you add new languages here new entries will be created for localising the category and section titles and the current defaults will be copied to the newly created entries.
+
+If you keep the original site slogan (in Admin > Prefs > Basic) set to the default install value of 'My Pithy Slogan' then a new snippet will be initialised to the name of the added language and this will be used to override the default so you always know what the current browse language is when you visit the site.
+
+h3(#l10n-show_legends). "Show Article Table Legend":#prefs
+
+This option controls the visibility of the explanation that appears as the footer of the article table on the Content>MLP>Articles tab.
+
+Setting this to 'no' can free up some screen space for you if you know what the colour scheme represents.
+
+h3(#l10n-show_clone_by_id). "Allow cloning by rendition ID in the article table?":#prefs
+
+If you set this to 'yes' an extra form will appear at the top of the article table that allows you to directly enter the ID of a rendition that you wish to clone. Hitting the 'go' button then starts the cloning process.
+
+h3(#l10n-send_notifications). "Email a user when assigning them a rendition?":#prefs
+
+Using the table of articles on the Content>MLP>Articles page it is possible to clone renditions for translation into other languages. When you do so, you must assign the translation work to a translator. If you set this option to 'yes' then the MLP pack will send a notification email to the translator telling them of their work assignment and providing a clickable link that takes them straight to that rendition to start work.
+
+
+h3(#l10n-send_notice_to_self). "… even when assigning to yourself?":#prefs
+
+Some users might even assign themselves as translator of a work, and in this case you can prevent the notification email from being sent to yourself by setting this option to 'no'. Set it to 'yes' if you still want to recieve an email notification.
+
+
+h3(#l10n-send_notice_on_changeauthor). "… even when author changed in content > renditions list?":#prefs
+
+The MLP pack can even send email notifications when a rendition's author is changed from the Contents>Renditions tab (that is the old 'article' tab.)
+
+
+h3(#l10n-allow_writetab_changes). "Power users can change a rendition's language or article?":#prefs
+
+Set this option to 'yes' allows some users (Publishers and Managing Editors) to change the language or article that a rendition is assigned to.
+
+
+h3(#l10n-inline_editing). "Inline editing of pages and forms":#prefs
+
+Setting this option to 'yes' allows pages and forms to be edited using a special link on the Content>MLP>Snippets>(Pages/Forms) tab. This allows you to work with snippets in pages and forms than if you had to keep swithing to the Presentation>(Pages/Forms) tabs.
+
+It also allows you access to a feature that allows pages and forms to automatically be wrapped with the l10n_localise tag.
+
+h3(#l10n-allow_search_delete). "Allow strings to be totally deleted on the snippet > search tab?":#prefs
+
+Choose 'yes' to allow all renditions of a string to be deleted when edited via the Content>MLP>Snippets>Search tab. Just select a string to edit, manually delete all renditions of the string and then hit 'save'. This will remove the string from your installation. You will be left on the edit page for that string so that you can re-enter rendition data if your deletion was a mistake.
+
+h3(#l10n-search_public_strings_only). "Limit string searches to publicly available strings?":#prefs
+
+Choose 'yes' to make the snippet > search tab only search against strings that are available to the public interface. This is useful if you are using the search feature to locate strings to use as snippets in your pages and forms. Prevents you from choosing admin only strings that will fail to render on your website's public interface.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+h2(#export). Snippets > Export Help
+
+* "Snippets Export":#l10n_export_languageset
+* "TxP Language File":#l10n_export_txp_file
+* "MLP Strings File":#l10n_export_l10n_string_file
+
+h3(#l10n_export_languageset). "Snippets Export":#export
+
+Allows you to export snippets from your specials, pages and forms in a format you can easily upload to live sites via the snippet import box on the recipient site.
+
+Select all the languages you wish to include in your export before you continue.
+
+h3(#l10n_export_txp_file). "TxP Language File":#export
+
+Export all non-plugin strings in a file format that TxP can load directly via the Admin > Prefs > Languages interface.
+Use this option if you are translating TxP's strings into a new language.
+
+This file should be in an acceptable format to be passed to the language leads/developers for inclusion on the Language file server.
+
+h3(#l10n_export_l10n_string_file). "MLP Strings File":#export
+
+This option allows you to export all of the standard MLP strings as an MLP Language file for redistribution as part of an out-of-the-box localised MLP Pack.
+
+For example, once you are happy with the localisation of all of your MLP Strings, export your translation and save it in the textpattern/lib directory of the MLP pack zip file along with the existing language files and anyone to whom you redistribute the pack will get the option of using that language straight out of the box -- even the install wizard can be localised this way.
+
+h2(#langs). Supported Languages.
+
+Here is the full list of ISO-693 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
+
+The array is located in the file @textpattern\lib\mlp_langs.php@.
+
+You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-693-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-693-2 code set) then you _could_ generate your own code for it.
+
+_Generated codes *must* be in 2 character (xx) or 5 character (xx-yy) format: the MLP Pack understands no others._
+
+For example, were I to add Malaysian English (uncommonly known as _Manglish_) to the array then I might extend the 'en' sub-array like this @'en-ms'=>'Manglish'@
+
+None of these codes may be used for section names in the MLP installation if the permlink mode starts with a section (for example, section/id/title.)
+
+*You can improve the efficiency of your MLP installation by editing the array and commenting out (or removing) all the entries you don't use on the public and admin sides of the site.*
+
+<pre class="code_tag">
+static $iso_693_langs = array(
+	'aa'=>array( 'aa'=>'Afaraf' ),
+	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
+	'af'=>array( 'af'=>'Afrikaans' ),
+	'am'=>array( 'am'=>'አማርኛ' ),
+	'ar'=>array( 'ar'=>'العربية' , 'ar-dz'=>'جزائري عربي' , 'dir'=>'rtl' ),
+	'as'=>array( 'as'=>'অসমীয়া' ),
+	'ay'=>array( 'ay'=>'Aymar aru' ),
+	'az'=>array( 'az'=>'Azərbaycan dili' ),
+	'ba'=>array( 'ba'=>'башҡорт теле' ),
+	'be'=>array( 'be'=>'Беларуская мова' ),
+	'bg'=>array( 'bg'=>'Български' ),
+	'bh'=>array( 'bh'=>'भोजपुरी' ),
+	'bi'=>array( 'bi'=>'Bislama' ),
+	'bn'=>array( 'bn'=>'বাংলা' ),
+	'bo'=>array( 'bo'=>'Bod Skad' ) ,
+	'br'=>array( 'br'=>'ar Brezhoneg' ) ,
+	'ca'=>array( 'ca'=>'Català', 'ca-es'=>'Català' ) ,
+	'co'=>array( 'co'=>'Corsu' ) ,
+	'cs'=>array( 'cs'=>'Čeština' , 'cs-cz'=>'Čeština' ) ,
+	'cy'=>array( 'cy'=>'Cymraeg' ) ,
+	'da'=>array( 'da'=>'Dansk', 'da-dk'=>'Dansk' ) ,
+	'de'=>array( 'de'=>'Deutsch' ) ,
+	'dz'=>array( 'dz'=>'Dzongkha' ) ,
+	'el'=>array( 'el'=>'Ελληνικά' , 'el-gr'=>'Ελληνικά' ) ,
+	'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
+	'eo'=>array( 'eo'=>'Esperanto' ),
+	'es'=>array( 'es'=>'Español' ),
+	'et'=>array( 'et'=>'Eesti Keel', 'et-ee'=>'Eesti Keel' ),
+	'eu'=>array( 'eu'=>'Euskera' ),
+	'fa'=>array( 'fa'=>'Fārsī' ),
+	'fi'=>array( 'fi'=>'Suomi' ),
+	'fj'=>array( 'fj'=>'vaka-Viti' ),
+	'fo'=>array( 'fo'=>'Føroyska' ),
+	'fr'=>array( 'fr'=>'Français' ),
+	'fy'=>array( 'fy'=>'Frysk' ),
+	'ga'=>array( 'ga'=>'Gaeilge' ),
+	'gd'=>array( 'gd'=>'Gàidhlig' ),
+	'gl'=>array( 'gl'=>'Galego' ),
+	'gn'=>array( 'gn'=>"Avañe'ẽ" ),
+	'gu'=>array( 'gu'=>'ગુજરાતી' ),
+	'ha'=>array( 'ha'=>'حَوْسَ حَرْش۪' , 'dir'=>'rtl' ),
+	'he'=>array( 'he'=>'עִבְרִית' , 'he_il'=>'עִבְרִית' , 'dir'=>'rtl' ),
+	'hi'=>array( 'hi'=>'हिन्दी' ),
+	'hr'=>array( 'hr'=>'Hrvatski' ),
+	'hu'=>array( 'hu'=>'Magyar' ),
+	'hy'=>array( 'hy'=>'Հայերէն' ),
+	'ia'=>array( 'ia'=>'Interlingua' ),
+	'id'=>array( 'id'=>'Bahasa Indonesia' ),
+	'ie'=>array( 'ie'=>'Interlingue' ),
+	'ik'=>array( 'ik'=>'Iñupiak' ),
+	'is'=>array( 'is'=>'Íslenska' ),
+	'it'=>array( 'it'=>'Italiano' ),
+	'iu'=>array( 'iu'=>'ᐃᓄᒃᑎᑐᑦ' ),
+	'ja'=>array( 'ja'=>'日本語' , 'ja-jp'=>'日本語' ),
+	'jw'=>array( 'jw'=>'basa Jawa' ),
+	'ka'=>array( 'ka'=>'ქართული' ),
+	'kk'=>array( 'kk'=>'Қазақ' ),
+	'kl'=>array( 'kl'=>'Kalaallisut' ),
+	'km'=>array( 'km'=>'ភាសាខ្មែរ' ),
+	'kn'=>array( 'kn'=>'ಕನ್ನಡ' ),
+	'ko'=>array( 'ko'=>'한국어' ),
+	'ks'=>array( 'ks'=>'काऽशुर' ),
+	'ku'=>array( 'ku'=>'Kurdí' ),
+	'ky'=>array( 'ky'=>'Кыргызча' ),
+	'la'=>array( 'la'=>'Latine' ),
+	'ln'=>array( 'ln'=>'lokótá ya lingála' ),
+	'lo'=>array( 'lo'=>'ລາວ' ),
+	'lt'=>array( 'lt'=>'Lietuvių Kalba' ),
+	'lv'=>array( 'lv'=>'Latviešu' ),
+	'mg'=>array( 'mg'=>'Malagasy fiteny' ),
+	'mi'=>array( 'mi'=>'te Reo Māori' ),
+	'mk'=>array( 'mk'=>'Македонски' ),
+	'ml'=>array( 'ml'=>'മലയാളം' ),
+	'mn'=>array( 'mn'=>'Монгол' ),
+	'mo'=>array( 'mo'=>'лимба молдовеняскэ' ),
+	'mr'=>array( 'mr'=>'मराठी' ),
+	'ms'=>array( 'ms'=>'Bahasa Melayu' ),
+	'mt'=>array( 'mt'=>'Malti' ),
+	'my'=>array( 'my'=>'ဗမာစကား' ),
+	'na'=>array( 'na'=>'Ekakairũ Naoero' ),
+	'ne'=>array( 'ne'=>'नेपाली' ),
+	'nl'=>array( 'nl'=>'Nederlands' ),
+	'no'=>array( 'no'=>'Norsk' ),
+	'oc'=>array( 'oc'=>'lenga occitana' ),
+	'om'=>array( 'om'=>'Afaan Oromo' ),
+	'or'=>array( 'or'=>'ଓଡ଼ିଆ' ),
+	'pa'=>array( 'pa'=>'ਪੰਜਾਬੀ' ),
+	'pl'=>array( 'pl'=>'Polski' ),
+	'ps'=>array( 'ps'=>'پښتو' , 'dir'=>'rtl' ),
+	'pt'=>array( 'pt'=>'Português' ),
+	'qu'=>array( 'qu'=>'Runa Simi/Kichwa' ),
+	'rm'=>array( 'en'=>'Rhaeto-Romance' ),
+	'rn'=>array( 'rn'=>'Kirundi' ),
+	'ro'=>array( 'ro'=>'Română' ),
+	'ru'=>array( 'ru'=>'Русский' ),
+	'rw'=>array( 'rw'=>'Kinyarwandi' ),
+	'sa'=>array( 'sa'=>'संस्कृतम्' ),
+	'sd'=>array( 'sd'=>'سنڌي' , 'dir'=>'rtl' ),
+	'sg'=>array( 'sg'=>'yângâ tî sängö' ),
+	'sh'=>array( 'sh'=>'Српскохрватски' ),
+	'si'=>array( 'si'=>'(siṁhala bʰāṣāva)' ),
+	'sk'=>array( 'sk'=>'Slovenčina' ),
+	'sl'=>array( 'sl'=>'Slovenščina' ),
+	'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),
+	'sn'=>array( 'sn'=>'chiShona' ),
+	'so'=>array( 'so'=>'af Soomaali' ),
+	'sq'=>array( 'sq'=>'Shqip' ),
+	'sr'=>array( 'sr'=>'Srpski' ),
+	'ss'=>array( 'ss'=>'siSwati' ),
+	'st'=>array( 'st'=>'seSotho' ),
+	'su'=>array( 'su'=>'basa Sunda' ),
+	'sv'=>array( 'sv'=>'Svenska', 'sv-se'=>'Svenska' ),
+	'sw'=>array( 'sw'=>'Kiswahili' ),
+	'ta'=>array( 'ta'=>'தமிழ்' ),
+	'te'=>array( 'te'=>'తెలుగు' ),
+	'tg'=>array( 'tg'=>'زبان تاجکی' , 'dir'=>'rtl' ),
+	'th'=>array( 'th'=>'ภาษาไทย' ),
+	'ti'=>array( 'ti'=>'ትግርኛ' ),
+	'tk'=>array( 'tk'=>'Türkmençe' ),
+	'tl'=>array( 'tl'=>'Tagalog' ),
+	'tn'=>array( 'tn'=>'Setswana' ),
+	'to'=>array( 'to'=>'Faka-Tonga' ),
+	'tr'=>array( 'tr'=>'Türkçe' ),
+	'ts'=>array( 'ts'=>'xiTsonga' ),
+	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),
+	'tw'=>array( 'tw'=>'Twi' ),
+	'ug'=>array( 'ug'=>'uyghur tili' ),
+	'uk'=>array( 'uk'=>"Українська", 'uk-ua'=>"Українська" ),
+	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),
+	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),
+	'vi'=>array( 'vi'=>'Tiếng Việt' ),
+	'vo'=>array( 'vo'=>"vad'd'a tšeel" ),
+	'wo'=>array( 'wo'=>'Wollof' ),
+	'xh'=>array( 'xh'=>'isiXhosa' ),
+	'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),
+	'yo'=>array( 'yo'=>'Yorùbá' ),
+	'za'=>array( 'za'=>'Sawcuengh' ),
+	'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
+	'zu'=>array( 'zu'=>'isiZulu' ),
+	);
+</pre>
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+
+h2(#credits). Credits.
+
+Thanks go to Marios for making the initial plugin request and pledging support for the development. Destry also promised support very soon afterward.
+
+Graeme provided v0.5 of what was then the gbp_l10n plugin which I have greatly extended (with his help). l10n MLP also uses his admin library to provide the tabbed admin interface.
+
+The Greek renditions for the MLP Pack were translated by Marios.
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+
+
+h2(#donors). Donors.
+
+The following people supported the development of the MLP Pack and made it available to the whole TxP community...
+
+* "NeMe":http://www.neme.org/
+* "Jakob"
+* "woof"
+* Luke Chambers of "Flickerbox":http://www.flickerbox.com.au/
+* "Jelle van der Heijde":http://www.jvdh.net/
+* "Christian Nolle":http://cnolle.com/
+* "sbonzix"
+
+ <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
+
+<br />
+
+-- _Steve (Net-Carver)_
+
+</div>
+# --- END PLUGIN HELP ---
+*/
 ?>
