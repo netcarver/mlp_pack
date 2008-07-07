@@ -479,38 +479,18 @@ if (@txpinterface === 'public')
 		@$GLOBALS['prefs']['comments_default_invite'] = gTxt('comment');
 
 		$feeds = array( 'rss' , 'atom' );
-		if( in_array( $first_chunk , $feeds) )
+		if( in_array( $first_chunk , $feeds ) )
 			{
-			#
-			#	There seems to be some whitespace getting into the output buffer.
-			# XHTML can cope but it causes a parse error in the feed xml
-			#
-			#	Simple solution is to make sure the output buffer is empty before
-			# continuing the processing critical requests...
-			#
-			while( @ob_end_clean() );
-
-			#
-			#	Turn on compression before the feed routines do!
-			#
+			#	Prevent the feed routine(s) from removing our handler!
 			if (extension_loaded('zlib') && ini_get("zlib.output_compression") == 0 && ini_get('output_handler') != 'ob_gzhandler' && !headers_sent())
-				@ob_start("ob_gzhandler");
+				{
+				@ob_start('ob_gzhandler');
+				if( $prefs['l10n_l10n-clean_feeds'] == '0' )
+					ini_set( 'zlib.output_compression' , 1 );
+				}
 
-			#
 			#	Inject our language markers into the feed stream...
-			#
-			global $l10n_replace_strings;
-			if( $first_chunk === 'rss' )
-				{
-				$l10n_replace_strings['start'] = '<link>';
-				$l10n_replace_strings['stop']  = '</link>';
-				}
-			elseif( $first_chunk === 'atom' )
-				{
-				$l10n_replace_strings['start'] = ' href="';
-				$l10n_replace_strings['stop']  = '"';
-				}
-			@ob_start('_l10n_inject_feed_lang_markers');
+			@ob_start( '_l10n_inject_'.$first_chunk.'_lang_markers' );
 			}
 		elseif( $first_chunk !== 'file_download' )
 			{
@@ -535,36 +515,99 @@ if (@txpinterface === 'public')
 			{
 			$siteurl = trim( $prefs['siteurl'] , '/' );
 			$siteurl = _l10n_markup( $siteurl , true );
-			$siteurl = '(https?:\/\/'.$siteurl.')(\/[\w|\-|\.|\~|\#|\%|\?|\=|\+|\&]*)([\/|\w|\-|\.|\~|\#|\%|\?|\=||\+|\&]*)';
+			$siteurl = '(https?:\/\/'.$siteurl.')?([\/|\?].*)?';	# Splits on first '/' or '?'
 			}
 
 		$start = _l10n_markup( $l10n_replace_strings['start'] );
 		$stop  = _l10n_markup( $l10n_replace_strings['stop'] );
 
-		$result = '/'.$start.$siteurl.$stop.'/';
+		$result = '/'.$start.$siteurl.$stop.'/Ui';		# Don't use greedy matching! Use case-insensitive matching.
 
 		return $result;
 		}
 
 	function _l10n_inject_lang_markers_cb( $matches )
 		{
-		global $l10n_language , $l10n_replace_strings , $prefs;
+		global $l10n_language , $l10n_replace_strings , $l10n_url_exclusions , $prefs;
 
+		$debug = 1;
+		#$debug = !$l10n_replace_strings['insert_blank'];
+		$logfile = $prefs['tempdir'] . DS . 'l10n.log.txt';
+		static $counter;
+
+		if( !isset( $counter ) )
+			$counter = 0;
+
+		$counter += 1;
+
+		$insert = 0;
 		$result = $matches[0];
-		$img = '/'.$prefs['img_dir'];
+		$query = '';
 
-		$has_lang_code = MLPLanguageHandler::is_valid_short_code( trim( $matches[2] , '/' ) );
-		if( !$has_lang_code && $matches[2] !== '/textpattern' && $matches[2] !== '/file_download' && $matches[2] !== $img )
+		if( $debug ) error_log( n.n.'Hit #'.$counter.' : ['.$matches[0].']' , 3 , $logfile );
+
+		if( @$l10n_replace_strings['insert_blank'] && empty( $matches[0] ) )	# Homepage...
 			{
-			$result = $matches[1] . '/' . $l10n_language['short'] . $matches[2] . $matches[3];
-			$result = $l10n_replace_strings['start']. $result . $l10n_replace_strings['stop'];
+			$insert = 1;
+			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$l10n_language['short'].'/' , 3 , $logfile );
+			}
+		else
+			{
+			if( $debug ) error_log( ' ... PARSING : ' . $matches[2] , 3 , $logfile );
+			$url = trim($matches[2] , '/');
+			$url = strtolower($url);
+			$qs = strpos($url,'?');
+			if( $qs !== false )
+				$url = substr($url, 0, $qs);
+			$r = array_map('urldecode', explode('/',$url));
+			if( $debug ) error_log( n.t.'  -> ' . $r[0] , 3 , $logfile );
+
+			$excluded = in_array( $r[0] , $l10n_url_exclusions );
+			if( $excluded )
+				{
+				if( $debug ) error_log( ' ... SKIPPING: this is an excluded section/area ' , 3 , $logfile );
+				}
+			else
+				{
+				if( !@$l10n_replace_strings['insert_blank'] && empty($matches[1]) )
+					{
+					if( $debug ) error_log( ' ... SKIPPING: not a URL ' , 3 , $logfile );
+					}
+				elseif( empty($r[0]) || !MLPLanguageHandler::is_valid_short_code($r[0]) )
+					{
+					if( $debug ) error_log( ' ... INSERTING : '.$l10n_language['short'] , 3 , $logfile );
+					$insert = 1;
+					}
+				else
+					if( $debug ) error_log( ' ... SKIPPING: language ('.$r[0].') present ' , 3 , $logfile );
+				}
+			}
+
+		if( $insert )
+			{
+			$extra='';
+			if( $matches[2][0] !== '/' )
+				$extra='/';
+			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$l10n_language['short'].$extra.$matches[2].$l10n_replace_strings['stop_rep'];
+			if( $debug ) error_log( n.t.'  ->  '.$result , 3 , $logfile );
 			}
 
 		return $result;
 		}
-	function _l10n_inject_feed_lang_markers( $buffer )
+
+	function _l10n_inject_atom_lang_markers( $buffer )
 		{
-		# Insert language code into any URLs embedded as texts in hyperlinks...
+		#	Atom uses the same notation as our XHTML so just call that handler...
+		return _l10n_inject_lang_markers( $buffer );
+		}
+	function _l10n_inject_rss_lang_markers( $buffer )
+		{
+		_l10n_make_exclusion_list();
+
+		global $l10n_replace_strings;
+		$l10n_replace_strings['start'] = $l10n_replace_strings['start_rep'] = '<link>';
+		$l10n_replace_strings['stop']  = $l10n_replace_strings['stop_rep']  = '</link>';
+		$l10n_replace_strings['insert_blank'] = true;
 		$pattern = _l10n_make_pattern();
 		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
@@ -632,21 +675,59 @@ if (@txpinterface === 'public')
 		return $out;
 		}
 
+	function _l10n_make_exclusion_list()
+		{
+		global $prefs , $l10n_url_exclusions;
+		# Get user excludes...
+		$tmp = trim( @$prefs['l10n_l10n-url_exclusions'] );
+		if( !empty( $tmp ) )
+			$tmp = do_list( $tmp );
+		else
+			$tmp = array();
+
+		# Make sure the image dir is in our final exclude list...
+		$img_dir = $prefs['img_dir'];
+		$l10n_url_exclusions = array( $img_dir => $img_dir );
+
+		# Transfer user entries, removing dups and empties...
+		foreach( $tmp as $entry )
+			{
+			if( !empty( $entry ) )
+				$l10n_url_exclusions[ $entry ] = $entry;
+			}
+
+		# Exclude the rvm_css directory (if any)...
+		$rvm_css = trim( @$prefs['rvm_css_dir'] );
+		if( !empty( $rvm_css ) && !in_array( $rvm_css , $l10n_url_exclusions ) )
+			$l10n_url_exclusions[$rvm_css] = $rvm_css;
+
+		# Add the standard exclude directories...
+		$l10n_url_exclusions['textpattern'] = 'textpattern';
+		$l10n_url_exclusions['file_download'] = 'file_download';
+		}
+
 	function _l10n_inject_lang_markers( $buffer )
 		{
-		global $l10n_replace_strings;
+		global $l10n_replace_strings , $l10n_url_exclusions;
+
+		_l10n_make_exclusion_list();
 
 		# Insert the language code into all permlinks...
-		$l10n_replace_strings['start'] = ' href="';
-		$l10n_replace_strings['stop']  = '"';
+		$l10n_replace_strings['start'] = ' href=["|\']';		$l10n_replace_strings['start_rep'] = ' href="';
+		$l10n_replace_strings['stop']  = '["|\']';			$l10n_replace_strings['stop_rep'] = '"';
+		$l10n_replace_strings['insert_blank'] = true;
 		$pattern1 = _l10n_make_pattern();
 		$buffer = preg_replace_callback( $pattern1 , '_l10n_inject_lang_markers_cb' , $buffer );
 
-		# Insert language code into any URLs embedded as texts in hyperlinks...
-		$l10n_replace_strings['start'] = '>';
-		$l10n_replace_strings['stop']  = '</a>';
+		# Insert language code into any URLs embedded as text in hyperlinks (eg search results)...
+		$l10n_replace_strings['start'] = $l10n_replace_strings['start_rep'] = '>';
+		$l10n_replace_strings['stop']  = $l10n_replace_strings['stop_rep']  = '</a>';
+		$l10n_replace_strings['insert_blank'] = false;
 		$pattern2 = _l10n_make_pattern();
 		$buffer = preg_replace_callback( $pattern2 , '_l10n_inject_lang_markers_cb' , $buffer );
+
+		if (0)	#debug
+			$buffer = 'Exclusions... :' . join( ', ' , $l10n_url_exclusions ) . $buffer;
 
 		return $buffer;
 		}
@@ -1343,6 +1424,8 @@ h2(#prefs). Preferences Help
 * "Inline editing of pages and forms?":#l10n-inline_editing
 * "Allow strings to be totally deleted on the snippet > search tab?":#l10n-allow_search_delete
 * "Limit string searches to publicly available strings?":#l10n-search_public_strings_only
+* "Exclude these sections/areas from URL re-writes?":#l10n-url_exclusions
+* "Keep Txp's normal feed behaviour (don't inject language markers in feeds)":#l10n-clean_feeds
 
 h3(#l10n-languages). "Languages":#prefs
 
@@ -1406,6 +1489,23 @@ Choose 'yes' to allow all renditions of a string to be deleted when edited via t
 h3(#l10n-search_public_strings_only). "Limit string searches to publicly available strings?":#prefs
 
 Choose 'yes' to make the snippet > search tab only search against strings that are available to the public interface. This is useful if you are using the search feature to locate strings to use as snippets in your pages and forms. Prevents you from choosing admin only strings that will fail to render on your website's public interface.
+
+h3(#l10n-url_exclusions). "Exclude these sections/areas from URL re-writes?":#prefs
+
+List any section or area under your site root that have URLs that you do *not* want the MLP to inject langauge markers into.
+
+# Please use a comma separated list of areas.
+# No need to prepend a '/' character.
+# No need to include 'textpattern', 'file_downloads', your Image directory or the directory used by @rvm_css@.
+
+You might want to include areas such as 'js' if you have a JavaScript directory.
+
+h3(#l10n-clean_feeds). "Keep Txp's normal feed behaviour (don't inject language markers in feeds)":#prefs
+
+Use this option to switch off or retain Txp's normal, clean, feed behaviour. If you retain it, the MLP pack will not be able to rewrite the URLs used in the feed to include language markers.
+If you want your site feeds to have language markers in the feed then set this to 'No'.
+
+*NB:* Setting to 'No' may cause feed problems as any plugin can then alter the feed and possibly break it.
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
 
