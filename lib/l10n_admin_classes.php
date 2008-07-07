@@ -4124,11 +4124,8 @@ class MLPArticleView extends GBPAdminTabView
 						#
 						#	Make a clone link if possible...
 						#
-						$status_ok = ( $status_no > 2 );
-						if( !$can_clone or !$status_ok or $all_translations_present )
-							{
+						if( !$can_clone or $all_translations_present )
 							$clone_link = '';
-							}
 						else
 							$clone_link = 	'<a href="' . $this->parent->url( array('page'=>$page,'step'=>'start_clone','rendition'=>$id,'article'=>$ID), true ) .
 											'" class="clone-link" title="' . gTxt('l10n-clone') . '"><img src="txp_img/l10n_clone.png" /></a>';
