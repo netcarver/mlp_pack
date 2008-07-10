@@ -1,18 +1,7 @@
 <?php
 
-$plugin['revision'] = '$LastChangedRevision$';
-
-$revision = @$plugin['revision'];
-if( !empty( $revision ) )
-	{
-	$parts = explode( ' ' , trim( $revision , '$' ) );
-	$revision = $parts[1];
-	if( !empty( $revision ) )
-		$revision = '.' . $revision;
-	}
-
 $plugin['name'] = 'l10n';
-$plugin['version'] = '0.8' . $revision;
+$plugin['version'] = '0.8';
 $plugin['author'] = 'Graeme Porteous & Steve (Netcarver)';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
