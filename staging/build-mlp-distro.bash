@@ -1,8 +1,8 @@
 #!/bin/bash
 
-BASEDIR=/home/.jeremia/programming/textpattern/Porteous-Plugins
+BASEDIR=/home/.jeremia/programming/git-repos/mlp_pack.git
 TARGET_DIR=$BASEDIR/staging/mlp
-SOURCE_DIR=$BASEDIR/trunk
+SOURCE_DIR=$BASEDIR
 ZIP_DIR=$BASEDIR/staging
 VERBOSE=""
 
