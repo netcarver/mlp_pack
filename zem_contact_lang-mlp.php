@@ -9,33 +9,6 @@ $plugin['type'] 		= 0;
 
 @include_once('../zem_tpl.php');
 
-if (0) {
-?>
-<!-- HELP SECTION
-# --- BEGIN PLUGIN HELP ---
-
-<div style="text-align:center;font-weight:bold;font-size:24px;text-decoration:underline;">Zem Contact Lang</div>
-
-This is a separate language plug-in for use with Zem Contact Reborn. Both plug-ins need to be installed and activated in order to work properly.
-
-Separating the language in this way will enable non-english users to update the main plug-in without affecting their &#8220;localisation&#8221;.
-
-<div id="local" style="text-align:center;font-weight:bold;font-size:24px;text-decoration:underline;">Localisation</div>
-
-Throughout the <code>zem_contact_reborn</code> plug-in, use has been made of a separate <code>gTxt</code> function which you can see in this plug-in&#8217;s code by clicking on the &#8220;Edit&#8221; button.
-
-If you are using the plug-in for a non-english site you can make use of this to localise text outputs for your preferred language.
-
-You should only edit text that appears after the <code>=&gt;</code> sign.
-
-If you have a dual-language site and the languages use separate &#8220;sections&#8221;, you can use the &#60;txp:if&#95;section&#62; tag to enable different translations. An example of this usage is shown in the <strong><a href="http://forum.textpattern.com/viewtopic.php?id=13416">forum thread</a></strong>. Our thanks to Els (doggiez) for this example.
-
-# --- END PLUGIN HELP ---
-
--->
-<?php
-}
-
 # --- BEGIN PLUGIN CODE ---
 #
 #	Define a (hopefully) unique prefix for our strings...
@@ -162,4 +135,25 @@ if( @txpinterface=='public' )
 		}
 	}
 # --- END PLUGIN CODE ---
+/*
+# --- BEGIN PLUGIN HELP ---
+
+<div style="text-align:center;font-weight:bold;font-size:24px;text-decoration:underline;">Zem Contact Lang</div>
+
+This is a separate language plug-in for use with Zem Contact Reborn. Both plug-ins need to be installed and activated in order to work properly.
+
+Separating the language in this way will enable non-english users to update the main plug-in without affecting their &#8220;localisation&#8221;.
+
+<div id="local" style="text-align:center;font-weight:bold;font-size:24px;text-decoration:underline;">Localisation</div>
+
+Throughout the <code>zem_contact_reborn</code> plug-in, use has been made of a separate <code>gTxt</code> function which you can see in this plug-in&#8217;s code by clicking on the &#8220;Edit&#8221; button.
+
+If you are using the plug-in for a non-english site you can make use of this to localise text outputs for your preferred language.
+
+You should only edit text that appears after the <code>=&gt;</code> sign.
+
+If you have a dual-language site and the languages use separate &#8220;sections&#8221;, you can use the &#60;txp:if&#95;section&#62; tag to enable different translations. An example of this usage is shown in the <strong><a href="http://forum.textpattern.com/viewtopic.php?id=13416">forum thread</a></strong>. Our thanks to Els (doggiez) for this example.
+
+# --- END PLUGIN HELP ---
+*/
 ?>
