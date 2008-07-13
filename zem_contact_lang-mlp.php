@@ -1,15 +1,11 @@
 <?php
 
 $plugin['name'] 		= 'zem_contact_lang-mlp';
-$plugin['version'] 		= '4.0.3-MLP';
+$plugin['version'] 		= '4.0.3.6-MLP';
 $plugin['author'] 		= 'Stephen Dickinson & the TXP Community';
 $plugin['author_uri'] 	= 'http://forum.textpattern.com/viewtopic.php?id=12956';
 $plugin['description'] 	= 'MLP strings plug-in for Zem Contact Reborn';
-$plugin['type'] 		= 0; 	# No longer has to be an admin plugin to register the strings!
-
-$plugin['url'] = '$HeadURL$';
-$plugin['date'] = '$LastChangedDate$';
-$plugin['revision'] = '$LastChangedRevision$';
+$plugin['type'] 		= 0;
 
 @include_once('../zem_tpl.php');
 
@@ -74,22 +70,23 @@ $zem_crl_strings = array(
 	'option'			=> 'Option',
 	'radio'				=> 'Radio',
 	'receiver'			=> 'Receiver',
+	'recipient'			=> 'Recipient',
+	'refresh'			=> 'Follow this link if the page does not refresh automatically.',
 	'secret' 			=> 'Secret',
 	'send'				=> 'Send',
+	'send_article'		=> 'Send article',
 	'spam'				=> 'We do not accept spam thankyou!',
 	'text'				=> 'Text',
 	'to'				=> 'No &#8220;<strong>to</strong>&#8221; email address specified.',
-	'to_missing'		=> '&#8220;<strong>To</strong>&#8221; address is missing.',
+	'to_missing'		=> '&#8220;<strong>To</strong>&#8221; email address is missing.',
+	'version'			=> '4.0.3.6'
 	);
-
-
 
 #
 #	Register the callback for the enumerate string event.
 # If the MLP pack is not present and active this will NOT get called.
 #
 register_callback( 'zem_crl_enumerate_strings' , 'l10n.enumerate_strings' );
-
 
 #
 #	Here's a callback routine used to register the above strings with
