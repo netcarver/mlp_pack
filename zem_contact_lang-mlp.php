@@ -2,7 +2,7 @@
 
 $plugin['name'] 		= 'zem_contact_lang-mlp';
 $plugin['version'] 		= '4.0.3.6-MLP';
-$plugin['author'] 		= 'Stephen Dickinson & the TXP Community';
+$plugin['author'] 		= 'Netcarver & the TXP Community';
 $plugin['author_uri'] 	= 'http://forum.textpattern.com/viewtopic.php?id=12956';
 $plugin['description'] 	= 'MLP strings plug-in for Zem Contact Reborn';
 $plugin['type'] 		= 0;
