@@ -6,6 +6,12 @@ SOURCE_DIR=$BASEDIR
 ZIP_DIR=$BASEDIR/staging
 VERBOSE=""
 
+#echo "Base dir   : $BASEDIR"
+#echo "Source dir : $SOURCE_DIR"
+#echo "Target dir : $TARGET_DIR"
+#echo "Zip dir    : $ZIP_DIR"
+
+
 sed_handle_BOM_marker()
 {
 echo -e '\E[31;40m'"\033[1mByte Order Mark detected in $1\033[0m"
@@ -25,7 +31,7 @@ sed_build_plugins()
 until [[ $1 == "" ]]
 do
 	OP_DOC=$TARGET_DIR/plugins/$1.txt
-	wget -q --output-document=$OP_DOC plugins.local/latest/$1.php;
+	wget -q --output-document=$OP_DOC plugins.local/dev/$1.php;
 	sed_BOM_check $SOURCE_DIR/$1.php
 	cp -iu $VERBOSE $SOURCE_DIR/$1.php $TARGET_DIR/plugins/sources
 	shift
@@ -50,12 +56,14 @@ rm -rd $VERBOSE $TARGET_DIR/textpattern
 rm -rd $VERBOSE $TARGET_DIR/plugins
 rm     $VERBOSE $TARGET_DIR/optional/textpattern/publish.php
 
+
 echo "Creating MLP staging area directories..."
 mkdir     $TARGET_DIR/textpattern
 mkdir     $TARGET_DIR/textpattern/lib 
 mkdir     $TARGET_DIR/textpattern/txp_img
 mkdir     $TARGET_DIR/plugins
 mkdir     $TARGET_DIR/plugins/sources
+
 
 echo "Copying textpattern/lib files..."
 cd $BASEDIR
