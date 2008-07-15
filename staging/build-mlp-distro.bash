@@ -31,7 +31,7 @@ sed_build_plugins()
 until [[ $1 == "" ]]
 do
 	OP_DOC=$TARGET_DIR/plugins/$1.txt
-	wget -q --output-document=$OP_DOC plugins.local/dev/$1.php;
+	wget -q --output-document=$OP_DOC plugins.local/dev/$1.php?action=gzip;
 	sed_BOM_check $SOURCE_DIR/$1.php
 	cp -iu $VERBOSE $SOURCE_DIR/$1.php $TARGET_DIR/plugins/sources
 	shift
@@ -81,8 +81,13 @@ sed_build_plugins l10n gbp_admin_library zem_contact_lang-mlp
 
 echo "Creating zip archive..."
 cd $TARGET_DIR
-PACK_VERSION=`head -n 1 ./plugins/l10n.txt | cut -c15- | tr -d [:blank:]`
-PACK_NAME=mlp-${PACK_VERSION}.zip
+
+#PACK_VERSION=`head -n 1 ./plugins/l10n.txt | cut -c3- | tr -d [:blank:]`
+PACK_VERSION=`head -n 3 ./plugins/l10n.txt | grep 'Version' | cut -c16- | tr -d [:blank:]`
+PACK_REV=`head -n 3 ./plugins/l10n.txt | grep 'Revision' | cut -c16- | tr -d [:blank:]`
+
+
+PACK_NAME=mlp-${PACK_VERSION}.${PACK_REV}.zip
 #echo "Pack version: $PACK_VERSION"
 #echo "Pack name:    $PACK_NAME"
 zip -rT -q $ZIP_DIR/$PACK_NAME .
