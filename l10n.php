@@ -520,7 +520,7 @@ if (@txpinterface === 'public')
 		{
 		global $l10n_language , $l10n_replace_strings , $l10n_url_exclusions , $prefs;
 
-		$debug = 1;
+		$debug = 0;
 		#$debug = !$l10n_replace_strings['insert_blank'];
 		$logfile = $prefs['tempdir'] . DS . 'l10n.log.txt';
 		static $counter;
