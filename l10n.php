@@ -330,6 +330,9 @@ if( @txpinterface === 'admin' )
 	global $l10n_language , $textarray , $prefs;
 	global $l10n_view;
 
+	# Allow admin-side forms to have substitutions done too.
+	$prefs['db_process_result_func'] = '_l10n_process_pageform_access';
+
 	#	Switch admin lang if needed...
 	if( l10n_installed( true ) )
 		{
@@ -638,31 +641,6 @@ if (@txpinterface === 'public')
 		$article_id = $info[L10N_COL_GROUP];
 		$alternatives = _l10n_get_article_members( $article_id , $exclude_lang );
 		return $alternatives;
-		}
-
-	function _l10n_substitute_snippets( &$thing )
-		{
-		/*
-		Replaces all snippets within the contained block with their text from the global textarray.
-		Allows TxP devs to include snippets* in their forms and page templates.
-		*/
-		$out = preg_replace_callback( 	L10N_SNIPPET_PATTERN ,
-										create_function(
-							           '$match',
-								       'global $l10n_language;
-										global $textarray;
-										if( $l10n_language )
-											$lang = $l10n_language[\'long\'];
-										else
-											$lang = "??";
-										$snippet = strtolower($match[1]);
-										if( array_key_exists( $snippet , $textarray ) )
-											$out = $textarray[$snippet];
-										else
-											$out = "($lang)$snippet";
-										return $out;'
-									), $thing );
-		return $out;
 		}
 
 	function _l10n_make_exclusion_list()
