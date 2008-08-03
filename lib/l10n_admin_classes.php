@@ -573,6 +573,7 @@ class MLPSnips
 
 		# Match all directly included snippets...
 		preg_match_all( MLPSnips::get_pattern('snippet') , $thing , $out );
+
 		# Match all snippets included as txp tags...
 		preg_match_all( MLPSnips::get_pattern('snippet_tag') , $thing , $tags );
 
@@ -2500,6 +2501,8 @@ class MLPStringView extends GBPAdminTabView
 
 	function _render_string_list( $strings , $owner_label , $owner_name , $prefix , $event )	# Center pane string render subroutine
 		{
+		#echo "_render_string_list( \$strings , \$owner_label[$owner_label] , \$owner_name[$owner_name] , \$prefix[$prefix] , \$event[$event] )".br.n;
+		
 		$strings_exist 	= ( count( $strings ) > 0 );
 		if( !$strings_exist )
 			return '';
@@ -2507,6 +2510,8 @@ class MLPStringView extends GBPAdminTabView
 		$site_langs = MLPLanguageHandler::get_site_langs();
 
 		$needs_legend = false;
+		$strip_prefix = 'plugin'===$owner_label;
+		$prefix_len   = ($strip_prefix) ? strlen($prefix)+1 : 0;
 
 		$out[] = '<ol>';
 		if( $strings_exist )
@@ -2516,7 +2521,7 @@ class MLPStringView extends GBPAdminTabView
 				$complete = MLPStrings::is_complete( $langs , ($event!=='public') );
 				if( !$complete )
 					$needs_legend = true;
-				$guts = $string . ' ['.( ($langs) ? $langs : gTxt('none') ).']';
+				$guts = (( $strip_prefix ) ? substr( $string , $prefix_len ) : $string ) . ' ['.( ($langs) ? $langs : gTxt('none') ).']';
 				if( !$complete )
 					$guts .= ' <strong>*</strong>';
 				$out[]= '<li><a href="' .
