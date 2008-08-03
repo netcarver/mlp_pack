@@ -43,6 +43,10 @@ function _l10n_substitute_snippets( &$thing )
 
 function _l10n_process_pageform_access( $thing , $table , $where , $results , $is_a_set )
 	{
+	global $event;
+	if( 'admin' === @txpinterface && 'l10n'===$event )
+		return $results;
+	
 	switch( $table )
 		{
 		case 'txp_page' :
