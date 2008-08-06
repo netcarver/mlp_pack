@@ -924,7 +924,8 @@ if (@txpinterface === 'public')
 
 				if( !$current or $link_current )
 					{
-					$uri = rtrim( serverSet('REQUEST_URI') , '/' );
+					$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
+					$uri = preg_replace("/^$subpath/i","/",serverSet('REQUEST_URI'));
 					if( $processing404 )
 						$uri = '';
 
