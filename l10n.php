@@ -140,7 +140,7 @@ function _l10n_process_url( $use_get_params=false )
 
 	if( $debug )
 		{
-		echo br ,'hu=' . hu . " REQUEST = " , $req_method , ' : ', var_dump($request);
+		echo br ,'hu=' . hu . " REQUEST = " , $req_method , ' : ', var_dump($req);
 		echo br , var_dump( $parts );
 		#global $plugin_callback;
 		#foreach( $plugin_callback as $cb )
@@ -216,7 +216,7 @@ function _l10n_process_url( $use_get_params=false )
 
 		if( $reduce_uri )
 			{
-			$new_uri = substr( $request , strlen($u1)+1 );
+			$new_uri = substr( $req , strlen($u1)+1 );
 			if (empty( $new_uri ))
 				$new_uri = '/';
 			$_SERVER['REQUEST_URI'] = $new_uri;
