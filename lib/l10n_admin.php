@@ -444,6 +444,17 @@ function _l10n_inject_switcher_form()
 			'</form>' . n;
 	return $ret;
 	}
+function _l10n_rename_articles_tab($page)
+	{
+	#
+	#	Dynamically replace the 'tab_list' label...
+	#
+	$f = '<a href="?event=list" class="plain">'.gTxt('tab_list').'</a>';
+	$r = htmlspecialchars(gTxt('l10n-renditions'));
+	$tmp = str_replace( $f , '<a href="?event=list" class="plain">'.$r.'</a>' , $page);
+	if( null !== $tmp ) $page = $tmp;
+	return $page;
+	}
 function _l10n_process_admin_page($page)
 	{
 	global $event , $step , $l10n_painters , $DB , $prefs;
@@ -470,45 +481,24 @@ function _l10n_process_admin_page($page)
 	#
 	$ls = _l10n_inject_switcher_form();
 	$ver = $prefs['version'];
+	$fs = array	(
+				'4.0.4' => '<form method="get" action="index.php" style="display: inline;">',
+				'4.0.6' => '<form method="get" action="index.php" class="navpop" style="display: inline;">',
+				);
+	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
+	$page = str_replace( $f , $ls.sp.$f , $page);
 
 	#
-	#	if aro_myadmin (just in case!)...
+	#	... and to the bottom of the admin form ...
 	#
-	if( is_callable('aro_pagetop') )
-		{
-		global $txp_user;
-
-		$ev = (has_privs('prefs')) ? 'prefs' : 'admin' ;
-
-		$f = '<p class="user">'.$txp_user.' - <a href="index.php?event=admin">'.gTxt('prefs').'</a> | <a href="index.php?logout=1">'.gTxt('logout').'</a></p>';
-		$r = '<div class="user">'.$txp_user.' - '.$ls.' | <a href="index.php?event='.$ev.'">'.gTxt('prefs').'</a> | <a href="index.php?logout=1">'.gTxt('logout').'</a></div>';
-		$page = str_replace( $f , $r , $page);
-		}
-	else
-		{
-		$fs = array	(
-					'4.0.4' => '<form method="get" action="index.php" style="display: inline;">',
-					'4.0.6' => '<form method="get" action="index.php" class="navpop" style="display: inline;">',
-					);
-		$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
-		$page = str_replace( $f , $ls.sp.$f , $page);
-		#
-		#	... and to the bottom of the admin form ...
-		#
-		$fs = array	(
-					'4.0.4' => '</form><a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
-					'4.0.6' => '</form>'.n.'<a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
-					);
-		$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
-		$page = str_replace( $f , $f.br.n.$ls , $page);
-		}
-
-	#
-	#	Dynamically replace the 'tab_list' label...
-	#
-	$f = '<a href="?event=list" class="plain">'.gTxt('tab_list').'</a>';
-	$r = htmlspecialchars(gTxt('l10n-renditions'));
-	$page = str_replace( $f , '<a href="?event=list" class="plain">'.$r.'</a>' , $page);
+	$fs = array	(
+				'4.0.4' => '</form><a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
+				'4.0.6' => '</form>'.n.'<a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
+				);
+	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
+	$page = str_replace( $f , $f.br.n.$ls , $page);
+ 
+	$page = _l10n_rename_articles_tab($page);
 
 	#
 	#	Pass the page through any matching event processors...

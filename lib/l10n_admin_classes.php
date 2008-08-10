@@ -2372,12 +2372,15 @@ class MLPStringView extends GBPAdminTabView
 		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
+			$can_edit = $this->pref('l10n-inline_editing');
 			$explain = false;
 			while ( $a = nextRow($rs) )
 				{
 				$snippets 	= array();
 				$snippets = MLPSnips::find_snippets_in_block( $a['data'] , $raw_count );
 				$count = count( $snippets );
+				if( !$can_edit && !$count )
+					continue;
 				$marker = ($count) ? '['.$count.']' : '';
 				$guts = $a['name'].' '.$marker;
 				$out[] = '<li><a href="'.$this->url( array('container'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
