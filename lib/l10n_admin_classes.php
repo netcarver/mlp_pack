@@ -564,7 +564,7 @@ class MLPSnips
 			}
 		}
 
-	function find_snippets_in_block( &$thing , &$raw_snippet_count , $merge = false , $get_data = false )
+	function find_snippets_in_block( &$thing , &$raw_snippet_count )
 		{
 		/*
 		Scans the given block ($thing) for snippets and returns their names as the values of an array.
@@ -585,38 +585,6 @@ class MLPSnips
 		$out = array_unique( array_merge( $out , $tags ) );
 		$raw_snippet_count = count( $out );
 		unset($tags);
-
-		if( $merge and $raw_snippet_count )
-			{
-			#	Enlarge the array with details of any txp_lang entries that match that snippet name.
-			$temp = array();
-			foreach( $out as $name )
-				{
-				#	Load details of named entries...
-				$rs = safe_rows_start(
-					'id , lang , data , lastmod',
-					'txp_lang',
-					"`name`='" . doSlash($name) . "' AND `event`='snippet'" );
-
-				if( $rs and mysql_num_rows($rs) > 0 )
-					{
-					while( $a = nextRow($rs) )
-						{
-						$lng = $a['lang'];
-						$temp[$name][$lng]['id'] 		= $a['id'];
-						$temp[$name][$lng]['lastmod'] 	= $a['lastmod'];
-						if( $get_data )
-							$temp[$name][$lng]['data'] 		= $a['data'];
-						}
-					}
-				else
-					{
-					$temp[$name] = NULL;
-					}
-				}
-			$out = &$temp;
-			}
-
 		return $out;
 		}
 
