@@ -1,5 +1,7 @@
 <?php
 
+if( !defined( 'txpinterface' ) ) exit;
+
 global $l10n_vars;
 global $l10n_painters;
 $l10n_vars = array();

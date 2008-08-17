@@ -1,5 +1,7 @@
 <?php
 
+if( !defined( 'txpinterface' ) ) exit;
+
 #
 #	This file contains functions/classes needed on both the admin and public side
 # of the plugin.

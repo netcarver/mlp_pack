@@ -1,5 +1,7 @@
 <?php
 
+if( !defined( 'txpinterface' ) ) exit;
+
 global $txpcfg , $l10n_language , $l10n_default_string_lang;
 
 #

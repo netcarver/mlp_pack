@@ -1,4 +1,5 @@
 <?php
+if( !defined( 'txpinterface' ) ) exit;
 global $iso_693_langs;
 $iso_693_langs = array(
 	'aa'=>array( 'aa'=>'Afaraf' ),

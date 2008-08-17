@@ -1,5 +1,7 @@
 <?php
 
+if( !defined( 'txpinterface' ) ) exit;
+
 #
 #	The language of the strings in this file...
 #
