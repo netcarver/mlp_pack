@@ -216,6 +216,16 @@ function _l10n_process_url( $use_get_params=false )
 
 		if( $reduce_uri )
 			{
+			#
+			#	Request_uri needs the subdir + lang stripping to prevent 404s
+			#
+			#	Subdir will be restored in a callback to the textpattern action to prevent conflicts with
+			# commenting and plugins...
+			#
+			$lang_code_pos = strpos( $_SERVER['REQUEST_URI'] , "/$u1/" );
+			$_SESSION['l10n_request_uri'] = substr( $_SERVER['REQUEST_URI'] , 0 , $lang_code_pos+1 ).
+				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+4, strlen($_SERVER['REQUEST_URI']) );
+
 			$new_uri = substr( $req , strlen($u1)+1 );
 			if (empty( $new_uri ))
 				$new_uri = '/';
@@ -415,6 +425,12 @@ if (@txpinterface === 'public')
 	function _l10n_textpattern_comment_submit()
 		{
 		global $pretext, $l10n_language;
+
+		#
+		#	The REQUEST_URI has to be maintained to ensure comments work and compatiblitly with
+		# plugins...
+		#
+		$pretext['request_uri'] = $_SERVER['REQUEST_URI'] = $_SESSION['l10n_request_uri'];
 
 		#
 		#	Detect comment submission and update master textpattern table...
@@ -756,11 +772,13 @@ if (@txpinterface === 'public')
 
 		$section = empty($pretext['s']) ? '' : $pretext['s'];
 		$id = $pretext['id'];
-		$url = trim(serverSet('REQUEST_URI') , '/');
-		$parts = chopUrl($url);
+
+		$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
+		$uri = preg_replace("/^$subpath/i" , "/" , serverSet('REQUEST_URI'));
+		$parts = chopUrl($uri);
 
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
-		//echo br , "url = " , $url;
+		//echo br , "uri = " , $uri;
 		//echo br , "parts = " , var_dump( $parts );
 
 		$name_mappings = array();
@@ -902,8 +920,6 @@ if (@txpinterface === 'public')
 
 				if( !$current or $link_current )
 					{
-					$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
-					$uri = preg_replace("/^$subpath/i","/",serverSet('REQUEST_URI'));
 					if( $processing404 )
 						$uri = '';
 
