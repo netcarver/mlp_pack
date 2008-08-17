@@ -579,18 +579,14 @@ class MLPSnips
 		# Match all snippets included as txp tags...
 		preg_match_all( MLPSnips::get_pattern('snippet_tag') , $thing , $tags );
 
-		#	cleanup and trim the output arrays a little...
-		array_shift( $out );
-		$out = $out[0];
-		$out = doArray( $out , 'strtolower' );
+		#	cleanup and merge the snippets, removing duplicates...
+		$out = doArray( $out[1] , 'strtolower' );
+		$tags = doArray( $tags[1] , 'strtolower' );
+		$out = array_unique( array_merge( $out , $tags ) );
 		$raw_snippet_count = count( $out );
-		array_shift( $tags );
-		$tags = $tags[0];
-		$tags = doArray( $tags , 'strtolower' );
-		$out = array_merge( $out , $tags );
 		unset($tags);
 
-		if( $merge and count($out) )
+		if( $merge and $raw_snippet_count )
 			{
 			#	Enlarge the array with details of any txp_lang entries that match that snippet name.
 			$temp = array();
@@ -2378,13 +2374,13 @@ class MLPStringView extends GBPAdminTabView
 			$explain = false;
 			while ( $a = nextRow($rs) )
 				{
+				$count = 0;
 				$snippets 	= array();
-				$snippets = MLPSnips::find_snippets_in_block( $a['data'] , $raw_count );
-				$count = count( $snippets );
+				$snippets = MLPSnips::find_snippets_in_block( $a['data'] , $count );
 				if( !$can_edit && !$count )
 					continue;
-				$marker = ($count) ? '['.$count.']' : '';
-				$guts = $a['name'].' '.$marker;
+				$marker = ($count) ? ' ['.$count.']' : '';
+				$guts = $a['name'].$marker;
 				$out[] = '<li><a href="'.$this->url( array('container'=>$a['name']) , true).'">'.$guts.'</a></li>' . n;
 				}
 			$out[] = br . gTxt('l10n-pageform-markup') . n;
@@ -2712,8 +2708,8 @@ class MLPStringView extends GBPAdminTabView
 		*/
 		$stats 	= array();
 		$data 	= safe_field( $fdata , $table , " `name`='$owner'" );
-		$raw_count = 0;
-		$snippets = MLPSnips::find_snippets_in_block( $data , $raw_count );
+		$count = 0;
+		$snippets = MLPSnips::find_snippets_in_block( $data , $count );
 		$strings  = MLPSnips::get_snippet_strings( $snippets , $stats );
 		$can_edit = $this->pref('l10n-inline_editing');
 
@@ -2729,7 +2725,7 @@ class MLPStringView extends GBPAdminTabView
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
-		if( $raw_count > 10 )
+		if( $count > 10 )
 			$out[] = $this->_render_list_filter( 'l10n_string_list' );
 		$out[] = '<div id="l10n_string_list">' . n;
 		$out[] = br . n . $this->_render_string_list( $strings , 'container', $owner , '' , 'public' ) . n;
