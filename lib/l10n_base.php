@@ -17,6 +17,21 @@ if( !defined( 'L10N_COL_GROUP' ) )
 global $txpcfg , $event;
 include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
+function _l10n_load_localised_pref( $name )
+ 	{
+	global $prefs,$pretext;
+	$k = 'snip-'.$name;
+	$r = gTxt( $k );
+	if( $r !== $k )
+		{
+		$GLOBALS[$name] = $r;
+		$GLOBALS['prefs'][$name] = $r;
+		$prefs[$name] = $r;
+		if( @txpinterface === 'public' )
+			$pretext[$name] = $r;
+		}
+	}
+
 function _l10n_substitute_snippets( &$thing )
 	{
 	/*

@@ -538,7 +538,30 @@ class MLPSnips
 
 	function get_special_snippets()
 		{
-		return array('snip-site_slogan');
+		global $prefs;
+		$specials=array('snip-site_slogan');
+		$custom_fields = preg_grep("(^custom_\d+_set$)", array_keys($prefs));
+		if (NULL !== $custom_fields)
+			{
+			$langs = MLPLanguageHandler::get_site_langs();
+			foreach( $custom_fields as $name )
+				{
+				$translation = $prefs[$name];
+				if( $translation )	#only store this entry if there is a name for it...
+					{
+					$specials[] = $name = 'snip-'.$name;
+					$stats = array();
+					$strings = MLPStrings::get_string_set( $name , &$stats );
+					#dmp( $strings );
+					foreach( $langs as $lang )
+						{
+						if( !@$strings[$lang] && $translation )
+							MLPStrings::store_translation_of_string( $name , 'admin' , $lang , $translation );
+						}
+					}
+				}
+			}
+		return $specials;
 		}
 	function get_pattern( $name )
 		{

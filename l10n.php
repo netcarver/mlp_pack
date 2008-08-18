@@ -353,6 +353,17 @@ if( @txpinterface === 'admin' )
 			$prefs['language'] = $l10n_language['long'];
 			}
 		$prefs['db_remap_fields_func']   = '_l10n_admin_remap_fields';
+
+		#	Localise custom field labels...
+		$custom_fields = preg_grep("(^custom_\d+_set$)", array_keys($prefs));
+		if ($custom_fields)
+			{
+			foreach( $custom_fields as $name )
+				{
+				if( $prefs[$name] )
+					_l10n_load_localised_pref( $name );
+				}
+			}
 		}
 
 	#
@@ -451,19 +462,6 @@ if (@txpinterface === 'public')
 			}
 		}
 
-	function _l10n_load_localised_pref( $name )
-		{
-		global $prefs,$pretext;
-		$k = "snip-$name";
-		$r = gTxt( $k );
-		if( $r !== $k )
-			{
-			$GLOBALS[$name] = $r;
-			$GLOBALS['prefs'][$name] = $r;
-			$prefs[$name] = $r;
-			$pretext[$name] = $r;
-			}
-		}
 	function _l10n_pretext()
 		{
 		global $l10n_language , $textarray , $prefs;
