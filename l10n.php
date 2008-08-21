@@ -1182,6 +1182,31 @@ if (@txpinterface === 'public')
 
 	}
 
+
+function l10n_inject_lang( $atts , $thing )
+	{
+	$lang = l10n_rendition_lang();
+	return strtr( parse($thing) , array( hu => hu.$lang.'/' ) );
+	}
+function l10n_rendition_lang( $atts )
+	{
+	global $thisarticle, $rs;
+	$r = '';
+	$lang = ( $thisarticle[L10N_COL_LANG] ) ? $thisarticle[L10N_COL_LANG] : @$rs[L10N_COL_LANG];
+	if( !$lang )
+		return $r;
+	$lang = MLPLanguageHandler::compact_code( $lang );
+	switch( $atts['length'] )
+		{
+		case 'long'	: $r = $lang['long'];
+			break;
+		default		: $r = $lang['short'];
+			break;
+		}
+	return $r;
+	}
+
+
 # --- END PLUGIN CODE ---
 /*
 # --- BEGIN PLUGIN CSS ---
