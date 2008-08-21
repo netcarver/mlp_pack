@@ -109,6 +109,7 @@ function _l10n_process_url( $use_get_params=false )
 
 	$req_method = serverSet('REQUEST_METHOD');
 	$request = serverSet('REQUEST_URI');
+	#$request = $_SESSION['l10n_request_uri'] = serverSet('REQUEST_URI');
 
 	#	Redirect empty GETs on the public side so that the URL used has the language code
 	# embedded in it.
@@ -773,6 +774,7 @@ if (@txpinterface === 'public')
 
 		$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
 		$uri = preg_replace("/^$subpath/i" , "/" , serverSet('REQUEST_URI'));
+		#$uri = preg_replace("/^$subpath/i" , "/" , rtrim(serverSet('REQUEST_URI'),'/'));
 		$parts = chopUrl($uri);
 
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
@@ -918,6 +920,8 @@ if (@txpinterface === 'public')
 
 				if( !$current or $link_current )
 					{
+					#$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
+					#$uri = preg_replace("/^$subpath/i" , "/" , serverSet('REQUEST_URI'));
 					if( $processing404 )
 						$uri = '';
 
@@ -996,7 +1000,7 @@ if (@txpinterface === 'public')
 							$class .= ' value="'.$url.'"';
 							}
 						else
-						$line = '<a href="'.$url.'">'.$text.'</a>';
+							$line = '<a href="'.$url.'">'.$text.'</a>';
 						}
 					else
 						{
@@ -1013,7 +1017,6 @@ if (@txpinterface === 'public')
 					}
 				}
 			}
-
 
 		$selopts = '';
 		if( !empty( $list ) )
