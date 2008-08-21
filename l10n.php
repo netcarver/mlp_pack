@@ -719,6 +719,42 @@ if (@txpinterface === 'public')
 	/*
 	TAG HANDLERS FOLLOW
 	*/
+	function l10n_permlink( $atts , $thing )
+		{
+		global $thisarticle , $l10n_language, $is_article_list , $pretext, $prefs;
+
+		$attrib_list = array(
+			'debug'		=> '0',
+			'articleid'	=> '',
+			'class' 	=> '',
+			'id'		=> '',
+			'style' 	=> '',
+			'title'		=> '',
+			'titlegtxt'	=> '',	# Use this to override the Title field with a gTxt result.
+			);
+
+		$atts = lAtts( $attrib_list, $atts );
+		$atts['title'] = ( $atts['titlegtxt'] ) ? gTxt($atts['titlegtxt']) : $atts['title'];
+		$debug = $atts['debug'];
+
+		if ( $debug ) dmp($atts);
+
+		if( !$atts['articleid'] && $is_article_list )
+			return '';
+
+		if( !$atts['articleid'] && !$is_article_list )
+			$atts['articleid'] = $thisarticle[L10N_COL_GROUP];
+
+		$article_id = (int)$atts['articleid'];
+		$where = "`".L10N_COL_GROUP."`=$article_id and `Status` >=4 and `".L10N_COL_LANG."`='{$l10n_language['long']}'";
+		$rendition_id = safe_field( 'ID' , L10N_MASTER_TEXTPATTERN , $where , $debug);
+		if ( $debug ) dmp( 'Rendition ID ['.$rendition_id.']' );
+		$atts['id'] = $rendition_id;
+		unset($atts['debug']);
+		unset($atts['articleid']);
+		unset($atts['titlegtxt']);
+		return permlink( $atts , $thing );
+		}
 	function l10n_lang_list( $atts )
 		{
 		global $thisarticle , $l10n_language, $is_article_list , $pretext, $prefs;
