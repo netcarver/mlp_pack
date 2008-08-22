@@ -725,9 +725,8 @@ if (@txpinterface === 'public')
 
 		$attrib_list = array(
 			'debug'		=> '0',
-			'articleid'	=> '',
+			'articleid'	=> '',	# set this to the ID of the *ARTICLE* you with to link to
 			'class' 	=> '',
-			'id'		=> '',
 			'style' 	=> '',
 			'title'		=> '',
 			'titlegtxt'	=> '',	# Use this to override the Title field with a gTxt result.
@@ -1182,11 +1181,10 @@ if (@txpinterface === 'public')
 
 	}
 
-
 function l10n_inject_lang( $atts , $thing )
 	{
 	$lang = l10n_rendition_lang();
-	return strtr( parse($thing) , array( hu => hu.$lang.'/' ) );
+	return ( $lang ) ? strtr( parse($thing) , array( hu => hu.$lang.'/' ) ) : parse($thing);
 	}
 function l10n_rendition_lang( $atts )
 	{
@@ -1247,6 +1245,10 @@ h2. Table Of Contents.
 ** "l10n_get_lang":#get_lang
 ** "-l10n_feed_link- -- deprecated. (deprecated)":#feed_link
 ** "l10n_get_lang_dir":#get_lang_dir
+** "l10n_permlink":#l10n_permlink
+** "l10n_inject_lang":#l10n_inject_lang
+** "l10n_rendition_lang":#l10n_rendition_lang
+
 * "Preferences Help":#prefs
 * "Snippets > Export Help":#export
 * "Supported Languages.":#langs
@@ -1388,6 +1390,9 @@ h2(#tags). Tag Directory
 | "*l10n_get_lang*":#get_lang      | Outputs the language code and/or full native name of the language the visitor is browsing in.<br/>Typically used in the page header to specify the language the page is rendered in (E.g. In the DOCTYPE declaration.) |
 | "-l10n_feed_link-":#feed_link    | DEPRECATED. Use txp's own feed_link tag instead. |
 | "*l10n_get_lang_dir*":#get_lang_dir | Outputs the direction of the visitor's browse language. <br/> Use this in the html @body@ tag to specify the default direction of a page. |
+| "*l10n_permlink*":#l10n_permlink | Outputs the permlink to the rendition of the identified article that matches the language currently being used to browse the site. |
+| "*l10n_inject_lang*":#l10n_inject_lang | Container tag to force injection of the current rendition's language into any contained URLs. |
+| "*l10n_rendition_lang*":#l10n_rendition_lang | Returns the language of the identified rendition. |
 
 <hr/>
 
@@ -1456,6 +1461,33 @@ Outputs the direction of the visitor's browse language. <br/> Use this in the ht
 |_. Attribute |_. Default |_. Description |
 | type | short | (Optional) Which of the language's codes to use during the direction lookup.<br/>Valid values are 'long','short' <br/>In practice 'short' should be all you need. |
 
+h3(#l10n_permlink). "l10n_permlink(Jump to the tag list)":#tags
+
+Outputs the permlink to the rendition of the identified article that matches the language currently being used to browse the site.
+
+|_. Attribute 	|_. Default |_. Description |
+| 'debug'		| '0'	| Set to a non-zero value to show debug. |
+| 'articleid' 	| ''	| Set this to the ID of the *ARTICLE* you with to link to. You can leave this empty in an article context (article form -- or within an 'if_individual_article' tag) and it will use the current rendition's article ID. _Make sure you set this explicitly in an article-list context._ |
+| 'class'		| ''	| Class to append to the permlink |
+| 'style' 		| ''	| Style to set on the permlink |
+| 'title'		| ''	| Title to give the permlink. This can be overridden with a gTxt value from the 'titlegtxt' attribute. |
+| 'titlegtxt'	| ''	| Use this to override the 'title' attribute with a gTxt-localised result. |
+
+h3(#l10n_inject_lang). "l10n_inject_lang(Jump to the tag list)":#tags
+
+This container tag takes no attributes and is used to force injection of the current rendition's language into any contained full URLs (relative URLs will be untouched). This is primarily for compatibility with Ben Bruce's Postmaster plugin which processes forms on the admin side to render email bodies.
+
+h3(#l10n_rendition_lang). "l10n_rendition_lang(Jump to the tag list)":#tags
+
+Returns the language of the current rendition.
+
+This can be called either...
+
+# from a public article-context, in which case the ID of the current rendition will be used.
+# from an admin context in which case the ID of Postmaster's current rendition will be used.
+
+|_. Attribute 	|_. Default |_. Description |
+| 'length'	| 'short' | Determines the length of the language code returned. Valid values are 'short' and 'long' -- returning codes like 'el' or 'el-gr' respectively. |
 
 
  <span style="float:right"><a href="#top" title="Jump to the top">top</a></span>
@@ -1490,9 +1522,13 @@ If you keep the original site slogan (in Admin > Prefs > Basic) set to the defau
 
 h3(#l10n-use_browser_languages). "Use browser 'accept-language' headers?":#prefs
 
-Set this to yes (the default value) and the MLP Pack will try to honour your site visitor's browser language headers. You might want to do this, at least temporarily, if you are adding a new language to a site and don't want visitors browsers requesting the new language before you have translated the renditions for the new language.
+Set this to yes (the default value) and the MLP Pack will try to honour your site visitor's browser language headers. If you set it to "no" then your site will ignore the browser request headers totally.
 
-Turn this to "no" if you want to force a site visitor to see the default site language on their first trip to your site.
+You might want to set this to "no", at least temporarily, if you are adding a new language to a site and don't want visitors browsers requesting the new language before you have translated the renditions for the new language.
+
+-- or --
+
+if you want to force a site visitor to see the default site language on their first trip to your site.
 
 
 h3(#l10n-show_legends). "Show Article Table Legend":#prefs
