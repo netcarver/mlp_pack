@@ -39,6 +39,8 @@ MLP
  | 
  |-- textpattern (you will need to copy these files into your txp installation)
              | 
+             |-- l10n.css (the MLP Pack's css file)
+             |
              |-- txp_img (l10n images in here)
              |       |
              |       |-- l10n_clone.png
@@ -46,8 +48,7 @@ MLP
              |   
              |-- lib (files used by the l10n pluign)
                   |
-                  |-- mlp.css (l10n's own css file)
-                  |-- ** mlp_langs.php (ISO codes and names)
+                  |-- ** l10n_langs.php (ISO codes and names)
                   |-- txplib_db.php (modified db layer supporting MLP) 
                   |-- l10n_base.php (the basic public+admin file)
                   |-- l10n_admin.php (extra admin routines)
@@ -56,7 +57,7 @@ MLP
                   |-- ** l10n_en-gb_strings.php (English (GB) strings for MLP Pack)
                   |-- ** l10n_el-gr_strings.php (Greek strings for MLP Pack)
 
-					  ** => Edit these files if you need to.
+		  ** => Edit these files if you need to.
 
 
 
@@ -85,6 +86,12 @@ INSTALL
 to your textpattern installation.
 
 You will need to overwrite the existing file txplib_db.php when you do so.
+
+NB: If you update your textpattern installation at a later date you will 
+overwrite the txplib_db.php file with the new one in the textpattern update.
+
+If you do so, the MLP Pack will no longer work until you restore an MLP 
+version of the txplib_db.php file.
 
 
 2) (OPTIONAL) If you are running a version of TxP creater than Changeset 2146
