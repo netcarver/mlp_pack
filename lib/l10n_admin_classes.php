@@ -2358,7 +2358,7 @@ class MLPStringView extends GBPAdminTabView
 
 	function _generate_list( $table , $fname , $fdata )						# left pane subroutine
 		{
-		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1' ) ;
+		$rs = safe_rows_start( "$fname as name, $fdata as data", $table, '1=1 ORDER BY '.$fname ) ;
 		if( $rs && mysql_num_rows($rs) > 0 )
 			{
 			$can_edit = $this->pref('l10n-inline_editing');
