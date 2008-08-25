@@ -632,7 +632,9 @@ class MLPSnips
 		$rs = safe_rows_start( 'lang, name, '.L10N_COL_OWNER, 'txp_lang', $where );
 		//$rs = safe_rows_start( 'lang, name, owner', 'txp_lang', $where );
 
-		return array_merge( $result , MLPStrings::get_strings( $rs , $stats ) );
+		$result = array_merge( $result , MLPStrings::get_strings( $rs , $stats ) );
+		ksort( $result );
+		return $result;
 		}
 	}
 
