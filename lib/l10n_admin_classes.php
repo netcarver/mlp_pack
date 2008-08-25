@@ -2434,14 +2434,14 @@ class MLPStringView extends GBPAdminTabView
 	function _render_list_filter( $id )
 		{
 		return '<script type="text/javascript" src="jquery.js"></script>'.
-		'<script> $(document).ready(function(){ $(\'#inline-search\').'.
+		'<script> $(document).ready(function(){ $(\'#'.$id.'_inline_search\').'.
 		'search(\'#'.$id.' li\'); }); $.fn.search = function(searchElements) {'.
 		'$(this).keyup(function(){ var searchString = $(this).val();'.
 		' if (searchString.length > 0){ $(searchElements).hide();'.
 		'$(searchElements+\':contains(\' +searchString+ \')\').show(); }'.
 		'else { $(searchElements).show(); } }); }; </script>'.
 		'<div style="text-align:left;"><label>'.gTxt('l10n-filter_label').'</label><br />'.
-		'<input type="text" id="inline-search" /></div>';
+		'<input type="text" id="'.$id.'_inline_search" /></div>';
 		}
 
 	function render_owner_list( $type )										#	Render the left pane
