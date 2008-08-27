@@ -364,7 +364,7 @@ function _l10n_list_buffer_processor( $buffer )
 	$buffer = str_replace( $f , $chooser.br.n.$f , $buffer );
 
 	#	Inject the language markers...
-	$result = preg_replace_callback( $pattern , '_l10n_match_cb' , $buffer /*, -1 , $count*/ );
+	$result = _l10n_preg_replace_callback( $pattern , '_l10n_match_cb' , $buffer /*, -1 , $count*/ );
 	if( !empty( $result ) )
 		return $result;
 

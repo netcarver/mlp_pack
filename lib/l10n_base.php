@@ -17,6 +17,47 @@ if( !defined( 'L10N_COL_GROUP' ) )
 global $txpcfg , $event;
 include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
 
+if( !is_callable('preg_last_error') )
+	{
+	function preg_last_error()
+		{
+		}
+	}
+function _l10n_preg_replace_err()
+	{
+	$err = preg_last_error();
+	}
+function _l10n_preg_replace_callback( $needle , $fn , $buffer , $limit = -1 )
+	{
+	$tmp = preg_replace_callback( $needle, $fn , $buffer );
+	if (NULL !== $tmp)
+		{
+		$buffer = $tmp;
+		// put email-sending or a log-message here
+		}
+	else
+		_l10n_preg_replace_err();
+
+	unset( $tmp );
+	return $buffer;	
+	}
+
+function _l10n_preg_replace( $needle , $new , $buffer , $limit = -1 )
+	{
+	$tmp = preg_replace( $needle , $new , $buffer , $limit );
+	if (NULL !== $tmp)
+		{
+		$buffer = $tmp;
+		$err = preg_last_error();
+		// put email-sending or a log-message here
+		}
+	else
+		_l10n_preg_replace_err();
+
+	unset( $tmp );
+	return $buffer;	
+	}
+
 function _l10n_load_localised_pref( $name )
  	{
 	global $prefs,$pretext;
@@ -32,31 +73,26 @@ function _l10n_load_localised_pref( $name )
 		}
 	}
 
-function _l10n_substitute_snippets( &$thing )
+function _l10n_replace_snippet( $m )
 	{
-	/*
-	Replaces all snippets within the contained block with their text from the global textarray.
-	Allows TxP devs to include snippets* in their forms and page templates.
-	*/
-	$out = preg_replace_callback( 	L10N_SNIPPET_PATTERN ,
-									create_function(
-									'$match',
-									'global $l10n_language;
-									global $textarray;
-									if( $l10n_language )
-										$lang = $l10n_language[\'long\'];
-									else
-										$lang = "??";
-									$snippet = strtolower($match[1]);
-									if( array_key_exists( $snippet , $textarray ) )
-										$out = $textarray[$snippet];
-									else
-										$out = "($lang)$snippet";
-									return $out;'
-								), $thing );
-	return $out;
+	global $l10n_language, $textarray;
+	static $l = false;
+	
+	if( !$l ) $l = 	$l10n_language['long'];
+
+	#$s = strtolower( $m[1] ); # Allow case sensitive snippet names?
+	$s = $m[1];
+	$r = @$textarray[$s];
+	if( !$r )
+		return $s;
+	return $r;	
 	}
 
+function _l10n_substitute_snippets( &$thing )
+	{
+	$out = _l10n_preg_replace_callback( L10N_SNIPPET_PATTERN , '_l10n_replace_snippet' , $thing );
+	return $out;
+	}
 
 function _l10n_process_pageform_access( $thing , $table , $where , $results , $is_a_set )
 	{

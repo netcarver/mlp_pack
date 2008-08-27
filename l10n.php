@@ -617,7 +617,7 @@ if (@txpinterface === 'public')
 		$l10n_replace_strings['stop']  = $l10n_replace_strings['stop_rep']  = '</link>';
 		$l10n_replace_strings['insert_blank'] = true;
 		$pattern = _l10n_make_pattern();
-		$buffer = preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
+		$buffer = _l10n_preg_replace_callback( $pattern , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		return $buffer;
 		}
@@ -700,14 +700,14 @@ if (@txpinterface === 'public')
 		$l10n_replace_strings['stop']  = '["|\']';			$l10n_replace_strings['stop_rep'] = '"';
 		$l10n_replace_strings['insert_blank'] = true;
 		$pattern1 = _l10n_make_pattern();
-		$buffer = preg_replace_callback( $pattern1 , '_l10n_inject_lang_markers_cb' , $buffer );
+		$buffer = _l10n_preg_replace_callback( $pattern1 , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		# Insert language code into any URLs embedded as text in hyperlinks (eg search results)...
 		$l10n_replace_strings['start'] = $l10n_replace_strings['start_rep'] = '>';
 		$l10n_replace_strings['stop']  = $l10n_replace_strings['stop_rep']  = '</a>';
 		$l10n_replace_strings['insert_blank'] = false;
 		$pattern2 = _l10n_make_pattern();
-		$buffer = preg_replace_callback( $pattern2 , '_l10n_inject_lang_markers_cb' , $buffer );
+		$buffer = _l10n_preg_replace_callback( $pattern2 , '_l10n_inject_lang_markers_cb' , $buffer );
 
 		if (0)	#debug
 			$buffer = 'Exclusions... :' . join( ', ' , $l10n_url_exclusions ) . $buffer;

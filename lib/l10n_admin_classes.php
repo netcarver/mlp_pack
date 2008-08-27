@@ -2460,7 +2460,7 @@ class MLPStringView extends GBPAdminTabView
 				break;
 
 			case 'plugin':
-				#$out[] = $this->_render_list_filter( 'l10n_plugins' );
+				$out[] = $this->_render_list_filter( 'l10n_plugins' );
 				$out[] = 	'<h3>' . gTxt('l10n-registered_plugins') . '</h3>' . n .
 							'<div id="l10n_plugins">' . n .
 							'<ol>' . n;
@@ -2469,7 +2469,7 @@ class MLPStringView extends GBPAdminTabView
 				break;
 
 			case 'page':
-				#$out[] = $this->_render_list_filter( 'l10n_pages' );
+				$out[] = $this->_render_list_filter( 'l10n_pages' );
 				$out[] = 	'<h3>' . gTxt('pages') . '</h3>' . n .
 							'<div id="l10n_pages"' . n .
 							'<ol>' . n;
@@ -2660,8 +2660,8 @@ class MLPStringView extends GBPAdminTabView
 				 $this->url( array( L10N_PLUGIN_CONST => $plugin, 'prefix'=>$prefix ) , true ) . '">' .
 				 gTxt('l10n-statistics') . '&#187;</a></span>' . br . n;
 
-		if( $raw_count > 10 )
-			$out[] = $this->_render_list_filter( 'l10n_plugin_strings' );
+		#if( $raw_count > 10 )
+		$out[] = $this->_render_list_filter( 'l10n_plugin_strings' );
 		$out[] = '<div id="l10n_plugin_strings">' . n;
 		$out[] = br . n . $this->_render_string_list( $strings , L10N_PLUGIN_CONST , $plugin , $prefix, $event );
 		$out[] = '</div></div>';
@@ -2718,8 +2718,8 @@ class MLPStringView extends GBPAdminTabView
 					 '&#187;</a></span>' . br . n;
 
 		#	Render the list...
-		if( $count > 10 )
-			$out[] = $this->_render_list_filter( 'l10n_string_list' );
+		#if( $count > 10 )
+		$out[] = $this->_render_list_filter( 'l10n_string_list' );
 		$out[] = '<div id="l10n_string_list">' . n;
 		$out[] = br . n . $this->_render_string_list( $strings , 'container', $owner , '' , 'public' ) . n;
 		$out[] = '</div></div>';
