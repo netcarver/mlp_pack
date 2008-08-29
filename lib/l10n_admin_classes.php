@@ -551,7 +551,7 @@ class MLPSnips
 					{
 					$specials[] = $name = 'snip-'.$name;
 					$stats = array();
-					$strings = MLPStrings::get_string_set( $name , &$stats );
+					$strings = MLPStrings::get_string_set( $name , $stats );
 					#dmp( $strings );
 					foreach( $langs as $lang )
 						{
