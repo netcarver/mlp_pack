@@ -468,7 +468,6 @@ if (@txpinterface === 'public')
 		global $l10n_language , $textarray , $prefs;
 
 		$first_chunk = _l10n_process_url();
-		#while( @ob_end_clean() );
 
 		#
 		#	Now we know what language this user is browsing in.
