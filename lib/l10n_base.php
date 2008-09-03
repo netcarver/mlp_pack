@@ -347,7 +347,12 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		#
 		#	Replace specific matches...
 		#
-		$thing = str_replace( $field , $r , $thing );
+		$v = array(	'`'.$field.'`' => '`'.$r.'`',
+					','.$field.',' => ','.$r.',',
+					','.$field.' ' => ','.$r.' ',
+					' '.$field.',' => ' '.$r.',',
+					' '.$field.' ' => ' '.$r.' ', );
+		$thing = str_replace( array_keys($v) , array_values($v) , $thing );
 
 		#
 		#	Don't forget to override any wildcard search with specific mappings,
