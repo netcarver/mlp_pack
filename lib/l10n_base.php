@@ -347,6 +347,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		#
 		#	Replace specific matches...
 		#
+		$thing = ' '.$thing.' ';	#inject padding to allow detection of matches at start of the string. 
 		$v = array(	'`'.$field.'`' => $r,	# no need for extra backticks here -- the $r string has them. 
 					','.$field.',' => ','.$r.',',
 					','.$field.' ' => ','.$r.' ',
@@ -362,7 +363,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 			$thing = str_replace( '*' , '*,'.$r , $thing );
 		}
 
-	return $thing;
+	return trim($thing);
 	}
 function _l10n_walk_mappings( $fn , $atts='' )
 	{
