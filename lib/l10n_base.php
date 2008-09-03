@@ -347,7 +347,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		#
 		#	Replace specific matches...
 		#
-		$v = array(	'`'.$field.'`' => '`'.$r.'`',
+		$v = array(	'`'.$field.'`' => $r,	# no need for extra backticks here -- the $r string has them. 
 					','.$field.',' => ','.$r.',',
 					','.$field.' ' => ','.$r.' ',
 					' '.$field.',' => ' '.$r.',',
