@@ -207,7 +207,6 @@ function _l10n_admin_remap_fields( $thing , $table )
 	if( !array_key_exists( $table , $mappings ) )
 		return $thing;
 
-
 	if( !array_key_exists( $event , $mappings[$table]['events'] ) )
 		return $thing;
 
@@ -228,7 +227,13 @@ function _l10n_admin_remap_fields( $thing , $table )
 	#
 	#	Replace specific matches...
 	#
-	$newthing = str_replace( $field , $r , $thing );
+	$newthing = ' '.$thing.' ';	#inject padding to allow detection of matches at start/end of the string.
+	$v = array(	'`'.$field.'`' => $r,	# no need for extra backticks here -- the $r string has them.
+				','.$field.',' => ','.$r.',',
+				','.$field.' ' => ','.$r.' ',
+				' '.$field.',' => ' '.$r.',',
+				' '.$field.' ' => ' '.$r.' ', );
+	$newthing = str_replace( array_keys($v) , array_values($v) , $newthing );
 
 	#
 	#	Don't forget to override any wildcard search with specific mappings,
