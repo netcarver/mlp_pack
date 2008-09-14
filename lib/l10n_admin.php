@@ -69,7 +69,7 @@ if( $l10n_view->installed() )
 	$l10n_mappings = _l10n_remap_fields( '' , '' , true );
 	foreach( $l10n_mappings as $table=>$field_map )
 		{
-		//echo br , "Processing $table";
+		//echo br , 'Processing $table';
 		foreach( $field_map as $field=>$attributes )
 			{
 			$sql 	= '';
@@ -261,7 +261,7 @@ function _l10n_match_cb( $matches )
 	#	$matches[1] is the article ID...
 	#
 	$id 		= $matches[1];
-	$rs 		= safe_row(	'*', 'textpattern', "ID=$id" );
+	$rs 		= safe_row(	'*', 'textpattern', 'ID='.$id );
 	//$rs = array( L10N_COL_LANG => 'test' );
 	if( empty( $rs ) )
 		return $matches[0] . br . '<span class="articles_detail">' . "ID: $id" . gTxt( 'l10n-missing' ) .'</span>';
@@ -390,7 +390,7 @@ function _l10n_setup_vars( $event , $step )
 
 	if( $ID )
 		{
-		$rs = safe_row(	'*, unix_timestamp(Posted) as sPosted, unix_timestamp(LastMod) as sLastMod', 'textpattern', "ID=$ID" );
+		$rs = safe_row(	'*, unix_timestamp(Posted) as sPosted, unix_timestamp(LastMod) as sLastMod', 'textpattern', 'ID='.$ID );
 		$l10n_vars['article_id'] 	= $ID;
 		$l10n_vars['article_lang']	= $rs[L10N_COL_LANG];
 		$l10n_vars['article_group']	= $rs[L10N_COL_GROUP];
@@ -646,9 +646,9 @@ function _l10n_article_buffer_processor( $buffer )
 
 function _l10n_replace_rendition( $lang , $replace=false , $id='' )
 	{
-	$op = "INSERT";
+	$op = 'INSERT';
 	if( $replace )
-		$op = "REPLACE";
+		$op = 'REPLACE';
 
 	if( empty($id) )
 		{
@@ -789,7 +789,7 @@ function _l10n_changeauthor_notify_routine()
 				$lang   = MLPLanguageHandler::get_native_name_of_lang( $row[L10N_COL_LANG] );
 				$status = $statuses[$Status];
 				$msg = 	gTxt('title')  . ": \"$Title\"\r\n" .
-						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [".$row[L10N_COL_LANG]."] , " . gTxt( 'group' ) . ": ".$row[L10N_COL_GROUP].".\r\n";
+						gTxt('status') . ": $status , " . gTxt('language') . ": $lang [".$row[L10N_COL_LANG].'] , ' . gTxt( 'group' ) . ': '.$row[L10N_COL_GROUP].".\r\n";
 				$msg.= "http://$siteurl/textpattern/index.php?event=article&step=edit&ID=$id\r\n";
 				$links[] = $msg;
 				}
@@ -917,16 +917,17 @@ function _l10n_update_dirty_flag( $v )
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	#echo 'Updating table defs for ' , $lang , br;
+	$dbg = 1;
 
 	if( !is_string( $lang ) )
 		{
-		echo br , "Non-string language passed to _l10n_generate_lang_table() ... " , var_dump($lang);
+		echo br , 'Non-string language passed to _l10n_generate_lang_table() ... ' , var_dump($lang);
 		return;
 		}
 
 	if( empty( $lang ) )
 		{
-		echo br , "Blank language passed to _l10n_generate_lang_table()";
+		echo br , 'Blank language passed to _l10n_generate_lang_table()';
 		return;
 		}
 
@@ -944,29 +945,29 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 
 	if( empty( $code ) )
 		{
-		echo br , "Blank language code calculated in _l10n_generate_lang_table()";
+		echo br , 'Blank language code calculated in _l10n_generate_lang_table()';
 		return;
 		}
 
 	if( !MLPLanguageHandler::is_valid_code($code) )
 		{
-		echo br , "Invalid language code '$code' calculated in _l10n_generate_lang_table()";
+		echo br , 'Invalid language code ['.$code.'] calculated in _l10n_generate_lang_table()';
 		return;
 		}
 	$table_name = _l10n_make_textpattern_name( $code );
 
 	$where = '';
 	if( $filter )
-		$where = " where ".L10N_COL_LANG."='$lang'";
-	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-	$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern`$where";
-	$drop_sql = 'drop table `'.PFX."$table_name`";
-	$lock_sql = 'lock tables `'.PFX."$table_name` WRITE";
+		$where = ' where '.L10N_COL_LANG."='$lang'";
+	$indexes = '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
+	$sql = 'create table `'.PFX.$table_name.'` '.$indexes.' select * from `'.PFX.'textpattern`'.$where;
+	$drop_sql = 'drop table `'.PFX.$table_name.'`';
+	$lock_sql = 'lock tables `'.PFX.$table_name.'` WRITE';
 	$unlock_sql = 'unlock tables';
-	@safe_query( $lock_sql );
-	@safe_query( $drop_sql );
-	$ok = @safe_query( $sql );
-	@safe_query( $unlock_sql ) ;
+	@safe_query( $lock_sql, $dbg);
+	@safe_query( $drop_sql, $dbg );
+	$ok = @safe_query( $sql, $dbg );
+	@safe_query( $unlock_sql, $dbg );
 	}
 
 function _l10n_pre_discuss_multi_edit( $event , $step )
@@ -1147,7 +1148,7 @@ function _l10n_section_paint( $page )
 	global $l10n_mappings;
 	$langs = MLPLanguageHandler::get_site_langs();
  	$fields = $l10n_mappings['txp_section'];
-	$rows = safe_rows_start( '*' , 'txp_section' , "1=1" );
+	$rows = safe_rows_start( '*' , 'txp_section' , '1=1' );
 	$c = @mysql_num_rows($rows);
 	if( $rows && $c > 0 )
 		{
