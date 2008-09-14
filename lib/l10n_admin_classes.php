@@ -5050,10 +5050,10 @@ class MLPWizView extends GBPWizardTabView
 			}
 
 		if( !$lang_found )
-			$sql[] = " ADD `".L10N_COL_LANG."` VARCHAR( 8 ) NOT NULL DEFAULT '-' AFTER `LastModID`";
+			$sql[] = ' ADD `'.L10N_COL_LANG.'` VARCHAR( 8 ) NOT NULL DEFAULT \'-\' AFTER `LastModID` , ADD INDEX(`'.L10N_COL_LANG.'`)';
 
 		if( !$article_id_found )
-			$sql[] = " ADD `".L10N_COL_GROUP."` INT( 11 ) NOT NULL DEFAULT '0' AFTER `".L10N_COL_LANG."`";
+			$sql[] = ' ADD `'.L10N_COL_GROUP.'` INT( 11 ) NOT NULL DEFAULT \'0\' AFTER `'.L10N_COL_LANG.'` , ADD INDEX(`'.L10N_COL_GROUP.'`)';
 
 		$this->add_report_item( gTxt('l10n-setup_3_title') );
 		if( !empty( $sql ) )
