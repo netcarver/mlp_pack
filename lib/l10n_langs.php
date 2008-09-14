@@ -129,7 +129,7 @@ $iso_693_langs = array(
 	'tt'=>array( 'tt'=>'تاتارچا' , 'dir'=>'rtl' ),
 	'tw'=>array( 'tw'=>'Twi' ),
 	'ug'=>array( 'ug'=>'uyghur tili' ),
-	'uk'=>array( 'uk'=>"Українська", 'uk-ua'=>"Українська" ),
+	'uk'=>array( 'uk'=>'Українська', 'uk-ua'=>'Українська' ),
 	'ur'=>array( 'ur'=>'اردو', 'dir'=>'rtl' ),
 	'uz'=>array( 'uz'=>"Ўзбек (o'zbek)" ),
 	'vi'=>array( 'vi'=>'Tiếng Việt' ),
@@ -139,7 +139,7 @@ $iso_693_langs = array(
 	'yi'=>array( 'yi'=>'ײִדיש' , 'dir'=>'rtl' ),
 	'yo'=>array( 'yo'=>'Yorùbá' ),
 	'za'=>array( 'za'=>'Sawcuengh' ),
-	'zh'=>array( 'zh'=>'中文(简体)' , 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
+	'zh'=>array( 'zh'=>'中文(简体)', 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
 	'zu'=>array( 'zu'=>'isiZulu' ),
 	);
 ?>
