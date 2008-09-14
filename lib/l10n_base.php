@@ -177,10 +177,10 @@ function _l10n_get_db_charsetcollation()
 function _l10n_get_dbserver_type()
 	{
 	$version = mysql_get_server_info();
-	//Use "ENGINE" if version of MySQL > (4.0.18 or 4.1.2)
+	//Use ENGINE if version of MySQL > (4.0.18 or 4.1.2)
 	$type = ( intval($version[0]) >= 5 || preg_match('#^4\.(0\.[2-9]|(1[89]))|(1\.[2-9])#',$version))
-					? "ENGINE=MyISAM"
-					: "TYPE=MyISAM";
+					? 'ENGINE=MyISAM'
+					: 'TYPE=MyISAM';
 
 	return $type;
 	}
@@ -197,9 +197,9 @@ function _l10n_admin_remap_fields( $thing , $table )
 		$mappings = array
 			(
 			'txp_category' => array( 	'field' 	=> 'title',
-										'events' 	=> array('article'=>'all','category'=>'none','list'=>'all'), ),
+										'events' 	=> array('article'=>'all','category'=>'none','list'=>'all','image'=>'image_edit','link'=>'all'), ),
 			'txp_section'  => array( 	'field' 	=> 'title',
-										'events' 	=> array('list'=>'all'), ),
+										'events' 	=> array('article'=>'all','list'=>'all'), ),
 			);
 		}
 
