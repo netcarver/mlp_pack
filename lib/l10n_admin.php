@@ -193,8 +193,8 @@ function _l10n_get_user_languages( $user_id = null )
 
 function _l10n_create_temp_textpattern( $languages )
 	{
-	$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-	$sql = "create TEMPORARY table `".PFX."textpattern` $indexes select * from `".PFX."textpattern` where ".L10N_COL_LANG." IN ($languages)";
+	$indexes = '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
+	$sql = 'create TEMPORARY table `'.PFX.'textpattern` '.$indexes.' select * from `'.PFX.'textpattern` where '.L10N_COL_LANG.' IN ('.$languages.')';
 	@safe_query( $sql );
 	}
 function _l10n_post_sectionsave( $event , $step )
