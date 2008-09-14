@@ -36,7 +36,7 @@ if( !defined( 'L10N_SNIPPET_IO_HEADER' ) )
 if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
 	define( 'L10N_MASTER_TEXTPATTERN' , 'l10n_master_txp' );
 if( !defined( 'L10N_SNIPPET_PATTERN' ) )
-	define( 'L10N_SNIPPET_PATTERN' , "/##([\w|\.|\-]+)##/" );
+	define( 'L10N_SNIPPET_PATTERN' , '/##([\w|\.|\-]+)##/' );
 global $txpcfg;
 
 function _l10n_set_browse_language( $code , $long ,  $debug=false )
@@ -67,7 +67,7 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 	if( isset( $tmp ) and in_array( $tmp , $site_langs ) )
 		{
 		if( $debug )
-			echo " ... in IF() ... " ;
+			echo ' ... in IF() ... ' ;
 		$l10n_language = MLPLanguageHandler::compact_code($tmp);
 
 		if( empty( $l10n_language['long'] ) )
@@ -81,7 +81,7 @@ function _l10n_set_browse_language( $code , $long ,  $debug=false )
 	else
 		{
 		if( $debug )
-			echo " ... in ELSE ... " ;
+			echo ' ... in ELSE ... ' ;
 		if( !isset($l10n_language) or !in_array( $l10n_language['long'] , $site_langs ))
 			{
 			$l10n_language = MLPLanguageHandler::compact_code( MLPLanguageHandler::get_site_default_lang() );
@@ -130,8 +130,8 @@ function _l10n_process_url( $use_get_params=false )
 		$request = @substr($argv[0], strpos($argv[0], ';') + 1);
 		}
 
-	$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),"/");
-	$req = preg_replace("/^$subpath/i","/",$request);
+	$subpath = preg_quote(preg_replace("/https?:\/\/.*(\/.*)/Ui","$1",hu),'/');
+	$req = preg_replace("/^$subpath/i",'/',$request);
 	# -- END VERBATIM --
 	if( !$use_get_params )
 		{
@@ -186,7 +186,7 @@ function _l10n_process_url( $use_get_params=false )
 		#
 		#	Examine the first path entry for the language request.
 		#
-		if( $debug ) echo br , "L10N MLP: Checking start of path for language ... " . $u1;
+		if( $debug ) echo br , 'L10N MLP: Checking start of path for language ... ' . $u1;
 		$temp = MLPLanguageHandler::expand_code( $u1 );
 		if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
 		$reduce_uri = true;
@@ -203,7 +203,7 @@ function _l10n_process_url( $use_get_params=false )
 			}
 		else
 			{
-			if( $debug ) echo br , "L10N MLP: no-match branch";
+			if( $debug ) echo br , 'L10N MLP: no-match branch';
 			#
 			#	Not a language this site can serve...
 			#
@@ -489,7 +489,7 @@ if (@txpinterface === 'public')
 		if( in_array( $first_chunk , $feeds ) )
 			{
 			#	Prevent the feed routine(s) from removing our handler!
-			if (extension_loaded('zlib') && ini_get("zlib.output_compression") == 0 && ini_get('output_handler') != 'ob_gzhandler' && !headers_sent())
+			if (extension_loaded('zlib') && ini_get('zlib.output_compression') == 0 && ini_get('output_handler') != 'ob_gzhandler' && !headers_sent())
 				{
 				@ob_start('ob_gzhandler');
 				if( $prefs['l10n_l10n-clean_feeds'] == '0' )
@@ -695,8 +695,10 @@ if (@txpinterface === 'public')
 		_l10n_make_exclusion_list();
 
 		# Insert the language code into all permlinks...
-		$l10n_replace_strings['start'] = ' href=["|\']';		$l10n_replace_strings['start_rep'] = ' href="';
-		$l10n_replace_strings['stop']  = '["|\']';			$l10n_replace_strings['stop_rep'] = '"';
+		$l10n_replace_strings['start'] = ' href=["|\']';
+		$l10n_replace_strings['start_rep'] = ' href="';
+		$l10n_replace_strings['stop']  = '["|\']';
+		$l10n_replace_strings['stop_rep'] = '"';
 		$l10n_replace_strings['insert_blank'] = true;
 		$pattern1 = _l10n_make_pattern();
 		$buffer = _l10n_preg_replace_callback( $pattern1 , '_l10n_inject_lang_markers_cb' , $buffer );
@@ -714,10 +716,33 @@ if (@txpinterface === 'public')
 		return $buffer;
 		}
 
+	function _l10n_get_rendition_id( $article_id , $debug=0 )
+		{
+		global $l10n_language;
+		
+		$article_id = (int)$article_id;
+		$where = '`'.L10N_COL_GROUP.'`=\''.$article_id.'\' and `Status`>=4 and `'.L10N_COL_LANG.'`=\''.$l10n_language['long'].'\'';
+		$rendition_id = safe_field( 'ID' , L10N_MASTER_TEXTPATTERN , $where , $debug);
+		if ( $debug ) dmp( 'Rendition ID ['.$rendition_id.']' );
+		return $rendition_id;
+		}
 
 	/*
 	TAG HANDLERS FOLLOW
 	*/
+	function l10n_get_rendition_id( $atts )
+		{
+		$attrib_list = array(
+			'debug'		=> '0',
+			'articleid'	=> '',	# set this to the ID of the *ARTICLE* you with to link to
+			);
+
+		$atts = lAtts( $attrib_list, $atts );
+		$debug = $atts['debug'];
+		if ( $debug ) dmp($atts);
+
+		return _l10n_get_rendition_id( $atts['articleid'] , $debug );
+		}
 	function l10n_permlink( $atts , $thing )
 		{
 		global $thisarticle , $l10n_language, $is_article_list , $pretext, $prefs;
@@ -743,11 +768,7 @@ if (@txpinterface === 'public')
 		if( !$atts['articleid'] && !$is_article_list )
 			$atts['articleid'] = $thisarticle[L10N_COL_GROUP];
 
-		$article_id = (int)$atts['articleid'];
-		$where = "`".L10N_COL_GROUP."`=$article_id and `Status` >=4 and `".L10N_COL_LANG."`='{$l10n_language['long']}'";
-		$rendition_id = safe_field( 'ID' , L10N_MASTER_TEXTPATTERN , $where , $debug);
-		if ( $debug ) dmp( 'Rendition ID ['.$rendition_id.']' );
-		$atts['id'] = $rendition_id;
+		$atts['id'] = _l10n_get_rendition_id( $atts['articleid'] , $debug );
 		unset($atts['debug']);
 		unset($atts['articleid']);
 		unset($atts['titlegtxt']);
@@ -781,7 +802,7 @@ if (@txpinterface === 'public')
 		$show_empty		= !empty($show_empty);
 		$link_current	= !empty($link_current);
 		$surpress_current = !empty($surpress_current);
-		$break = ($wraptag=="select") ? "option" : $break; // Ensure 'option' break tag if select used
+		$break = ($wraptag=='select') ? 'option' : $break; // Ensure 'option' break tag if select used
 
 		$appendslash	= !empty($appendslash);
 
@@ -812,13 +833,13 @@ if (@txpinterface === 'public')
 		$parts = chopUrl($uri);
 
 		//echo br , "l10n_lang_list(" , var_dump($atts) , ") Section($section) ID($id)" ;
-		//echo br , "uri = " , $uri;
+		//echo br , 'uri = ' , $uri;
 		//echo br , "parts = " , var_dump( $parts );
 
 		$name_mappings = array();
 		if( $processingcats || $processingauths )
 			{
-			# echo br , "Processing by category or author : ";
+			# echo br , 'Processing by category or author : ';
 			$info = safe_rows_start( 'name,lang,data' , 'txp_lang' , "`name` IN ('category','author')" );
 			if( $info and mysql_num_rows($info) > 0 )
 				{
@@ -860,7 +881,7 @@ if (@txpinterface === 'public')
 						break;
 
 					case 'title_only':
-						$rs = safe_row("ID",L10N_MASTER_TEXTPATTERN,"url_title like '".doSlash($u0)."' and Status >= 4 limit 1");
+						$rs = safe_row('ID',L10N_MASTER_TEXTPATTERN,"url_title like '".doSlash($u0)."' and Status >= 4 limit 1");
 						$id = @$rs['ID'];
 						break;
 
@@ -979,7 +1000,7 @@ if (@txpinterface === 'public')
 					if( !$processing404 && $appendslash && $uri == '' )
 						$uri = '/';
 
-					if ($break == "option")
+					if ($break == 'option')
 						{
 					$line = $text;
 						$class .= ' value="'.hu.$short.$uri.'"';
@@ -989,7 +1010,7 @@ if (@txpinterface === 'public')
 					}
 				else
 					{
-					if ($break == "option")
+					if ($break == 'option')
 						$class .= ' selected="selected"';
 					$line = $text;
 					}
@@ -1028,7 +1049,7 @@ if (@txpinterface === 'public')
 						$url = permlinkurl($record);
 						$f = hu;
 						$url = str_replace( $f , $f.$short.'/' , $url );
-						if ($break == "option")
+						if ($break == 'option')
 							{
 							$line = $text;
 							$class .= ' value="'.$url.'"';
@@ -1038,7 +1059,7 @@ if (@txpinterface === 'public')
 						}
 					else
 						{
-						if ($break == "option")
+						if ($break == 'option')
 							$class .= ' selected="selected"';
 						$line = $text;
 						}
@@ -1055,7 +1076,7 @@ if (@txpinterface === 'public')
 		$selopts = '';
 		if( !empty( $list ) )
 			{
-			if ($wraptag == "select")
+			if ($wraptag == 'select')
 				$selopts .= ' onchange="location.href=this.options[selectedIndex].value"';
 			$list = $title . tag( join( "\n\t" , $list ) , $wraptag , " class=\"$list_class\"" . $selopts );
 			}
