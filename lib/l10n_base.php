@@ -222,7 +222,7 @@ function _l10n_admin_remap_fields( $thing , $table )
 	# Ok, this is an event we have to map for this table...
 	$field = $mappings[$table]['field'];
 	$localised_field = _l10n_make_field_name( $field , $lang );
-	$r = "`$localised_field` as `$field`";
+	$r = '`'.$localised_field.'` as `'.$field.'`';
 
 	#
 	#	Replace specific matches...
@@ -262,7 +262,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 		$mappings = array	(
 			'txp_category'	=> array(
 				'title' 		=> array(
-					'sql' 			=> "varchar(255) NOT NULL DEFAULT ''" ,
+					'sql' 			=> 'varchar(255) NOT NULL DEFAULT \'\'',
 					'e' 			=> 'category',
 					'paint_steps'	=> array( 'cat_article_edit', 'cat_link_edit', 'cat_image_edit', 'cat_file_edit' ),
 					'paint' 		=> '_l10n_category_paint',
@@ -282,7 +282,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_image'		=> array(
 				'alt'			=> array(
-					'sql'			=> "varchar(255) NOT NULL DEFAULT ''",
+					'sql' 			=> 'varchar(255) NOT NULL DEFAULT \'\'',
 					'e' 			=> 'image',
 					'paint_steps'	=> array( 'image_edit' ),
 					'paint' 		=> '_l10n_image_paint',
@@ -310,7 +310,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_section'	=> array(
 				'title' 		=> array(
-					'sql'			=> "varchar(255) NOT NULL DEFAULT ''",
+					'sql' 			=> 'varchar(255) NOT NULL DEFAULT \'\'',
 					'e' 			=> 'section',
 					'paint_steps'	=> array( '' ),
 					'paint' 		=> '_l10n_section_paint',
@@ -347,7 +347,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	foreach( $mappings[$table] as $field => $sql )
 		{
 		$localised_field = _l10n_make_field_name( $field , $lang );
-		$r = "`$localised_field` as `$field`";
+		$r = '`'.$localised_field.'` as `'.$field.'`';
 
 		#
 		#	Replace specific matches...
@@ -423,14 +423,14 @@ function _l10n_make_textpattern_name( $full_code )
 			$code = $full_code['short'];
 		else
 			{
-			$error = "_l10n_make_textpattern_name() given an invalid input value $full_code";
+			$error = '_l10n_make_textpattern_name() given an invalid input value '.$full_code;
 			trigger_error( $error , E_USER_ERROR );
 			}
 		}
 
 	if( strlen( $code ) < 2 )
 		{
-		trigger_error( "$code is too short!" , E_USER_ERROR );
+		trigger_error( $code.' is too short!' , E_USER_ERROR );
 		}
 
 	$result = _l10n_clean_sql_name( L10N_RENDITION_TABLE_PREFIX . $code );
@@ -522,7 +522,7 @@ class MLPLanguageHandler
 
 		if( empty( $short_code ) )
 			{
-			//echo br, "expand_code( $short_code ) rejecting empty \$short_code!";
+			//echo br, 'expand_code( '.$short_code.' ) rejecting empty $short_code!';
 			return null;
 			}
 
@@ -778,7 +778,7 @@ class MLPLanguageHandler
 			{
 			foreach( $langs as $lang )
 				{
-				$count = safe_count( 'txp_lang' , "`lang`='$lang'" );
+				$count = safe_count( 'txp_lang' , '`lang`=\''.$lang.'\'' );
 				if( ($count >= $limit) && ($lang !== LANG) )
 					$installation_langs[] = $lang;
 				}
