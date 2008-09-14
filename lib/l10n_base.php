@@ -272,7 +272,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_file' 		=> array(
 				'description'	=> array(
-					'sql'			=> "text NOT NULL" ,
+					'sql'			=> 'text NOT NULL' ,
 					'e' 			=> 'file',
 					'paint_steps'	=> array( 'file_edit' ),
 					'paint' 		=> '_l10n_file_paint',
@@ -290,7 +290,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 					'save'			=> '_l10n_image_save',
 					),
 				'caption' 	=> array(
-					'sql'			=> "text NOT NULL",
+					'sql'			=> 'text NOT NULL',
 					'e' 			=> '',
 					'paint_steps'	=> '',
 					'paint' 		=> '',
@@ -300,7 +300,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 				),
 			'txp_link' 		=> array(
 				'description'	=> array(
-					'sql'			=> "text NOT NULL",
+					'sql'			=> 'text NOT NULL',
 					'e' 			=> 'link',
 					'save_steps'	=> array( 'link_post', 'link_save' ),
 					'save'			=> '_l10n_link_save',
@@ -401,7 +401,7 @@ function _l10n_clean_sql_name( $name )
 	{
 	if( !is_string( $name ) )
 		{
-		$error = "clean_table_name() given a non string input.";
+		$error = 'clean_table_name() given a non string input.';
 		trigger_error( $error , E_USER_ERROR );
 		}
 
@@ -773,7 +773,7 @@ class MLPLanguageHandler
  			return $installation_langs;
 
 		$installation_langs = array( LANG );
-		$langs = safe_column('lang','txp_lang',"1=1 GROUP BY `lang`");
+		$langs = safe_column('lang','txp_lang','1=1 GROUP BY `lang`');
 		if( count( $langs ) )
 			{
 			foreach( $langs as $lang )
