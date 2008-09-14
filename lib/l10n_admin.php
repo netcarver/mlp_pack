@@ -917,7 +917,7 @@ function _l10n_update_dirty_flag( $v )
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	#echo 'Updating table defs for ' , $lang , br;
-	$dbg = 1;
+	$dbg = 0;
 
 	if( !is_string( $lang ) )
 		{
