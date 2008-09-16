@@ -184,7 +184,31 @@ function _l10n_get_dbserver_type()
 
 	return $type;
 	}
+function _l10n_rewrite_sql( $field, $lang, $sql )
+	{
+	$localised_field = _l10n_make_field_name( $field , $lang );
+	$r = '`'.$localised_field.'` as `'.$field.'`';
 
+	#
+	#	Replace specific matches...
+	#
+	$newsql = 	' '.$sql.' ';	#inject padding to allow detection of matches at start/end of the string.
+
+	$v = array(	'`'.$field.'`' =>     $r,	 # no need for extra backticks here -- the $r string has them.
+				','.$field.',' => ','.$r.',',
+				','.$field.' ' => ','.$r.' ',
+				' '.$field.',' => ' '.$r.',',
+				' '.$field.' ' => ' '.$r.' ', );
+	$newsql = str_replace( array_keys($v) , array_values($v) , $newsql );
+
+	#
+	#	Don't forget to override any wildcard search with specific mappings,
+	# but not in count ops...
+	#
+	if( false === stripos( $newsql, '(*)' ) )
+		$newsql = str_replace( '*' , '*,'.$r , $newsql );
+	return $newsql;
+	}
 function _l10n_admin_remap_fields( $thing , $table )
 	{
 	global $event , $step;
@@ -221,26 +245,7 @@ function _l10n_admin_remap_fields( $thing , $table )
 
 	# Ok, this is an event we have to map for this table...
 	$field = $mappings[$table]['field'];
-	$localised_field = _l10n_make_field_name( $field , $lang );
-	$r = '`'.$localised_field.'` as `'.$field.'`';
-
-	#
-	#	Replace specific matches...
-	#
-	$newthing = ' '.$thing.' ';	#inject padding to allow detection of matches at start/end of the string.
-	$v = array(	'`'.$field.'`' => $r,	# no need for extra backticks here -- the $r string has them.
-				','.$field.',' => ','.$r.',',
-				','.$field.' ' => ','.$r.' ',
-				' '.$field.',' => ' '.$r.',',
-				' '.$field.' ' => ' '.$r.' ', );
-	$newthing = str_replace( array_keys($v) , array_values($v) , $newthing );
-
-	#
-	#	Don't forget to override any wildcard search with specific mappings,
-	# but not in count ops...
-	#
-	if( false === stripos( $newthing, '(*)' ) )
-		$newthing = str_replace( '*' , '*,'.$r , $newthing );
+	$newthing = _l10n_rewrite_sql( $field , $lang , $thing );
 
 	if( $debug && $thing !== $newthing )
 		{
@@ -346,26 +351,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 
 	foreach( $mappings[$table] as $field => $sql )
 		{
-		$localised_field = _l10n_make_field_name( $field , $lang );
-		$r = '`'.$localised_field.'` as `'.$field.'`';
-
-		#
-		#	Replace specific matches...
-		#
-		$thing = ' '.$thing.' ';	#inject padding to allow detection of matches at start/end of the string.
-		$v = array(	'`'.$field.'`' => $r,	# no need for extra backticks here -- the $r string has them.
-					','.$field.',' => ','.$r.',',
-					','.$field.' ' => ','.$r.' ',
-					' '.$field.',' => ' '.$r.',',
-					' '.$field.' ' => ' '.$r.' ', );
-		$thing = str_replace( array_keys($v) , array_values($v) , $thing );
-
-		#
-		#	Don't forget to override any wildcard search with specific mappings,
-		# but not in count ops...
-		#
-		if( false === stripos( $thing, '(*)' ) )
-			$thing = str_replace( '*' , '*,'.$r , $thing );
+		$thing = _l10n_rewrite_sql( $field , $lang , $thing );
 		}
 
 	return trim($thing);
