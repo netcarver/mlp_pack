@@ -567,7 +567,19 @@ function _l10n_article_buffer_processor( $buffer )
 	#
 	#	Insert the ID/Language/Group display elements...
 	#
-	$f = '<p><input type="text" id="title"';
+	
+	#	Find strings for different versions...
+	$find[] = '<p><input type="text" id="title"';
+	$find[] = '<p><label for="title"';
+	
+	$f = $find[0];
+	foreach( $find as $v )
+		{
+		if( false === strpos( $buffer , $v ) )
+			continue;
+		
+		$f = $v;
+		}
 
 	$r = '';
 	if( isset($l10n_article_message) )
