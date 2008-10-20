@@ -814,8 +814,12 @@ class MLPStrings
 
 	function insert_strings( $pfx , &$strings , $lang , $event='' , $owner='' , $override = false )
 		{
-		//echo br , "insert_strings( $pfx , $strings , $lang , $event , $owner ," , var_dump($override), " )";
-		//echo br , "where keys = " , var_dump( serialize( array_keys( $strings ) ) );
+		$debug = 0;
+		if( $debug ) 
+			{
+			echo br , "insert_strings( $pfx , $strings , $lang , $event , $owner ," , var_dump($override), " )";
+			echo br , "where keys = " , var_dump( serialize( array_keys( $strings ) ) );
+			}
 		global	$txp_current_plugin;
 		if( empty($strings) or !is_array($strings) or empty($lang) )
 			return null;
@@ -834,7 +838,7 @@ class MLPStrings
 				MLPStrings::register_plugin( $owner , $pfx , $num , $lang , $event , $strings );
 			elseif( !$override )
 				return false;
-
+			
 			# If the prefix doesn't end with the required sep character, add it...
 			$pfx_len = strlen( $pfx );
 			if( $pfx[$pfx_len-1] != L10N_SEP )
@@ -848,6 +852,8 @@ class MLPStrings
 		$lastmod 	= date('YmdHis');
 		$lang 		= doSlash( $lang );
 		$event 		= doSlash( $event );
+		$owner		= doSlash( $owner );
+		$where	 	= "`lang`='$lang'";
 		foreach( $strings as $name=>$data )
 			{
 			$data = doSlash($data);
@@ -858,11 +864,14 @@ class MLPStrings
 			else
 				$name = doSlash( $name );
 
-			$set 	= "`lang`='$lang', `lastmod`='$lastmod', `event`='$event', `data`='$data', `".L10N_COL_OWNER."`='$owner'";
-			$where 	= ", `name`='$name'";
-			$added = @safe_insert( 'txp_lang' , $set . $where );
-			if( $override )
-				@safe_update( 'txp_lang' , $set , $where );
+			$set 	= "`lastmod`='$lastmod', `event`='$event', `data`='$data', `".L10N_COL_OWNER."`='$owner'";
+			$where2	= "`name`='$name'";
+			$added	= @safe_insert( 'txp_lang' , $set.', '.$where.', '.$where2 );
+			
+			if( $debug ) { if( !$added ) dmp( 'not added!' ); else dmp( 'Added '.$added ); }
+			
+			if( $override && !$added )
+				@safe_update( 'txp_lang' , $set , $where.' AND '.$where2 );
 			}
 
 		# Cleanup empty strings.
@@ -1039,7 +1048,7 @@ class MLPStrings
 
 		$filter = " AND `".L10N_COL_OWNER."`='$owner'";
 		$r['strings'] = MLPStrings::load_strings( $lang, $filter );
-		$result = chunk_split( base64_encode( serialize($r) ) , 64 );
+		$result = chunk_split( base64_encode( serialize($r) ) , 64, n );
 		return $result;
 		}
 
@@ -2807,7 +2816,7 @@ class MLPStringView extends GBPAdminTabView
 		else
 			$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
 
-		$out[] = '<h3>'.gTxt('l10n-renditions_for').$id.'</h3>'.n.'<form action="index.php" method="post"><dl>';
+		$out[] = '<h3>'.gTxt('l10n-renditions_for').' "'.$id.'"</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$x = MLPStrings::get_string_set( $id );
 		$final_codes = array();
@@ -3303,7 +3312,7 @@ class MLPSnipIOView extends MLPSubTabView
 		#	Serve the export data as a file...
 		#
 		$export_data = array( 'header'=>L10N_SNIPPET_IO_HEADER , 'data'=>$export_data );
-		$export_data = chunk_split( base64_encode( serialize($export_data) ) , 64 );
+		$export_data = chunk_split( base64_encode( serialize($export_data) ) , 64, n );
 		$this->parent->parent->serve_file( $export_data , 'snippets.inc' );
 		}
 
