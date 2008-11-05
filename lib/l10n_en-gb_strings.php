@@ -157,7 +157,6 @@ $l10n_default_strings = array(
 	'l10n-xlate_to'				=> 'Translating into: ',
 
 	# Strings for the cleanup wizard...
-	'l10n-cleanup_steps'		=> 'The following steps will be taken to cleanup the MLP Pack in this installation',
 	'l10n-drop_field'			=> 'Drop the `{table}.{field}` field',
 	'l10n-clean_2_main'			=> 'Remove all MLP strings and unregister plugins',
 	'l10n-clean_2_unreg'		=> 'Unregistered plugin \'{name}\'',
