@@ -2816,6 +2816,9 @@ class MLPStringView extends GBPAdminTabView
 		else
 			$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
 
+		$debug = false;
+		if( $debug ) $out[] = 'render_string_edit( '.$type.' , '.$container.' , '.$id.' , '.$owner.' , '.$event.' )'; 
+			
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').' "'.$id.'"</h3>'.n.'<form action="index.php" method="post"><dl>';
 
 		$x = MLPStrings::get_string_set( $id );
@@ -2839,13 +2842,66 @@ class MLPStringView extends GBPAdminTabView
 			$lang_codes = MLPLanguageHandler::get_installation_langs();
 			}
 
+		# Work out what event to use...
+		$default_event = $event;
+		switch( count( $x ) )
+			{
+			case 0:	# No string with this name exists in the DB yet
+				break;
+			case 1: # Use existing event
+				$usedlangcodes = array_keys($x);
+				$default_event = $x[$usedlangcodes[0]]['event'];
+				break;
+			default: # Use the most frequent existing event...
+				foreach( array_values($x) as $i => $data)
+					$events[] = $data['event'];
+				$freq = array_count_values( $events );
+				$max = max($freq);
+				foreach ($freq as $key => $val) 
+					{
+					if ($val === $max)
+						{
+						$default_event = $key;
+						break;
+						}
+					}
+				break;
+			}
+			
+		$default_owner = $owner;
+		switch( count( $x ) )
+			{
+			case 0:	# No string with this name exists in the DB yet
+				break;
+			case 1: # Use existing owner
+				$usedlangcodes = array_keys($x);
+				$default_owner = $x[$usedlangcodes[0]][L10N_COL_OWNER];
+				break;
+			default: # Use the most frequent existing owner...
+				foreach( array_values($x) as $i => $data)
+					$owners[] = $data[L10N_COL_OWNER];
+				$freq = array_count_values( $owners );
+				$max = max($freq);
+				foreach ($freq as $key => $val)
+					{
+					if ($val === $max)
+						{
+						$default_owner = $key;
+						break;
+						}
+					}
+				break;
+			}
+
 		foreach($lang_codes as $code)
 			{
-			if( array_key_exists( $code , $x ) )
-				continue;
-			$x[ $code ] = array( 'id'=>'', 'event'=>'', 'data'=>'' );
+			if( !array_key_exists( $code , $x ) )
+				$x[ $code ] = array( 'id'=>'', 'event'=>$default_event, 'data'=>'' , L10N_COL_OWNER => $default_owner );
 			}
 		ksort( $x );
+		
+		if( $debug ) dmp( $x );
+		
 		foreach( $x as $code => $data )
 			{
 			$final_codes[] = $code;
@@ -2885,7 +2941,7 @@ class MLPStringView extends GBPAdminTabView
 			$out[] = hInput('subtab' , $this->sub_tab );
 			}
 		$out[] = hInput('l10n_type', $type );
-		$out[] = hInput('owner', $owner);
+		$out[] = hInput('owner', $default_owner );
 		$out[] = hInput('string_event', $event);
 		$out[] = hInput(gbp_id, $id);
 		$out[] = '</form>'.n;
