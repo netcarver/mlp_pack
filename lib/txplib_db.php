@@ -542,12 +542,12 @@ $DB = new DB;
 							event = 'l10n',
 							html  = 'text_input',
 							type  = '0',
-							prefs_id = 1" , 1
+							prefs_id = 1"
 						);
 						} 
 					else 
 						{
-						safe_update('txp_prefs', "val = 'DIRTY'","name like '$name'", 1);
+						safe_update('txp_prefs', "val = 'DIRTY'","name like '$name'");
 						}
 					}
 				}
