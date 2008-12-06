@@ -996,17 +996,19 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 
 	$where = '';
 	if( $filter )
-		$where = ' where '.L10N_COL_LANG."='$lang'";
+		$where = ' where `'.L10N_COL_LANG."`='$lang'";
 
-	$indexes = _l10n_get_indexes();
-
-	$sql = 'create table `'.PFX.$table_name.'` '.$indexes.' select * from `'.PFX.'textpattern`'.$where;
+	$copy_struct_sql = 'create table `'.PFX.$table_name.'` like `'.PFX.'textpattern`';
+	$copy_data_sql   = 'insert into `'.PFX.$table_name.'` select * from `'.PFX.'textpattern`'.$where;
 	$drop_sql = 'drop table `'.PFX.$table_name.'`';
 	$lock_sql = 'lock tables `'.PFX.$table_name.'` WRITE';
 	$unlock_sql = 'unlock tables';
+
 	@safe_query( $lock_sql, $dbg);
 	@safe_query( $drop_sql, $dbg );
-	$ok = @safe_query( $sql, $dbg );
+	$ok = @safe_query( $copy_struct_sql, $dbg );
+	if( $ok )
+		$ok = @safe_query( $copy_data_sql, $dbg );
 	@safe_query( $unlock_sql, $dbg );
 	}
 
