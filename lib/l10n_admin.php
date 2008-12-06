@@ -7,16 +7,14 @@ global $l10n_painters;
 $l10n_vars = array();
 $l10n_mappings = null;
 $l10n_painters = array();
-global $l10n_dirty_flag;
-$l10n_dirty_flag = 'l10n_txp_dirty';
 
 if( $l10n_view->installed() )
 	{
 	#
 	#	Detect the dirty-flag and re-build tables...
 	#
-	global $prefs, $l10n_dirty_flag;
-	if( @$prefs[$l10n_dirty_flag] === 'DIRTY' )
+	global $prefs;
+	if( @$prefs[L10N_DIRTY_FLAG_VARNAME] === 'DIRTY' )
 		{
 		# Iterate over the site languages, rebuilding the tables...
 		$langs = MLPLanguageHandler::get_site_langs();
@@ -191,9 +189,27 @@ function _l10n_get_user_languages( $user_id = null )
 	return $langs;
 	}
 
+function _l10n_get_indexes()
+	{
+	$indexes = 'PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`)';
+
+	$rs = getRows('show index from `'.PFX.'textpattern`');
+	foreach ($rs as $row) 
+		{
+		if ($row['Key_name'] == 'Expires_idx')
+			{
+			$indexes .= ', KEY `Expires_idx` (`Expires`)';
+			break;
+			}
+		}
+
+	$indexes = '('.$indexes.')'; 
+
+	return $indexes;
+	}
 function _l10n_create_temp_textpattern( $languages )
 	{
-	$indexes = '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
+	$indexes = _l10n_get_indexes();
 	$sql = 'create TEMPORARY table `'.PFX.'textpattern` '.$indexes.' select * from `'.PFX.'textpattern` where '.L10N_COL_LANG.' IN ('.$languages.')';
 	@safe_query( $sql );
 	}
@@ -931,9 +947,9 @@ function _l10n_observe_glz_custom_fields( $event , $step )
 
 function _l10n_update_dirty_flag( $v )
 	{
-	global $prefs , $l10n_dirty_flag;
-	set_pref( $l10n_dirty_flag, $v , 'l10n', 2 );
-	$prefs[$l10n_dirty_flag] = $v;
+	global $prefs;
+	set_pref( L10N_DIRTY_FLAG_VARNAME, $v , 'l10n', 2 );
+	$prefs[L10N_DIRTY_FLAG_VARNAME] = $v;
 	}
 
 function _l10n_generate_lang_table( $lang , $filter = true )
@@ -981,7 +997,9 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$where = '';
 	if( $filter )
 		$where = ' where '.L10N_COL_LANG."='$lang'";
-	$indexes = '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
+
+	$indexes = _l10n_get_indexes();
+
 	$sql = 'create table `'.PFX.$table_name.'` '.$indexes.' select * from `'.PFX.'textpattern`'.$where;
 	$drop_sql = 'drop table `'.PFX.$table_name.'`';
 	$lock_sql = 'lock tables `'.PFX.$table_name.'` WRITE';
