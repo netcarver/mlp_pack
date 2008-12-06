@@ -5229,7 +5229,7 @@ class MLPWizView extends GBPWizardTabView
 	function setup_11()		# Optionally insert l10n tags into the pages/forms.
 		{
 		static $default_md5s = array (
-			'txp_page'     => array (		  #Txp 4.04                            #Txp 4.05                           #txp 4.07 -- Add new entries as required.
+			'txp_page'     => array (        #Txp 4.04                            #Txp 4.05                           #txp 4.07 -- Add new entries as required.
 				'default'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896', 'fb7f068c1627f25f924ff40d09bc0fc8' ),
 				'archive'          => array( 'c9797b38809d64cb8f5d33ad1f62a144',	'fb13b4120c263898cd33bf82b51fd896', '31f30171455dd5a9d96aeb5e0c86f8a1' ),
 				'error_default'    => array( '909ada7984ebdc41a86f74861d6a0944',	'faca32c1d818cc017e1389124742fb74', '056b8532e6c875e6a9e4a7bf6aeded95' )
