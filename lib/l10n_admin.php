@@ -485,10 +485,17 @@ function _l10n_process_admin_page($page)
 	$ver = $prefs['version'];
 	$fs = array	(
 				'4.0.4' => '<form method="get" action="index.php" style="display: inline;">',
-				'4.0.6' => '<form method="get" action="index.php" class="navpop" style="display: inline;">',
+				'4.0.6' => '<form method="get" action="index.php" class="navpop" style="display: inline;">'
 				);
-	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
-	$page = str_replace( $f , $ls.sp.$f , $page);
+
+	$ks = array_keys($fs);
+	$index = count($ks);
+	if( $index > 0 )
+		{
+		$index = $ks[$index - 1];
+		$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs[$index];
+		$page = str_replace( $f , $ls.sp.$f , $page);
+		}
 
 	#
 	#	... and to the bottom of the admin form ...
@@ -497,8 +504,15 @@ function _l10n_process_admin_page($page)
 				'4.0.4' => '</form><a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
 				'4.0.6' => '</form>'.n.'<a href="http://www.textpattern.com"><img src="txp_img/carver.gif" width="60" height="48" border="0" alt="" /></a>' ,
 				);
-	$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs['4.0.4'] ;
-	$page = str_replace( $f , $f.br.n.$ls , $page);
+
+	$ks = array_keys($fs);
+	$index = count($ks);
+	if( $index > 0 )
+		{
+		$index = $ks[$index - 1];
+		$f = array_key_exists( $ver , $fs ) ? $fs[$ver] : $fs[$index];
+		$page = str_replace( $f , $f.br.n.$ls , $page);
+		}
  
 	$page = _l10n_rename_articles_tab($page);
 
