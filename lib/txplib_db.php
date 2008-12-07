@@ -1,10 +1,5 @@
 <?php
 
-/*
-$HeadURL: http://svn.textpattern.com/development/4.0/textpattern/lib/txplib_db.php $
-$LastChangedRevision: 1879 $
-*/
-
 if (!defined('PFX')) {
 	if (!empty($txpcfg['table_prefix'])) {
 		define ("PFX",$txpcfg['table_prefix']);
@@ -22,7 +17,7 @@ class DB {
 		$this->db	= $txpcfg['db'];
 		$this->user = $txpcfg['user'];
 		$this->pass = $txpcfg['pass'];
-		$this->client_flags = isset($txpcfg['client_flags']) ? $txpcfg['client_flags'] : 0; 
+		$this->client_flags = isset($txpcfg['client_flags']) ? $txpcfg['client_flags'] : 0;
 
 		$this->link = @mysql_connect($this->host, $this->user, $this->pass, false, $this->client_flags);
 		if (!$this->link) die(db_down());
@@ -100,14 +95,11 @@ $DB = new DB;
 //-------------------------------------------------------------
 	function safe_query($q='',$debug='',$unbuf='')
 	{
-		global $DB,$txpcfg, $qcount, $qtime, $production_status;
+		global $DB, $txpcfg, $qcount, $qtime, $production_status;
 		$method = (!$unbuf) ? 'mysql_query' : 'mysql_unbuffered_query';
 		if (!$q) return false;
-		if ($debug or TXP_DEBUG === 1) {
-			dmp($q);
-			dmp(mysql_error());
-//			dmp(debug_backtrace());
-		}
+		if ($debug or TXP_DEBUG === 1) dmp($q);
+
 		$start = getmicrotime();
 		$result = $method($q,$DB->link);
 		$time = getmicrotime() - $start;
@@ -198,8 +190,7 @@ $DB = new DB;
 		return false;
 	}
 
-
-//-------------------------------------------------------------
+// -------------------------------------------------------------
 	function safe_field($thing, $table, $where, $debug='')
 	{
 		$thing = safe_remap_fields( $thing , $table );
@@ -410,7 +401,8 @@ $DB = new DB;
 					'name' => $name,
 					'title' => $title,
 					'level' => count($right),
-					'children' => ($rgt - $lft - 1) / 2
+					'children' => ($rgt - $lft - 1) / 2,
+					'parent' => $parent
 				);
 
 			$right[] = $rgt;
@@ -520,10 +512,8 @@ $DB = new DB;
 	function get_prefs()
 		{
 		$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1');
-		if( $r )
-			{
-			while( $a = nextRow($r) )
-				{
+		if ($r) {
+			while ($a = nextRow($r)) {
 				$out[$a['name']] = $a['val'];
 				}
 
