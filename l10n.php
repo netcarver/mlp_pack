@@ -6,7 +6,7 @@ $plugin['author'] = 'Graeme Porteous & Steve (Netcarver)';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
 $plugin['type'] = '1';
-$plugin['order'] = 1;	## Make sure we get first shot at incomming url requests
+$plugin['order'] = 1;	# Make sure we get first shot at incomming url requests
 
 @include_once('../zem_tpl.php');
 
