@@ -26,7 +26,7 @@ $iso_693_langs = array(
 	'de'=>array( 'de'=>'Deutsch' ) ,
 	'dz'=>array( 'dz'=>'Dzongkha' ) ,
 	'el'=>array( 'el'=>'Ελληνικά' , 'el-gr'=>'Ελληνικά' ) ,
-	'en'=>array( 'en'=>'English' , 'en-gb'=>'English (GB)' , 'en-us'=>'English (US)' ),
+	'en'=>array( 'en'=>'English' , 'en-gb'=>'English' , 'en-us'=>'English (US)' ),
 	'eo'=>array( 'eo'=>'Esperanto' ),
 	'es'=>array( 'es'=>'Español' ),
 	'et'=>array( 'et'=>'Eesti Keel', 'et-ee'=>'Eesti Keel' ),
