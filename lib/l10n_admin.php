@@ -16,6 +16,10 @@ if( $l10n_view->installed() )
 	global $prefs;
 	if( @$prefs[L10N_DIRTY_FLAG_VARNAME] === 'DIRTY' )
 		{
+		# Ensure new indexes (indices) are present in case of upgade...
+		_l10n_check_index();
+		safe_optimize('textpattern');
+
 		# Iterate over the site languages, rebuilding the tables...
 		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $lang )
@@ -191,28 +195,48 @@ function _l10n_get_user_languages( $user_id = null )
 
 function _l10n_get_indexes()
 	{
-	$indexes = '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
-    /*
-	$indexes = 'PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`)';
-	$rs = getRows('show index from `'.PFX.'textpattern`');
-	foreach ($rs as $row) 
-		{
-		if ($row['Key_name'] == 'Expires_idx')
-			{
-			$indexes .= ', KEY `Expires_idx` (`Expires`)';
-			break;
-			}
-		}
-	$indexes = '('.$indexes.')'; 
-	*/
-
-	return $indexes;
+	return '(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))';
 	}
 function _l10n_create_temp_textpattern( $languages )
 	{
 	$indexes = _l10n_get_indexes();
 	$sql = 'create temporary table `'.PFX.'textpattern` '.$indexes.' select * from `'.PFX.'textpattern` where `'.L10N_COL_LANG.'` IN ('.$languages.')';
 	@safe_query( $sql );
+	}
+function _l10n_check_index()
+	{
+	$debug = false;
+	if($debug) dmp('Entered _l10n_check_index()');
+
+	$sql = array();
+	$has_lang_index = $has_group_index = false;
+	
+	$rs = getRows('show index from `'.PFX.'textpattern`');
+	foreach ($rs as $row)
+		{
+		if (!$has_lang_index)
+			$has_lang_index = ($row['Key_name'] == L10N_COL_LANG);
+		if (!$has_group_index)
+			$has_group_index = ($row['Key_name'] == L10N_COL_GROUP);
+		}
+
+	if( !$has_lang_index )
+		$sql[] = 'ADD INDEX(`'.L10N_COL_LANG.'`)';
+	if( !$has_group_index )
+		$sql[] = 'ADD INDEX(`'.L10N_COL_GROUP.'`)';
+
+	if($debug) dmp($sql);
+	
+	if( !empty( $sql ) )
+		{
+		$ok = @safe_alter( 'textpattern' , join(',', $sql) , $debug );
+		}
+	else
+		{
+		if($debug) dmp('No need to add new indexes');
+		}
+
+	if($debug) dmp('Exiting _l10n_check_index()');
 	}
 function _l10n_post_sectionsave( $event , $step )
 	{
@@ -956,7 +980,7 @@ function _l10n_update_dirty_flag( $v )
 function _l10n_generate_lang_table( $lang , $filter = true )
 	{
 	#echo 'Updating table defs for ' , $lang , br;
-	$dbg = 0;
+	$dbg = false;
 
 	if( !is_string( $lang ) )
 		{
@@ -1003,13 +1027,17 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	$copy_data_sql   = 'insert into `'.PFX.$table_name.'` select * from `'.PFX.'textpattern`'.$where;
 	$drop_sql = 'drop table `'.PFX.$table_name.'`';
 	$lock_sql = 'lock tables `'.PFX.$table_name.'` WRITE';
+	$optimize_sql = 'optimize table `'.PFX.$table_name.'`';
 	$unlock_sql = 'unlock tables';
 
 	@safe_query( $lock_sql, $dbg);
 	@safe_query( $drop_sql, $dbg );
 	$ok = @safe_query( $copy_struct_sql, $dbg );
 	if( $ok )
-		$ok = @safe_query( $copy_data_sql, $dbg );
+		{
+		@safe_query( $copy_data_sql, $dbg );
+		@safe_query( $optimize_sql, $dbg );
+		}
 	@safe_query( $unlock_sql, $dbg );
 	}
 
