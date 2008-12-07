@@ -44,7 +44,7 @@ $DB = new DB;
 		#
 		global $prefs;
 		if (isset($prefs['db_remap_tables_func']) and is_callable($prefs['db_remap_tables_func']))
-			$table = doSlash(call_user_func($prefs['db_remap_tables_func'], $table));
+			$table = call_user_func($prefs['db_remap_tables_func'], $table);
 		return $table;
 	}
 
