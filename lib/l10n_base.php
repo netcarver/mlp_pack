@@ -184,21 +184,195 @@ function _l10n_get_dbserver_type()
 
 	return $type;
 	}
-function _l10n_rewrite_sql( $field, $lang, $sql )
+function _l10n_get_sql_rewrite_details( $sql_sel , $tables , $lang , $mappings )
+	{
+	$debug = false;
+	$result = array();
+	$join = count($tables) > 1;
+
+	if( $debug )
+		{
+		dmp('_l10n_get_sql_rewrite_details() building search vector for... '.n.t.$sql_sel );
+		dmp('from ... '.n.t.join(', ',$tables));
+		dmp( ($join ? 'This is a join' : 'This is not a join') );
+		}
+
+	# array of MySQL statements that can appear before the select list...
+	$sql_st = array( 'ALL', 'DISTINCT', 'DISTINCTROW', 'HIGH_PRIORITY', 'STRAIGHT_JOIN', 'SQL_SMALL_RESULT', 'SQL_BIG_RESULT', 'SQL_BUFFER_RESULT', 'SQL_CACHE', 'SQL_NO_CACHE', 'SQL_CALC_FOUND_ROWS' );
+
+	# chop the array down...
+	$vect = do_list($sql_sel);
+
+	# cleanup first entry...
+	$init_vect = $vect[0];
+	$init_len  = strlen($init_vect);
+	foreach( $sql_st as $statement ) $vect[0] = str_ireplace( $statement, '', $vect[0] );
+	$len = strlen($vect[0]);
+	$vect[0] = trim($vect[0]);
+
+	# record what was chopped off...
+	$initial_sql = '';
+	if( strlen($init_vect) !== $len)
+		{
+		$initial_sql = substr($init_vect,0,$init_len - $len);
+		if( $debug ) dmp($initial_sql);
+		}
+
+	# process all entries...
+	foreach($vect as $s)
+		{
+		$field = $s = $key = strtr($s,array('`' => ''));	# all substituted entries will be given backticks.
+		$extable = '';
+		$as = '';
+		$pos = stripos($s, ' as ');
+		if( $pos === false )
+			$parts = do_list($s,'.');
+		else
+			{
+			$key = substr($s,0,$pos);
+			$as  = substr($s,$pos+4);
+			$parts = do_list($key,'.');
+			}
+		if( count($parts) == 2)
+			{
+			$extable = $parts[0];
+			$field = $parts[1];
+			}
+		$entry = array(
+			'k'=>$key,			# key isolated from any explicit 'as' statement
+			'et'=>$extable,		# explicit table to use, if known.
+			'it'=>$tables,		# otherwise use the list of implicit tables (joins will have 2 or more entries, non-joins will have a single entry)
+			'f'=>$field,		# field name isolated from explicit table and any 'as' statement
+			'a'=>$as,			# explicit 'as' to retain
+			'r'=>$s, 			# default rewrite string should there be no match
+			);
+
+		# Calculate the replacements for a wildcard across tables...
+		if( $key === '*' )
+			{
+			$extras = array();
+			foreach( $tables as $table )
+				{
+				$maps = @$mappings[$table];
+				if( $maps )
+					{
+					foreach( $maps as $f=>$sql )
+						{
+						$localised_field = _l10n_make_field_name( $f , $lang );
+						if( $join )
+							$localised_field = $table.'`.`'.$localised_field;
+						$extras[] = '`'.$localised_field.'` as `'.$f.'`';
+						}
+					}
+				}
+			$entry['r'] = $key.','.join(',',$extras);
+			}
+
+		# Calculate specific replacements...
+		if( !$join )
+			{
+			$table = ($extable) ? $extable : $tables[0];
+			$mapping = @$mappings[$table][$field];
+			#dmp( 'Lookup $mappings['.$table.']['.$field.'].');
+			if( $mapping )
+				{
+				#dmp(t.'...hit!');
+				$localised_field = _l10n_make_field_name( $field , $lang );
+				if( $extable )
+					$localised_field = $table.'`.`'.$localised_field;
+				$entry['r'] = '`'.$localised_field.'` as `'.(($as)?$as:$field).'`';
+				}
+			#else
+			#	dmp(t.'...miss!');
+			}
+		else
+			{
+			$table = $extable;
+			if( $table )
+				{
+				$mapping = @$mappings[$table][$field];
+				#dmp( 'Lookup $mappings['.$table.']['.$field.'].');
+				if( $mapping )
+					{
+					#dmp(t.'...hit!');
+					$localised_field = _l10n_make_field_name( $field , $lang );
+					if( $extable )
+						$localised_field = $table.'`.`'.$localised_field;
+					$entry['r'] = '`'.$localised_field.'` as `'.(($as)?$as:$field).'`';
+					}
+				#else
+				#	dmp(t.'...miss!');
+				}
+			else
+				{
+				#dmp(t.'...implicit search');
+				$extras = array();
+				foreach( $tables as $table )
+					{
+					$mapping = @$mappings[$table][$field];
+					if( $mapping )
+						{
+						$localised_field = $table.'`.`'._l10n_make_field_name( $field , $lang );
+						$extras[] = '`'.$localised_field.'` as `'.(($as)?$as:$field).'`';
+						}
+					}
+				$entry['r'] = join(',',$extras);
+				}
+			}
+
+		# Add initial SQL back to the first replacement...
+		if( $initial_sql )
+			{
+			$entry['init'] = $initial_sql;
+			$entry['r'] = $initial_sql.' '.$entry['r'];
+			$initial_sql = '';
+			}
+
+		# Store for later
+		$result[] = $entry;
+		}
+
+	#if( $debug ) dmp($result);
+
+	$new = array();
+	foreach( $result as $pos => $select )
+		{
+		$new[] = $select['r'];
+		}
+	$new = join(',',$new);
+	if( $debug ) dmp( 'Here\'s my new sql: "'.$new.'"' );
+
+	unset($result);
+
+	return $new;
+	}
+function _l10n_rewrite_sql( $field, $lang, $sql, $table='')
 	{
 	$localised_field = _l10n_make_field_name( $field , $lang );
 	$r = '`'.$localised_field.'` as `'.$field.'`';
+	if( $table )
+		{
+		$r = '`'.$table.'`.`'.$localised_field.'` as `'.$field.'`';
+		$table = $table.'.';
+		}
 
 	#
 	#	Replace specific matches...
 	#
 	$newsql = 	' '.$sql.' ';	#inject padding to allow detection of matches at start/end of the string.
 
-	$v = array(	'`'.$field.'`' =>     $r,	 # no need for extra backticks here -- the $r string has them.
+	$v = array(
+				'`'.$field.'`' =>     $r,	 # no need for extra backticks here -- the $r string has them.
 				','.$field.',' => ','.$r.',',
 				','.$field.' ' => ','.$r.' ',
 				' '.$field.',' => ' '.$r.',',
-				' '.$field.' ' => ' '.$r.' ', );
+				' '.$field.' ' => ' '.$r.' ',
+				'`'.$table.$field.'`' =>     $r,	 # no need for extra backticks here -- the $r string has them.
+				','.$table.$field.',' => ','.$r.',',
+				','.$table.$field.' ' => ','.$r.' ',
+				' '.$table.$field.',' => ' '.$r.',',
+				' '.$table.$field.' ' => ' '.$r.' ',
+				);
 	$newsql = str_replace( array_keys($v) , array_values($v) , $newsql );
 
 	#
@@ -335,8 +509,14 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 	if( !in_array( @txpinterface , $interfaces ) )
 		return $thing;
 
-	if( !isset( $mappings[$table] ) )
-		return $thing;
+	$tables = do_list($table);
+	if( count($tables) === 1 )
+		{
+		if( !isset( $mappings[$table] ) )
+			return $thing;
+		}
+
+	$start_thing = trim($thing);
 
 	if( @txpinterface === 'admin' )
 		$lang = MLPLanguageHandler::get_site_default_lang();
@@ -349,12 +529,14 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 			$lang = LANG;
 		}
 
-	foreach( $mappings[$table] as $field => $sql )
+	$thing = _l10n_get_sql_rewrite_details( $thing , $tables , $lang , $mappings );
+	$thing = trim($thing);
+	if( false && $start_thing != $thing )
 		{
-		$thing = _l10n_rewrite_sql( $field , $lang , $thing );
+		dmp('_l10n_remap_fields select rewritten from...'.n.'"'.$start_thing.'"'.n.'to...'.n.'"'.$thing.'"');
 		}
 
-	return trim($thing);
+	return $thing;
 	}
 function _l10n_walk_mappings( $fn , $atts='' )
 	{
