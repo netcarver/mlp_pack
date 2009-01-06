@@ -419,7 +419,7 @@ $LastChangedRevision: 1973 $
 
 		$out['path_to_site']   = $path_to_site;
 		$out['permlink_mode']  = $permlink_mode;
-		$out['sitename']       = htmlspecialchars($sitename);
+		$out['sitename']       = htmlspecialchars($sitename, ENT_COMPAT, 'UTF-8');
 
 		return $out;
 

@@ -37,6 +37,10 @@ if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
 	define( 'L10N_MASTER_TEXTPATTERN' , 'l10n_master_txp' );
 if( !defined( 'L10N_SNIPPET_PATTERN' ) )
 	define( 'L10N_SNIPPET_PATTERN' , '/##([\w|\.|\-]+)##/' );
+
+# Set the following define to 1 to enable url-rewrite debugging...
+define( 'L10N_DEBUG_URLREWRITE' , 1 );
+
 global $txpcfg;
 
 function _l10n_set_browse_language( $code , $long ,  $debug=false )
@@ -102,7 +106,7 @@ function _l10n_process_url( $use_get_params=false )
 	$redirects = array( '' , '/' );
 	$redirect = false;
 	$new_first_path = '';
-	$debug = (0) && (@txpinterface === 'public');
+	$debug = (L10N_DEBUG_URLREWRITE) && (@txpinterface === 'public');
 
 	@session_start();
 	$site_langs = MLPLanguageHandler::get_site_langs();
@@ -237,9 +241,9 @@ function _l10n_process_url( $use_get_params=false )
 
 	if( @$prefs['l10n_l10n-use_browser_languages'] == '1' )
 		{
-		if( $debug ) echo br,br,"Checking browser accept-language headers.",br,br;
 		if( !isset($_SESSION[$ssname]) or empty($_SESSION[$ssname]) )
 			{
+			if( $debug ) echo br,br,"Checking browser accept-language headers.",br,br;
 			#
 			#	If we are still missing a language for the session, try to get the prefered selection
 			# from the user agent's HTTP header.
@@ -532,61 +536,58 @@ if (@txpinterface === 'public')
 
 		return $result;
 		}
-
+	function _l10n_rewrite_log($string)
+		{
+		global $l10n_rewrite_log;
+		if( L10N_DEBUG_URLREWRITE ) $l10n_rewrite_log .= $string.br;
+		}
 	function _l10n_inject_lang_markers_cb( $matches )
 		{
 		global $l10n_language , $l10n_replace_strings , $l10n_url_exclusions , $prefs;
 
-		$debug = 0;
-		#$debug = !$l10n_replace_strings['insert_blank'];
-		$logfile = $prefs['tempdir'] . DS . 'l10n.log.txt';
 		static $counter;
-
 		if( !isset( $counter ) )
 			$counter = 0;
-
 		$counter += 1;
-
 		$insert = 0;
 		$result = $matches[0];
 		$query = '';
 
-		if( $debug ) error_log( n.n.'Hit #'.$counter.' : ['.$matches[0].']' , 3 , $logfile );
-
+		_l10n_rewrite_log( n.n.br.'Hit #'.$counter.' : ['.$matches[0].']' );
 		if( @$l10n_replace_strings['insert_blank'] && empty( $matches[0] ) )	# Homepage...
 			{
 			$insert = 1;
-			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$l10n_language['short'].'/' , 3 , $logfile );
+			_l10n_rewrite_log( ' ... Blank! ... INSERTING : /'.$l10n_language['short'].'/'  );
 			}
 		else
 			{
-			if( $debug ) error_log( ' ... PARSING : ' . $matches[2] , 3 , $logfile );
+			_l10n_rewrite_log( ' ... PARSING : ' . $matches[2]  );
 			$url = trim($matches[2] , '/');
 			$url = strtolower($url);
 			$qs = strpos($url,'?');
 			if( $qs !== false )
 				$url = substr($url, 0, $qs);
 			$r = array_map('urldecode', explode('/',$url));
-			if( $debug ) error_log( n.t.'  -> ' . $r[0] , 3 , $logfile );
+			_l10n_rewrite_log( n.t.'  -> ' . $r[0]  );
 
 			$excluded = in_array( $r[0] , $l10n_url_exclusions );
 			if( $excluded )
 				{
-				if( $debug ) error_log( ' ... SKIPPING: this is an excluded section/area ' , 3 , $logfile );
+				_l10n_rewrite_log( ' ... SKIPPING: this is an excluded section/area '  );
 				}
 			else
 				{
 				if( !@$l10n_replace_strings['insert_blank'] && empty($matches[1]) )
 					{
-					if( $debug ) error_log( ' ... SKIPPING: not a URL ' , 3 , $logfile );
+					_l10n_rewrite_log( ' ... SKIPPING: not a URL '  );
 					}
 				elseif( empty($r[0]) || !MLPLanguageHandler::is_valid_short_code($r[0]) )
 					{
-					if( $debug ) error_log( ' ... INSERTING : '.$l10n_language['short'] , 3 , $logfile );
+					_l10n_rewrite_log( ' ... INSERTING : '.$l10n_language['short']  );
 					$insert = 1;
 					}
 				else
-					if( $debug ) error_log( ' ... SKIPPING: language ('.$r[0].') present ' , 3 , $logfile );
+					_l10n_rewrite_log( ' ... SKIPPING: language ('.$r[0].') present '  );
 				}
 			}
 
@@ -596,7 +597,7 @@ if (@txpinterface === 'public')
 			if( $matches[2][0] !== '/' )
 				$extra='/';
 			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$l10n_language['short'].$extra.$matches[2].$l10n_replace_strings['stop_rep'];
-			if( $debug ) error_log( n.t.'  ->  '.$result , 3 , $logfile );
+			_l10n_rewrite_log( n.t.'RESULT ... "'.$result.'"' );
 			}
 
 		return $result;
@@ -710,8 +711,13 @@ if (@txpinterface === 'public')
 		$pattern2 = _l10n_make_pattern();
 		$buffer = _l10n_preg_replace_callback( $pattern2 , '_l10n_inject_lang_markers_cb' , $buffer );
 
-		if (0)	#debug
-			$buffer = 'Exclusions... :' . join( ', ' , $l10n_url_exclusions ) . $buffer;
+		if ( L10N_DEBUG_URLREWRITE )	#debug
+			{
+			global $l10n_rewrite_log;
+			$buffer = 'Rewrites   ...' .$l10n_rewrite_log.br.$buffer;
+			$buffer = 'Match string  : "'.$pattern1.'"'.br.$buffer;
+			$buffer = br.'Exclusions    : ' .join( ', ' , $l10n_url_exclusions ).br.$buffer;
+			}
 
 		return $buffer;
 		}

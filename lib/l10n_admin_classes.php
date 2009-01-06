@@ -106,7 +106,7 @@ class MLPTableManager
 														# if set to true => not a regex find. Replace search term
 														# with html highlight.
 		$qq        = '/'.preg_quote( $q ).'/';			# processed search term.
-		$qr        = '<span class="l10n_highlite">'.htmlspecialchars( $q ).'</span>';	#search term html highlight
+		$qr        = '<span class="l10n_highlite">'.htmlspecialchars( $q, ENT_COMPAT, 'UTF-8' ).'</span>';	#search term html highlight
 		$marker    = md5( $q );
 		$col_name  = $row['name'];						# name of the row we are processing
 		$input     = explode( "\n" , $row['data'] );	# array of lines obtained from the row data
@@ -122,12 +122,12 @@ class MLPTableManager
 				if( $markup )
 					{
 					$match = str_replace( $q , $marker , $match );
-					$match = htmlspecialchars( $match );
+					$match = htmlspecialchars( $match, ENT_COMPAT, 'UTF-8' );
 					$match = str_replace( $marker , $qr , $match );
 					$result[$table.'.'.$col_name][$line_num] = $match;
 					}
 				else
-					$result[$table.'.'.$col_name][$line_num] = trim( htmlspecialchars($match) );
+					$result[$table.'.'.$col_name][$line_num] = trim( htmlspecialchars($match, ENT_COMPAT, 'UTF-8') );
 				}
 
 		return $result;
@@ -1300,7 +1300,7 @@ class MLPStrings
 
 			$data = $string['data'];
 			if( $media !== 'file' )
-				$data = htmlspecialchars( $data );
+				$data = htmlspecialchars( $data, ENT_COMPAT, 'UTF-8' );
 			$out[] = $string['name'].' => '.$data;
 			++$count;
 			}
@@ -2178,7 +2178,7 @@ class MLPStringView extends GBPAdminTabView
 				#	Now encode the data and highlight the search term...
 				#
 				$data = $a['data'];
-				$data = htmlspecialchars($data);
+				$data = htmlspecialchars($data, ENT_COMPAT, 'UTF-8');
 				$data = str_ireplace( $search_term, '<span class="l10n_highlite">'.$search_term.'</span>', $data );
 
 				if( empty($lang) or $lang==='-' )
@@ -2785,7 +2785,7 @@ class MLPStringView extends GBPAdminTabView
 		$data = safe_field( $fdata , $table , '`'.$fname.'`=\''.doSlash($owner).'\'' );
 
 		$f[] = '<p><textarea name="data" cols="70" rows="20" title="'.gTxt('l10n-textbox_title').'">' .
-			 htmlspecialchars($data) .
+			 htmlspecialchars($data, ENT_COMPAT, 'UTF-8') .
 			 '</textarea></p>'.br.n;
 		$f[] = '<div class="l10n_form_submit">'.fInput('submit', '', gTxt('save'), '').'</div>';
 		$f[] = sInput('l10n_save_pageform');
@@ -2920,7 +2920,7 @@ class MLPStringView extends GBPAdminTabView
 			$out[] = '<dt>'.$lang.' ['.$code.']. '.$warning.sp.'<a href="#" onClick="toggleDirection(\''.$code.'\')"><span id="'.$code.'-toggle">'.gTxt('l10n-toggle').'</span></a>' .'</dt>';
 			$out[] = '<dd><p>'.
 						'<textarea class="l10n_string_edit" id="' . $code . '-data" name="' . $code . '-data" cols="60" rows="2" title="' .
-						gTxt('l10n-textbox_title') . '"'. $dir .'>' . htmlspecialchars( $data['data'] ) . '</textarea>' .
+						gTxt('l10n-textbox_title') . '"'. $dir .'>' . htmlspecialchars( $data['data'], ENT_COMPAT, 'UTF-8' ) . '</textarea>' .
 						hInput( $code.'-id' , $data['id'] ) .
 						hInput( $code.'-event' , $e ) .
 						'</p></dd>';
@@ -2979,7 +2979,7 @@ class MLPStringView extends GBPAdminTabView
 
 			foreach( $d['strings'] as $k=>$v )
 				{
-				$v = htmlspecialchars( $v );
+				$v = htmlspecialchars( $v, ENT_COMPAT, 'UTF-8' );
 				$l[] = tr( '<td style="text-align: right;">'.$k.' : </td>' . n . td("<input type=\"text\" readonly size=\"100\" value=\"$v\" $direction_markup/>") ) .n ;
 				}
 
@@ -3410,8 +3410,8 @@ class MLPSnipIOView extends MLPSubTabView
 						$l[] = tr( n.tdcs( gTxt('language') . ': <strong>'.MLPLanguageHandler::get_native_name_of_lang($lang).' ['.$lang.']&#8230;</strong>'.br.br.n , 2 ) ).n;
 						foreach( $set as $name=>$couplet )
 							{
-							$data	= htmlspecialchars($couplet[0]);
-							$event	= htmlspecialchars($couplet[1]);
+							$data	= htmlspecialchars($couplet[0], ENT_COMPAT, 'UTF-8');
+							$event	= htmlspecialchars($couplet[1], ENT_COMPAT, 'UTF-8');
 
 							if( empty( $name ) or empty($event) or empty($data) )
 								continue;
@@ -4214,7 +4214,7 @@ class MLPArticleView extends GBPAdminTabView
 										'\')"><img src="txp_img/l10n_delete.png" /></a>';
 				else
 					$delete_art_link = '';
-				$cells[] = td( $delete_art_link . $ID . br . htmlspecialchars($names) , '' , 'id' );
+				$cells[] = td( $delete_art_link . $ID . br . htmlspecialchars($names, ENT_COMPAT, 'UTF-8') , '' , 'id' );
 
 				#
 				#	Compose the rest of the row - one cell per translation...

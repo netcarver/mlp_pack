@@ -493,7 +493,7 @@ function _l10n_rename_articles_tab($page)
 	#	Dynamically replace the 'tab_list' label...
 	#
 	$f = '<a href="?event=list" class="plain">'.gTxt('tab_list').'</a>';
-	$r = htmlspecialchars(gTxt('l10n-renditions'));
+	$r = htmlspecialchars(gTxt('l10n-renditions'), ENT_COMPAT, 'UTF-8');
 	$tmp = str_replace( $f , '<a href="?event=list" class="plain">'.$r.'</a>' , $page);
 	if( null !== $tmp ) $page = $tmp;
 	return $page;
@@ -635,7 +635,7 @@ function _l10n_article_buffer_processor( $buffer )
 	$r = '';
 	if( isset($l10n_article_message) )
 		{
-		$r = strong( htmlspecialchars($l10n_article_message) ) . n . br;
+		$r = strong( htmlspecialchars($l10n_article_message, ENT_COMPAT, 'UTF-8') ) . n . br;
 		unset( $l10n_article_message );
 		}
 	$r.= 'ID: ' . strong( $id_no ) . ' / ';
