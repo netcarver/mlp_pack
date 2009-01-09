@@ -38,7 +38,10 @@ if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
 if( !defined( 'L10N_SNIPPET_PATTERN' ) )
 	define( 'L10N_SNIPPET_PATTERN' , '/##([\w|\.|\-]+)##/' );
 
-# Set the following define to 1 to enable url-rewrite debugging...
+# Set the following define to enable url-rewrite debugging...
+# 0 => no debug output
+# 1 => summary
+# 2 => summary + individual rewrites.
 define( 'L10N_DEBUG_URLREWRITE' , 1 );
 
 global $txpcfg;
@@ -409,9 +412,20 @@ if (@txpinterface === 'public')
 		}
 	else
 		register_callback( '_l10n_pretext' 					, 'pretext' );
-	register_callback( '_l10n_textpattern_comment_submit'	, 'textpattern' );
-	register_callback( '_l10n_tag_feeds'					, 'rss_entry' );
-	register_callback( '_l10n_tag_feeds'					, 'atom_entry' );
+	register_callback( '_l10n_textpattern_comment_submit', 'textpattern' );
+	register_callback( '_l10n_tag_feeds', 'rss_entry' );
+	register_callback( '_l10n_tag_feeds', 'atom_entry' );
+	register_callback( '_l10n_pretext_set', 'pretext_set' );
+
+	function _l10n_pretext_set()
+		{
+		if( L10N_DEBUG_URLREWRITE )
+			{
+			global $pretext;
+			dmp(br.br.'Pretext as at pretext_set event...');
+			dmp($pretext);
+			}
+		}
 
 	function _l10n_tag_feeds()
 		{
@@ -539,7 +553,7 @@ if (@txpinterface === 'public')
 	function _l10n_rewrite_log($string)
 		{
 		global $l10n_rewrite_log;
-		if( L10N_DEBUG_URLREWRITE ) $l10n_rewrite_log .= $string.br;
+		if( L10N_DEBUG_URLREWRITE === 2 ) $l10n_rewrite_log .= $string.br;
 		}
 	function _l10n_inject_lang_markers_cb( $matches )
 		{
