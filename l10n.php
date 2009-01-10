@@ -422,7 +422,7 @@ if (@txpinterface === 'public')
 		if( L10N_DEBUG_URLREWRITE )
 			{
 			global $pretext;
-			dmp(br.br.'Pretext as at pretext_set event...');
+			dmp(br.br.'$pretext as at pretext_set event...');
 			dmp($pretext);
 			}
 		}
