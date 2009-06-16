@@ -519,12 +519,12 @@ $DB = new DB;
 
 			global $event, $dbversion, $thisversion, $txp_using_svn;
 
-			if ( @txpinterface==='admin') 
+			if ( @txpinterface==='admin')
 				{
 				if(!$dbversion or ($dbversion != $thisversion) or $txp_using_svn)
 					{
 					$name = L10N_DIRTY_FLAG_VARNAME;
-					if (!array_key_exists(L10N_DIRTY_FLAG_VARNAME , $out)) 
+					if (!array_key_exists(L10N_DIRTY_FLAG_VARNAME , $out))
 						{
 						safe_insert('txp_prefs', "
 							name  = '$name',
@@ -534,8 +534,8 @@ $DB = new DB;
 							type  = '0',
 							prefs_id = 1"
 						);
-						} 
-					else 
+						}
+					else
 						{
 						safe_update('txp_prefs', "val = 'DIRTY'","name like '$name'");
 						}
@@ -601,5 +601,3 @@ $DB = new DB;
 </html>
 eod;
 	}
-
-?>

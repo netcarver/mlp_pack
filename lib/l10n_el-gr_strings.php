@@ -156,5 +156,3 @@ $l10n_default_strings = array(
 	'l10n-cleanup_report'              => 'MLP Pack Cleanup Report&#8230;',
 	'l10n-cleanup_next'                => 'The MLP Pack l10n plugin can now be disabled and/or uninstalled.',
 	);
-
-?>

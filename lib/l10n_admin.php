@@ -1880,5 +1880,3 @@ function on_lang_selection_change()
 end_js;
 	return $fn;
 	}
-
-?>

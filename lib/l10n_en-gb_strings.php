@@ -172,5 +172,3 @@ $l10n_default_strings = array(
 	'l10n-cleanup_next' 		=> 'The MLP Pack l10n plugin can now be disabled and/or uninstalled.',
 	'l10n-cleanup_steps'		=> 'The following steps will be taken to cleanup the MLP Pack&#8230;',
 	);
-
-?>

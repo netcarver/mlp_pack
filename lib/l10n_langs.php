@@ -142,4 +142,3 @@ $iso_693_langs = array(
 	'zh'=>array( 'zh'=>'中文(简体)', 'zh-cn'=>'中文(简体)' , 'zh-tw'=>'中文(國語)'  ),
 	'zu'=>array( 'zu'=>'isiZulu' ),
 	);
-?>

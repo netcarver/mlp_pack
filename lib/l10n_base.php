@@ -39,7 +39,7 @@ function _l10n_preg_replace_callback( $needle , $fn , $buffer , $limit = -1 )
 		_l10n_preg_replace_err();
 
 	unset( $tmp );
-	return $buffer;	
+	return $buffer;
 	}
 
 function _l10n_preg_replace( $needle , $new , $buffer , $limit = -1 )
@@ -55,7 +55,7 @@ function _l10n_preg_replace( $needle , $new , $buffer , $limit = -1 )
 		_l10n_preg_replace_err();
 
 	unset( $tmp );
-	return $buffer;	
+	return $buffer;
 	}
 
 function _l10n_load_localised_pref( $name )
@@ -85,7 +85,7 @@ function _l10n_replace_snippet( $m )
 	$r = @$textarray[$s];
 	if( !$r )
 		return $s;
-	return $r;	
+	return $r;
 	}
 
 function _l10n_substitute_snippets( &$thing )
@@ -97,7 +97,7 @@ function _l10n_substitute_snippets( &$thing )
 function _l10n_process_pageform_access( $thing , $table , $where , $results , $is_a_set )
 	{
 	global $event;
-	if ('admin' === @txpinterface) 
+	if ('admin' === @txpinterface)
 		{
 		if ('dashboard'!==$event)
 			return $results;
@@ -988,4 +988,3 @@ if (!function_exists('str_ireplace'))
 		return str_replace(strtolower($torep), strtolower($replace), strtolower($text));
 		}
 	}
-?>

@@ -145,8 +145,8 @@ $LastChangedRevision: 1973 $
 						if ((connection_status()==0) and !connection_aborted() ) {
 							safe_update("txp_file", "downloads=downloads+1", 'id='.intval($id));
 						} else {
-							$pretext['request_uri'] .= ($sent >= $filesize) 
-								? '#aborted' 
+							$pretext['request_uri'] .= ($sent >= $filesize)
+								? '#aborted'
 								: "#aborted-at-".floor($sent*100/$filesize)."%";
 							log_hit('200');
 						}
@@ -654,7 +654,7 @@ $LastChangedRevision: 1973 $
 			$total = $grand_total - $offset;
 			$numPages = ceil($total/$pageby);
 			$pg = (!$pg) ? 1 : $pg;
-			$pgoffset = $offset + (($pg - 1) * $pageby);	
+			$pgoffset = $offset + (($pg - 1) * $pageby);
 			// send paging info to txp:newer and txp:older
 			$pageout['pg']       = $pg;
 			$pageout['numPages'] = $numPages;
@@ -1112,5 +1112,3 @@ $LastChangedRevision: 1973 $
 
 		return $o;
 	}
-
-?>

@@ -815,7 +815,7 @@ class MLPStrings
 	function insert_strings( $pfx , &$strings , $lang , $event='' , $owner='' , $override = false )
 		{
 		$debug = 0;
-		if( $debug ) 
+		if( $debug )
 			{
 			echo br , "insert_strings( $pfx , $strings , $lang , $event , $owner ," , var_dump($override), " )";
 			echo br , "where keys = " , var_dump( serialize( array_keys( $strings ) ) );
@@ -2817,7 +2817,7 @@ class MLPStringView extends GBPAdminTabView
 			$out[] = '<div class="l10n_values_list" id="l10n_div_string_edit">';
 
 		$debug = false;
-		if( $debug ) $out[] = 'render_string_edit( '.$type.' , '.$container.' , '.$id.' , '.$owner.' , '.$event.' )'; 
+		if( $debug ) $out[] = 'render_string_edit( '.$type.' , '.$container.' , '.$id.' , '.$owner.' , '.$event.' )';
 			
 		$out[] = '<h3>'.gTxt('l10n-renditions_for').' "'.$id.'"</h3>'.n.'<form action="index.php" method="post"><dl>';
 
@@ -2857,7 +2857,7 @@ class MLPStringView extends GBPAdminTabView
 					$events[] = $data['event'];
 				$freq = array_count_values( $events );
 				$max = max($freq);
-				foreach ($freq as $key => $val) 
+				foreach ($freq as $key => $val)
 					{
 					if ($val === $max)
 						{
@@ -5488,5 +5488,3 @@ class MLPWizView extends GBPWizardTabView
 		}
 
 	}	# End of MLPWizView class
-
-?>
