@@ -415,14 +415,14 @@ if (@txpinterface === 'public')
 	register_callback( '_l10n_textpattern_comment_submit', 'textpattern' );
 	register_callback( '_l10n_tag_feeds', 'rss_entry' );
 	register_callback( '_l10n_tag_feeds', 'atom_entry' );
-	register_callback( '_l10n_pretext_set', 'pretext_set' );
+	register_callback( '_l10n_pretext_end', 'pretext_end' );
 
-	function _l10n_pretext_set()
+	function _l10n_pretext_end()
 		{
 		if( L10N_DEBUG_URLREWRITE )
 			{
 			global $pretext;
-			dmp(br.br.'$pretext as at pretext_set event...');
+			dmp(br.br.'$pretext as at pretext_end event...');
 			dmp($pretext);
 			}
 		}
