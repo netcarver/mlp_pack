@@ -1179,7 +1179,7 @@ function _l10n_category_paint( $page )
 	#
 	#	Insert the extra block of inputs...
 	#
-	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" name="" value="'.gTxt('save_button').'" class="smallerbox" /></td>';
+	$f = '<tr>	<td align="left" valign="top" colspan="2"><input type="submit" value="'.gTxt('save_button').'" class="smallerbox" /></td>';
 	$page = str_replace( $f , $r.n.$f , $page );
 
 	#
@@ -1227,7 +1227,7 @@ function _l10n_section_paint( $page )
 			{
 			$name  = $row['name'];
 			$title = $row['title'];
-			$f = '<input type="text" name="name" value="' . $name . '" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" name="title" value="' . $title . '" size="20" class="edit" tabindex="1" /></td></tr>';
+			$f = '<input type="text" value="' . $name . '" name="name" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" name="title" value="' . $title . '" size="20" class="edit" tabindex="1" /></td></tr>';
 			foreach( $fields as $field => $attributes )
 				{
 				$r = '';
@@ -1446,7 +1446,7 @@ function _l10n_image_paint( $page )
 				}
 			}
 		}
-	$f = '<p><input type="submit" name="" value="';
+	$f = '<p><input type="submit" value="';
 	$page = str_replace( $f , $r.n.$f , $page );
 
 	#
