@@ -1519,7 +1519,7 @@ class MLPPlugin extends GBPPlugin
 				#	Add language tables as needed and populate them as far as possible...
 				#
 				$indexes = "(PRIMARY KEY  (`ID`), KEY `categories_idx` (`Category1`(10),`Category2`(10)), KEY `Posted` (`Posted`), FULLTEXT KEY `searching` (`Title`,`Body`))";
-				$sql = "create table `$full_name` $indexes select * from `".PFX."textpattern` where ".L10N_COL_LANG."='$lang'";
+				$sql = "create table `$full_name` $indexes ENGINE=MyISAM select * from `".PFX."textpattern` where ".L10N_COL_LANG."='$lang'";
 				$ok = @safe_query( $sql );
 
 				#
@@ -5012,13 +5012,13 @@ class MLPWizView extends GBPWizardTabView
 				$len = strlen( $lang );
 				if( 2 === $len )
 					{
-					$ok = MLPLanguageHandler::iso_693_langs( $lang , 'valid_short' );
+					$ok = MLPLanguageHandler::iso_639_langs( $lang , 'valid_short' );
 					if( $ok )
-						$lang = MLPLanguageHandler::iso_693_langs( $lang , 'short2long' );
+						$lang = MLPLanguageHandler::iso_639_langs( $lang , 'short2long' );
 					}
 				elseif( 5 === $len )
 					{
-					$ok = MLPLanguageHandler::iso_693_langs( $lang , 'valid_long' );
+					$ok = MLPLanguageHandler::iso_639_langs( $lang , 'valid_long' );
 					}
 				if( $ok )
 					$langs[] = $lang;

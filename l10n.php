@@ -1453,7 +1453,7 @@ This is very useful for serving css files for Right-to-Left languages or any oth
 This is used on the demo site to output a second CSS file for RTL languages. As the file is output after the default LTR file, it's CSS rules will override the LTR rules and the page layout is setup for correct RTL rendering.
 
 |_. Attribute |_. Default |_. Description |
-| lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
+| lang | @$l10n_language['short']@ | Set this to a valid ISO-639 language code to test against the visitor's browse language. |
 | dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
 | wraptag | '' | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. *NB* This has changed from a default of 'div'. If you need a div, just set @wraptag="div"@ as an attribute. |
 
@@ -1643,11 +1643,11 @@ For example, once you are happy with the localisation of all of your MLP Strings
 
 h2(#langs). Supported Languages.
 
-Here is the full list of ISO-693 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
+Here is the full list of ISO-639 languages known to the MLP Pack. Note that it contains a few extra 5 character codes.
 
 The array is located in the file @textpattern\lib\mlp_langs.php@.
 
-You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-693-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-693-2 code set) then you _could_ generate your own code for it.
+You can extend existing entries as needed. See the entries for 'ar', 'en' or 'zn' for examples how to add 5 character (xx-yy) ISO-639-2 codes to the array. If you need a language that is not in the array (nor even in the ISO-639-2 code set) then you _could_ generate your own code for it.
 
 _Generated codes *must* be in 2 character (xx) or 5 character (xx-yy) format: the MLP Pack understands no others._
 

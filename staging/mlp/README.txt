@@ -203,7 +203,7 @@ If you want to produce a translated version of the MLP Pack that presents all
 strings in a language other than the default en-gb then simply make a copy of 
 one of the strings files (like l10n_en-gb_strings.php) in the textpattern/lib
 directory and translate the strings to your target language. Rename the file 
-so that the 5 character ISO-693-2 code is embedded in the center of the 
+so that the 5 character ISO-639-2 code is embedded in the center of the
 filename. e.g, If you were creating a Japanese localisation you would call it
 l10n_ja-jp_strings.php. Make sure the 5 letter code matches the one TxP uses 
 for your language.

@@ -286,7 +286,7 @@ function _l10n_make_textpattern_name( $full_code )
 
 class MLPLanguageHandler
 	{
-	#	class MLPLanguageHandler implements ISO-693-1 language support.
+	#	class MLPLanguageHandler implements ISO-639-1 language support.
 	function do_fleshout_names( &$langs , $suffix='' , $append_code = true , $append_default=false , $use_long=true )
 		{
 		$result = array();
@@ -382,7 +382,7 @@ class MLPLanguageHandler
 		return NULL;
 		}
 
-	function iso_693_langs ( $input, $to_return='lang' )
+	function iso_639_langs ( $input, $to_return='lang' )
 		{
 		global $iso_639_langs;
 
@@ -483,13 +483,13 @@ class MLPLanguageHandler
 	function is_valid_short_code($code)
 		{
 		/*
-		Check the given string is a valid 2-digit language code from the ISO-693-1 table.
+		Check the given string is a valid 2-digit language code from the ISO-639-1 table.
 		*/
 		$result = false;
 		$code = trim( $code );
 		if( 2 == strlen( $code ) )
 			{
-			$result = ( MLPLanguageHandler::iso_693_langs( $code ) );
+			$result = ( MLPLanguageHandler::iso_639_langs( $code ) );
 			}
 		return $result;
 		}
@@ -497,13 +497,13 @@ class MLPLanguageHandler
 	function find_code_for_lang( $name )
 		{
 		/*
-		Returns the ISO-693-1 code for the given native language.
+		Returns the ISO-639-1 code for the given native language.
 		*/
 		$out = '';
 
 		if( $name and !empty( $name ) )
 			{
-			$out = MLPLanguageHandler::iso_693_langs( $name, 'code' );
+			$out = MLPLanguageHandler::iso_639_langs( $name, 'code' );
 			}
 
 		if (empty($out))
@@ -518,7 +518,7 @@ class MLPLanguageHandler
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		$dir = ' dir="ltr"';
-		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_693_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_639_langs( $lang, 'dir' ) ) )
 			$dir = ' dir="rtl"';
 		return $dir;
 		}
@@ -529,7 +529,7 @@ class MLPLanguageHandler
 		Builds the xhtml direction markup needed based upon the directionality of the language requested.
 		*/
 		$dir = 'ltr';
-		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_693_langs( $lang, 'dir' ) ) )
+		if( !empty($lang) and ('rtl' == MLPLanguageHandler::iso_639_langs( $lang, 'dir' ) ) )
 			$dir = 'rtl';
 		return $dir;
 		}
@@ -539,7 +539,7 @@ class MLPLanguageHandler
 		/*
 		Returns the native name of the given language code.
 		*/
-		return (MLPLanguageHandler::iso_693_langs( $code )) ? MLPLanguageHandler::iso_693_langs( $code ) : MLPLanguageHandler::iso_693_langs( 'en' ) ;
+		return (MLPLanguageHandler::iso_639_langs( $code )) ? MLPLanguageHandler::iso_639_langs( $code ) : MLPLanguageHandler::iso_639_langs( 'en' ) ;
 		}
 
 	function get_site_langs( $set_if_empty = false )
@@ -574,7 +574,7 @@ class MLPLanguageHandler
 	function get_site_default_lang()
 		{
 		/*
-		Returns a string containing the ISO-693-1 language to be used as the site's default.
+		Returns a string containing the ISO-639-1 language to be used as the site's default.
 		*/
 		$lang_codes = MLPLanguageHandler::get_site_langs();
 		return $lang_codes[0];

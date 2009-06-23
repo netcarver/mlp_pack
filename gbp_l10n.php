@@ -202,7 +202,7 @@ This is very useful for serving css files for Right-to-Left languages or any oth
 This is used on the demo site to output a second CSS file for RTL languages. As the file is output after the default LTR file, it's CSS rules will override the LTR rules and the page layout is setup for correct RTL rendering.
 
 |_. Attribute |_. Default |_. Description |
-| lang | @$l10n_language['short']@ | Set this to a valid ISO-693 language code to test against the visitor's browse language. |
+| lang | @$l10n_language['short']@ | Set this to a valid ISO-639 language code to test against the visitor's browse language. |
 | dir | '' | Leave blank if testing using the 'lang' attribute otherwise setting this to either 'rtl' or 'ltr' tests against the direction of the visitor's browse language. |
 | wraptag | div | Wrapper for the resulting output. It is *only* used for tests against the browse language, not against direction. |
 

@@ -1,7 +1,7 @@
 <?php
 if( !defined( 'txpinterface' ) ) exit;
-global $iso_693_1_langs;
-$iso_693_1_langs = array(
+global $iso_639_1_langs;
+$iso_639_1_langs = array(
 	'aa'=>array( 'aa'=>'Afaraf' ),
 	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
 	'af'=>array( 'af'=>'Afrikaans' ),
