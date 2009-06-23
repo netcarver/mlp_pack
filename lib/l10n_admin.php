@@ -23,7 +23,10 @@ if( $l10n_view->installed() )
 		# Iterate over the site languages, rebuilding the tables...
 		$langs = MLPLanguageHandler::get_site_langs();
 		foreach( $langs as $lang )
+			{
 			_l10n_generate_lang_table( $lang );
+			_l10n_generate_localise_table_fields( $lang );
+			}
 
 		# Clear the dirty flag...
 		_l10n_update_dirty_flag( '' );
@@ -977,21 +980,18 @@ function _l10n_update_dirty_flag( $v )
 	$prefs[L10N_DIRTY_FLAG_VARNAME] = $v;
 	}
 
-function _l10n_generate_lang_table( $lang , $filter = true )
+function _l10n_check_lang_code( $lang )
 	{
-	#echo 'Updating table defs for ' , $lang , br;
-	$dbg = false;
-
 	if( !is_string( $lang ) )
 		{
-		echo br , 'Non-string language passed to _l10n_generate_lang_table() ... ' , var_dump($lang);
-		return;
+		echo 'Non-string language passed to _l10n_check_lang_code() ... ' , var_dump($lang) , br;
+		return false;
 		}
 
 	if( empty( $lang ) )
 		{
-		echo br , 'Blank language passed to _l10n_generate_lang_table()';
-		return;
+		echo 'Blank language passed to _l10n_check_lang_code()' , br;
+		return false;
 		}
 
 	if( strlen( $lang ) > 2 )
@@ -1005,40 +1005,105 @@ function _l10n_generate_lang_table( $lang , $filter = true )
 	else
 		$code = $lang;
 
-
 	if( empty( $code ) )
 		{
-		echo br , 'Blank language code calculated in _l10n_generate_lang_table()';
-		return;
+		echo 'Blank language code calculated in _l10n_check_lang_code()' , br;
+		return false;
 		}
 
 	if( !MLPLanguageHandler::is_valid_code($code) )
 		{
-		echo br , 'Invalid language code ['.$code.'] calculated in _l10n_generate_lang_table()';
-		return;
+		echo 'Invalid language code ['.$code.'] calculated in _l10n_check_lang_code()' , br;
+		return false;
 		}
+
+	return $code;
+	}
+
+function _l10n_check_lang_table( $lang )
+	{
+	$result = _l10n_check_lang_code( $lang );
+	if( !is_string($result) ) return $result;
+
+	$code = $result;
 	$table_name = _l10n_make_textpattern_name( $code );
-
-	$where = '';
-	if( $filter )
-		$where = ' where `'.L10N_COL_LANG."`='$lang'";
-
-	$copy_struct_sql = 'create table `'.PFX.$table_name.'` like `'.PFX.'textpattern`';
-	$copy_data_sql   = 'insert into `'.PFX.$table_name.'` select * from `'.PFX.'textpattern`'.$where;
-	$drop_sql = 'drop table `'.PFX.$table_name.'`';
-	$lock_sql = 'lock tables `'.PFX.$table_name.'` WRITE';
-	$optimize_sql = 'optimize table `'.PFX.$table_name.'`';
-	$unlock_sql = 'unlock tables';
-
-	@safe_query( $lock_sql, $dbg);
-	@safe_query( $drop_sql, $dbg );
-	$ok = @safe_query( $copy_struct_sql, $dbg );
-	if( $ok )
+	if( @safe_query( "SHOW COLUMNS FROM `$table_name`" ) )
 		{
-		@safe_query( $copy_data_sql, $dbg );
-		@safe_query( $optimize_sql, $dbg );
+		return true;
 		}
-	@safe_query( $unlock_sql, $dbg );
+	return array($code, $table_name);
+	}
+function _l10n_generate_lang_table( $lang )
+	{
+	$result = _l10n_check_lang_table( $lang );
+	if( !is_array($result) ) return $result;
+
+	list($code, $table_name) = $result;
+	$where = ' WHERE `'.L10N_COL_LANG."`='$lang'";
+
+	@safe_query( 'LOCK TABLES `'.PFX.$table_name.'` WRITE' );
+	@safe_query( 'CREATE TABLE `'.PFX.$table_name.'` LIKE `'.PFX.'textpattern`' );
+	@safe_query( 'INSERT INTO `'.PFX.$table_name.'` SELECT * FROM `'.PFX.'textpattern`'.$where );
+	@safe_query( 'OPTIMIZE TABLE `'.PFX.$table_name.'`' );
+	@safe_query( 'UNLOCK TABLES' );
+	}
+
+function _l10n_check_localise_table( $lang )
+	{
+	$result = _l10n_check_lang_code( $lang );
+	if( !is_string($result) ) return $result;
+
+	global $l10n_mappings;
+	if( !is_array( $l10n_mappings ) )
+		$l10n_mappings = _l10n_remap_fields( '' , '' , true );
+
+	$missing_mappings = array();
+	foreach( $l10n_mappings as $table=>$fields )
+		{
+		$safe_table = safe_pfx( $table );
+		foreach( $fields as $field=>$attributes )
+			{
+			$f = _l10n_make_field_name( $field , $lang );
+			$exists = getThing( "SHOW COLUMNS FROM $safe_table LIKE '$f'" );
+			if( !$exists )
+				{
+				if( !isset($missing_mappings[$table]) ) $missing_mappings[$table] = array();
+				$missing_mappings[$table][$field] = $attributes['sql'];
+				}
+			}
+		}
+
+	if( count($missing_mappings) > 0 )
+		return $missing_mappings;
+	else
+		return true;
+	}
+function _l10n_generate_localise_table_fields( $lang )
+	{
+	$result = _l10n_check_localise_table( $lang );
+	if( !is_array($result) ) return $result;
+
+	$default    = MLPLanguageHandler::get_site_default_lang();
+	$extend_all = array( 'txp_category' , 'txp_section' );
+
+	foreach( $result as $table=>$fields )
+		{
+		foreach( $fields as $field=>$sql )
+			{
+			$do_all = in_array( $table , $extend_all );
+
+			$safe_table = safe_pfx( $table );
+			$f = _l10n_make_field_name( $field , $lang );
+			$sql = "ADD `$f` ".$sql;
+			$ok = @safe_alter( $table , $sql );
+
+			if( $ok and ($do_all or $lang===$default) )
+				{
+				$sql = "UPDATE $safe_table SET `$f`=`$field` WHERE `$f`=''";
+				$ok = @safe_query( $sql );
+				}
+			}
+		}
 	}
 
 function _l10n_pre_discuss_multi_edit( $event , $step )
