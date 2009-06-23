@@ -4366,7 +4366,7 @@ class MLPArticleView extends GBPAdminTabView
 		$o[] = tag( join( '' , $body) , 'tbody' );
 		$o[] = endTable();
 		$o[] = n.nav_form( $event, $page, $numPages, '', '', '', '');
-		$o[] = n.pageby_form( $event, $article_list_pageby );
+		$o[] = n.pageby_form( $event, max(@$article_list_pageby, 15) );
 
 		echo join( '' , $o );
 		}
