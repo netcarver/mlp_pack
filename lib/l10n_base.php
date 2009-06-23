@@ -585,9 +585,9 @@ function _l10n_make_textpattern_name( $full_code )
 		}
 	else
 		{
-		if( isset( $full_code['long'] ) )
+		if( @$full_code['long'] )
 			$code = $full_code['long'];
-		elseif( isset( $full_code['short'] ) )
+		elseif( @$full_code['short'] )
 			$code = $full_code['short'];
 		else
 			{
