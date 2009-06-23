@@ -511,33 +511,46 @@ $DB = new DB;
 	define( 'L10N_DIRTY_FLAG_VARNAME', 'l10n_txp_dirty' );
 	function get_prefs()
 		{
-		$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1');
-		if ($r) {
-			while ($a = nextRow($r)) {
-				$out[$a['name']] = $a['val'];
+			global $txp_user, $dbversion, $thisversion, $txp_using_svn;
+			$out = array();
+
+			// get current user's private prefs
+			if ($txp_user and (version_compare($dbversion, '4.0.9', '>=') or $txp_using_svn)) {
+				$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1 AND user_name=\''.doSlash($txp_user).'\'');
+				if ($r) {
+					while ($a = nextRow($r)) {
+						$out[$a['name']] = $a['val'];
+					}
 				}
+			}
 
-			global $event, $dbversion, $thisversion, $txp_using_svn;
+			// get global prefs, eventually override equally named user prefs.
+			if (version_compare($dbversion, '4.0.9', '>=') or $txp_using_svn)
+				{
+				$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1 AND user_name=\'\'');
+				}
+			else
+				{
+				$r = safe_rows_start('name, val', 'txp_prefs', 'prefs_id=1');
+				}
+			if ($r) {
+				while ($a = nextRow($r)) {
+					$out[$a['name']] = $a['val'];
+				}
+			}
 
-			if ( @txpinterface==='admin') 
+			if ( @txpinterface==='admin')
 				{
 				if(!$dbversion or ($dbversion != $thisversion) or $txp_using_svn)
 					{
 					$name = L10N_DIRTY_FLAG_VARNAME;
-					if (!array_key_exists(L10N_DIRTY_FLAG_VARNAME , $out)) 
+					if (!array_key_exists(L10N_DIRTY_FLAG_VARNAME , $out))
 						{
-						safe_insert('txp_prefs', "
-							name  = '$name',
-							val   = 'DIRTY',
-							event = 'l10n',
-							html  = 'text_input',
-							type  = '0',
-							prefs_id = 1"
-						);
-						} 
-					else 
+						safe_insert('txp_prefs', "name = '$name', val = 'DIRTY', event = 'l10n', html = 'text_input', type = '2', prefs_id = 1");
+						}
+					else
 						{
-						safe_update('txp_prefs', "val = 'DIRTY'","name like '$name'");
+						safe_update('txp_prefs', "val = 'DIRTY'", "name like '$name'");
 						}
 					}
 				}
@@ -574,10 +587,7 @@ $DB = new DB;
 						}
 					}
 				}
-
 			return $out;
-			}
-		return array();
 		}
 
 // -------------------------------------------------------------
