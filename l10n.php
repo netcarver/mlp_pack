@@ -1678,7 +1678,7 @@ None of these codes may be used for section names in the MLP installation if the
 *You can improve the efficiency of your MLP installation by editing the array and commenting out (or removing) all the entries you don't use on the public and admin sides of the site.*
 
 <pre class="code_tag">
-static $iso_693_langs = array(
+static $iso_639_langs = array(
 	'aa'=>array( 'aa'=>'Afaraf' ),
 	'ab'=>array( 'ab'=>'аҧсуа бызшәа' ),
 	'af'=>array( 'af'=>'Afrikaans' ),
@@ -1785,8 +1785,9 @@ static $iso_693_langs = array(
 	'sm'=>array( 'sm'=>"gagana fa'a Samoa" ),
 	'sn'=>array( 'sn'=>'chiShona' ),
 	'so'=>array( 'so'=>'af Soomaali' ),
+	'sp'=>array( 'sp'=>'Srpski' ), # Not an ISO 639-1 code but TXP core uses this for it's language file
 	'sq'=>array( 'sq'=>'Shqip' ),
-	'sr'=>array( 'sr'=>'Srpski' ),
+	'sr'=>array( 'sr'=>'Српски' ),
 	'ss'=>array( 'ss'=>'siSwati' ),
 	'st'=>array( 'st'=>'seSotho' ),
 	'su'=>array( 'su'=>'basa Sunda' ),

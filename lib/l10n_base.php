@@ -709,7 +709,7 @@ class MLPLanguageHandler
 
 	function iso_693_langs ( $input, $to_return='lang' )
 		{
-		global $iso_693_langs;
+		global $iso_639_langs;
 
 		switch ( $to_return )
 			{
@@ -719,10 +719,10 @@ class MLPLanguageHandler
 				$short = $r['short'];
 				if( isset($r['long']) ) $long = $r['long'];
 
-				if( !array_key_exists( $short , $iso_693_langs ))
+				if( !array_key_exists( $short , $iso_639_langs ))
 					return NULL;
 
-				$row = $iso_693_langs[$short];
+				$row = $iso_639_langs[$short];
 
 				if( isset( $long ) )
 					{
@@ -736,14 +736,14 @@ class MLPLanguageHandler
 			break;
 
 			case 'valid_short':
-				return array_key_exists( $input , $iso_693_langs );
+				return array_key_exists( $input , $iso_639_langs );
 			break;
 
 			case 'valid_long':
 				$short = substr( $input , 0 , 2 );
-				if( !array_key_exists( $short , $iso_693_langs ) )
+				if( !array_key_exists( $short , $iso_639_langs ) )
 					return false;
-				$row = $iso_693_langs[$short];
+				$row = $iso_639_langs[$short];
 				return array_key_exists( $input , $row );
 			break;
 
@@ -755,9 +755,9 @@ class MLPLanguageHandler
 			case 'short2long':
 				//return MLPLanguageHandler::expand_code( $input );
 
-				if( array_key_exists( $input , $iso_693_langs ) )
+				if( array_key_exists( $input , $iso_639_langs ) )
 					{
-					$row = $iso_693_langs[$input];
+					$row = $iso_639_langs[$input];
 					foreach( $row as $code => $name )
 						{
 						if( $code === 'dir' )
@@ -774,13 +774,13 @@ class MLPLanguageHandler
 
 			case 'dir':
 				extract( MLPLanguageHandler::compact_code( $input ) );
-				return (array_key_exists( $short, $iso_693_langs ) and array_key_exists('dir', $iso_693_langs[$short]))
-					?	$iso_693_langs[$short]['dir']
+				return (array_key_exists( $short, $iso_639_langs ) and array_key_exists('dir', $iso_639_langs[$short]))
+					?	$iso_639_langs[$short]['dir']
 					:	NULL;
 			break;
 
 			case 'code':
-				foreach( $iso_693_langs as $code => $data )
+				foreach( $iso_639_langs as $code => $data )
 					{
 					if( in_array( $input , $data ) )
 						{
