@@ -698,9 +698,10 @@ if (@txpinterface === 'public')
 		if( !empty( $rvm_css ) && !in_array( $rvm_css , $l10n_url_exclusions ) )
 			$l10n_url_exclusions[$rvm_css] = $rvm_css;
 
-		# Add the standard exclude directories...
+		# Add the standard exclude directories and files...
 		$l10n_url_exclusions['textpattern'] = 'textpattern';
 		$l10n_url_exclusions['file_download'] = 'file_download';
+		$l10n_url_exclusions['css.php'] = 'css.php';
 		}
 
 	function _l10n_inject_lang_markers( $buffer )
