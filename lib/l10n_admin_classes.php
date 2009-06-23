@@ -5214,6 +5214,8 @@ class MLPWizView extends GBPWizardTabView
 
 			$sql = "create table `".PFX."$table_name` $indexes select * from `".PFX."textpattern` where `".L10N_COL_LANG."`='$lang'";
 			$ok = @safe_query( $sql );
+			if (mysql_error() == "Table '".PFX."$table_name' already exists")
+				$ok = 'skipped';
 
 			$this->add_report_item( gTxt('l10n-op_table',array('{op}'=>'Add' ,'{table}'=>MLPLanguageHandler::get_native_name_of_lang( $lang ).' ['.$table_name.']')) , $ok , true );
 			}
