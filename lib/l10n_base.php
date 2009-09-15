@@ -221,7 +221,7 @@ function _l10n_admin_remap_fields( $thing , $table )
 		$mappings = array
 			(
 			'txp_category' => array( 	'field' 	=> 'title',
-										'events' 	=> array('article'=>'all','category'=>'none','list'=>'all','image'=>'image_edit','link'=>'all'), ),
+										'events' 	=> array('article'=>'all','category'=>'cat_category_list,cat_article_save,cat_link_save,cat_image_save,cat_file_save','list'=>'all','image'=>'image_edit','link'=>'all','file'=>'all'), ),
 			'txp_section'  => array( 	'field' 	=> 'title',
 										'events' 	=> array('article'=>'all','list'=>'all'), ),
 			);
@@ -234,8 +234,14 @@ function _l10n_admin_remap_fields( $thing , $table )
 	if( !array_key_exists( $event , $mappings[$table]['events'] ) )
 		return $thing;
 
-	if( ($mappings[$table]['events'][$event] === 'none') && !empty($step) )
-		return $thing;
+	if( $mappings[$table]['events'][$event] !== 'all' )
+		{
+		if( ($mappings[$table]['events'][$event] === 'none') && !empty($step) )
+			return $thing;
+
+		if( !in_array( $step , explode(',', $mappings[$table]['events'][$event]) ) )
+			return $thing;
+		}
 
 	global $l10n_language;
 	if( isset( $l10n_language['long'] ) )
