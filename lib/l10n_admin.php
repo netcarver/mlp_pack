@@ -82,6 +82,7 @@ if( $l10n_view->installed() )
 			$s 	= '';
 			$paint 	= '';
 			$save 	= '';
+			$save_pre	= 0;
 			extract( $attributes );
 
 			if( $e !== '' )
@@ -99,7 +100,7 @@ if( $l10n_view->installed() )
 					//echo br , "Setting saver for event($event), step($step), -> $save";
 					if( is_array( $save_steps ) )
 						foreach( $save_steps as $st )
-							register_callback( $save , $e , $st );
+							register_callback( $save , $e , $st, $save_pre );
 					else
 						register_callback( $save , $e , $save_steps );
 					}

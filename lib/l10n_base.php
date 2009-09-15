@@ -279,6 +279,7 @@ function _l10n_remap_fields( $thing , $table , $get_mappings=false )
 					'paint' 		=> '_l10n_category_paint',
 					'save_steps'	=> array( 'cat_article_create', 'cat_article_save', 'cat_link_create', 'cat_link_save', 'cat_image_create', 'cat_image_save', 'cat_file_create', 'cat_file_save', ),
 					'save'			=> '_l10n_category_save',
+					'save_pre'		=> 1,
 					),
 				),
 			'txp_file' 		=> array(
