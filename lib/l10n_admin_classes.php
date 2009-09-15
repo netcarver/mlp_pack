@@ -2,7 +2,7 @@
 
 if( !defined( 'txpinterface' ) ) exit;
 
-global $txpcfg , $l10n_language , $l10n_default_string_lang;
+global $l10n_language , $l10n_default_string_lang;
 
 #
 #	Bring in the strings. Try getting the localised strings if possible, else
@@ -13,7 +13,7 @@ $installed = l10n_installed();
 if( $installed )
 	$l10n_langname = $l10n_language['long'];
 
-$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$l10n_langname.'_strings.php';
+$file_name = txpath.DS.'lib'.DS.'l10n_'.$l10n_langname.'_strings.php';
 if( is_readable($file_name) )
 	{
 	//echo br, "Reading $file_name";
@@ -22,8 +22,8 @@ if( is_readable($file_name) )
 else
 	{
 	//echo br, "FAILED TO READ SPECIFIC STRINGS ... $file_name";
-	include_once $txpcfg['txpath'].DS.'lib'.DS.'l10n_default_strings.php';
-	$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$l10n_default_strings_lang.'_strings.php';
+	include_once txpath.DS.'lib'.DS.'l10n_default_strings.php';
+	$file_name = txpath.DS.'lib'.DS.'l10n_'.$l10n_default_strings_lang.'_strings.php';
 	if( is_readable($file_name) )
 		{
 		//echo br, "Reading $file_name";
@@ -4987,7 +4987,7 @@ class MLPWizView extends GBPWizardTabView
 
 	function setup_2()		# Add strings...
 		{
-		global $l10n_wiz_upgrade , $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings , $txpcfg , $prefs;
+		global $l10n_wiz_upgrade , $l10n_default_strings_lang , $l10n_default_strings_perm, $l10n_default_strings , $prefs;
 
 		#
 		#	First things first, try to set the installation langs...
@@ -5071,7 +5071,7 @@ class MLPWizView extends GBPWizardTabView
 				continue;
 
 			$merged = array();
-			$file_name = $txpcfg['txpath'].DS.'lib'.DS.'l10n_'.$lang.'_strings.php';
+			$file_name = txpath.DS.'lib'.DS.'l10n_'.$lang.'_strings.php';
 			if( is_readable($file_name) )
 				{
 				include_once $file_name;

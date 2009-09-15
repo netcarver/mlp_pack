@@ -37,7 +37,6 @@ if( !defined( 'L10N_MASTER_TEXTPATTERN' ) )
 	define( 'L10N_MASTER_TEXTPATTERN' , 'l10n_master_txp' );
 if( !defined( 'L10N_SNIPPET_PATTERN' ) )
 	define( 'L10N_SNIPPET_PATTERN' , '/##([\w|\.|\-]+)##/' );
-global $txpcfg;
 
 function _l10n_set_browse_language( $code , $long ,  $debug=false )
 	{
@@ -336,7 +335,7 @@ if( @txpinterface === 'admin' )
 	add_privs( 'l10n.clone' 	, '1,2' );
 	add_privs( 'l10n.reassign'	, '1,2' );
 
-	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+	include_once txpath.'/lib/l10n_base.php';
 
 	global $l10n_language , $textarray , $prefs;
 	global $l10n_view;
@@ -368,11 +367,11 @@ if( @txpinterface === 'admin' )
 		}
 
 	#
-	include_once $txpcfg['txpath'].'/lib/l10n_admin_classes.php';
+	include_once txpath.'/lib/l10n_admin_classes.php';
 	$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );
 
 	#
-	include_once $txpcfg['txpath'].'/lib/l10n_admin.php';
+	include_once txpath.'/lib/l10n_admin.php';
 	if( gps( 'l10nfile' ) === 'mlp.js' )
 		{
 		ob_start();
@@ -389,7 +388,7 @@ if (@txpinterface === 'public')
 	if( !$installed )
 		return '';
 
-	include_once $txpcfg['txpath'].'/lib/l10n_base.php';
+	include_once txpath.'/lib/l10n_base.php';
 
 	global $prefs;
 	$prefs['db_remap_tables_func']   = '_l10n_redirect_textpattern';

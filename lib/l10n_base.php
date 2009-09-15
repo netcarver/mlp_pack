@@ -14,8 +14,8 @@ if( !defined( 'L10N_COL_LANG' ) )
 if( !defined( 'L10N_COL_GROUP' ) )
 	define( 'L10N_COL_GROUP' , L10N_NAME.'_group' );
 
-global $txpcfg , $event;
-include_once $txpcfg['txpath'].'/lib/l10n_langs.php';
+global $event;
+include_once txpath.'/lib/l10n_langs.php';
 
 if( !is_callable('preg_last_error') )
 	{
