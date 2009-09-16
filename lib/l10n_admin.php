@@ -1291,8 +1291,8 @@ function _l10n_section_paint( $page )
 		{
 		while( $row = nextRow($rows) )
 			{
-			$name  = $row['name'];
-			$title = $row['title'];
+			$name  = htmlspecialchars($row['name']);
+			$title = htmlspecialchars($row['title']);
 			$f = '<input type="text" value="' . $name . '" name="name" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" value="' . $title . '" name="title" size="20" class="edit" tabindex="1" /></td></tr>';
 			foreach( $fields as $field => $attributes )
 				{
