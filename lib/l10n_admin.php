@@ -401,6 +401,9 @@ function _l10n_list_buffer_processor( $buffer )
 		$DB = new DB;
 
 	//$count = 0;
+	if( version_compare( $GLOBALS['prefs']['version'], '4.3' , '>=') )
+    $pattern = '/<td class="title"><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
+	else
     $pattern = '/<\/td>'.n.t.'<td><a href="\?event=article&#38;step=edit&#38;ID=(\d+)">.*<\/a>/';
 
 	#	Inject the language chooser...
@@ -453,7 +456,15 @@ function _l10n_setup_article_buffer_processor( $event , $step )
 	#	Setup the buffer process routine. It will inject new page elements
 	# into the article edit page...
 	#
+	if( version_compare( $GLOBALS['prefs']['version'], '4.3' , '>=') )
+	{
+		register_callback('_l10n_write_tab_title',   'article_ui', 'title');
+		register_callback('_l10n_write_tab_excerpt', 'article_ui', 'excerpt');
+		register_callback('_l10n_write_tab_body',    'article_ui', 'body');
+	}
+	else
 	ob_start( '_l10n_article_buffer_processor' );
+
 	_l10n_setup_vars( $event , $step );
 
 	#
@@ -580,35 +591,45 @@ function _l10n_process_admin_page($page)
 
 	return $page;
 	}
-
-function _l10n_article_buffer_processor( $buffer )
+function _l10n_write_tab_excerpt($event, $step, $data, $rs)
 	{
-	global $l10n_vars;
-	global $l10n_view;
-	global $l10n_article_message;
-	global $txp_user;
+	$lang = $GLOBALS['l10n_vars']['article_lang'];
+	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
+	$f = 'class="excerpt"';
+	return str_replace( $f , $f.$r , $data );
+	}
+function _l10n_write_tab_body($event, $step, $data, $rs)
+	{
+	$lang = $GLOBALS['l10n_vars']['article_lang'];
+	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
+	$f = 'class="body"';
+	return str_replace( $f , $f.$r , $data );
+	}
+function _l10n_write_tab_title($event, $step, $data, $rs)
+	{
+	$lang = $GLOBALS['l10n_vars']['article_lang'];
+	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
+	$f = 'class="title"';
+	$data = str_replace( $f , $f.$r , $data );
 
-	#
-	#	The buffer processing routine injects page elements when editing an article.
-	#
-	$author 	= (@$l10n_vars['article_author_id']) ? $l10n_vars['article_author_id'] : $txp_user;
+	return _l10n_make_writeselector().$data;
+	}
+function _l10n_make_writeselector()
+	{
+	global $l10n_vars, $l10n_article_message, $l10n_view;
+
 	$view		= gps( 'view' );
 	$preview	= ($view === 'preview');
 	$html		= ($view === 'html');
-
 	$lang 		= $l10n_vars['article_lang'];
-	//$from_view	= gps( 'from_view' );
 	$user_sel_lang = cs( 'rendition_lang_selection' );
 	$user_langs = MLPLanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
+	$r = '';
 
-
-	//	Needed to prevent a blank content > write tab.
-	//	Fix for php5 behaviour change: the global object has been decostructed by the time this
-	// routine is called from the output buffer processor.
 	if( !isset( $l10n_view ) )
 		$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );	// <<<<
 
-	$reassigning_permitted = ( '1' == $l10n_view->pref('l10n-allow_writetab_changes') ) ? true : false;
+	$reassigning_permitted = '1' === $l10n_view->pref('l10n-allow_writetab_changes');
 	$has_reassign_privs = has_privs( 'l10n.reassign' );
 
 	$id_no		= '-';
@@ -618,6 +639,86 @@ function _l10n_article_buffer_processor( $buffer )
 	$group_id 	= '-';
 	if( isset($l10n_vars['article_group']) )
 		$group_id = $l10n_vars['article_group'];
+
+	if( isset($l10n_article_message) )
+		{
+		$r = strong( htmlspecialchars($l10n_article_message) ) . n . br;
+		unset( $l10n_article_message );
+		}
+	$r.= 'ID: ' . strong( $id_no ) . ' / ';
+
+	if( $group_id == '-' )	#	New article , don't setup a L10N_COL_GROUP element in the page!...
+		{
+		if( !empty( $user_sel_lang ) )
+			$lang = $user_sel_lang;
+
+		$r .=	gTxt('language') . ': ' . selectInput( L10N_COL_LANG , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
+		$r .= 	gTxt('article')  . ': ' . strong( $group_id );
+		}
+	else	# Existing article, either being cloned/edited with re-assignment language rights or not...
+		{
+		if( $reassigning_permitted and $has_reassign_privs )
+			{
+			if( !empty( $user_sel_lang ) )
+				$lang = $user_sel_lang;
+
+			$r .=	gTxt('language') . ': ' . selectInput( L10N_COL_LANG , $user_langs , $lang , '', ' onchange="on_lang_selection_change()"', 'l10n_lang_selector' ) . ' / ';
+			$r .=	gTxt('article')  . ': ' . fInput('edit' , L10N_COL_GROUP , $group_id , '', '', '', '4');
+			}
+		else
+			{
+			$r .= 	hInput( L10N_COL_LANG  , $lang )     . gTxt('language') . ': ' . strong( MLPLanguageHandler::get_native_name_of_lang($lang) ) . ' / ';
+			$r .= 	hInput( L10N_COL_GROUP , $group_id ) . gTxt('article')  . ': ' . strong( $group_id );
+			}
+		}
+
+	if( !$preview and !$html )
+		{
+		#
+		#	Inject direction hyper-link...
+		#
+		$r .= ' / <a href="#" onClick="toggleTextElements()" id="title-toggle">'.gTxt('l10n-toggle').'</a>';
+		}
+
+	$r = graf( $r );
+
+	return $r;
+  }
+function _l10n_article_buffer_processor( $buffer )
+	{
+	global $l10n_vars, $l10n_view, $l10n_article_message;
+
+	#
+	#	The buffer processing routine injects page elements when editing an article.
+	#
+	$view		= gps( 'view' );
+	$preview	= ($view === 'preview');
+	$html		= ($view === 'html');
+
+	$lang 		= $l10n_vars['article_lang'];
+	//$from_view	= gps( 'from_view' );
+/*
+	$user_sel_lang = cs( 'rendition_lang_selection' );
+	$user_langs = MLPLanguageHandler::do_fleshout_names( _l10n_get_user_languages() );
+
+
+	//	Needed to prevent a blank content > write tab.
+	//	Fix for php5 behaviour change: the global object has been deconstructed by the time this
+	// routine is called from the output buffer processor.
+	if( !isset( $l10n_view ) )
+		$l10n_view = new MLPPlugin( 'l10n-localisation' , L10N_NAME, 'content' );	// <<<<
+
+	$reassigning_permitted = '1' === $l10n_view->pref('l10n-allow_writetab_changes');
+	$has_reassign_privs = has_privs( 'l10n.reassign' );
+
+	$id_no		= '-';
+	if( isset($l10n_vars['article_id']) )
+		$id_no = $l10n_vars['article_id'];
+
+	$group_id 	= '-';
+	if( isset($l10n_vars['article_group']) )
+		$group_id = $l10n_vars['article_group'];
+*/
 
 	#
 	#	Insert the ID/Language/Group display elements...
@@ -636,6 +737,8 @@ function _l10n_article_buffer_processor( $buffer )
 		$f = $v;
 		}
 
+  $r = _l10n_make_writeselector();
+  /*
 	$r = '';
 	if( isset($l10n_article_message) )
 		{
@@ -678,6 +781,7 @@ function _l10n_article_buffer_processor( $buffer )
 		}
 
 	$r = graf( $r );
+	*/
 	$buffer = str_replace( $f , $r.n.$f , $buffer );
 
 	if( !$preview and !$html )
