@@ -1397,7 +1397,10 @@ function _l10n_section_paint( $page )
 			{
 			$name  = htmlspecialchars($row['name']);
 			$title = htmlspecialchars($row['title']);
-			$f = '<input type="text" value="' . $name . '" name="name" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" value="' . $title . '" name="title" size="20" class="edit" tabindex="1" /></td></tr>';
+			if( version_compare( $GLOBALS['prefs']['version'], '4.3' , '>=') )
+				$f = '<input type="text" value="' . $name . '" name="name" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr class="title"><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" value="' . $title . '" name="title" size="20" class="edit" tabindex="1" /></td></tr>';
+			else
+				$f = '<input type="text" value="' . $name . '" name="name" size="20" class="edit" tabindex="1" /></td></tr>'. n.n . '<tr><td class="noline" style="text-align: right; vertical-align: middle;">' . gTxt('section_longtitle') . ': </td><td class="noline"><input type="text" value="' . $title . '" name="title" size="20" class="edit" tabindex="1" /></td></tr>';
 			foreach( $fields as $field => $attributes )
 				{
 				$r = '';
@@ -1422,7 +1425,10 @@ function _l10n_section_paint( $page )
 	#	Insert the default title field's language's direction...
 	#
 	$dir = MLPLanguageHandler::get_lang_direction_markup( $default ) . ' ';
-	$f = '<td class="noline"><input type="text" name="title"';
+	if( version_compare( $GLOBALS['prefs']['version'], '4.3' , '>=') )
+		$f = '>'.gTxt('section_longtitle').': </td><td class="noline"><input type="text" ';
+	else
+		$f = '<td class="noline"><input type="text" name="title"';
 	$page = str_replace( $f , $f.$dir , $page );
 
 	#
