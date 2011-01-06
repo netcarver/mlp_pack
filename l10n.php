@@ -1,7 +1,7 @@
 <?php
 
 $plugin['name'] = 'l10n';
-$plugin['version'] = '4.2.0';
+$plugin['version'] = '4.3.0';
 $plugin['author'] = 'Graeme Porteous & Steve (Netcarver)';
 $plugin['author_uri'] = 'http://txp-plugins.netcarving.com/plugins/mlp-plugin';
 $plugin['description'] = 'Multi-Lingual Publishing Package.';
