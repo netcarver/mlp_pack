@@ -420,12 +420,12 @@ if (@txpinterface == 'public')
 			$req_lang = (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '' ;
 			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
-				$chunks = split( ',' , $req_lang );
+				$chunks = explode( ',' , $req_lang );
 				if( count( $chunks ) )
 					{
 					foreach( $chunks as $chunk )
 						{
-						$info = split( ';' , $chunk );
+						$info = explode( ';' , $chunk );
 						if( false === $info )
 							{
 							$info[] = $chunk;

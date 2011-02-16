@@ -248,12 +248,12 @@ function _l10n_process_url( $use_get_params=false )
 
 			if( isset( $req_lang ) and !empty( $req_lang ) )
 				{
-				$chunks = split( ',' , $req_lang );
+				$chunks = explode( ',' , $req_lang );
 				if( count( $chunks ) )
 					{
 					foreach( $chunks as $chunk )
 						{
-						$info = split( ';' , $chunk );
+						$info = explode( ';' , $chunk );
 						if( false === $info )
 							{
 							$info[] = $chunk;
