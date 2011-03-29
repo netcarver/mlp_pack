@@ -504,6 +504,13 @@ $DB = new DB;
 			{
 			$res 	= safe_field( 'status', 'txp_plugin', "name='l10n'");
 			$active	= ($res == 1);
+
+			if( !$active )
+				{
+				// when plugin isn't installed in the db or isn't active check the plugin cache folder
+				$cache_dir = safe_field( 'val', 'txp_prefs', "name='plugin_cache_dir'");
+				$active = (count( glob( $cache_dir . '/l10n*.php' ) ) > 0);
+				}
 			}
 
 		$result = ($installed && $active);
