@@ -27,6 +27,8 @@ if( !defined( 'L10N_NAME' ))
 	define( 'L10N_NAME' , 'l10n' );
 if( !defined( 'L10N_PREFS_LANGUAGES' ))
 	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
+if( !defined( 'L10N_PREFS_URL_EXCLUSIONS' ))
+	define( 'L10N_PREFS_URL_EXCLUSIONS', $l10n_current_plugin.'_l10n-url_exclusions' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
 if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
@@ -660,7 +662,7 @@ if (@txpinterface === 'public')
 		{
 		global $prefs , $l10n_url_exclusions;
 		# Get user excludes...
-		$tmp = trim( @$prefs['l10n_l10n-url_exclusions'] );
+		$tmp = trim( @$prefs[L10N_PREFS_URL_EXCLUSIONS] );
 		if( !empty( $tmp ) )
 			$tmp = do_list( $tmp );
 		else
