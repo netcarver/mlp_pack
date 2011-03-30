@@ -326,7 +326,11 @@ function _l10n_process_url( $use_get_params=false )
 
 	if( $redirect )
 		{
-		$location = hu.$_SESSION[$ssname].'/'; # QUESTION: Does this need a trailing slash?
+		if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+			$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $_SESSION[$lsname] );
+		if( !$callback_language_marker ) $callback_language_marker = $_SESSION[$ssname];
+		$location = hu.$callback_language_marker.'/'; # QUESTION: Does this need a trailing slash?
+
 		if( $debug )
 			{
 			echo br , 'L10N MLP: About to redirect to: <a href="'.$location.'">'.$location.'</a>';
@@ -571,12 +575,16 @@ if (@txpinterface === 'public')
 		$result = $matches[0];
 		$query = '';
 
+		if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+			$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $l10n_language['long'] );
+		if( !$callback_language_marker ) $callback_language_marker = $l10n_language['short'];
+
 		if( $debug ) error_log( n.n.'Hit #'.$counter.' : ['.$matches[0].']' , 3 , $logfile );
 
 		if( @$l10n_replace_strings['insert_blank'] && empty( $matches[0] ) )	# Homepage...
 			{
 			$insert = 1;
-			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$l10n_language['short'].'/' , 3 , $logfile );
+			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$callback_language_marker.'/' , 3 , $logfile );
 			}
 		else
 			{
@@ -609,13 +617,13 @@ if (@txpinterface === 'public')
 					{
 					if( $debug ) error_log( ' ... SKIPPING: not a URL ' , 3 , $logfile );
 					}
-				elseif( empty($r[0]) || !MLPLanguageHandler::is_valid_short_code($r[0]) )
+				elseif( empty($callback_detect_language) || !( MLPLanguageHandler::is_valid_short_code($callback_detect_language) && MLPLanguageHandler::iso_639_langs( $callback_detect_language , 'valid_long' ) ) )
 					{
-					if( $debug ) error_log( ' ... INSERTING : '.$l10n_language['short'] , 3 , $logfile );
+					if( $debug ) error_log( ' ... INSERTING : '.$callback_language_marker , 3 , $logfile );
 					$insert = 1;
 					}
 				else
-					if( $debug ) error_log( ' ... SKIPPING: language ('.$r[0].') present ' , 3 , $logfile );
+					if( $debug ) error_log( ' ... SKIPPING: language ('.$callback_detect_language.') present ' , 3 , $logfile );
 				}
 			}
 
@@ -624,7 +632,8 @@ if (@txpinterface === 'public')
 			$extra='';
 			if( $matches[2][0] !== '/' )
 				$extra='/';
-			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$l10n_language['short'].$extra.$matches[2].$l10n_replace_strings['stop_rep'];
+
+			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$callback_language_marker.$extra.$matches[2].$l10n_replace_strings['stop_rep'];
 			if( $debug ) error_log( n.t.'  ->  '.$result , 3 , $logfile );
 			}
 
