@@ -187,32 +187,52 @@ function _l10n_process_url( $use_get_params=false )
 		#
 		#	Examine the first path entry for the language request.
 		#
-		if( $debug ) echo br , 'L10N MLP: Checking start of path for language ... ' . $u1;
-		$temp = MLPLanguageHandler::expand_code( $u1 );
-		if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
 		$reduce_uri = true;
-		$new_first_path = (isset($u2)) ? $u2 : '' ;
+		$reduced_uri = null;
 
-		if( !empty($temp) and in_array( $temp , $site_langs ) )
+		if( isset($prefs['l10n_detect_language_func']) and is_callable($prefs['l10n_detect_language_func']) )
+			$callback_detect_language = call_user_func( $prefs['l10n_detect_language_func'], $req );
+
+		if( is_array($callback_detect_language) and isset($callback_detect_language['lang']) and isset($callback_detect_language['lang']['long']) and in_array( $callback_detect_language['lang']['long'] , $site_langs ) )
 			{
-			#
-			#	Hit! We can serve this language...
-			#
-			if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $u1) ($lsname < $temp).";
-			$_SESSION[$ssname] = $u1;
-			$_SESSION[$lsname] = $temp;
+			if( $debug ) echo br , "L10N MLP: Plugin callback returned " , var_dump($callback_detect_language);
+			$_SESSION[$ssname] = $callback_detect_language['lang']['short'];
+			$_SESSION[$lsname] = $callback_detect_language['lang']['long'];
+			$reduced_uri = $callback_detect_language['uri']['reduced'];
+			$new_first_path = array_shift(explode('/', ltrim($reduced_uri, '/'), 2));
+			$u1 = $callback_detect_language['uri']['code'];
 			}
 		else
 			{
-			if( $debug ) echo br , 'L10N MLP: no-match branch';
-			#
-			#	Not a language this site can serve...
-			#
-			if( !MLPLanguageHandler::is_valid_short_code( $u1 ) )
+			if (empty($temp))
 				{
-				#	And not a known language so don't reduce the uri and use the original part of the path...
-				$reduce_uri = false;
-				$new_first_path = $u1;
+				if( $debug ) echo br , 'L10N MLP: Checking start of path for language ... ' . $u1;
+				$temp = MLPLanguageHandler::expand_code( $u1 );
+				if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
+				$new_first_path = (isset($u2)) ? $u2 : '' ;
+				}
+
+			if( !empty($temp) and in_array( $temp , $site_langs ) )
+				{
+				#
+				#	Hit! We can serve this language...
+				#
+				if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $u1) ($lsname < $temp).";
+				$_SESSION[$ssname] = $u1;
+				$_SESSION[$lsname] = $temp;
+				}
+			else
+				{
+				if( $debug ) echo br , 'L10N MLP: no-match branch';
+				#
+				#	Not a language this site can serve...
+				#
+				if( !MLPLanguageHandler::is_valid_short_code( $u1 ) )
+					{
+					#	And not a known language so don't reduce the uri and use the original part of the path...
+					$reduce_uri = false;
+					$new_first_path = $u1;
+					}
 				}
 			}
 
@@ -228,8 +248,9 @@ function _l10n_process_url( $use_get_params=false )
 			$_SESSION['l10n_request_uri'] = substr( $_SERVER['REQUEST_URI'] , 0 , $lang_code_pos+1 ).
 				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+strlen($u1)+2, strlen($_SERVER['REQUEST_URI']) );
 
-			$new_uri = substr( $req , strlen($u1)+1 );
-			if (empty( $new_uri ))
+			if( !( $new_uri = $reduced_uri ) )
+				$new_uri = substr( $req , strlen($u1)+1 );
+			if( empty( $new_uri ) )
 				$new_uri = '/';
 			$_SERVER['REQUEST_URI'] = $new_uri;
 			if( $debug ) echo br , "REQUEST reduced to ... [$new_uri]";
@@ -320,10 +341,8 @@ function _l10n_process_url( $use_get_params=false )
 			}
 		}
 
-	if( $use_get_params )
-		_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
-	else
-		_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
+	if( _l10n_set_browse_language( $_SESSION[$lsname] , true , $debug ) );
+	else _l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
 
 	if( $debug ) echo br , "New first path is: $new_first_path";
 	return $new_first_path;
@@ -568,7 +587,16 @@ if (@txpinterface === 'public')
 			if( $qs !== false )
 				$url = substr($url, 0, $qs);
 			$r = array_map('urldecode', explode('/',$url));
-			if( $debug ) error_log( n.t.'  -> ' . $r[0] , 3 , $logfile );
+
+			if( isset($prefs['l10n_detect_language_func']) and is_callable($prefs['l10n_detect_language_func']) )
+				$callback_detect_language = call_user_func( $prefs['l10n_detect_language_func'], $req );
+
+			if( is_array($callback_detect_language) and isset($callback_detect_language['lang']) and isset($callback_detect_language['lang']['long']) )
+				$callback_detect_language = $callback_detect_language['lang']['long'];
+			else
+				$callback_detect_language = $r[0];
+
+			if( $debug ) error_log( n.t.'  -> ' . $callback_detect_language , 3 , $logfile );
 
 			$excluded = in_array( $r[0] , $l10n_url_exclusions );
 			if( $excluded )
