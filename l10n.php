@@ -226,7 +226,7 @@ function _l10n_process_url( $use_get_params=false )
 			#
 			$lang_code_pos = strpos( $_SERVER['REQUEST_URI'] , "/$u1/" );
 			$_SESSION['l10n_request_uri'] = substr( $_SERVER['REQUEST_URI'] , 0 , $lang_code_pos+1 ).
-				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+4, strlen($_SERVER['REQUEST_URI']) );
+				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+strlen($u1)+2, strlen($_SERVER['REQUEST_URI']) );
 
 			$new_uri = substr( $req , strlen($u1)+1 );
 			if (empty( $new_uri ))
