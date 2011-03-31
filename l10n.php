@@ -1262,6 +1262,17 @@ function l10n_rendition_lang( $atts )
 		}
 	return $r;
 	}
+function l10n_language_marker( $atts )
+	{
+	global $prefs, $l10n_language;
+
+	if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+		$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $l10n_language['long'] );
+
+	if( !$callback_language_marker ) $callback_language_marker = $l10n_language['short'];
+
+	return $callback_language_marker;
+	}
 
 
 # --- END PLUGIN CODE ---
