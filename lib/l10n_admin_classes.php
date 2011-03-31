@@ -1471,8 +1471,11 @@ class MLPPlugin extends GBPPlugin
 		if( has_privs('article.edit') )
 			new MLPArticleView( gTxt('articles'), 'article', $this, true );
 
-		new GBPPreferenceTabView($this);
-		new MLPWizView($this, NULL , gTxt('l10n-wizard') );
+		if( has_privs('plugin') )
+			{
+			new GBPPreferenceTabView($this);
+			new MLPWizView($this, NULL , gTxt('l10n-wizard') );
+			}
 		}
 
 	function prefs_save_cb( $event='' , $step='' )
@@ -4524,7 +4527,8 @@ class MLPArticleView extends GBPAdminTabView
 
 class MLPWizView extends GBPWizardTabView
 	{
- 	function get_steps()
+	var $permissions = '1';
+	function get_steps()
 		{
 		#
 		#	Override this method in derived classes to return the appropriate setup/cleanup steps.
