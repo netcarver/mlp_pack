@@ -1242,7 +1242,7 @@ if (@txpinterface === 'public')
 
 function l10n_inject_lang( $atts , $thing )
 	{
-	$lang = l10n_rendition_lang();
+	$lang = l10n_rendition_lang( $atts );
 	return ( $lang ) ? strtr( parse($thing) , array( hu => hu.$lang.'/' ) ) : parse($thing);
 	}
 function l10n_rendition_lang( $atts )
