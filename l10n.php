@@ -27,6 +27,8 @@ if( !defined( 'L10N_NAME' ))
 	define( 'L10N_NAME' , 'l10n' );
 if( !defined( 'L10N_PREFS_LANGUAGES' ))
 	define( 'L10N_PREFS_LANGUAGES', $l10n_current_plugin.'_l10n-languages' );
+if( !defined( 'L10N_PREFS_URL_EXCLUSIONS' ))
+	define( 'L10N_PREFS_URL_EXCLUSIONS', $l10n_current_plugin.'_l10n-url_exclusions' );
 if( !defined( 'L10N_ARTICLES_TABLE' ) )
 	define( 'L10N_ARTICLES_TABLE' , 'l10n_articles' );
 if( !defined( 'L10N_RENDITION_TABLE_PREFIX' ) )
@@ -185,32 +187,52 @@ function _l10n_process_url( $use_get_params=false )
 		#
 		#	Examine the first path entry for the language request.
 		#
-		if( $debug ) echo br , 'L10N MLP: Checking start of path for language ... ' . $u1;
-		$temp = MLPLanguageHandler::expand_code( $u1 );
-		if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
 		$reduce_uri = true;
-		$new_first_path = (isset($u2)) ? $u2 : '' ;
+		$reduced_uri = null;
 
-		if( !empty($temp) and in_array( $temp , $site_langs ) )
+		if( isset($prefs['l10n_detect_language_func']) and is_callable($prefs['l10n_detect_language_func']) )
+			$callback_detect_language = call_user_func( $prefs['l10n_detect_language_func'], $req );
+
+		if( is_array($callback_detect_language) and isset($callback_detect_language['lang']) and isset($callback_detect_language['lang']['long']) and in_array( $callback_detect_language['lang']['long'] , $site_langs ) )
 			{
-			#
-			#	Hit! We can serve this language...
-			#
-			if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $u1) ($lsname < $temp).";
-			$_SESSION[$ssname] = $u1;
-			$_SESSION[$lsname] = $temp;
+			if( $debug ) echo br , "L10N MLP: Plugin callback returned " , var_dump($callback_detect_language);
+			$_SESSION[$ssname] = $callback_detect_language['lang']['short'];
+			$_SESSION[$lsname] = $callback_detect_language['lang']['long'];
+			$reduced_uri = $callback_detect_language['uri']['reduced'];
+			$new_first_path = array_shift(explode('/', ltrim($reduced_uri, '/'), 2));
+			$u1 = $callback_detect_language['uri']['code'];
 			}
 		else
 			{
-			if( $debug ) echo br , 'L10N MLP: no-match branch';
-			#
-			#	Not a language this site can serve...
-			#
-			if( !MLPLanguageHandler::is_valid_short_code( $u1 ) )
+			if (empty($temp))
 				{
-				#	And not a known language so don't reduce the uri and use the original part of the path...
-				$reduce_uri = false;
-				$new_first_path = $u1;
+				if( $debug ) echo br , 'L10N MLP: Checking start of path for language ... ' . $u1;
+				$temp = MLPLanguageHandler::expand_code( $u1 );
+				if( $debug ) echo br , "L10N MLP: expand_code($u1) returned " , var_dump($temp);
+				$new_first_path = (isset($u2)) ? $u2 : '' ;
+				}
+
+			if( !empty($temp) and in_array( $temp , $site_langs ) )
+				{
+				#
+				#	Hit! We can serve this language...
+				#
+				if( $debug ) echo br , "L10N MLP: Set session vars ($ssname < $u1) ($lsname < $temp).";
+				$_SESSION[$ssname] = $u1;
+				$_SESSION[$lsname] = $temp;
+				}
+			else
+				{
+				if( $debug ) echo br , 'L10N MLP: no-match branch';
+				#
+				#	Not a language this site can serve...
+				#
+				if( !MLPLanguageHandler::is_valid_short_code( $u1 ) )
+					{
+					#	And not a known language so don't reduce the uri and use the original part of the path...
+					$reduce_uri = false;
+					$new_first_path = $u1;
+					}
 				}
 			}
 
@@ -224,10 +246,11 @@ function _l10n_process_url( $use_get_params=false )
 			#
 			$lang_code_pos = strpos( $_SERVER['REQUEST_URI'] , "/$u1/" );
 			$_SESSION['l10n_request_uri'] = substr( $_SERVER['REQUEST_URI'] , 0 , $lang_code_pos+1 ).
-				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+4, strlen($_SERVER['REQUEST_URI']) );
+				substr( $_SERVER['REQUEST_URI'] , $lang_code_pos+strlen($u1)+2, strlen($_SERVER['REQUEST_URI']) );
 
-			$new_uri = substr( $req , strlen($u1)+1 );
-			if (empty( $new_uri ))
+			if( !( $new_uri = $reduced_uri ) )
+				$new_uri = substr( $req , strlen($u1)+1 );
+			if( empty( $new_uri ) )
 				$new_uri = '/';
 			$_SERVER['REQUEST_URI'] = $new_uri;
 			if( $debug ) echo br , "REQUEST reduced to ... [$new_uri]";
@@ -303,7 +326,11 @@ function _l10n_process_url( $use_get_params=false )
 
 	if( $redirect )
 		{
-		$location = hu.$_SESSION[$ssname].'/'; # QUESTION: Does this need a trailing slash?
+		if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+			$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $_SESSION[$lsname] );
+		if( !$callback_language_marker ) $callback_language_marker = $_SESSION[$ssname];
+		$location = hu.$callback_language_marker.'/'; # QUESTION: Does this need a trailing slash?
+
 		if( $debug )
 			{
 			echo br , 'L10N MLP: About to redirect to: <a href="'.$location.'">'.$location.'</a>';
@@ -318,10 +345,8 @@ function _l10n_process_url( $use_get_params=false )
 			}
 		}
 
-	if( $use_get_params )
-		_l10n_set_browse_language( $_SESSION[$lsname] , true , $debug );
-	else
-		_l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
+	if( _l10n_set_browse_language( $_SESSION[$lsname] , true , $debug ) );
+	else _l10n_set_browse_language( $_SESSION[$ssname] , false , $debug );
 
 	if( $debug ) echo br , "New first path is: $new_first_path";
 	return $new_first_path;
@@ -550,12 +575,16 @@ if (@txpinterface === 'public')
 		$result = $matches[0];
 		$query = '';
 
+		if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+			$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $l10n_language['long'] );
+		if( !$callback_language_marker ) $callback_language_marker = $l10n_language['short'];
+
 		if( $debug ) error_log( n.n.'Hit #'.$counter.' : ['.$matches[0].']' , 3 , $logfile );
 
 		if( @$l10n_replace_strings['insert_blank'] && empty( $matches[0] ) )	# Homepage...
 			{
 			$insert = 1;
-			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$l10n_language['short'].'/' , 3 , $logfile );
+			if( $debug ) error_log( ' ... Blank! ... INSERTING : /'.$callback_language_marker.'/' , 3 , $logfile );
 			}
 		else
 			{
@@ -566,7 +595,16 @@ if (@txpinterface === 'public')
 			if( $qs !== false )
 				$url = substr($url, 0, $qs);
 			$r = array_map('urldecode', explode('/',$url));
-			if( $debug ) error_log( n.t.'  -> ' . $r[0] , 3 , $logfile );
+
+			if( isset($prefs['l10n_detect_language_func']) and is_callable($prefs['l10n_detect_language_func']) )
+				$callback_detect_language = call_user_func( $prefs['l10n_detect_language_func'], $req );
+
+			if( is_array($callback_detect_language) and isset($callback_detect_language['lang']) and isset($callback_detect_language['lang']['long']) )
+				$callback_detect_language = $callback_detect_language['lang']['long'];
+			else
+				$callback_detect_language = $r[0];
+
+			if( $debug ) error_log( n.t.'  -> ' . $callback_detect_language , 3 , $logfile );
 
 			$excluded = in_array( $r[0] , $l10n_url_exclusions );
 			if( $excluded )
@@ -579,13 +617,13 @@ if (@txpinterface === 'public')
 					{
 					if( $debug ) error_log( ' ... SKIPPING: not a URL ' , 3 , $logfile );
 					}
-				elseif( empty($r[0]) || !MLPLanguageHandler::is_valid_short_code($r[0]) )
+				elseif( empty($callback_detect_language) || !( MLPLanguageHandler::is_valid_short_code($callback_detect_language) && MLPLanguageHandler::iso_639_langs( $callback_detect_language , 'valid_long' ) ) )
 					{
-					if( $debug ) error_log( ' ... INSERTING : '.$l10n_language['short'] , 3 , $logfile );
+					if( $debug ) error_log( ' ... INSERTING : '.$callback_language_marker , 3 , $logfile );
 					$insert = 1;
 					}
 				else
-					if( $debug ) error_log( ' ... SKIPPING: language ('.$r[0].') present ' , 3 , $logfile );
+					if( $debug ) error_log( ' ... SKIPPING: language ('.$callback_detect_language.') present ' , 3 , $logfile );
 				}
 			}
 
@@ -594,7 +632,8 @@ if (@txpinterface === 'public')
 			$extra='';
 			if( $matches[2][0] !== '/' )
 				$extra='/';
-			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$l10n_language['short'].$extra.$matches[2].$l10n_replace_strings['stop_rep'];
+
+			$result = $l10n_replace_strings['start_rep'].$matches[1].'/'.$callback_language_marker.$extra.$matches[2].$l10n_replace_strings['stop_rep'];
 			if( $debug ) error_log( n.t.'  ->  '.$result , 3 , $logfile );
 			}
 
@@ -660,7 +699,7 @@ if (@txpinterface === 'public')
 		{
 		global $prefs , $l10n_url_exclusions;
 		# Get user excludes...
-		$tmp = trim( @$prefs['l10n_l10n-url_exclusions'] );
+		$tmp = trim( @$prefs[L10N_PREFS_URL_EXCLUSIONS] );
 		if( !empty( $tmp ) )
 			$tmp = do_list( $tmp );
 		else
@@ -1203,8 +1242,10 @@ if (@txpinterface === 'public')
 
 function l10n_inject_lang( $atts , $thing )
 	{
-	$lang = l10n_rendition_lang();
-	return ( $lang ) ? strtr( parse($thing) , array( hu => hu.$lang.'/' ) ) : parse($thing);
+	$lang = l10n_rendition_lang( $atts );
+	if( empty($lang) ) $lang = l10n_language_marker( $atts );
+
+	return ( $lang ) ? preg_replace('@'.hu."(?!$lang/)@", hu.$lang.'/', parse($thing)) : parse($thing);
 	}
 function l10n_rendition_lang( $atts )
 	{
@@ -1222,6 +1263,17 @@ function l10n_rendition_lang( $atts )
 			break;
 		}
 	return $r;
+	}
+function l10n_language_marker( $atts )
+	{
+	global $prefs, $l10n_language;
+
+	if( isset($prefs['l10n_language_marker_func']) and is_callable($prefs['l10n_language_marker_func']) )
+		$callback_language_marker = call_user_func( $prefs['l10n_language_marker_func'], $l10n_language['long'] );
+
+	if( !$callback_language_marker ) $callback_language_marker = $l10n_language['short'];
+
+	return $callback_language_marker;
 	}
 
 

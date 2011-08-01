@@ -458,6 +458,14 @@ function _l10n_setup_article_buffer_processor( $event , $step )
 	#
 	if( version_compare( $GLOBALS['prefs']['version'], '4.3' , '>=') )
 	{
+		// Delay article_ui callbacks - this fixes issues with glz_custom_fields and potentially other plugins too
+		global $plugin_callback;
+		foreach( $plugin_callback as $index => $callback )
+			{
+			if ( $callback['event'] == 'article_ui' && in_array( $callback['step'], array('title', 'body', 'excerpt') ) )
+				$plugin_callback[$index]['event'] = '_l10n_article_ui';
+			}
+
 		register_callback('_l10n_write_tab_title',   'article_ui', 'title');
 		register_callback('_l10n_write_tab_excerpt', 'article_ui', 'excerpt');
 		register_callback('_l10n_write_tab_body',    'article_ui', 'body');
@@ -596,14 +604,18 @@ function _l10n_write_tab_excerpt($event, $step, $data, $rs)
 	$lang = $GLOBALS['l10n_vars']['article_lang'];
 	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
 	$f = 'class="excerpt"';
-	return str_replace( $f , $f.$r , $data );
+	$data = str_replace( $f , $f.$r , $data );
+
+	return pluggable_ui( '_l10n_article_ui', $step, $data, $rs );
 	}
 function _l10n_write_tab_body($event, $step, $data, $rs)
 	{
 	$lang = $GLOBALS['l10n_vars']['article_lang'];
 	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
 	$f = 'class="body"';
-	return str_replace( $f , $f.$r , $data );
+	$data = str_replace( $f , $f.$r , $data );
+
+	return pluggable_ui( '_l10n_article_ui', $step, $data, $rs );
 	}
 function _l10n_write_tab_title($event, $step, $data, $rs)
 	{
@@ -611,8 +623,9 @@ function _l10n_write_tab_title($event, $step, $data, $rs)
 	$r = MLPLanguageHandler::get_lang_direction_markup( $lang );
 	$f = 'class="title"';
 	$data = str_replace( $f , $f.$r , $data );
+	$data = _l10n_make_writeselector().$data;
 
-	return _l10n_make_writeselector().$data;
+	return pluggable_ui( '_l10n_article_ui', $step, $data, $rs );
 	}
 function _l10n_make_writeselector()
 	{
